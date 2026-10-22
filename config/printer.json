@@ -1,0 +1,24 @@
+{
+  "_notes": "Filled in during setup. The printer is offline: prints go by SD card via tools/export_sd.py.",
+  "printer_model": "MK3S",
+  "nozzle_diameter": 0.4,
+  "nozzle_type": "brass",
+  "enclosure": false,
+  "sheets": [
+    "smooth_pei"
+  ],
+  "bed_mm": [
+    250,
+    210,
+    210
+  ],
+  "materials_on_hand": [],
+  "prusaslicer_path": "prusa-slicer",
+  "profiles": {
+    "printer": "profiles/printer/MK3S.ini",
+    "print_default": "profiles/print/0.20mm_QUALITY_MK3S.ini",
+    "filament": {}
+  },
+  "transfer": "sd_card",
+  "sd_drive": ""
+}

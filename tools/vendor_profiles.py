@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""Make flat PrusaSlicer profile .ini files from Prusa's official vendor bundle.
+
+Use this when you haven't exported your own tuned profiles yet. The vendor
+bundle (PrusaResearch.ini) ships with PrusaSlicer and holds Prusa's tested
+presets with inheritance; this resolves the inheritance into one flat file
+per preset that `prusa-slicer --load` accepts.
+
+  python3 tools/vendor_profiles.py --list printer --filter MK3S
+  python3 tools/vendor_profiles.py --list print --filter "@MK3"
+  python3 tools/vendor_profiles.py --list filament --filter PETG
+  python3 tools/vendor_profiles.py \
+      --printer "Original Prusa i3 MK3S & MK3S+" \
+      --print "0.20mm QUALITY @MK3" \
+      --filament "Prusament PETG" --filament "Prusament PLA"
+
+Files are written to profiles/printer|print|filament/<safe name>.ini.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import os
+import platform
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+KINDS = ("printer", "print", "filament")
+
+
+def candidate_bundles() -> list[Path]:
+    home = Path.home()
+    c: list[Path] = []
+    env = os.environ.get("PRUSASLICER_VENDOR_BUNDLE")
+    if env:
+        c.append(Path(env))
+    system = platform.system()
+    if system == "Darwin":
+        c += [home / "Library/Application Support/PrusaSlicer/vendor/PrusaResearch.ini",
+              Path("/Applications/PrusaSlicer.app/Contents/Resources/profiles/PrusaResearch.ini"),
+              Path("/Applications/Original Prusa Drivers/PrusaSlicer.app/Contents/Resources/profiles/PrusaResearch.ini")]
+    elif system == "Windows":
+        appdata = Path(os.environ.get("APPDATA", home / "AppData/Roaming"))
+        c += [appdata / "PrusaSlicer/vendor/PrusaResearch.ini",
+              Path(r"C:\Program Files\Prusa3D\PrusaSlicer\resources\profiles\PrusaResearch.ini")]
+    else:
+        c += [home / ".config/PrusaSlicer/vendor/PrusaResearch.ini",
+              home / ".var/app/com.prusa3d.PrusaSlicer/config/PrusaSlicer/vendor/PrusaResearch.ini",
+              Path("/usr/share/PrusaSlicer/profiles/PrusaResearch.ini"),
+              Path("/usr/share/prusa-slicer/profiles/PrusaResearch.ini")]
+    return c
+
+
+def find_bundle(explicit: str | None) -> Path:
+    if explicit:
+        p = Path(explicit)
+        if not p.exists():
+            sys.exit(f"Vendor bundle not found: {p}")
+        return p
+    for p in candidate_bundles():
+        if p.exists():
+            return p
+    sys.exit("Could not find PrusaResearch.ini. Pass --bundle <path>, or set PRUSASLICER_VENDOR_BUNDLE. "
+             "It is in PrusaSlicer's resources/profiles folder or its data folder under vendor/.")
+
+
+def parse_bundle(path: Path) -> tuple[dict[str, dict[str, str]], str]:
+    sections: dict[str, dict[str, str]] = {}
+    current = None
+    version = "unknown"
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.startswith("[") and stripped.endswith("]"):
+                current = stripped[1:-1]
+                sections.setdefault(current, {})
+                continue
+            if current is None or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            sections[current][key.strip()] = value.strip()
+    version = sections.get("vendor", {}).get("config_version", version)
+    return sections, version
+
+
+def resolve(sections: dict, kind: str, name: str, seen: tuple = ()) -> dict[str, str]:
+    key = f"{kind}:{name}"
+    if key not in sections:
+        raise KeyError(f"No {kind} preset named '{name}' in the vendor bundle.")
+    if key in seen:
+        raise ValueError(f"Inheritance loop at {key}")
+    own = sections[key]
+    merged: dict[str, str] = {}
+    for parent in [p.strip() for p in own.get("inherits", "").split(";") if p.strip()]:
+        merged.update(resolve(sections, kind, parent, seen + (key,)))
+    merged.update({k: v for k, v in own.items() if k != "inherits"})
+    return merged
+
+
+def list_presets(sections: dict, kind: str, filt: str | None) -> list[str]:
+    names = [s.split(":", 1)[1] for s in sections if s.startswith(kind + ":")]
+    names = [n for n in names if not (n.startswith("*") and n.endswith("*"))]
+    if filt:
+        names = [n for n in names if filt.lower() in n.lower()]
+    return sorted(names)
+
+
+def safe_name(name: str) -> str:
+    return re.sub(r"[^A-Za-z0-9.@+-]+", "_", name).strip("_")
+
+
+def write_preset(sections, kind, name, out_dir: Path, bundle: Path, version: str) -> Path:
+    cfg = resolve(sections, kind, name)
+    out = out_dir / kind / f"{safe_name(name)}.ini"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    stamp = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    lines = [f"# Generated by tools/vendor_profiles.py on {stamp}",
+             f"# Source: {bundle} (vendor config_version {version}), {kind} preset '{name}'",
+             "# Prusa's stock settings. Replace with your own tuned export when you have one."]
+    lines += [f"{k} = {v}" for k, v in sorted(cfg.items())]
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--bundle", help="path to PrusaResearch.ini (auto-detected if omitted)")
+    ap.add_argument("--list", choices=KINDS)
+    ap.add_argument("--filter")
+    ap.add_argument("--printer")
+    ap.add_argument("--print", dest="print_")
+    ap.add_argument("--filament", action="append", default=[])
+    ap.add_argument("--out", default=str(ROOT / "profiles"))
+    args = ap.parse_args(argv)
+
+    bundle = find_bundle(args.bundle)
+    sections, version = parse_bundle(bundle)
+
+    if args.list:
+        for n in list_presets(sections, args.list, args.filter):
+            print(n)
+        return 0
+
+    wanted = [("printer", args.printer), ("print", args.print_)] + [("filament", f) for f in args.filament]
+    wanted = [(k, n) for k, n in wanted if n]
+    if not wanted:
+        ap.error("nothing to do: use --list or name at least one preset")
+    out_dir = Path(args.out)
+    for kind, name in wanted:
+        try:
+            path = write_preset(sections, kind, name, out_dir, bundle, version)
+        except KeyError as exc:
+            close = list_presets(sections, kind, name.split()[0])[:10]
+            print(f"{exc} Close matches: {close}", file=sys.stderr)
+            return 1
+        print(path)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

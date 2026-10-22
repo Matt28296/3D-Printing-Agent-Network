@@ -1,0 +1,110 @@
+{
+  "model": "opus",
+  "effortLevel": "xhigh",
+  "enabledMcpjsonServers": [
+    "build123d"
+  ],
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(python3 tools/new_job.py:*)",
+      "Bash(python3 tools/cad_build.py:*)",
+      "Bash(python3 tools/render.py:*)",
+      "Bash(python3 tools/mesh_check.py:*)",
+      "Bash(python3 tools/slice.py:*)",
+      "Bash(python3 tools/vendor_profiles.py:*)",
+      "Bash(python3 tools/import_fcstd.py:*)",
+      "Bash(python3 tools/gcode_validator.py:*)",
+      "Bash(python3 tools/export_sd.py --list)",
+      "Bash(python3 tools/export_sd.py jobs/*)",
+      "Bash(python3 tools/calibration/*)",
+      "Bash(python3 jobs/*/cad_checks.py)",
+      "Bash(python3 jobs/*/strength_calc.py)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(ls:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "mcp__build123d"
+    ],
+    "ask": [
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3 -m pip install:*)",
+      "Bash(uv pip install:*)",
+      "Bash(python3 tools/export_sd.py * --overwrite)"
+    ],
+    "deny": [
+      "Bash(python3 tools/approve.py:*)",
+      "Bash(python tools/approve.py:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)",
+      "Edit(/config/safety.json)",
+      "Edit(/CLAUDE.md)",
+      "Edit(/.claude/**)",
+      "Edit(/tools/gcode_validator.py)",
+      "Edit(/tools/approve.py)",
+      "Edit(/tools/export_sd.py)",
+      "Edit(/jobs/**/approval.json)",
+      "Edit(/jobs/**/sd_export.json)",
+      "mcp__build123d__install_skill",
+      "mcp__build123d__export",
+      "mcp__build123d__bank_candidate",
+      "PowerShell(python tools/approve.py:*)",
+      "PowerShell(Invoke-WebRequest:*)",
+      "PowerShell(Invoke-RestMethod:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session_env.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run_py.sh\" guard_bash.py",
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run_py.sh\" protect_paths.py",
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0"
+  }
+}

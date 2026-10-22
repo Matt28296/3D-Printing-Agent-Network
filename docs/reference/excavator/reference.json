@@ -1,0 +1,773 @@
+{
+  "source": "AssemblyExample.FCStd",
+  "printer_bed_mm": [
+    250.0,
+    210.0,
+    210.0
+  ],
+  "parts": [
+    {
+      "instance": "BasePin",
+      "label": "BasePin",
+      "source_object": "Shape012",
+      "solids": 1,
+      "bbox_mm": [
+        20.0,
+        20.0,
+        100.0
+      ],
+      "volume_cm3": 31.4,
+      "est_mass_petg_solid_g": 40.0,
+      "round_feature_diameters_mm": [
+        20.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        100.0,
+        20.0,
+        20.0
+      ],
+      "max_scale_to_fit": 2.4,
+      "files": {
+        "part_step": "parts/BasePin.step",
+        "part_stl": "parts/BasePin.stl",
+        "assembled_step": "assembled/BasePin.step"
+      }
+    },
+    {
+      "instance": "Base",
+      "label": "Base",
+      "source_object": "Shape001",
+      "solids": 1,
+      "bbox_mm": [
+        88.0,
+        119.5,
+        106.0
+      ],
+      "volume_cm3": 241.3,
+      "est_mass_petg_solid_g": 306.0,
+      "round_feature_diameters_mm": [
+        14.0,
+        20.0,
+        24.0,
+        31.2,
+        31.4,
+        50.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        106.0,
+        119.5,
+        88.0
+      ],
+      "max_scale_to_fit": 1.981,
+      "files": {
+        "part_step": "parts/Base.step",
+        "part_stl": "parts/Base.stl",
+        "assembled_step": "assembled/Base.step"
+      }
+    },
+    {
+      "instance": "Boom",
+      "label": "Boom",
+      "source_object": "Shape",
+      "solids": 1,
+      "bbox_mm": [
+        60.0,
+        364.0,
+        319.0
+      ],
+      "volume_cm3": 1204.6,
+      "est_mass_petg_solid_g": 1530.0,
+      "round_feature_diameters_mm": [
+        14.0,
+        29.0,
+        70.8
+      ],
+      "fits_bed": false,
+      "flat_on_bed_mm": null,
+      "max_scale_to_fit": 0.658,
+      "split_hint": "longest side 364 mm > 240 mm usable: split into at least 2 pieces joined mechanically (bolts, dowels or a lap joint), or scale the assembly",
+      "files": {
+        "part_step": "parts/Boom.step",
+        "part_stl": "parts/Boom.stl",
+        "assembled_step": "assembled/Boom.step"
+      }
+    },
+    {
+      "instance": "Stick",
+      "label": "Stick",
+      "source_object": "Shape013",
+      "solids": 1,
+      "bbox_mm": [
+        30.0,
+        388.4,
+        109.8
+      ],
+      "volume_cm3": 333.9,
+      "est_mass_petg_solid_g": 424.0,
+      "round_feature_diameters_mm": [
+        8.0,
+        14.0,
+        24.0,
+        26.0,
+        26.6
+      ],
+      "fits_bed": false,
+      "flat_on_bed_mm": null,
+      "max_scale_to_fit": 0.617,
+      "split_hint": "longest side 388 mm > 240 mm usable: split into at least 2 pieces joined mechanically (bolts, dowels or a lap joint), or scale the assembly",
+      "files": {
+        "part_step": "parts/Stick.step",
+        "part_stl": "parts/Stick.stl",
+        "assembled_step": "assembled/Stick.step"
+      }
+    },
+    {
+      "instance": "Bucket",
+      "label": "Bucket",
+      "source_object": "Shape015",
+      "solids": 1,
+      "bbox_mm": [
+        103.0,
+        107.7,
+        124.0
+      ],
+      "volume_cm3": 58.3,
+      "est_mass_petg_solid_g": 74.0,
+      "round_feature_diameters_mm": [
+        3.0,
+        8.0,
+        15.0,
+        20.0,
+        23.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        107.7,
+        124.0,
+        103.0
+      ],
+      "max_scale_to_fit": 1.935,
+      "files": {
+        "part_step": "parts/Bucket.step",
+        "part_stl": "parts/Bucket.stl",
+        "assembled_step": "assembled/Bucket.step"
+      }
+    },
+    {
+      "instance": "BucketLink2",
+      "label": "BucketLink2",
+      "source_object": "Shape019",
+      "solids": 1,
+      "bbox_mm": [
+        48.0,
+        78.0,
+        37.6
+      ],
+      "volume_cm3": 17.1,
+      "est_mass_petg_solid_g": 22.0,
+      "round_feature_diameters_mm": [
+        8.2,
+        84.0,
+        116.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        48.0,
+        78.0,
+        37.6
+      ],
+      "max_scale_to_fit": 3.076,
+      "files": {
+        "part_step": "parts/BucketLink2.step",
+        "part_stl": "parts/BucketLink2.stl",
+        "assembled_step": "assembled/BucketLink2.step"
+      }
+    },
+    {
+      "instance": "BucketLink1",
+      "label": "BucketLink1",
+      "source_object": "Shape014",
+      "solids": 1,
+      "bbox_mm": [
+        30.0,
+        31.4,
+        61.5
+      ],
+      "volume_cm3": 12.3,
+      "est_mass_petg_solid_g": 16.0,
+      "round_feature_diameters_mm": [
+        8.0,
+        16.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        61.5,
+        31.4,
+        30.0
+      ],
+      "max_scale_to_fit": 3.904,
+      "files": {
+        "part_step": "parts/BucketLink1.step",
+        "part_stl": "parts/BucketLink1.stl",
+        "assembled_step": "assembled/BucketLink1.step"
+      }
+    },
+    {
+      "instance": "BoomCylinderOuter",
+      "label": "BoomCylinderOuter",
+      "source_object": "Shape020",
+      "solids": 1,
+      "bbox_mm": [
+        30.0,
+        143.0,
+        143.0
+      ],
+      "volume_cm3": 48.2,
+      "est_mass_petg_solid_g": 61.0,
+      "round_feature_diameters_mm": [
+        12.0,
+        14.0,
+        20.0,
+        30.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        143.0,
+        143.0,
+        30.0
+      ],
+      "max_scale_to_fit": 1.468,
+      "files": {
+        "part_step": "parts/BoomCylinderOuter.step",
+        "part_stl": "parts/BoomCylinderOuter.stl",
+        "assembled_step": "assembled/BoomCylinderOuter.step"
+      }
+    },
+    {
+      "instance": "BoomCylinderInner",
+      "label": "BoomCylinderInner",
+      "source_object": "Shape016",
+      "solids": 1,
+      "bbox_mm": [
+        15.0,
+        140.2,
+        140.2
+      ],
+      "volume_cm3": 23.0,
+      "est_mass_petg_solid_g": 29.0,
+      "round_feature_diameters_mm": [
+        12.0,
+        14.0,
+        24.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        140.2,
+        140.2,
+        15.0
+      ],
+      "max_scale_to_fit": 1.497,
+      "files": {
+        "part_step": "parts/BoomCylinderInner.step",
+        "part_stl": "parts/BoomCylinderInner.stl",
+        "assembled_step": "assembled/BoomCylinderInner.step"
+      }
+    },
+    {
+      "instance": "StickCylinderInner",
+      "label": "StickCylinderInner",
+      "source_object": "Shape017",
+      "solids": 1,
+      "bbox_mm": [
+        15.0,
+        146.3,
+        133.8
+      ],
+      "volume_cm3": 23.0,
+      "est_mass_petg_solid_g": 29.0,
+      "round_feature_diameters_mm": [
+        12.0,
+        14.0,
+        24.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        133.8,
+        146.3,
+        15.0
+      ],
+      "max_scale_to_fit": 1.57,
+      "files": {
+        "part_step": "parts/StickCylinderInner.step",
+        "part_stl": "parts/StickCylinderInner.stl",
+        "assembled_step": "assembled/StickCylinderInner.step"
+      }
+    },
+    {
+      "instance": "StickCylinderOuter",
+      "label": "StickCylinderOuter",
+      "source_object": "Shape021",
+      "solids": 1,
+      "bbox_mm": [
+        30.0,
+        148.8,
+        136.9
+      ],
+      "volume_cm3": 48.2,
+      "est_mass_petg_solid_g": 61.0,
+      "round_feature_diameters_mm": [
+        12.0,
+        14.0,
+        20.0,
+        30.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        136.9,
+        148.8,
+        30.0
+      ],
+      "max_scale_to_fit": 1.534,
+      "files": {
+        "part_step": "parts/StickCylinderOuter.step",
+        "part_stl": "parts/StickCylinderOuter.stl",
+        "assembled_step": "assembled/StickCylinderOuter.step"
+      }
+    },
+    {
+      "instance": "BucketCylinderInner",
+      "label": "BucketCylinderInner",
+      "source_object": "Shape018",
+      "solids": 1,
+      "bbox_mm": [
+        15.0,
+        182.7,
+        39.9
+      ],
+      "volume_cm3": 9.0,
+      "est_mass_petg_solid_g": 11.0,
+      "round_feature_diameters_mm": [
+        7.0,
+        10.0,
+        18.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        39.9,
+        182.7,
+        15.0
+      ],
+      "max_scale_to_fit": 1.313,
+      "files": {
+        "part_step": "parts/BucketCylinderInner.step",
+        "part_stl": "parts/BucketCylinderInner.stl",
+        "assembled_step": "assembled/BucketCylinderInner.step"
+      }
+    },
+    {
+      "instance": "BucketCylinderOuter",
+      "label": "BucketCylinderOuter",
+      "source_object": "Shape022",
+      "solids": 1,
+      "bbox_mm": [
+        15.0,
+        179.4,
+        45.6
+      ],
+      "volume_cm3": 16.0,
+      "est_mass_petg_solid_g": 20.0,
+      "round_feature_diameters_mm": [
+        7.0,
+        8.0,
+        12.0,
+        20.0
+      ],
+      "fits_bed": true,
+      "flat_on_bed_mm": [
+        179.4,
+        45.6,
+        15.0
+      ],
+      "max_scale_to_fit": 1.337,
+      "files": {
+        "part_step": "parts/BucketCylinderOuter.step",
+        "part_stl": "parts/BucketCylinderOuter.stl",
+        "assembled_step": "assembled/BucketCylinderOuter.step"
+      }
+    }
+  ],
+  "joints": [
+    {
+      "name": "Revolute",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "BasePin",
+          "elements": [
+            "Edge2",
+            "Face1"
+          ],
+          "diameter_mm": 20.0
+        },
+        {
+          "part": "Base",
+          "elements": [
+            "Edge107"
+          ],
+          "diameter_mm": 20.0
+        }
+      ],
+      "print_note": "both sides reference \u00d820: modelled line-to-line (zero clearance). A printed pin/bore pair needs the measured sliding-fit clearance (\u22480.3\u20130.4 mm on diameter by default)"
+    },
+    {
+      "name": "Revolute001",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "Boom",
+          "elements": [
+            "Edge5",
+            "Face1"
+          ],
+          "diameter_mm": 29.0
+        },
+        {
+          "part": "Base",
+          "elements": [
+            "Edge61"
+          ],
+          "diameter_mm": 14.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d829 vs \u00d814); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Revolute002",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "BoomCylinderOuter",
+          "elements": [
+            "Edge8"
+          ],
+          "diameter_mm": 14.0
+        },
+        {
+          "part": "Base",
+          "elements": [
+            "Edge34"
+          ],
+          "diameter_mm": 14.0
+        }
+      ],
+      "print_note": "both sides reference \u00d814: modelled line-to-line (zero clearance). A printed pin/bore pair needs the measured sliding-fit clearance (\u22480.3\u20130.4 mm on diameter by default)"
+    },
+    {
+      "name": "Slider",
+      "type": "Slider",
+      "active": true,
+      "between": [
+        {
+          "part": "BoomCylinderInner",
+          "elements": [
+            "Face1"
+          ],
+          "diameter_mm": 12.0
+        },
+        {
+          "part": "BoomCylinderOuter",
+          "elements": [
+            "Edge3",
+            "Face1"
+          ],
+          "diameter_mm": 20.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d812 vs \u00d820); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Cylindrical",
+      "type": "Cylindrical",
+      "active": true,
+      "between": [
+        {
+          "part": "BoomCylinderInner",
+          "elements": [
+            "Edge7"
+          ],
+          "diameter_mm": 14.0
+        },
+        {
+          "part": "Boom",
+          "elements": [
+            "Edge53"
+          ],
+          "diameter_mm": 14.0
+        }
+      ],
+      "print_note": "both sides reference \u00d814: modelled line-to-line (zero clearance). A printed pin/bore pair needs the measured sliding-fit clearance (\u22480.3\u20130.4 mm on diameter by default)"
+    },
+    {
+      "name": "Revolute003",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "StickCylinderOuter",
+          "elements": [
+            "Edge3",
+            "Face2"
+          ],
+          "diameter_mm": 20.0
+        },
+        {
+          "part": "Boom",
+          "elements": [
+            "Edge66"
+          ],
+          "diameter_mm": 14.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d820 vs \u00d814); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Slider001",
+      "type": "Slider",
+      "active": true,
+      "between": [
+        {
+          "part": "StickCylinderInner",
+          "elements": [
+            "Face1"
+          ],
+          "diameter_mm": 12.0
+        },
+        {
+          "part": "StickCylinderOuter",
+          "elements": [
+            "Edge3",
+            "Face6"
+          ],
+          "diameter_mm": 20.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d812 vs \u00d820); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Revolute004",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "Stick",
+          "elements": [
+            "Edge41"
+          ],
+          "diameter_mm": 14.0
+        },
+        {
+          "part": "Boom",
+          "elements": [
+            "Edge51"
+          ],
+          "diameter_mm": 14.0
+        }
+      ],
+      "print_note": "both sides reference \u00d814: modelled line-to-line (zero clearance). A printed pin/bore pair needs the measured sliding-fit clearance (\u22480.3\u20130.4 mm on diameter by default)"
+    },
+    {
+      "name": "Cylindrical001",
+      "type": "Cylindrical",
+      "active": true,
+      "between": [
+        {
+          "part": "Stick",
+          "elements": [
+            "Edge57"
+          ],
+          "diameter_mm": 14.0
+        },
+        {
+          "part": "StickCylinderInner",
+          "elements": [
+            "Face4"
+          ],
+          "diameter_mm": null
+        }
+      ]
+    },
+    {
+      "name": "Revolute005",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketCylinderOuter",
+          "elements": [
+            "Face6"
+          ],
+          "diameter_mm": null
+        },
+        {
+          "part": "Stick",
+          "elements": [
+            "Edge56"
+          ],
+          "diameter_mm": 8.0
+        }
+      ]
+    },
+    {
+      "name": "Slider002",
+      "type": "Slider",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketCylinderInner",
+          "elements": [
+            "Face1"
+          ],
+          "diameter_mm": 7.0
+        },
+        {
+          "part": "BucketCylinderOuter",
+          "elements": [
+            "Face1"
+          ],
+          "diameter_mm": 12.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d87 vs \u00d812); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Revolute006",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketLink2",
+          "elements": [
+            "Edge49"
+          ],
+          "diameter_mm": 8.0
+        },
+        {
+          "part": "Stick",
+          "elements": [
+            "Edge10",
+            "Face20"
+          ],
+          "diameter_mm": null
+        }
+      ]
+    },
+    {
+      "name": "Revolute007",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "Bucket",
+          "elements": [
+            "Edge139"
+          ],
+          "diameter_mm": 8.0
+        },
+        {
+          "part": "Stick",
+          "elements": [
+            "Edge6",
+            "Face20"
+          ],
+          "diameter_mm": 24.0
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d88 vs \u00d824); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Revolute008",
+      "type": "Revolute",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketLink1",
+          "elements": [
+            "Face11"
+          ],
+          "diameter_mm": null
+        },
+        {
+          "part": "Bucket",
+          "elements": [
+            "Edge2",
+            "Face65"
+          ],
+          "diameter_mm": 8.0
+        }
+      ]
+    },
+    {
+      "name": "Cylindrical002",
+      "type": "Cylindrical",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketLink1",
+          "elements": [
+            "Edge25"
+          ],
+          "diameter_mm": 8.0
+        },
+        {
+          "part": "BucketLink2",
+          "elements": [
+            "Face13"
+          ],
+          "diameter_mm": 8.2
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d88 vs \u00d88.2); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    },
+    {
+      "name": "Cylindrical003",
+      "type": "Cylindrical",
+      "active": true,
+      "between": [
+        {
+          "part": "BucketCylinderInner",
+          "elements": [
+            "Face3"
+          ],
+          "diameter_mm": 18.0
+        },
+        {
+          "part": "BucketLink2",
+          "elements": [
+            "Face13"
+          ],
+          "diameter_mm": 8.2
+        }
+      ],
+      "print_note": "referenced circles differ (\u00d818 vs \u00d88.2); one is probably a boss outline that only defines the axis. Measure the actual pin and bore in parts/ before setting clearances"
+    }
+  ],
+  "grounded": [
+    "BasePin"
+  ],
+  "summary": {
+    "parts": 13,
+    "parts_too_big_for_bed": [
+      "Boom",
+      "Stick"
+    ],
+    "joints": 16,
+    "total_volume_cm3": 2066.3,
+    "total_est_mass_petg_solid_g": 2623.0,
+    "max_uniform_scale_all_parts_fit": 0.617
+  }
+}

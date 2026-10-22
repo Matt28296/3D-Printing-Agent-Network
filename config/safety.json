@@ -1,0 +1,55 @@
+{
+  "_notes": "Protected file. Agents cannot edit it; change it yourself in an editor. require_human_approval=false lets a validated G-code be copied to the SD card without approval.json (not recommended).",
+  "require_human_approval": true,
+  "approval_max_age_hours": 24,
+  "allowed_printer_models": [
+    "MK3",
+    "MK3S",
+    "MK3MMU2",
+    "MK3SMMU2S",
+    "MK3SMMU3"
+  ],
+  "nozzle_diameter": 0.4,
+  "limits": {
+    "max_nozzle_c": 300,
+    "max_bed_c": 120,
+    "x_mm": [
+      -1.0,
+      255.0
+    ],
+    "y_mm": [
+      -4.0,
+      212.5
+    ],
+    "z_mm": [
+      0.0,
+      210.5
+    ],
+    "max_print_hours": 48
+  },
+  "forbidden_gcodes": [
+    "M500",
+    "M502",
+    "M92",
+    "M997",
+    "M302"
+  ],
+  "warn_gcodes": [
+    "M907",
+    "M350",
+    "M906"
+  ],
+  "require_heaters_off_at_end": true,
+  "network_tools_blocked": [
+    "curl",
+    "wget",
+    "nc",
+    "ncat",
+    "netcat",
+    "telnet",
+    "socat",
+    "http",
+    "https",
+    "xh"
+  ]
+}

@@ -1,0 +1,8 @@
+__pycache__/
+.venv/
+*.gcode
+*.bgcode
+jobs/*/renders/
+.claude/settings.local.json
+CLAUDE.local.md
+jobs/_pytest_*/
