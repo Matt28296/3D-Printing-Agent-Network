@@ -143,7 +143,8 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 2. **Flash, find the end stops, and centre.**
    - Plug the other four servos onto the bus loose, on the bench.
    - Flash `arm_test/arm_test.ino`: Arduino IDE, board "ESP32 Dev Module" on the arduino-esp32 3.x core, library **ESP32Servo** 3.x.
-   - Plug in the USB first, then switch on the 6 V. Open the Serial Monitor at 115200 and type `c`.
+   - Plug in the USB first, then switch on the 6 V. Open the Serial Monitor at 115200, line ending "Newline".
+   - Type `i 0` first. The sketch parks the arm by itself after 60 s without a command (§5), and nothing may move while you fit the horns and links; §5 switches parking back on with `i 60`. Then type `c`.
    - **End stops**, one servo at a time, with a horn pushed loosely onto the spline as a pointer. Hobby servos don't all turn 180° between 500 and 2500 µs; one that hits its end stop first stalls there at full current.
      - Type `u s 1500`, then step down 100 µs at a time (`u s 1400`, `u s 1300` …) to `u s 500`. If the horn stops turning or the servo buzzes before 500, come back in 20 µs steps until it is quiet, then 30 µs more, and note that pulse.
      - Do the same upwards to `u s 2500`. Type `c`.
@@ -171,7 +172,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 8. **Claw servo, from the front.**
    - File its lead-end tab's slit to 2.1 mm as in step 6.
    - Feed its plug through the bulkhead's window from the front, then push the MG90S in after it, **case bottom first**, shaft pointing at the fingertips, the ribbon flat in the notch at the shaft end, until the tabs sit on the bulkhead's front face. Fix it with 2 × M2 × 8 self-tappers.
-   - **Direction.** Push a horn loosely onto its spline as a pointer and type `g 20`. Seen from the front, the spline must turn **anticlockwise** to open the claw. If it turns clockwise, set `GRIP_OPEN_DIR = -1` in the sketch and re-flash. Type `f` and take the pointer off.
+   - **Direction.** Push a horn loosely onto its spline as a pointer and type `g 20`. Seen from the front, the spline must turn **anticlockwise** to open the claw. If it turns clockwise, set `GRIP_OPEN_DIR = -1` and `GRIP_CLOSED_DEG` to about 160 in the sketch and re-flash. Type `f` and take the pointer off.
 9. **Cover, then the camera mount.**
    - Lower the cover onto the frame: the front plate slides down past the wrist plate's front edge, the lip goes in front of the claw servo's case, and the top wall lands on the bulkhead.
    - Fix the front with 2 × M2.5 × 12 into the wrist plate's edge.
@@ -186,7 +187,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
     - Push the pinion, horn first, through the round hole in the front plate onto the spline. Its teeth slide into both racks at once. If they don't, nudge one or both jaws along their channels by up to half a tooth (1.6 mm), or turn the pinion by one spline tooth, until it slides home.
     - Drive the M2 × 12 + Ø6 washer through the pinion's front counterbore into the spline.
 12. **Claw calibration.**
-    - Type `k 20`, `k 22`, …: each one closes the claw itself to that angle. Listen during the first 2 s: every closing move squeezes for at most 2 s and then eases off, so a buzz only shows then. Stop at the value where the grip faces just touch without the servo buzzing. The ESP32 keeps the trim; copying the printed `GRIP_CLOSED_DEG` into the sketch is optional.
+    - Type `g 10`, then `k 20`: `k` sets the claw's closed servo angle and closes the claw to it by itself. Listen during the first 2 s: a closing move squeezes for at most 2 s and then eases off, so a buzz only shows then. If it buzzed, type `g 10` again and try `k 22`, `k 24`, …; if a gap is left between the grip faces, try lower values. Stop at the value where the faces just touch without a buzz. With `GRIP_OPEN_DIR = -1`, start at `k 160` and step the other way. The ESP32 keeps the trim; copying the printed `GRIP_CLOSED_DEG` into the sketch is optional.
     - Run `g 44` and `g 0` a few times: the jaws must run without a tight spot or a click anywhere over the stroke. A tight spot means a rack isn't riding on its guide or the pinion isn't centred on its horn; then glue the horn with a drop of CA.
     - Then do §5's claw scale check (`g 40`).
     - **Service** is the same in reverse: `g 44`, the M2 screw out, the pinion out through the front hole, then the jaws out of the slots' open ends, the cover off, and the claw servo out to the front. With a dead claw servo, pull the jaws open by hand first; that back-drives the servo you are replacing anyway.
