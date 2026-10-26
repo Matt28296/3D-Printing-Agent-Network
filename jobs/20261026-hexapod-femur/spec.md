@@ -67,6 +67,7 @@ Round-3 mass (812–877 g) raises the walking and servo loads by 19–28 %; the 
 
 ## 8. Acceptance criteria (measurable)
 - [ ] The tibia MG90S goes into the window from the back, spline first; its tab screws bite from the back
+- [ ] **Screw-strip check (user decision 26 Oct 2026).** The strips between the window and the tab pilots are 1.45 mm in CAD (about 1.65 printed), under fdm-design-rules' 1.8 mm; strength round 3 puts them at SF 51 in the drop, so the risk is cracking as the screws are driven. The user kept them and asked for this check: on the printed plate, fit a tibia servo in one femur, drive both M2 × 8 snug and look at both strips. Pass: no whitening, no crack. If either fails, stop: the pilots move out (with the tab slits filed to match) and the femurs are reprinted
 - [ ] **Proof test (strength round 3):**
   1. **Set-up.** Fit the femur on its horn on an MG90S clamped in a vice, with the M2 × 12 clamp screw **snug (0.05 N·m)**. Fit the tibia servo and the tibia, with the femur level and the tibia hanging straight down. Put a stop **above the femur's rear end** (behind the horn), so the femur servo's gears do not carry the moment.
   2. **Load.** Hang **1.5 kg** from the foot tip for **1 min** (2 × the walking foot load at 906 g). With the tibia vertical, this loads the femur root like the foot does, torsion included. Then turn the servo over in the vice, move the stop to the other side, and repeat: a hanging weight pulls the foot opposite to the ground's push, and the horn clamp tips on a different side each way.

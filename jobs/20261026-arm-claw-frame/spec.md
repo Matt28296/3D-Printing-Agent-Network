@@ -58,6 +58,7 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 
 ## 8. Acceptance criteria (measurable)
 - [ ] The MG90S goes into the window from the front, case bottom first, with its lead ribbon in the notch, without force; both tab screws bite (the lead-end one through the filed slit)
+- [ ] **Screw-strip check (user decision 26 Oct 2026).** The strips between the MG90S window and its tab pilots are under fdm-design-rules' 1.8 mm, like every closed MG90S window in the three robots. The user kept them and asked for this check instead: drive both M2 × 8 tab screws snug on the first printed frame and look at both strips. Pass: no whitening, no crack. If either fails, stop before printing again: the pilots move out with the tab slits filed to match
 - [ ] Wrist horn seats flat in its pocket; the M2 × 12 clamps the frame without the screw bottoming in the spline
 - [ ] Rack B slides along the wrist plate with no binding
 - [ ] `claw_sequence_check.py` (run by `assembly_check.py`): 0 mm³ on every insertion path and over the 0–44 mm stroke

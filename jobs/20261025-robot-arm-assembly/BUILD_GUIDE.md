@@ -165,6 +165,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
    - Push the link's horn onto the shoulder spline with the link **straight up**, and fit the M3 × 14 + Ø9 washer.
 6. **Forearm** (deep review 03, SYS-03).
    - File the slit that runs from the lead-end tab's hole to the tab's end to 2.1 mm wide with a needle file: that pilot is moved 1.3 mm out, beside the lead notch (deep review 01, B1). Check that an M2 passes, then fit the wrist MG90S into the forearm's far window from the front face, case bottom first, shaft forward, its lead in the notch at the shaft end: 2 × M2 × 12 self-tappers.
+   - **Screw-strip check.** The plastic between the window and each screw hole is only about 1.5 mm wide, under the project's 1.8 mm rule; you chose to keep it and check it instead (26 Oct 2026). Drive both screws snug, no more, then look at the two strips. If either has turned white or cracked, stop and tell Claude: the screw holes move out and the forearm is reprinted.
    - With the elbow servo at its centre, push the forearm onto the elbow spline **60° below the upper link's line, bent towards +X**: with the upper link straight up, the forearm points 30° above horizontal, out over the USB wall. Check it with a protractor or a phone level, take the spline position nearest 30°, and fit the M3 × 14 + Ø9 washer. The trims in §5 take out the rest.
 7. **Claw frame, before the claw servo** (its body covers the wrist clamp screw).
    - Push the frame, with its horn, onto the wrist spline **in line with the forearm**.
@@ -172,6 +173,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 8. **Claw servo, from the front.**
    - File its lead-end tab's slit to 2.1 mm as in step 6.
    - Feed its plug through the bulkhead's window from the front, then push the MG90S in after it, **case bottom first**, shaft pointing at the fingertips, the ribbon flat in the notch at the shaft end, until the tabs sit on the bulkhead's front face. Fix it with 2 × M2 × 8 self-tappers.
+   - **Screw-strip check,** as in step 6: drive both screws snug and look at the strips beside the screw holes. White or cracked: stop and tell Claude.
    - **Direction.** Push a horn loosely onto its spline as a pointer and type `g 20`. Seen from the front, the spline must turn **anticlockwise** to open the claw. If it turns clockwise, set `GRIP_OPEN_DIR = -1` and `GRIP_CLOSED_DEG` to about 160 in the sketch and re-flash. Type `f` and take the pointer off.
 9. **Cover, then the camera mount.**
    - Lower the cover onto the frame: the front plate slides down past the wrist plate's front edge, the lip goes in front of the claw servo's case, and the top wall lands on the bulkhead.

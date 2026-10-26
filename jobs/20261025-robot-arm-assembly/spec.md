@@ -55,10 +55,11 @@ Checked in CAD (`assembly_check.py`, which also runs `claw_sequence_check.py`; `
 
 **On the built arm:**
 - [ ] Every servo goes into its window case bottom first with its lead through the notch, without force; all tab screws bite.
+- [ ] The forearm's and the claw frame's screw-strip checks pass (their spec §8; user decision 26 Oct 2026: the MG90S strips stay under 1.8 mm, checked on the first print).
 - [ ] `c` puts the arm in the fitting pose: upright upper link, forearm 30° above horizontal towards +X, claw in line (§4 of the BUILD_GUIDE); after the trims (§5), the parked arm is vertical within 1°.
 - [ ] Joint windows reached without buzzing at either end of each servo's travel (end-stop test, §4 step 2).
 - [ ] Claw: `g 40` measures 40 ± 1 mm between the grip faces; `g 0` ↔ `g 44` runs with no tight spot; the pinion comes out through the front plate at `g 44` and goes back in.
-- [ ] Desk reach: with the claw straight down, the guard lets the fingertips reach the desk (8 mm up) from ≤ 100 mm to ≥ 200 mm from the yaw axis (§5 gives the guard's figures).
+- [ ] Desk reach: with the claw straight down (within 5°, as the mechanical check measures it), the guard lets the fingertips reach the desk (8 mm up) from ≤ 100 mm to ≥ 200 mm from the yaw axis. Firmware round 3 gives 99–223 mm within 5°; with the claw exactly vertical it is 103–217 mm, where the elbow's −150° stop sets the near end (§5 gives the guard's figures).
 - [ ] Payload: holds 50 g for 10 s with the camera at 160 mm out and the claw down, shoulder servo case below 50 °C afterwards.
 - [ ] Each part's own proof tests (its `spec.md` §8).
 

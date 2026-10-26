@@ -15,6 +15,8 @@ Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo dri
 
 Print times and filament: each job's `slice_stats.json` once it is sliced. Round 3 changed the bottom plate, the deck, the coxa bracket and the femur, so those four need slicing again. Round 4 changed the bottom plate and the coxa bracket once more.
 
+**Screw-strip check (26 Oct 2026).** The coxa bracket and the femur leave only 1.35–1.45 mm of plastic between each servo window and its screw holes, under the project's 1.8 mm rule. You chose to keep the design and check it on the first prints: print the **first coxa plate and the femur plate**, then fit one femur servo in a bracket and one tibia servo in a femur (step 6), drive both screws snug and look at the strips beside the screw holes. If one has turned white or cracked, stop and tell Claude **before printing the other two coxa plates**: the screw holes move out.
+
 ### Bought
 | Qty | Item | Notes |
 |---|---|---|
@@ -102,8 +104,8 @@ Fit every horn with its servo centred (90°): femur level, tibia perpendicular t
    - **Femur servo into the coxa bracket:** tabs on the **gusset face** of the vertical plate, shaft towards where the femur goes.
      1. Feed the lead's plug through the notch at the window's outboard end.
      2. Push the case through the window bottom first, the lead root sliding along the notch.
-     3. Fit two M2 × 10, the outboard one through the filed slit.
-   - **Tibia servo into the femur, reversed:** from the femur's **back** face (the face with the horn pocket), spline first, so the spline comes out of the front face and the lead points to the knee end. Fit two M2 × 8 from the back.
+     3. Fit two M2 × 10, the outboard one through the filed slit. On the first bracket, do the screw-strip check (§1).
+   - **Tibia servo into the femur, reversed:** from the femur's **back** face (the face with the horn pocket), spline first, so the spline comes out of the front face and the lead points to the knee end. Fit two M2 × 8 from the back. On the first femur, do the screw-strip check (§1).
    - **Tibia** onto the tibia servo, **perpendicular to the femur** (servo centred).
    - **Femur** onto the femur servo, pointing **straight out** (servo centred).
    - For each clamp: hold the link so the shaft can't turn, and drive the screw **snug, about 0.05 N·m**. That is finger-tight on a small screwdriver plus a quarter turn; never "firmly", which pulls the washer through the floor. Femur and tibia: M2 × 12 + Ø6 washer.

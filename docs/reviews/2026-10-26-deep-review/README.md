@@ -17,12 +17,20 @@ Five independent reviewers each took one slice of all three robot test builds: t
 
 | ID | Robot | Finding | Fix | Status |
 |---|---|---|---|---|
-| 01-B1 | Arm, hexapod | No servo lead can pass its closed window | `servo_mount_cutter(lead=...)` in `tools/hobby_parts.py` cuts a lead notch; MG90S windows shift the pilot | Library done (merged). Hexapod: done in round 3 (coxa and tibia servos reversed, one notch with a shifted pilot). Arm links and claw: in progress |
+| 01-B1 | Arm, hexapod | No servo lead can pass its closed window | `servo_mount_cutter(lead=...)` in `tools/hobby_parts.py` cuts a lead notch; MG90S windows shift the pilot | Library done (merged). Hexapod: done in round 3 (coxa and tibia servos reversed, one notch with a shifted pilot). Arm links: round 4 printability passes for the base, turntable and upper link; forearm and claw: see the decision below |
 | 01-B2 | Arm, hexapod | MG90S spline top is 14.0 mm above the tabs, not 10.8 | MG90S has its own spec in `hobby_parts.py` | Library done (merged). Hexapod: done in round 3. Arm wrist and claw: in progress |
 | 02-A1 | Arm | `x` stopped a move, but the next command finished it | Cancel clears the target | Fixed and merged |
 | 02-A2 | Arm | Opening the PC port reset the ESP32, which snapped every joint to boot | Pose kept in NVS; slow start from it; port opened without reset | Fixed and merged |
-| 03-SYS-01 | Arm | The claw has no assembly or service sequence that works | Ø ≥ 20.6 mm pinion pass-through in the front plate; pinion fitted last with the jaws parked open | Arm round in progress |
+| 03-SYS-01 | Arm | The claw has no assembly or service sequence that works | Ø ≥ 20.6 mm pinion pass-through in the front plate; pinion fitted last with the jaws parked open | Merged in the arm round; claw round 2 reviews running |
 | 04-S-01 | Rover | Partly threaded M3 × 45 and × 35 bolts can't engage the wall trap nuts | Fully threaded bolts, or a changed clamp | Fixed in rover round 3: fully threaded class-12.9 M3 × 50 / × 40 bolts, checked in the assembly check (2.0 / 4.2 mm past the nylocs) |
+
+## Your decisions
+
+| When (UTC) | Decision |
+|---|---|
+| 26 Oct, ~10:15 | Hexapod coxa bracket and bottom plate: a fourth design round after their third failure. Both passed it (printability PASS; strength NEEDS_TEST, lowest SF 4.22 and 3.09) |
+| 26 Oct, 10:27 | Rover chassis: a fourth design round (steel plates under the idler bolt head and nut, 2 mm skin). In review |
+| 26 Oct, 11:40 | MG90S closed windows (arm forearm and claw frame, hexapod coxa bracket and femur, 14 servos): keep the 1.34–1.65 mm strips between each window and its screw holes, under the 1.8 mm rule, and check them on the first print instead. Each affected spec §8 and both build guides carry the check; if a strip whitens or cracks, that part's screw holes move out |
 
 ## How the fixes flow
 
@@ -36,8 +44,8 @@ Five independent reviewers each took one slice of all three robot test builds: t
 
 | Robot | Round | Covers |
 |---|---|---|
-| Arm, mechanical | Links round 4, claw round 2 | 01-B1/B2/S2–S8, 03 (SYS-01 to SYS-05, SYS-08 to SYS-10, SYS-12, SYS-16 to SYS-18), claw DFM and strength round 1 |
-| Arm, firmware | Firmware round 2 (done and merged) | 03 SYS-02/03 (elbow window), SYS-06 (motion profiles), SYS-07 (trims and calibration), SYS-11, SYS-13 |
-| Rover | Round 3 (printability 6/6 pass; strength review running) | DFM and strength round 2, 01-S9 to S13, 04 |
-| Hexapod | Round 3 (femur, tibia, deck pass); round 4 for the coxa and bottom plate, approved by the user after their third failure | Coxa redesign, 01-B1/B2/S14/S15, 05 |
+| Arm, mechanical | Links round 4 (base, turntable, upper link pass printability; ring brief to fix; forearm under the strip decision), claw round 2 (reviews running) | 01-B1/B2/S2–S8, 03 (SYS-01 to SYS-05, SYS-08 to SYS-10, SYS-12, SYS-16 to SYS-18), claw DFM and strength round 1 |
+| Arm, firmware | Firmware round 3 (done and merged: guard boxes from the round 3 CAD, 52,022 poses with none within 8 mm of the desk) | 03 SYS-02/03 (elbow window), SYS-06 (motion profiles), SYS-07 (trims and calibration), SYS-11, SYS-13 |
+| Rover | Round 4 for the chassis and lid (reviews running); sprocket, idler, wheel and track link passed round 3 (the sprocket's shaft-end rows are being re-checked) | DFM and strength round 2, 01-S9 to S13, 04 |
+| Hexapod | Design complete: all five parts pass. Slicing, audits and preflight checklists running | Coxa redesign, 01-B1/B2/S14/S15, 05 |
 | All | Firmware round 1 | 02 (done and merged) |

@@ -48,6 +48,7 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, M
 
 ## 8. Acceptance criteria (measurable)
 - [ ] The MG90S goes into the window from the front face, case bottom first, with its lead ribbon in the notch, without force (measure it first: 22.8 × 12.2 nominal); both tab screws bite, the lead-end one through the filed slit
+- [ ] **Screw-strip check (user decision 26 Oct 2026).** The strips between the window and the two tab pilots are 1.34 mm (lead end) and 1.45 mm (far end) in CAD, about 1.55 / 1.65 printed, under fdm-design-rules' 1.8 mm. The user kept them and asked for this check instead: drive both M2 × 12 tab screws snug on the printed forearm, then look at both strips. Pass: no whitening, no crack. If either fails, stop: the pilots move out (lead end 1.6 mm, far end 0.2 mm, with the tab slits filed to match) and the forearm is reprinted
 - [ ] At the elbow servo's centre the forearm sits 60° below the upper link's line, towards +X (within one spline step, ±7°)
 - [ ] **Proof test:** (1) Clamp at the elbow horn, 1 kg at the wrist axis for 1 min: no cracks, no set. (2) Same clamping, 15 N sideways (out of plane) at the wrist axis for 1 min each way, then 7.5 N sideways at the end of a 95 mm lever on the wrist tab holes. Pass: no cracks at the pocket or the MG90S pilots, the MG90S tabs don't lift, no lift off the horn, no permanent set. Run (2) with the M2 × 12 tab screws fitted.
 

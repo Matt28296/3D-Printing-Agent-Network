@@ -70,6 +70,7 @@ Round 4: strength round 3 itemised the robot at 840 g and checked the round-4 ch
 
 ## 8. Acceptance criteria (measurable)
 - [ ] The femur servo's lead root passes the notch as the case goes in; the outboard tab screw reaches its pilot through the filed slit; both tab screws bite
+- [ ] **Screw-strip check (user decision 26 Oct 2026), on the first plate before printing the other two.** The strip between the lead notch and the moved outboard pilot is 1.35 mm in CAD (about 1.55 printed), under fdm-design-rules' 1.8 mm; strength round 4 puts it at SF 35 in the drop, so the risk is cracking as the screw is driven. The user kept it and asked for this check: fit a femur servo in one bracket from the first plate, drive both M2 × 10 snug and look at the strips beside both pilots. Pass: no whitening, no crack. If either fails, stop: the pilots move out (with the slits filed to match) for the remaining plates
 - [ ] The femur swings −70 … +90° without touching the bracket (assembly check)
 - [ ] **Proof test (strength round 3, for the bracket printed at 100 % infill):**
   1. **Leg test first:** as in the assembly spec §8 (deep review SYS-6), unchanged.
