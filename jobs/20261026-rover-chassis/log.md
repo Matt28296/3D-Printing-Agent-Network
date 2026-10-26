@@ -18,3 +18,5 @@
 - 2026-10-26T12:09Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (largest bridge 8.0 mm; 2.0 mm skin; plates fit real 14-ga stock; slots cover the bolt's full travel; build-guide notes A1–A4 for the snug, the nyloc, the pen mark and the slots)
 - 2026-10-26T12:09Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
 - 2026-10-26T12:16Z · architect · spec.md motor note: 10 mm shaft from the gearbox face (at least 9.6 mm), per the sprocket's round 4 re-check · ok
+- 2026-10-26T12:54Z · strength-analyst (round 4, independent) · strength.md, strength_calc.py · FAIL (10 of 58 rows; lowest SF 0.61, B15: web top strip root across the layers, 5 cm front-corner drop; round 3's five failures fixed; N20 shaft 3.06 stall / 1.91 drop against 1.5 for steel)
+- 2026-10-26T12:54Z · architect (as head-orchestrator) · merged the review (b51930e); strength_calc re-run; status.json: DESIGN iterations 4, escalated to the user with the reviewer's fix · ok
