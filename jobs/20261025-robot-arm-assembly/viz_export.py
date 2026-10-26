@@ -33,9 +33,9 @@ LABELS = {"base": "Base", "ring": "Turntable support ring", "turntable": "Turnta
           "camera_mount": "Brio 4K camera mount"}
 QTY = {"claw_jaw": 2}
 # review status shown on the page (update after each gate)
-STAMPS = [{"text": "9 of 11 parts awaiting your approval", "kind": "pass"},
-          {"text": "Claw frame + cover: round 5 in final review", "kind": "warn"}]
-RESLICE = ("claw_frame", "claw_cover")   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
+STAMPS = [{"text": "Awaiting your approval", "kind": "pass"}, {"text": "Assembly check clean", "kind": "pass"},
+          {"text": "Sliced and audited", "kind": "pass"}]
+RESLICE = ()   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
 PAYLOAD = ("with the camera, claw down: ≈160 g lifted at 140–160 mm out, ≈50 g at 180–200 mm, none held straight out; "
            "without it ≈55 g straight out (BUILD_GUIDE payload table)")
 PETG = "petg_orange"

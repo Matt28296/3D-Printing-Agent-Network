@@ -1,15 +1,15 @@
 {
   "job_id": "20261026-arm-claw-cover",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 6,
-    "SLICE": 0
+    "SLICE": 1
   },
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 7 independent review): DFM PASS; strength NEEDS_TEST, lowest 3.03 (plate strips); sustained heads 4.80/5.42, anchor 4.15; M2.5 under stall 3.62",
-    "SLICE": null,
+    "SLICE": "pass (round 7: 1 plate, 3.57 h, 34.33 g; validator 0 errors, 0 warnings; audit PASS; preflight with the step-9 seat check; seam 'rear' keeps seams off the top wall and web roots; pillar A gap prints 0.4 (piece (a) on a slice plane, not blocking))",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,

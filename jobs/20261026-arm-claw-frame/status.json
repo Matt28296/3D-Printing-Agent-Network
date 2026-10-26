@@ -1,15 +1,15 @@
 {
   "job_id": "20261026-arm-claw-frame",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 5,
-    "SLICE": 0
+    "SLICE": 1
   },
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 7 independent review): DFM PASS; strength NEEDS_TEST, lowest vs requirement 4.02 (top M3 \u00d7 14 pull-out at preload), absolute 3.17 (V-groove flank)",
-    "SLICE": null,
+    "SLICE": "pass (round 7: 1 plate, 3.93 h, 41.3 g; validator 0 errors, 0 warnings; audit PASS; preflight with the step-9 seat check; 4 h limit margin 4\u20137 min)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,

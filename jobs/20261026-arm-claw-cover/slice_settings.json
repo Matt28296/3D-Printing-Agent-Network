@@ -30,8 +30,10 @@
     "fill_pattern": "gyroid",
     "layer_height": 0.2,
     "elefant_foot_compensation": 0.2,
+    "support_material": 0,
     "brim_type": "outer_only",
-    "brim_width": 5
+    "brim_width": 5,
+    "seam_position": "rear"
   },
   "copies": 1,
   "warnings": []
