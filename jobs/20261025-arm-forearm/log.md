@@ -13,3 +13,4 @@
 - 2026-10-26T01:28:29Z · gcode-auditor · wrote audit.md · PASS
 - 2026-10-26T01:29:19+00:00 · print-ops-lead · wrote preflight.md · ok
 - 2026-10-26T01:29:19+00:00 · head-orchestrator · stage -> AWAITING_APPROVAL (DESIGN, SLICE gates pass) · ok
+- 2026-10-26T06:39:59+00:00 · head-orchestrator · stage AWAITING_APPROVAL -> DESIGN: deep review 01 B1 + B2: the wrist MG90S's lead can't pass its window, and the MG90S spline sits 3.2 mm higher than modelled. Do not approve or print this job's current G-code · reopened
