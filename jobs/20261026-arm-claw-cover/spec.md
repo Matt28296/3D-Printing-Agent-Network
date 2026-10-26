@@ -15,6 +15,8 @@ Closes both rack channels. The front plate holds both racks forward and carries 
 
 **Round 6 (user-approved, cover round 5 review): ridge-first contact. VSEAT_CLR 0 (the ridge's flanks on the groove's in CAD, virtual apex z 16.95); the foot's flats at z 18.05 (FOOT_CLR 0.30 over the rail block, independent of VSEAT_CLR), the ridge's flanks carried up to them (base x 14.15–16.35); the tip flat at z 17.35; the frame's bulkhead top at z 48.45.**
 
+**Round 7 (user-approved, cover round 6 review): M3 × 14 + Ø7 × 0.5 washers on the top screws (and on the camera build's M3 × 18 button heads); front M2.5 × 16 at z 2.5 with DIN 125 Ø6 × 0.5 washers; a 0.3 × 45° chamfer on the front edge of each slot's side nearer the axis.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 37.85 × 64 × 55.5 mm (print: 37.85 × 55.5 × 64; claw frame G: x 0…37.85, y ±32, z −4…51.5). Interfaces:
@@ -25,17 +27,17 @@ Closes both rack channels. The front plate holds both racks forward and carries 
   - slot A z 38.25–48.5 (its outer edge is the top wall's underside), open at −y, closing at y +6.5 with a 45° roof;
   - slot B z 5.75–16.25, open at +y, closing at y −5 with r 2 corners;
   - pinion pass-through Ø22.8 CAD (≈22.6 printed) on the pinion axis (y 0, z 27.25) with a 45° teardrop top; the slivers it would leave beside the slots are cut back to |y| 7;
-  - 2 × Ø3.6 teardrop top holes at (6.75, −23) and (6.75, 14); 2 × Ø3.0 teardrop front holes at (y ±24, z 3).
-- Fasteners used: 2 × M3 × 10 down into the frame's bulkhead (2 × M3 × 18 button heads through the camera mount when it is fitted); 2 × M2.5 × 12 pan head (head ≤ Ø5) back into the wrist plate's front edge
+  - 2 × Ø3.6 teardrop top holes at (6.75, −23) and (6.75, 14); 2 × Ø3.0 teardrop front holes at (y ±24, z 2.5); a 0.3 mm 45° chamfer on the front-face edge of slot A's lower side and of slot B's upper side (the sides nearer the axis).
+- Fasteners used: 2 × M3 × 14 pan head + Ø7 × 0.5 washers (ISO 7089) down into the frame's bulkhead, snug only (2 × M3 × 18 button heads + Ø7 × 0.5 washers through the camera mount when it is fitted); 2 × M2.5 × 16 pan head (head ≤ Ø5) + DIN 125 Ø6 × 0.5 washers back into the wrist plate's front edge at z 2.5, snug only; 1 × M3 × 45 socket head + Ø7 × 0.5 washer (the anchor).
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Front plate inner face | x 32.85 | ±0.15 | 0.25 sliding gap in front of the racks |
-| Top wall underside | z 48.5 | ±0.15 on the part; assembled, 0 to +0.3 over the printed bulkhead (48.4) at the +y end | rack A's back rides on it; the cover rests on its ridge, and rack A's 0.7 backlash absorbs the float |
+| Top wall underside | z 48.5 | ±0.15 on the part; assembled, 0 to +0.35 (0.06–0.10 nominal after the anchor) | rack A's back rides on it; the cover rests on its ridge; a higher guide only increases rack A's backlash (0.33–0.49 nominal to RSS) |
 | Lip wall front face | x 22.35 | ±0.15 | 0.25 sliding gap behind rack A |
-| Slot A (neck A, 10 tall) | z 38.25–48.5 | +0.2/−0 | 0.25 on the side nearer the axis |
-| Slot B (neck B, 10 tall) | z 5.75–16.25 | +0.2/−0 | 0.25 each side |
+| Slot A (neck A, 10 tall) | z 38.25–48.5 | +0.2/−0 | 0.25 on the side nearer the axis; 0.3 × 45° chamfer on the front edge of the side nearer the axis: ≥ 0.2 to the jaw's r 3 kink fillet over the stroke (0.21) |
+| Slot B (neck B, 10 tall) | z 5.75–16.25 | +0.2/−0 | 0.25 each side; 0.3 × 45° chamfer on the front edge of the side nearer the axis: ≥ 0.2 to the jaw's r 3 kink fillet over the stroke (0.21) |
 | Pinion pass-through | Ø22.6 printed | +0.3/−0 | pinion tips Ø21.7: 0.45 radial |
 
 Servo and camera dimensions are nominal (`tools/hobby_parts.py`, `claw_frame.py`). The MG90S has its own spec since deep review 01: body 22.8 × 12.2 mm, case bottom 18.5 mm below the tab underside, spline top 14.0 mm above it. Measure yours and give Claude any body-size difference over 0.1 mm or any other over 0.3 mm. Brio 4K: 27 × 102 × 27 mm, 63 g with its clip removed, 1/4"-20 thread centred on the bottom, USB-C on its back.
@@ -69,12 +71,13 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 - [ ] Both jaws slide in from the open slot ends to fully open without binding; the pinion then passes the front plate's hole and meshes with both racks; the jaws run 0–44 mm without binding
 - [ ] The pinion's clamp screw is reachable through the pass-through
 - [ ] `claw_sequence_check.py`: 0 mm³ on every insertion path and over the stroke
+- [ ] **Seat check (BUILD_GUIDE §4 step 9).** Before any cover screw, with the top wall pressed straight down over the inner post, a 0.03 mm feeler (blade ≥ 10 mm wide) enters between the top wall and the bulkhead at the end where the lower slot is open. After the anchor and every cover screw, a 0.3 mm feeler does not. The strength verdict assumes a build that passes the first check.
 - [ ] **Proof test (claw strength round 2, 1.5 × the design loads; the claw opening against an obstacle stays a design case):** Claw assembled on the frame, wrist horn in a vice, servo powered and holding, jaws at 30 mm.
   1. Each fingertip in turn, 3 mm from the tip: pull it away from the other jaw with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall), 10 s. Then push it towards the other jaw with **32 N** (1.5 × the opening stall), 10 s.
   2. Push jaw B's fingertip sideways towards the wrist (−z) with **10.7 N** (1.5 × the yaw stall), 10 s, jaws closed and again at 44 mm.
 
   Pass:
-  - no crack or whitening at the lip's roots, the top wall behind the lip, both ties' posts, webs and their corners, the second post's ridge still seated in the frame's groove (a 0.3 mm feeler does not enter between the top wall and the bulkhead at the end where the lower slot is open), and its M3 × 45 and washer still tight, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
+  - no crack or whitening at the lip's roots, the top wall behind the lip, both ties' posts, webs and their corners, the second post's ridge still seated (a 0.3 mm feeler, blade at least 10 mm wide, does not enter between the top wall and the bulkhead at the end where the lower slot is open), and no new whitening at the lip's back corner under the top wall (compare with its state after assembly), and its M3 × 45 and washer still tight, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
   - both jaws still slide the full 0–44 mm without binding;
   - the cover screws are still tight.
 ## 9. Notes and open questions

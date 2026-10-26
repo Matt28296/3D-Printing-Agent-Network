@@ -10,6 +10,13 @@ face (x = 10) with the shaft on the claw axis (y 0, z ZS). Rack B rides on the w
 face, backed by the lower rail. The cover screws on top (2 x M3 into the bulkhead top) and at
 the front (2 x M2.5 into the wrist plate's front edge).
 
+Round 7 (cover + frame round 6 independent review: at their snug preload the cover's bare M3 x 10 heads, their pull-out
+from the bulkhead and the bare front M2.5 heads failed SF 4): hardware, plus the front pilots 0.5 lower. The cover's top
+screws become M3 x 14 pan heads + Ø7 x 0.5 washers (10.5 engaged below the printed bulkhead; tip z 38.0 in the unchanged
+14 mm pilots, floor 34.45). FRONT_SCREWS z 3 -> 2.5 (claw_frame.py) so the cover's new Ø6 x 0.5 washers under the M2.5
+heads clear jaw B's neck: the flat-topped front pilots follow, keeping 2.4 to rack B's track (1.9 before) and 1.4 to the
+back face. Nothing else changes.
+
 Round 6 (frame round 5 independent review: the bulkhead top, z 48.5, lay exactly on the slice plane of layer 48.4..48.6
 and printed at 48.4 by floating-point rounding): the bulkhead and its two ribs stop at BULK_TOP 48.45 (claw_frame.py).
 They print at 48.4 as before, now with 0.05 to the slice planes on both sides. The cover's top wall stays at 48.5, so
@@ -65,9 +72,10 @@ from hobby_parts import _body_x0, _teardrop_z, chamfer_plane_edges, horn_pocket_
 # --- parameters (mm) -----------------------------------------------------------
 HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (default, fdm-design-rules)
 CLR, END_CLR = 0.4, 0.2        # MG90S window side / end clearance (printed): 23.0 x 12.6 printed, 23.2 x 12.8 CAD
-TOP_PILOT_DEPTH = 14.0         # M3 pilots in the bulkhead top, below BULK_TOP (M3 x 10 cover, M3 x 18 with the camera)
-FRONT_PILOT_DEPTH = 14.0       # M2.5 x 16 through the cover's 5 mm front plate: 11 mm engaged (was x 12, 7 engaged:
-                               # the cover's row 22, M2.5 pull-out under the opening stall, SF 2.56 -> 4.0)
+TOP_PILOT_DEPTH = 14.0         # M3 pilots in the bulkhead top, below BULK_TOP (round 7: M3 x 14 + Ø7 x 0.5 washer on the
+                               # cover, tip z 38.0, 3.55 above the floor; M3 x 18 button heads with the camera, tip 37.5)
+FRONT_PILOT_DEPTH = 14.0       # M2.5 x 16 + Ø6 x 0.5 washer through the cover's 5 mm front plate: 10.5 mm engaged
+                               # (round 7; 11 without the washer; was x 12, 7 engaged: the cover's row 22, SF 2.56 -> 4.0)
 BED_CHAMFER = 0.4
 RELIEF_D = 3.0                 # teardrop reliefs at the window's lower corners (strength fix 2: Kt 2.5 -> 1.5)
 BACK_FILLET = 1.5              # pad top / bulkhead back face, full width (strength fix 3: Kt 2.5 -> 1.7)

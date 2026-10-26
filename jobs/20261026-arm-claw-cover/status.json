@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 review: ridge seat works (play 0 nominal/RSS); DFM FAIL \u00a74 + strength FAIL 2.49 \u2014 bare pan heads at snug preload (top M3 \u00d7 10, front M2.5). Fix proposed: M3 \u00d7 14 + \u00d87 washers on top; FRONT_SCREWS z 2.5 + \u00d86 washers. Escalated",
+    "DESIGN": "round 7 built (user-approved washers + longer screws, slot chamfers): CAD DFM PASS 28/28, CAD-side strength NEEDS_TEST 3.03 (sustained heads 4.80/5.42); independent review next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Round 7: M3 \u00d7 14 + \u00d87 washers (top), FRONT_SCREWS z 2.5 + \u00d86 washers (front)?"
-  ],
+  "open_questions": [],
   "updated": "2026-10-26T16:09:12+00:00"
 }

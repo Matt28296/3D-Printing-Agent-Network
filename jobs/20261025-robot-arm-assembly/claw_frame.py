@@ -153,13 +153,22 @@ VSEAT_CLR = 0.0                # per flank, horizontal, ridge to groove in CAD (
                                # and the ridge's tip stop the cover as printed and left 0.08..0.13 mm of play)
 ANCHOR_WASHER = (7.0, 0.5)     # ISO 7089 M3 washer under the M3 x 45's head (as on the MG996R tab screws)
 # cover screws: two M3 down into the bulkhead top, two M2.5 back into the wrist plate's front edge
+# Claw round 7 (cover + frame round 6 independent review: at the snug preload, a sustained load, the bare M3 x 10 pan
+# heads on the top wall gave SF 2.49, their pull-out from the bulkhead 2.73, the bare M2.5 pan heads 3.26): every cover
+# screw now has a washer under its head. Top, no camera: M3 x 14 pan head + TOP_WASHER (10.5 engaged below the printed
+# bulkhead, tip z 38.0 in the 14 mm pilot, floor 34.45); with the camera mount: M3 x 18 button heads through the pad.
+# Front: M2.5 x 16 pan head + FRONT_WASHER, the screws 0.5 lower (z 3 -> 2.5) so the washer clears jaw B's neck (z 6).
 TOP_SCREWS = [(X_B - BULK_T / 2, -23.0), (X_B - BULK_T / 2, 14.0)]   # (x, y), clear of the servo window
-FRONT_SCREWS = [(-24.0, T_W / 2), (24.0, T_W / 2)]                  # (y, z)
+TOP_WASHER = (7.0, 0.5)        # ISO 7089 M3 washer (OD, thickness) under each top M3 x 14 pan head, as ANCHOR_WASHER
+FRONT_SCREW_Z = 2.5            # z of the front M2.5s (round 7: T_W / 2 = 3 -> 2.5): the washer's top at 5.5, 0.5 under
+                               # jaw B's neck (z 6); the frame's flat-topped pilot keeps 2.4 to rack B's track, 1.4 below
+FRONT_SCREWS = [(-24.0, FRONT_SCREW_Z), (24.0, FRONT_SCREW_Z)]      # (y, z)
+FRONT_WASHER = (6.0, 0.5)      # DIN 125 M2.5 washer (OD, thickness) under each front M2.5 x 16 pan head (round 7)
 M3_PILOT = 2.5                 # printed pilot for M3 self-tapping (+ HOLE_COMP in the models)
 M3_CLEAR = 3.4
-M25_PILOT = 2.0                # front screws: M2.5 x 16 pan head self-tapping (head Ø5 x 1.5 stands 0.5 under
-M25_CLEAR = 2.8                # jaw B's finger, which sweeps over it; an M3 head would hit it). Pilot skin 1.9
-                               # (DFM fix 2's M2.5 alternative)
+M25_PILOT = 2.0                # front screws: M2.5 x 16 pan head self-tapping + Ø6 x 0.5 washer (round 7; head Ø5 x 1.75,
+M25_CLEAR = 2.8                # the washer stands 0.5 under jaw B's finger, which sweeps over it; an M3 head would hit
+                               # it). Pilot skin 2.4 (DFM fix 2's M2.5 alternative; 1.9 at z 3)
 
 # --- jaws -----------------------------------------------------------------------------
 NECK_Z = (RACK_ROOT, RACK_OUT)     # neck band above the axis (jaw A): 11.25..21.25, on the rack's solid back

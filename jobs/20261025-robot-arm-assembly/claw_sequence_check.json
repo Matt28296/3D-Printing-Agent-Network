@@ -48,7 +48,7 @@
     "front_screws"
    ],
    "plane": "x = 39.85",
-   "what": "screw heads on the front plate"
+   "what": "screw washers on the front plate (round 7: \u00d86 x 0.5 under each M2.5 head)"
   },
   {
    "pair": [
@@ -235,5 +235,5 @@
   }
  },
  "ok": true,
- "run_s": 859.8
+ "run_s": 854.0
 }

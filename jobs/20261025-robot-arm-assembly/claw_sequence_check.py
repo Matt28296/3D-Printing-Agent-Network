@@ -77,7 +77,8 @@ CONTACTS = {
                                                "0.05 clear in CAD, the cover rests on its ridge)"),
                                               ("x", C.X_B, "lip against the bulkhead's front face")],
     frozenset({"camera_mount", "claw_cover"}): [("z", C.Z_TOP1, "mount pad on the top wall")],
-    frozenset({"front_screws", "claw_cover"}): [("x", C.X_F1, "screw heads on the front plate")],
+    frozenset({"front_screws", "claw_cover"}): [("x", C.X_F1, "screw washers on the front plate (round 7: Ø6 x 0.5 "
+                                                 "under each M2.5 head)")],
     frozenset({"jaw_a", "claw_cover"}): [("z", C.Z_TOP0, "rack A's back (and neck top) under the top wall")],
     frozenset({"jaw_b", "claw_frame"}): [("z", C.T_W, "rack B's back on the wrist plate")],
     frozenset({"jaw_a", "jaw_b"}): [("y", 0.0, "fingers closed (gap 0 only)")],
@@ -151,10 +152,13 @@ def servo_with_lead():
 
 
 def front_screw_heads():
+    """The front M2.5 pan heads, each on its DIN 125 Ø6 x 0.5 washer (claw round 7: FRONT_WASHER) on the front plate."""
     d, k = M25_HEAD
+    wd, wt = C.FRONT_WASHER
     heads = None
     for (y, z) in C.FRONT_SCREWS:
-        h = Pos(C.X_F1, y, z) * Rot(0, 90, 0) * Cylinder(d / 2, k, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        h = (Pos(C.X_F1, y, z) * Rot(0, 90, 0) * Cylinder(wd / 2, wt, align=(Align.CENTER, Align.CENTER, Align.MIN))
+             + Pos(C.X_F1 + wt, y, z) * Rot(0, 90, 0) * Cylinder(d / 2, k, align=(Align.CENTER, Align.CENTER, Align.MIN)))
         heads = h if heads is None else heads + h
     return heads
 

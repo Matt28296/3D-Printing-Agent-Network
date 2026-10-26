@@ -167,9 +167,13 @@ def main(out_dir: Path):
     for (x, y) in C.TOP_SCREWS:
         S.add("m3x18", V.screw_parts(3, 18, "pan", mat="black_oxide"), "J_wrist", matrix=G @ V.T(x, y, C.PAD_TOP),
               label="M3 × 18 button head (cover + camera mount)", category="hardware")
+    wd, wt = C.FRONT_WASHER                          # claw round 7: Ø6 × 0.5 washer under each front M2.5
     for (y, z) in C.FRONT_SCREWS:
-        S.add("m25x16", V.screw_parts(2.5, 16, "pan", mat="black_oxide"), "J_wrist", matrix=G @ V.T(C.X_F1, y, z) @ V.Ry(90),
-              label="M2.5 × 16 pan head self-tapping (cover front)", category="hardware")
+        S.add("washer25", V.washer_parts(2.5, wd, wt), "J_wrist", matrix=G @ V.T(C.X_F1, y, z) @ V.Ry(90),
+              label="M2.5 washer Ø6 × 0.5 (DIN 125, cover front)", category="hardware")
+        S.add("m25x16", V.screw_parts(2.5, 16, "pan", mat="black_oxide"), "J_wrist",
+              matrix=G @ V.T(C.X_F1 + wt, y, z) @ V.Ry(90), label="M2.5 × 16 pan head self-tapping (cover front)",
+              category="hardware")
     cam = G @ V.T(C.CAM_XC, 0, C.CAM_ZC) @ V.Ry(C.CAM_TILT)
     S.add("brio", V.brio4k_parts(), "J_wrist", matrix=cam, label="Logitech Brio 4K webcam (clip removed)", category="electronics")
     S.add("thumb14", V.thumb_screw_parts(length=7.9), "J_wrist", matrix=cam @ V.T(0, 0, -C.SEAT_T),

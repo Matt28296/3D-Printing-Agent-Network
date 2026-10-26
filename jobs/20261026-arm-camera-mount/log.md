@@ -13,3 +13,4 @@
 - 2026-10-26T12:56Z · architect · spec §8: proof test replaced with claw strength round 2's version (1.5 × the design loads); decision: the claw opening against an obstacle stays a design case (nothing limits the opening stall force) · ok
 - 2026-10-26T15:59Z · slicing agent · slice_plan.json, slice, validation.json, audit.md, preflight.md · PASS (1 plate, 1.42 h, 12.9 g, 5 mm brim)
 - 2026-10-26T15:59Z · architect (as head-orchestrator) · merged; sha256 matches; stage → AWAITING_APPROVAL · ok
+- 2026-10-26T21:15Z · architect · claw round 7: the M3 × 18 button heads through this mount now take Ø7 × 0.5 washers (BUILD_GUIDE §1, steps 9 and 13); bare heads were SF 2.64 at snug preload; no geometry change (washer 0.258 from the seat's front face) · ok

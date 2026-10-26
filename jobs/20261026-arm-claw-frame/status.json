@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 review: DFM PASS; strength FAIL 2.73 \u2014 top M3 \u00d7 10 pull-out at snug preload. Fix with the cover: M3 \u00d7 14 + washer (pull-out 4.12). Escalated",
+    "DESIGN": "round 7 built (front pilots z 2.5): CAD DFM PASS 24/24, CAD-side strength NEEDS_TEST, lowest vs requirement 4.02 (top M3 \u00d7 14 pull-out at preload); independent review next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Round 7: M3 \u00d7 14 + \u00d87 washers (top), FRONT_SCREWS z 2.5 + \u00d86 washers (front)?"
-  ],
+  "open_questions": [],
   "updated": "2026-10-26T16:09:12+00:00"
 }

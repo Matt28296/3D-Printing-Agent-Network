@@ -15,6 +15,8 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 
 **Round 6 (user-approved, frame round 5 review): the bulkhead and rib tops at z 48.45 (off the slice plane; prints at 48.4); the top M3 pilots 14 deep below it.**
 
+**Round 7 (user-approved, frame round 6 review): front M2.5 pilots at z 2.5 (14 deep); cover screws with washers (M3 × 14 + Ø7, M2.5 × 16 + Ø6), snug only.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.45). Interfaces:
@@ -23,8 +25,8 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
   - lead notch at the shaft end (G +y): 4.4 wide CAD, reaching 1.6 beyond the case end; the tab pilots are Ø1.7 CAD teardrop slots (0.4 longer outwards) at G y −19.4 and +9.7: the lead-end one moved 1.3 mm out (`lead="notch_shift_pilot"`, deep review 01 B1);
   - rail wall x 18.35–22.35, z 6–17.75 (r 2 root fillet behind it);
   - 2 × Ø2.7 M3 pilots 14 deep in the bulkhead top at (6.75, −23) and (6.75, 14);
-  - 2 × Ø2.2 flat-topped teardrop M2.5 pilots 10 deep in the wrist plate's front edge at (y ±24, z 3).
-- Fasteners used: wrist horn: M2 × 12 + Ø6 × 0.5 washer from the pad's front face at (0, 0), 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, fitted BEFORE the claw servo (its body covers the screw), + 1 × M2 × 6 self-tapper through the horn arm; claw MG90S: 2 × M2 × 8 self-tapping (5.5 mm engaged), the lead-end tab's slit filed to 2.1 mm; cover: 2 × M3 × 10 (or 2 × M3 × 18 button heads through the camera mount) into the top pilots, 2 × M2.5 × 12 pan head (head ≤ Ø5) into the front pilots.
+  - 2 × Ø2.2 flat-topped teardrop M2.5 pilots 14 deep in the wrist plate's front edge at (y ±24, z 2.5) (flat top z 3.6: 2.4 below rack B's track).
+- Fasteners used: wrist horn: M2 × 12 + Ø6 × 0.5 washer from the pad's front face at (0, 0), 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, fitted BEFORE the claw servo (its body covers the screw), + 1 × M2 × 6 self-tapper through the horn arm; claw MG90S: 2 × M2 × 8 self-tapping (5.5 mm engaged), the lead-end tab's slit filed to 2.1 mm; cover: 2 × M3 × 14 pan head + Ø7 × 0.5 washers, snug only (or 2 × M3 × 18 button heads + Ø7 × 0.5 washers through the camera mount) into the top pilots, 2 × M2.5 × 16 pan head (head ≤ Ø5) + DIN 125 Ø6 × 0.5 washers, snug only, into the front pilots (10.5 mm engaged).
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -80,7 +82,7 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
   4. 7.5 N at the fingertips, sideways (±z) then ±y, 1 min each.
 
   Pass:
-  - no crack or whitening at the rail block's rack-side root (along it and at its +y end), the V-groove's flanks and the anchor pilot's mouth on the block top, the horn pocket, the clamp washer's seat (washer flat on the pad), the bulkhead root, the rib roots on the pad and the washer relief's foot, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
+  - no crack or whitening at the rail block's rack-side root (along it and at its +y end), the V-groove's flanks and the anchor pilot's mouth on the block top (checked once before the cover is fitted, after the M3 × 45 has been driven into the pilot and backed out to form its thread: no split or bulge between the pilot and the groove), the horn pocket, the clamp washer's seat (washer flat on the pad), the bulkhead root, the rib roots on the pad and the washer relief's foot, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
   - the frame doesn't lift off the horn;
   - the fingertips return to within 0.5 mm.
 ## 9. Notes and open questions
