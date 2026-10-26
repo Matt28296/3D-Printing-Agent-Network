@@ -10,6 +10,13 @@ face (x = 10) with the shaft on the claw axis (y 0, z ZS). Rack B rides on the w
 face, backed by the lower rail. The cover screws on top (2 x M3 into the bulkhead top) and at
 the front (2 x M2.5 into the wrist plate's front edge).
 
+Round 6 (frame round 5 independent review: the bulkhead top, z 48.5, lay exactly on the slice plane of layer 48.4..48.6
+and printed at 48.4 by floating-point rounding): the bulkhead and its two ribs stop at BULK_TOP 48.45 (claw_frame.py).
+They print at 48.4 as before, now with 0.05 to the slice planes on both sides. The cover's top wall stays at 48.5, so
+it stands 0.05 over the bulkhead in CAD; the cover now rests on its ridge in the V-groove (ridge-first contact, VSEAT_CLR
+0). The two M3 pilots keep their 14 mm depth below the new top (their floor moves down 0.05 with it). Nothing
+else changes.
+
 Round 5 (cover strength round 4: the anchor held the post's foot in x only by preload friction): a 90° V-groove, 0.8
 deep, along y in the rail block's top (x 14.45..16.05 at z 17.75, y 23.5..32, open at +y); the cover's post has the
 matching ridge, so the foot is held in x by geometry and the M3 x 45 only holds the flank's lift. 0.95 mm of block stays
@@ -49,16 +56,16 @@ from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Location, Pl
 from cadlib import HOLE_COMP_DEFAULT, teardrop_cutter, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
-from claw_frame import (ANCHOR_PILOT_DEPTH, ANCHOR_XY, BULK_T, FRONT_SCREWS, HALF_Y, M3_PILOT, M25_PILOT, PAD_T, RAIL_IN, RAIL_X0,  # noqa: E402
-                        RAIL_X1, SERVO, T_W, TOP_SCREWS, VSEAT_D, VSEAT_XC, VSEAT_Y0, WINDOW_ROOF, WRIST_HORN,
-                        WRIST_WASHER_OD, X_B, X_F0, X_REAR, Z_TOP0, ZS)
+from claw_frame import (ANCHOR_PILOT_DEPTH, ANCHOR_XY, BULK_T, BULK_TOP, FRONT_SCREWS, HALF_Y, M3_PILOT, M25_PILOT,  # noqa: E402
+                        PAD_T, RAIL_IN, RAIL_X0, RAIL_X1, SERVO, T_W, TOP_SCREWS, VSEAT_D, VSEAT_XC, VSEAT_Y0,
+                        WINDOW_ROOF, WRIST_HORN, WRIST_WASHER_OD, X_B, X_F0, X_REAR, ZS)
 
 from hobby_parts import _body_x0, _teardrop_z, chamfer_plane_edges, horn_pocket_cutter, servo_mount_cutter  # noqa: E402
 
 # --- parameters (mm) -----------------------------------------------------------
 HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (default, fdm-design-rules)
 CLR, END_CLR = 0.4, 0.2        # MG90S window side / end clearance (printed): 23.0 x 12.6 printed, 23.2 x 12.8 CAD
-TOP_PILOT_DEPTH = 14.0         # M3 pilots in the bulkhead top (M3 x 10 cover, M3 x 18 with the camera)
+TOP_PILOT_DEPTH = 14.0         # M3 pilots in the bulkhead top, below BULK_TOP (M3 x 10 cover, M3 x 18 with the camera)
 FRONT_PILOT_DEPTH = 14.0       # M2.5 x 16 through the cover's 5 mm front plate: 11 mm engaged (was x 12, 7 engaged:
                                # the cover's row 22, M2.5 pull-out under the opening stall, SF 2.56 -> 4.0)
 BED_CHAMFER = 0.4
@@ -136,8 +143,8 @@ def _back_fillet():
 def _ribs():
     """RIB_W x RIB_D ribs behind the bulkhead's two outer edges, from the pad's top to the bulkhead's top."""
     xb, z0 = X_B - BULK_T, T_W + PAD_T - 0.01
-    return (_box(xb - RIB_D, xb + 0.01, -HALF_Y, -HALF_Y + RIB_W, z0, Z_TOP0)
-            + _box(xb - RIB_D, xb + 0.01, HALF_Y - RIB_W, HALF_Y, z0, Z_TOP0))
+    return (_box(xb - RIB_D, xb + 0.01, -HALF_Y, -HALF_Y + RIB_W, z0, BULK_TOP)
+            + _box(xb - RIB_D, xb + 0.01, HALF_Y - RIB_W, HALF_Y, z0, BULK_TOP))
 
 
 def _groove():
@@ -158,7 +165,7 @@ def design():
     plate = chamfer_plane_edges(plate, 0.0, BED_CHAMFER)                     # back face goes on the bed
     f = plate
     f += _box(X_REAR, X_B - BULK_T + 0.01, -HALF_Y, HALF_Y, T_W - 0.01, T_W + PAD_T)   # raised pad (clamp floor)
-    f += _box(X_B - BULK_T, X_B, -HALF_Y, HALF_Y, T_W - 0.01, Z_TOP0)           # bulkhead
+    f += _box(X_B - BULK_T, X_B, -HALF_Y, HALF_Y, T_W - 0.01, BULK_TOP)         # bulkhead (top 48.45, round 6)
     f += _box(RAIL_X0 - 0.01, RAIL_X1, -HALF_Y, HALF_Y, T_W - 0.01, ZS - RAIL_IN)   # rail block behind rack B
     f += _back_fillet() + _ribs()
     win = servo_mount_cutter(SERVO, BULK_T, clearance=CLR, end_clearance=END_CLR, through=BULK_T * 2 + 2,
@@ -166,12 +173,12 @@ def design():
     f -= SERVO_LOC * (win + _window_roof() + _corner_reliefs() + _notch_top())
     # Ø8 clamp washer: vertical relief in the bulkhead's back face (and the fillet) round the clamp axis, pad to top
     # (it starts ON the pad's top face: the washer seat and the 6.3 mm clamp floor stay whole)
-    f -= Pos(0, 0, T_W + PAD_T) * Cylinder(WASHER_RELIEF_D / 2, Z_TOP0 - T_W - PAD_T + 1.0,
+    f -= Pos(0, 0, T_W + PAD_T) * Cylinder(WASHER_RELIEF_D / 2, BULK_TOP - T_W - PAD_T + 1.0,
                                            align=(Align.CENTER, Align.CENTER, Align.MIN))
     f -= horn_pocket_cutter(WRIST_HORN, link_t=T_W + PAD_T, hole_comp=HOLE_COMP)   # wrist horn, back face
     d = M3_PILOT + HOLE_COMP
     for (x, y) in TOP_SCREWS:                                                  # cover (+ camera mount) screws
-        f -= Pos(x, y, Z_TOP0 - TOP_PILOT_DEPTH) * Cylinder(d / 2, TOP_PILOT_DEPTH + 1,
+        f -= Pos(x, y, BULK_TOP - TOP_PILOT_DEPTH) * Cylinder(d / 2, TOP_PILOT_DEPTH + 1,
                                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
     d = M3_PILOT + HOLE_COMP                                                   # cover anchor M3 x 45 (round 4):
     z_blk = ZS - RAIL_IN                                                       # vertical in print, so a plain hole

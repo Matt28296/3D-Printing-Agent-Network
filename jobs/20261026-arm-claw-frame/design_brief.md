@@ -37,7 +37,7 @@ The rail is a block, not round 2's 4 mm wall (strength fix 1). Its front root is
 - **Bulkhead:** 6.5 mm, holding the claw MG90S. The servo goes in from the front, case bottom first, with its lead through the notch at the shaft end; that end's tab pilot is moved 1.3 mm out (`lead="notch_shift_pilot"`).
 - **Rail block** behind rack B, x 10…22.35, z 6…17.75: it fills the space between the bulkhead and rack B, below the claw servo's case (z ≥ 21.15). Rack B rides on the plate's top face.
 - **r 1.5 fillet** where the pad meets the bulkhead's back face, full width (round 3, strength fix 3).
-- **Two ribs** 6 × 10 mm behind the bulkhead's outer edges: y −32…−26 and 26…32, x −6.5…3.5, from the pad (z 8.3) to the bulkhead top (z 48.5) (round 3, strength fix 4). They clear the claw servo (y −16.9…5.9), the top screws (y −23, 14) and the clamp.
+- **Two ribs** 6 × 10 mm behind the bulkhead's outer edges: y −32…−26 and 26…32, x −6.5…3.5, from the pad (z 8.3) to the bulkhead top (z 48.45 since round 6) (round 3, strength fix 4). They clear the claw servo (y −16.9…5.9), the top screws (y −23, 14) and the clamp.
 - **Ø8 clamp washer:** a Ø9 vertical relief round the clamp axis cuts 1.0 mm into the bulkhead's back face (|y| ≤ 2.9), from the pad's top to the bulkhead top, so the washer goes down past the bulkhead and lies flat on the pad (round 3, strength fix 2). The relief starts on the pad's top face, so the washer seat and the 6.3 mm floor stay whole; it interrupts the r 1.5 fillet over |y| ≤ 4.0.
 - **Cover screws:** the cover screws on from above (2 × M3) and from the front (2 × M2.5 × 16 into 14 mm pilots; was × 12 into 10 mm).
 - **MG90S tab-pilot strips:** unchanged. The user decided on 26 Oct 2026 to keep them, and spec §8's screw-strip check covers them.
@@ -57,7 +57,8 @@ The rail is a block, not round 2's 4 mm wall (strength fix 1). Its front root is
 | **Washer relief** | Ø9.0 CAD (Ø8 washer + 0.4 a side + HOLE_COMP), 1.0 into the bulkhead | +0.3 | the washer passes the bulkhead | HOLE_COMP | strength round 2 fix 2 |
 | **Front M2.5 pilots** | Ø2.2 CAD, **14 deep** | +0.2 | M2.5 × 16 through the 5 mm front plate: 11 engaged | HOLE_COMP | cover strength round 2 (row 22) |
 | **Cover anchor M3 pilot (round 4)** | Ø2.7 CAD (Ø2.5 printed), **14 deep**, vertical, in the rail block's top at **(x 18.35, y 28)**, z 3.75…17.75 | +0.2 | M3 × 45 socket head + Ø7 × 0.5 washer through the cover's second-tie post: 10.75 engaged | HOLE_COMP | cover strength round 3 required change; frame strength round 3 |
-| **V-groove (round 5)** | 90°, **0.8 deep** on x 15.25: x **14.45…16.05** at the block top (z 17.75), bottom z 16.95; **y 23.5…32**, open at +y; 0.95 of block to the anchor pilot at the top | ±0.1 | the cover's ridge, 0.1 clear per flank (horizontal) in CAD; the layer corners take that up in print | — | cover strength round 4 required change; `VSEAT_*` in claw_frame.py |
+| **V-groove (round 5)** | 90°, **0.8 deep** on x 15.25: x **14.45…16.05** at the block top (z 17.75), bottom z 16.95; **y 23.5…32**, open at +y; 0.95 of block to the anchor pilot at the top | ±0.1 | the cover's ridge, line to line in CAD since round 6 (`VSEAT_CLR` 0; round 5: 0.1 per flank); as printed the layer corners stand 0.1 inside the flanks, so the ridge lands on them first | — | cover strength round 4 required change; `VSEAT_*` in claw_frame.py |
+| **Bulkhead (and rib) top (round 6)** | **z 48.45** (`BULK_TOP`), prints at 48.4 | ±0.1 | the cover's top wall (48.5) stands 0.05 over it in CAD and ~0.16 over it as printed before the screws (the cover rides on its ridge); 2 × M3 pilots 14 deep below it | — | frame round 5 review (off the slice plane 48.5) |
 
 Printed targets:
 - MG90S window +0.4 side / +0.2 end; wrist horn pocket +0.5.
@@ -86,8 +87,8 @@ The strength-analyst's `strength_calc.py` what-if lines, re-run on the round-3 p
 The frame's lowest predicted SF is **3.53**: floor punching under the Ø8 washer when the camera hits the desk (13 N at its end). The tab-pilot rows are unchanged: user decision, spec §8 screw-strip check.
 
 ## Parameters exposed by model.py
-- model.py: HOLE_COMP, CLR, END_CLR, TOP_PILOT_DEPTH, FRONT_PILOT_DEPTH, BED_CHAMFER, RELIEF_D, BACK_FILLET, WASHER_RELIEF_D, RIB_W, RIB_D, GROOVE_Y (round 5), SERVO_LOC.
-- shared, in claw_frame.py: ANCHOR_XY, ANCHOR_PILOT_DEPTH (round 4), VSEAT_D, VSEAT_XC, VSEAT_Y0, VSEAT_CLR (round 5), T_W, PAD_T, ZS, X_B, BULK_T, X_REAR, HALF_Y, RAIL_IN, RAIL_X0, RAIL_X1, X_F0, WINDOW_ROOF, TOP_SCREWS, FRONT_SCREWS, M3_PILOT, M25_PILOT, WRIST_WASHER_OD, WRIST_WASHER_T.
+- model.py: HOLE_COMP, CLR, END_CLR, TOP_PILOT_DEPTH (below BULK_TOP), FRONT_PILOT_DEPTH, BED_CHAMFER, RELIEF_D, BACK_FILLET, WASHER_RELIEF_D, RIB_W, RIB_D, GROOVE_Y (round 5), SERVO_LOC.
+- shared, in claw_frame.py: ANCHOR_XY, ANCHOR_PILOT_DEPTH (round 4), VSEAT_D, VSEAT_XC, VSEAT_Y0, VSEAT_CLR (round 5), BULK_TOP (round 6), T_W, PAD_T, ZS, X_B, BULK_T, X_REAR, HALF_Y, RAIL_IN, RAIL_X0, RAIL_X1, X_F0, WINDOW_ROOF, TOP_SCREWS, FRONT_SCREWS, M3_PILOT, M25_PILOT, WRIST_WASHER_OD, WRIST_WASHER_T.
 
 ## Risks
 - **The wrist clamp screw sits under the claw servo:** BUILD_GUIDE §4 fits it first.
@@ -100,7 +101,7 @@ The frame's lowest predicted SF is **3.53**: floor punching under the Ø8 washer
   - wrist plate front edge x 32.85 → 34.85;
   - rail: a block from x 10 instead of the x 18.35…22.35 wall;
   - front pilots 10 → 14 deep with M2.5 × 16;
-  - the envelope is 42.85 × 64 × 48.5.
+  - the envelope is 42.85 × 64 × 48.5 (48.45 since round 6).
 
 ## Round 4 (2026-10-26: the cover's claw strength round 3 required change). User-approved
 - **Why.** The cover failed at SF 1.23: the reversed rack-B push (opening stall on jaw B, 27 N, or the 13 N crash) could leave the cover only through its 3 mm top wall behind the lip. The fix anchors the cover's second-tie post on this frame's rail block with one vertical M3 × 45, which takes about 25 of the 27 N straight into the block.
@@ -117,3 +118,17 @@ The frame's lowest predicted SF is **3.53**: floor punching under the Ø8 washer
 - **Checks.** `cad_checks.py` (21 checks, exit 0) adds the groove (flanks probed ±0.05 at z 17.1 / 17.4 / 17.7 and y 23.6 / 28 / 31.9, bottom, closed −y end, open +y end) and the 0.95 mm wall to the pilot. mesh_check: overhang 1.4 %, bed contact 2534.7 mm², widest bridge 7.9 mm, thin walls 0, as round 4. Overall size and holes unchanged.
 - **Strength (strength.md, round 5).** The groove's flank bearing 3.61 (proof 2.85, req 2); the block in front of the groove in interlayer shear 6.66; M3 pull-out 4.22 on the preload (sustained, 10.75 engaged with the washer), 3.42 with the preload + wedge + lift. The frame's lowest stays 3.03 (the top-screw bound) and 3.53 for its own cases.
 - **Mass.** −0.005 cm³: **46.39 cm³**.
+
+## Round 6 (2026-10-26: the round 5 independent review). User-approved
+- **What failed (design_review.md, round 5 review).** The bulkhead top, the cover's z datum, lay exactly on the slice plane of layer 48.4–48.6 (z 48.5) and printed at 48.4 by floating-point rounding, not by design. The cover's seat (cover brief, round 6) needs it off the plane.
+- **Change (frame only):** the bulkhead and both ribs stop at **`BULK_TOP` 48.45** (claw_frame.py). The two top M3 pilots keep their 14 mm depth below it (floor 34.45); the washer relief still runs through the top. The cover's top wall stays at 48.5, so it stands 0.05 over the bulkhead in CAD; the cover now rests on its ridge in the V-groove (ridge-first contact, `VSEAT_CLR` 0, which changes nothing on this part's geometry).
+- **What else references the bulkhead top, and what moved:**
+  - the cover's top-wall seat: no longer a contact; the top wall stands 0.05 over the bulkhead in CAD, ~0.16 as printed before the screws, 0–0.26 after them at the +y end (cover strength.md);
+  - the top M3 pilots: their floor moves down with the top (34.50 → 34.45); the M3 × 10 is engaged 6.95 in CAD (was 7.0), the M3 × 18 with the camera 11.45 (was 11.5);
+  - spec §3 "top wall underside 48.5 ±0.15" (cover spec): the part still meets it, but assembled the top wall stands up to ~0.26 over the printed bulkhead at the +y end; the Architect has the spec text;
+  - `claw_sequence_check.py`'s declared contact plane "top wall on the bulkhead top" now names `BULK_TOP` and is noted as 0.05 clear;
+  - nothing else: the window, the ribs' function, the washer relief and the rail block are unchanged.
+- **As printed (scratch slice of the round 6 part.stl with the arm's command, G-code read back).** Last layer ;Z:48.4: the bulkhead and both ribs print at **48.4**, now with 0.05 to the slice planes on both sides (48.3 and 48.5). Rail block top 17.8; groove walls at half-widths 0.15 / 0.35 / 0.55 / 0.75 in the layers ending 17.2 / 17.4 / 17.6 / 17.8 (unchanged).
+- **Checks.** `cad_checks.py` 23/23 (exit 0), new or changed: size 42.85 × 64 × 48.45; bulkhead and ribs top 48.45 (±0.02 probes); the top off the slice planes (0.05 to the nearest); the top pilots 14 deep below it. mesh_check: overhang 1.4 %, bed contact 2534.7 mm², widest bridge 7.9 mm, thin walls 0, fits the bed.
+- **Strength (strength.md, round 6 self-check).** Lowest SF 3.00 (3.004, row 39: the top M3 × 10 bound, now at 6.95 engaged); the frame's own cases 3.53 (unchanged); V-groove flank bearing 3.21 (proof 2.53); M3 × 45 pull-out on the preload 4.12 (10.49 engaged with the cover's worst-case float).
+- **Mass.** −27 mm³ (the 0.05 off the bulkhead and ribs): 46 365 mm³ (round 5: 46 392).

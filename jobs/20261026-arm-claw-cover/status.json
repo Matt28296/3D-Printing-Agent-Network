@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 in progress (user-approved sixth attempt): ridge-first V-seat \u2014 TIE2_FOOT_Z 18.05, RIDGE_TIP_Z 17.35, VSEAT_CLR 0",
+    "DESIGN": "round 6 built (ridge-first seat): CAD DFM PASS, CAD-side strength NEEDS_TEST 3.01; independent review next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

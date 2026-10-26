@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 in progress (user-approved with the cover): VSEAT_CLR 0, bulkhead top 48.45 (off the slice plane)",
+    "DESIGN": "round 6 built (ridge-first seat): CAD DFM PASS, CAD-side strength NEEDS_TEST 3.00; independent review next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

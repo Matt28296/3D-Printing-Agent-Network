@@ -13,6 +13,8 @@ Closes both rack channels. The front plate holds both racks forward and carries 
 
 **Round 5 (user-approved, cover strength round 4): the second tie's post foot flats at z 17.85 (0.1 over the frame's rail block), with a 90° V-ridge under them (0.1 clear per flank, tip flat at z 17.25) in the frame's V-groove; an M3 washer Ø7 × 0.5 under the M3 × 45's head.**
 
+**Round 6 (user-approved, cover round 5 review): ridge-first contact. VSEAT_CLR 0 (the ridge's flanks on the groove's in CAD, virtual apex z 16.95); the foot's flats at z 18.05 (FOOT_CLR 0.30 over the rail block, independent of VSEAT_CLR), the ridge's flanks carried up to them (base x 14.15–16.35); the tip flat at z 17.35; the frame's bulkhead top at z 48.45.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 37.85 × 64 × 55.5 mm (print: 37.85 × 55.5 × 64; claw frame G: x 0…37.85, y ±32, z −4…51.5). Interfaces:
@@ -30,7 +32,7 @@ Closes both rack channels. The front plate holds both racks forward and carries 
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Front plate inner face | x 32.85 | ±0.15 | 0.25 sliding gap in front of the racks |
-| Top wall underside | z 48.5 | ±0.15 | rack A's back rides on it |
+| Top wall underside | z 48.5 | ±0.15 on the part; assembled, 0 to +0.3 over the printed bulkhead (48.4) at the +y end | rack A's back rides on it; the cover rests on its ridge, and rack A's 0.7 backlash absorbs the float |
 | Lip wall front face | x 22.35 | ±0.15 | 0.25 sliding gap behind rack A |
 | Slot A (neck A, 10 tall) | z 38.25–48.5 | +0.2/−0 | 0.25 on the side nearer the axis |
 | Slot B (neck B, 10 tall) | z 5.75–16.25 | +0.2/−0 | 0.25 each side |
@@ -72,7 +74,7 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
   2. Push jaw B's fingertip sideways towards the wrist (−z) with **10.7 N** (1.5 × the yaw stall), 10 s, jaws closed and again at 44 mm.
 
   Pass:
-  - no crack or whitening at the lip's roots, the top wall behind the lip, both ties' posts, webs and their corners, the second post's ridge still seated in the frame's groove (a 0.15 mm feeler does not enter under the post's foot), and its M3 × 45 and washer still tight, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
+  - no crack or whitening at the lip's roots, the top wall behind the lip, both ties' posts, webs and their corners, the second post's ridge still seated in the frame's groove (a 0.3 mm feeler does not enter between the top wall and the bulkhead at the end where the lower slot is open), and its M3 × 45 and washer still tight, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
   - both jaws still slide the full 0–44 mm without binding;
   - the cover screws are still tight.
 ## 9. Notes and open questions

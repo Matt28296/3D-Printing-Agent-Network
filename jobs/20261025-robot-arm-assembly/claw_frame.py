@@ -16,7 +16,7 @@ racks (x 22.6..34.6) | cover front plate (x 34.85..39.85, with the pinion pass-t
 Round 3 (2026-10-26): every required fix of the claw DFM and strength round 2 (see each claw job's design_brief.md).
 Layout along z (pinion axis at ZS 27.25): wrist plate (z 0..6, rack B rides on its top face)
 | rack B (teeth up) | pinion | rack A (teeth down, rides under the top wall) | cover top wall
-(z 48.5..51.5) | camera mount.
+(z 48.5..51.5; the frame's bulkhead top is 48.45, BULK_TOP) | camera mount.
 Jaw A (upper rack) carries the finger on the -y side; jaw B is the SAME part turned 180° about
 the pinion axis (x), carrying the finger on the +y side. Turning the pinion positive about +x
 moves rack A to -y and rack B to +y: the claw opens.
@@ -104,7 +104,11 @@ FRONT_Z0 = -6.0                # front plate reaches 6 mm below the claw's back 
                                # 11.75 deep (z -6..5.75); -4 -> -6 in claw round 3 (cover strength round 2: SF 2.58 -> 4.34)
 TOP_T = 3.0
 TOP_X0 = 0.0                   # top wall's rear edge: x 0 (DFM R2; carries the whole camera pad)
-Z_TOP0 = ZS + RACK_OUT + RACK_SEAT   # 48.5: top wall underside (= bulkhead top)
+Z_TOP0 = ZS + RACK_OUT + RACK_SEAT   # 48.5: top wall underside (the cover's z datum; rack A's guide)
+BULK_TOP = Z_TOP0 - 0.05       # 48.45: the frame's bulkhead (and ribs) top, frame only (claw round 6, frame DFM round 5:
+                               # 48.5 lay exactly on the slice plane of layer 48.4..48.6; 48.45 prints at 48.4 as
+                               # before, with 0.05 to the slice planes on both sides). The cover's top wall stands
+                               # 0.05 over it in CAD; the cover rests on its ridge (VSEAT), not on the bulkhead
 Z_TOP1 = Z_TOP0 + TOP_T        # 51.5: top of the claw
 TOP_CHAMFER = 1.5              # 45° on the top-front outer edge: the camera sees the fingertips over it
                                # (1.5 keeps a 1.5 mm front face on the top wall over slot A: no knife edge)
@@ -138,11 +142,15 @@ ANCHOR_PILOT_DEPTH = 14.0      # M3 x 45 + Ø7 x 0.5 washer: 33.75 + 0.5 over th
 # against fdm-design-rules §4): a 90° V-groove along y in the rail block's top and a matching ridge under the post's foot
 # hold the foot in x by geometry; the M3 x 45 holds the 45° flank's lift in tension, so no preload is relied on.
 # Groove: x 14.45..16.05 at the block top (z 17.75), VSEAT_D deep (bottom z 16.95), y 23.5..32 (open at +y).
-# Ridge: the same 90° V raised VSEAT_CLR (0.1 per flank, horizontal), so the foot's flats stand VSEAT_CLR over the block.
+# Ridge (claw round 6, ridge-first contact; cover round 5 review): the groove's own 90° V (VSEAT_CLR 0), so its flanks
+# meet the groove's line to line in CAD (virtual apex 16.95). As printed, the groove's layer corners stand 0.1 inside
+# its CAD flanks, so the ridge lands on them about 0.1 high and is the cover's FIRST stop: the foot's flats stand
+# FOOT_CLR (cover model.py) over the block and the top wall about 0.16 over the printed bulkhead, until the screws seat it.
 VSEAT_D = 0.8                  # groove depth / the ridge's virtual height (90° V: half-width = depth)
-VSEAT_XC = LIP_X0 + 0.1 + VSEAT_D   # 15.25: groove / ridge centre line (ridge base 0.1 inside the post's back face)
+VSEAT_XC = LIP_X0 + 0.1 + VSEAT_D   # 15.25: groove / ridge centre line
 VSEAT_Y0 = TIE2_Y[0] - 0.5     # 23.5: the groove's closed -y end (the ridge starts at y 24 with a 45° lead-in)
-VSEAT_CLR = 0.1                # per flank, horizontal; also the foot's flats over the block top
+VSEAT_CLR = 0.0                # per flank, horizontal, ridge to groove in CAD (round 5: 0.1, which let the foot's flats
+                               # and the ridge's tip stop the cover as printed and left 0.08..0.13 mm of play)
 ANCHOR_WASHER = (7.0, 0.5)     # ISO 7089 M3 washer under the M3 x 45's head (as on the MG996R tab screws)
 # cover screws: two M3 down into the bulkhead top, two M2.5 back into the wrist plate's front edge
 TOP_SCREWS = [(X_B - BULK_T / 2, -23.0), (X_B - BULK_T / 2, 14.0)]   # (x, y), clear of the servo window

@@ -13,9 +13,11 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 
 **Round 5 (user-approved with the cover's V-seat): a 90° V-groove, 0.8 deep, along y in the rail block's top (x 14.45–16.05 at z 17.75, y 23.5–32, open at +y), 0.95 mm from the anchor pilot; the cover's M3 × 45 has a Ø7 × 0.5 washer, 10.75 mm engaged.**
 
+**Round 6 (user-approved, frame round 5 review): the bulkhead and rib tops at z 48.45 (off the slice plane; prints at 48.4); the top M3 pilots 14 deep below it.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.5). Interfaces:
+- Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.45). Interfaces:
   - MG90S arm-horn pocket on the back face (2 deep), Ø2.6 clamp hole at (0, 0) through plate and pad: 6.3 mm floor;
   - MG90S window through the bulkhead (x 3.5–10): 23.2 × 12.8 CAD (23.0 × 12.6 printed), shaft on (y 0, z 27.25); 7 mm 45° roof above it, Ø3 teardrop reliefs at its two lower corners;
   - lead notch at the shaft end (G +y): 4.4 wide CAD, reaching 1.6 beyond the case end; the tab pilots are Ø1.7 CAD teardrop slots (0.4 longer outwards) at G y −19.4 and +9.7: the lead-end one moved 1.3 mm out (`lead="notch_shift_pilot"`, deep review 01 B1);
@@ -34,6 +36,7 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 | Wrist plate front edge | x 32.85 | ±0.15 | the cover's front plate slides down it |
 | MG90S window | 23.0 × 12.6 printed | +0.3/−0 | clearance |
 | Wrist clamp floor | 6.3 | ±0.2 | M2 × 12 reaches 4.6 into the spline |
+| Bulkhead top (the cover's top-wall datum) | z 48.45 (prints 48.4) | ±0.1 | the cover's top wall stands 0.05 over it in CAD; must stay off a 0.2 mm slice plane |
 
 Servo and camera dimensions are nominal (`tools/hobby_parts.py`, `claw_frame.py`). The MG90S has its own spec since deep review 01: body 22.8 × 12.2 mm, case bottom 18.5 mm below the tab underside, spline top 14.0 mm above it, lead leaving the shaft end 5.1 mm above the case bottom. Measure yours (body length and width, tab-hole spacing, shaft to near end, those heights, the lead exit, the tab slits) and give Claude any body-size difference over 0.1 mm or any other over 0.3 mm. Brio 4K: 27 × 102 × 27 mm, 63 g with its clip removed, 1/4"-20 thread centred on the bottom, USB-C on its back.
 
