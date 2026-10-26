@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-arm-claw-pinion",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 3: DFM PASS; strength NEEDS_TEST, lowest SF 3.61)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 0.45 h, 4.3 g, 100 % rectilinear; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T16:08:26+00:00"
+  "updated": "2026-10-26T16:14:38+00:00"
 }
