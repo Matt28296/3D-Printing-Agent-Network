@@ -32,12 +32,11 @@ JOBS = {"chassis": "20261026-rover-chassis", "lid": "20261026-rover-lid", "sproc
 LABELS = {"chassis": "Chassis (tub)", "lid": "Lid / electronics deck", "sprocket": "Drive sprocket",
           "idler": "Idler", "wheel": "Road wheel", "link": "Track link"}
 QTY = {"chassis": 1, "lid": 1, "sprocket": 2, "idler": 2, "wheel": 4, "link": 70}   # 68 links + 2 spares
-PLATES = {"link": 2}            # 34 links per plate (+ the 2 spares on one of them)
+PLATES = {"link": 2, "wheel": 2}   # 35 links per plate; 2 wheels per plate (the slices of 26 Oct 2026)
 PETG = "petg_olive"
-STAMPS = [{"text": "Round 4: printability passed", "kind": "pass"}, {"text": "Chassis strength review running", "kind": "warn"},
-          {"text": "Slicing in progress", "kind": "note"}]
-RESLICE = ("chassis", "lid", "sprocket", "idler", "wheel", "link")   # their slice_stats.json are from round 2: empty this
-                                                                 # (or drop a part) once its round 4 slice is merged
+STAMPS = [{"text": "5 of 6 parts: awaiting approval", "kind": "pass"}, {"text": "Chassis strength review running", "kind": "warn"},
+          {"text": "Assembly check clean", "kind": "pass"}]
+RESLICE = ("chassis",)   # its slice_stats.json is from round 2: drop it once its round 4 slice is merged
 BUCK_X0 = 85.0                  # buck under the lid, x 85-107 (as in assembly_check.py)
 JACK_L = 20.0                   # M3 × 20 set screw (idler jack screw)
 
