@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 recheck: DFM PASS, strength NEEDS_TEST 3.03 \u00b7 held: the cover fix proposes a V-groove in this rail block (user decision)",
+    "DESIGN": "round 5 in progress (user-approved with the cover fix): 90\u00b0 V-groove 0.8 deep in the rail block top",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Approve the V-groove in the rail block top (cover anchor fix)?"
-  ],
+  "open_questions": [],
   "updated": "2026-10-26T16:09:12+00:00"
 }

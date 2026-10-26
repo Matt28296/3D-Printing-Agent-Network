@@ -21,3 +21,4 @@
 - 2026-10-26T16:34Z · cad-engineer (fourth attempt, user-approved) · model.py, cad_checks.py, design_brief.md · ok (merged fa56765)
 - 2026-10-26T16:34Z · architect · spec updated for the change; recheck next · ok
 - 2026-10-26T17:30Z · design-reviewer + strength-reviewer (final recheck) · design_review.md, strength.md, strength_calc.py · recheck: DFM PASS, strength NEEDS_TEST 3.03 · held for the cover decision
+- 2026-10-26T17:40Z · architect · user approved the V-groove positive lock (fifth attempt) · cad-engineer started
