@@ -1,15 +1,31 @@
 VERDICT: PASS
 
-# DFM review, round 3: 20261026-rover-lid
+# DFM review, round 4: 20261026-rover-lid
 
-Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, cad_checks.py, renders/{iso,front,right,top,bottom}.png (regenerated with tools/render.py), print_requirements.json, slice_plan.json, round-2 design_review.md and strength.md, rover_frame.py (LID_SCREWS), chassis model.py (insert columns), tools/hobby_parts.py (ESP32 boards, breadboard), assembly_check.json, BUILD_GUIDE.md (steps 2 and 11, Service). The library is empty, so the defaults apply (HOLE_COMP +0.2).
+Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26
 
-Outputs are current: a fresh in-memory `build()` gives 31 376.89 mm³ and 154 × 76 × 7.1, identical to geometry.json. `mesh_check.check()` re-run in memory is identical to mesh_check.json. `cad_checks.py`: all 9 checks pass. Extra evidence: a layer-by-layer support analysis of part.stl (0.1 mm grid, 0.2 mm layers).
+**Inputs:**
+- this job: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, cad_checks.py, print_requirements.json, slice_plan.json, log.md;
+- renders/{iso,front,right,top,bottom}.png, regenerated with tools/render.py;
+- the round-3 design_review.md and strength.md;
+- rover_frame.py (LID_SCREWS) and tools/hobby_parts.py (ESP32 boards);
+- assembly_check.json and BUILD_GUIDE.md (step 11, BOM).
 
-Round 3 changed three things on the lid:
-- the screw holes moved onto the chassis's new heat-set-insert columns (the inserts are in the chassis job);
-- the MTS-102 toggle hole is new;
-- two cable slots with a tie bar replace the Ø10 cable hole.
+The library is empty, so the defaults apply (HOLE_COMP +0.2).
+
+**Outputs are current.**
+- A fresh `build()` gives 32 288.73 mm³ and 154 × 76 × 7.1, identical to geometry.json.
+- part.stl is watertight (32 288.72 mm³).
+- `tools/mesh_check.py` re-run: mesh_check.json is unchanged.
+- `cad_checks.py`: all 14 checks pass.
+
+**Extra evidence** (my scripts, in the scratchpad):
+- a layer-by-layer support analysis of part.stl (0.05 mm raster, 0.2 mm layers, 0.2 mm allowance);
+- ray-cast wall thickness from every face (4 rays per face);
+- edge-to-edge distances from each tie slot and rail to every other feature, from the model's parameters;
+- `is_inside` probes on `design()`.
+
+**What changed in round 4: one parameter.** RAIL_W went from 2.5 to 4.5 (l.38), and the rails widened outward to \|y\| 14.85–19.35. That moved the zip-tie slots out by 2.0, to \|y\| 20.85–22.65 (l.79). The window, the pocket (29.7) and the ledges did not move.
 
 ## Checklist
 
@@ -17,38 +33,60 @@ Round 3 changed three things on the lid:
 |---|---|---|---|
 | 1 | Bed fit, 5 mm margin | PASS | 154.0 × 76.0 × 7.1, fits_bed true |
 | 2 | One watertight solid, min Z 0 | PASS | solids 1, watertight true, min_z 0.0 |
-| 3 | Orientation | PASS | Flat, underside down, the seat rising from the top (iso.png, front.png, right.png) |
-| 4 | Load paths vs layers | PASS | Deck bending is in the layer plane. The rail roots bend across the layers under a sideways jumper pull (strength round 2: lowest SF 3.27). The toggle's bushing nuts clamp the deck through its thickness |
-| 5 | Bed contact | PASS | 9 756.8 mm². A 3 mm PETG plate has a low warp risk; use a glue release layer on smooth PEI (preflight) |
-| 6 | Overhangs, bridges | PASS | overhang_pct 0, no bridges. Layer analysis: no unsupported cell in any layer. The window, slots and holes are all vertical through-cuts |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS | T 3.0, RAIL_W 2.5, END_LEDGE 2.4. The tie bar is 2.8 wide in CAD (\|y\| ≤ 1.4; cad_checks) and 3.0 thick. Each screw hole is 3.7 from the side edge and the corner arc (centre at \|y\| 32.5, r 1.8; it was 2.2 in round 2). The toggle hole is ≥ 11.8 from any edge. thin_wall_warnings empty |
-| 8 | HOLE_COMP, teardrops | PASS | Screw holes 3.4 + 0.2 = Ø3.6 (l.80); toggle 6.2 + 0.2 = Ø6.4 (l.82; geometry.json). Cable slots get +0.1 per edge (l.85). The ESP32 pocket's HALF includes HOLE_COMP/2 (l.38). No horizontal holes |
-| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(lid, z0, 0.4)` (l.60); bottom.png shows the bevel. The through-cuts are clearance features |
-| 10 | Internal corners on load paths | PASS (note) | The cable-slot corners are r2 (l.87). The ESP32 window's corners are still sharp, but the deck rests on the whole wall rim, so stress there is low (round-2 R2, still open: R2 below) |
-| 11 | Fasteners (§4) | PASS (note) | 4 × M3 × 8 go through Ø3.6 holes into M3 × 5.7 heat-set inserts in the chassis's Ø10 columns: metal threads, fine for the lid coming off at every charge (§4; this was round-2 R3). Engagement is 8 − 3 = 5 mm of the 5.7 mm insert, and the tip stops 1.5 mm above the bottom of the 6.5 mm hole. No washers are listed under the heads (R3) |
-| 12 | Spec §3 dims are named parameters | PASS | Each spec §3 dimension is a named, commented parameter, and cad_checks proves each: 2·HALF = 2·(28.3/2 + 0.6 + 0.1) = 29.7 (pocket width); SCREW_D 3.4; SWITCH_D 6.2; CABLE_X (71, 81) and CABLE_Y (1.5, 12) give the 10 × 10.5 slots |
+| 3 | Orientation | PASS | Flat, underside down. front.png and right.png show the rails standing 4.1 above the deck; top.png shows the four tie slots just outside the rails |
+| 4 | Load paths vs layers | PASS | Deck bending is in the layer plane. Only the rail roots cross the layers, under a sideways push: strength round 3 gives SF 10.6 with 4.5 mm rails |
+| 5 | Bed contact | PASS | 9 756.8 mm², unchanged. A 3 mm PETG plate has a low warp risk; use a glue release layer on smooth PEI |
+| 6 | Overhangs, bridges | PASS | overhang_pct 0, no bridges. Layer analysis: no unsupported region in any of the 35 layers. Rails, ledges, slots and holes are all vertical walls or through-cuts |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | Rails 4.5 (10 lines), deck 3.0, ledges 2.4. Around the moved tie slots: 6.00 of deck to the window edge (the rail sits on 4.5 of it), 15.35 to the deck edge. Ray-cast: thinnest 3.0 around the tie slots, and 2.6 overall (at the 0.4 bed chamfer). thin_wall_warnings empty |
+| 8 | HOLE_COMP, teardrops | PASS | Unchanged: screw holes Ø3.6 (l.83), toggle Ø6.4 (l.85), cable slots +0.1 per edge (l.88). The tie slots are clearance slots. No horizontal holes |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(lid, z0, 0.4)`; bottom.png |
+| 10 | Internal corners on load paths | PASS (note) | Cable slots r2. The window corners are still sharp (round-3 R2). The wider rails stiffen the window edges that meet them |
+| 11 | Fasteners (§4) | PASS (note) | Unchanged: 4 × M3 × 8 into the chassis's heat-set inserts. Still no washers under the heads (round-3 R3) |
+| 12 | Spec §3 dimensions are named parameters | PASS | RAIL_W 4.5 (l.38), with its source (strength round 3; 4.0 minimum); spec §3 "4.5 wide (`RAIL_W`) ±0.2". cad_checks proves the rail width, height and extent, the tie-slot positions, and the clearances to the walls, toggle, cable slots and screws |
 | 13 | Service temp | PASS | 40 °C against ≈ 70 °C for PETG |
 | 14 | Lessons | N/A | None recorded |
 | 15 | FreeCAD reference | N/A | None |
-| 16 | Fits and assembly (cross-part) | PASS | SCREWS = rover_frame.LID_SCREWS = the chassis COLUMNS, (−13, ±32.5) and (102, ±32.5), so the holes can't drift from the inserts (cad_checks). The toggle at (0, −23) hangs over the right-hand motor with 0 collisions; its tie head goes beside the can (BUILD_GUIDE step 5). The slots clear the ESP32 seat (ends at x 14 + 54.4 + 0.6 = 69.0) and the breadboard (from x 84). The ESP32 ties still cross the board 1.2 mm from its pin-free ends |
+| 16 | Fits and assembly (cross-part) | PASS | SCREWS = rover_frame.LID_SCREWS = the chassis columns. assembly_check.json: 158 bodies, 0 collisions. The tie slots stay 10.85 inside the chassis walls' inner faces (\|y\| 33.5), so the ties under the deck run over the tub |
+
+Rails and tie slots against the other features (edge to edge, from the model's parameters):
+
+| From | To | Distance (mm) |
+|---|---|---|
+| Rails (\|y\| 14.85–19.35, x 13.4–69.0, 4.1 tall) | toggle hole Ø6.4 at (0, −23) | 10.69 |
+| | cable slots (x 70.9–81.1, \|y\| 1.4–12.1) | 1.90 in X, 3.3 diagonal |
+| | screw holes at \|y\| 32.5 | 11.35 |
+| USB-end tie slots (x 13.6–16.8) | toggle hole | 10.40 (right side), 42.7 (left side) |
+| Far tie slots (x 62.7–65.9 and 65.6–68.8) | cable slots | 9.00 or more |
+| All tie slots | screw holes; rail outer face; window edge; deck edge | 26.57 or more; 1.50; 6.00; 15.35 |
+
+The two far-end slots (for the 38- and 30-pin boards) overlap by 0.3. They print as one 6.1 × 1.8 slot, as in round 3, and the deck around it is 6.0 or more on every side.
 
 ## Required fixes
 
 None.
 
-## Round 2 fixes checked
+## Round-3 findings
 
-Round 2 passed with no required fixes. Its recommendations:
-- **R1 (USB-end tie on EN/BOOT): still applies** (R1 below).
-- **R2 (round the window corners r ≥ 2): not done** (R2 below).
-- **R3 (heat-set inserts): done.** They are in the chassis columns, Ø4.0 × 6.5 holes in Ø10 columns, and the lid takes M3 × 8 machine screws.
+Round 3 had no required fixes. Its recommendations:
+- **R1 (USB-end tie on EN/BOOT):** still applies. The ties are still 1.2 mm from the board ends.
+- **R2 (window corners r ≥ 2):** not done.
+- **R3 (M3 washers under the lid-screw heads):** not done, and not in the BOM.
 
-## Printing notes vs print_requirements.json
-
-The brief's only printing note is "flat, underside on the bed". print_requirements.json asks for 3 perimeters, 5 top and 5 bottom layers, 20 % gyroid, and PETG at 230–250 °C nozzle and 80–90 °C bed, within 5 h. These are consistent with the brief, and slice_plan.json matches them.
+The round-3 checklist items all still pass on the round-4 geometry.
 
 ## Recommendations (not blocking)
 
-- **R1.** On your actual board, check that the USB-end tie (1.2 mm from the end, over the micro-USB socket) doesn't press EN or BOOT. A tie pressing EN holds the ESP32 in reset; if it does, use a small printed clip at that end instead.
-- **R2.** Round the window's internal corners to r ≥ 2 mm. It costs nothing, and the cable slots already have r2.
-- **R3.** The lid comes off at every charge, and the screw heads bear straight on PETG. Add an M3 washer (ISO 7089) under each lid-screw head, as §4 asks for plastic under clamping load. That means 4 more washers in the BOM, and an M3 × 8 still engages 4.5 mm of the insert.
+- **R1 (new; a BOM line in the assembly job): give the ESP32 zip ties a length.**
+  - The wider rails and the moved slots make each tie's loop about 98 mm, up from about 90:
+    - 28.3 over the board;
+    - twice 13.9 for the rail top, the rail face, the deck and the slot;
+    - 41.7 under the deck between the slots.
+  - A common 2.5 × 100 mm tie can't close that.
+  - BUILD_GUIDE §1 only says "2 at most 2.5 mm wide (ESP32)". Make it "at most 2.5 mm wide and at least 150 mm long".
+- **R2 to R4:** round-3 R1, R2 and R3, as above.
+
+## Printing notes against print_requirements.json
+
+- The brief's only printing note is "flat, underside on the bed".
+- print_requirements.json asks for 3 perimeters, 5 top and 5 bottom layers, 20 % gyroid, and PETG at 230–250 °C nozzle and 80–90 °C bed, within 5 h.
+- These are consistent with the brief, and slice_plan.json matches them.
