@@ -9,7 +9,7 @@ from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-HERE = Path(__file__).parent  # prices_*.csv and bom.py live next to this script
+HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 import bom  # noqa: E402
 

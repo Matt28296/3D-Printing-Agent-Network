@@ -38,7 +38,7 @@ ARM = [
 ]
 
 ROVER = [
-    ("Motors and boards", "N20 gearmotor 6 V ≈150:1 (LP or MP), 3 mm D-shaft", "n20", 2, ""),
+    ("Motors and boards", "N20 gearmotor 6 V ≈150:1 (LP or MP), 3 mm D-shaft 10 mm long (at least 9.6 mm)", "n20", 2, "Not a 9 mm shaft (sprocket strength round 4)"),
     ("Motors and boards", "Pololu #1996 aluminium hub, 3 mm (2-pack)", "hub1996", 1, "One pack"),
     ("Motors and boards", "TB6612FNG motor driver carrier", "tb6612", 1, ""),
     ("Motors and boards", "ESP32 DevKit (38- or 30-pin)", "esp32", 1, ""),
@@ -109,5 +109,5 @@ HEXAPOD = [
 PRINT = {  # PETG kg and print hours (latest slices or estimates)
     "Arm": (0.330, 30.2, "Latest slices (arm links round 3, claw round 1); the arm round will change them"),
     "Rover": (0.303, 30.4, "Round-2 slices; round 3 not sliced yet"),
-    "Hexapod": (0.400, 34.0, "Estimate: strength round-3 mass model and the round-4 print-time estimates"),
+    "Hexapod": (0.388, 31.6, "Slices of 26 Oct 2026: 9 plates (coxa 2 x 3, femur and tibia 3 x 2, deck, bottom plate)"),
 }

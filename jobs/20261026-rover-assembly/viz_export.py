@@ -34,8 +34,10 @@ LABELS = {"chassis": "Chassis (tub)", "lid": "Lid / electronics deck", "sprocket
 QTY = {"chassis": 1, "lid": 1, "sprocket": 2, "idler": 2, "wheel": 4, "link": 70}   # 68 links + 2 spares
 PLATES = {"link": 2}            # 34 links per plate (+ the 2 spares on one of them)
 PETG = "petg_olive"
-STAMPS = [{"text": "Round 4 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
-          {"text": "Not sliced yet", "kind": "note"}]
+STAMPS = [{"text": "Round 4: printability passed", "kind": "pass"}, {"text": "Chassis strength review running", "kind": "warn"},
+          {"text": "Slicing in progress", "kind": "note"}]
+RESLICE = ("chassis", "lid", "sprocket", "idler", "wheel", "link")   # their slice_stats.json are from round 2: empty this
+                                                                 # (or drop a part) once its round 4 slice is merged
 BUCK_X0 = 85.0                  # buck under the lid, x 85-107 (as in assembly_check.py)
 JACK_L = 20.0                   # M3 × 20 set screw (idler jack screw)
 
@@ -195,7 +197,7 @@ def main(out_dir: Path):
     size = S.export(out_dir / "robot.glb")
     parts = []
     for k, job in JOBS.items():
-        st = stats(job)
+        st = {} if k in RESLICE else stats(job)
         parts.append({"label": LABELS[k], "job": job, "qty": QTY[k], "plates": PLATES.get(k, 1),
                       "hours": st.get("print_time_h"), "grams": st.get("filament_g")})
     path_r = (F.N_LINKS * F.P - 2 * F.AXLE_DX) / (2 * math.pi)      # circular wrap that matches 34 × 10 mm
@@ -216,14 +218,16 @@ def main(out_dir: Path):
                      "TB6612FNG driver and the power switch ride on the "
                      "lid, two 18650 cells sit in the tub, and an HC-SR04 looks out of the front."),
             "meta": [["Printed parts", str(sum(QTY.values()))],
-                     ["Print time", f"{sum((p['hours'] or 0) * p['plates'] for p in parts):.1f} h"],
-                     ["PETG", f"{sum((p['grams'] or 0) * p['plates'] for p in parts):.0f} g"], ["Size", "160 × 155 × 73 mm"]],
+                     ["Print time", f"{sum(p['hours'] * p['plates'] for p in parts):.1f} h"
+                      if all(p['hours'] is not None for p in parts) else "slicing in progress"],
+                     ["PETG", f"{sum(p['grams'] * p['plates'] for p in parts):.0f} g"
+                      if all(p['grams'] is not None for p in parts) else "slicing in progress"], ["Size", "160 × 155 × 73 mm"]],
             "stamps": STAMPS,
             "facts": [["Controller", "ESP32 DevKit (38- or 30-pin) pins-down on the lid"],
-                      ["Drive", "2 × N20 6 V 100 rpm (150:1, LP/MP) on Pololu aluminium hubs; TB6612FNG on a mini "
-                                "breadboard; ≈10 N of track pull per side"],
+                      ["Drive", "2 × N20 6 V 100 rpm (150:1, LP/MP, 3 mm D-shaft 10 mm long) on Pololu aluminium hubs; "
+                                "TB6612FNG on a mini breadboard; ≈10 N of track pull per side"],
                       ["Tracks", "34 links per side, 10 mm pitch, Ø2 × 24 steel dowel pins; 10-tooth sprocket and idler; "
-                                 "jack-screw tensioner"],
+                                 "jack-screw tensioner; the idler bolt clamped between 2 mm steel plates"],
                       ["Power", "2 × 18650 (7.4 V), toggle switch on the lid; MP1584 buck to 5 V under the lid"],
                       ["Sensor", "HC-SR04 behind the front wall"],
                       ["Ground clearance", f"{F.FLOOR_Z:.1f} mm"],

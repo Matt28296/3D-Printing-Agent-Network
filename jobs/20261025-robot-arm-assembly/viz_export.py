@@ -33,8 +33,10 @@ LABELS = {"base": "Base", "ring": "Turntable support ring", "turntable": "Turnta
           "camera_mount": "Brio 4K camera mount"}
 QTY = {"claw_jaw": 2}
 # review status shown on the page (update after each gate)
-STAMPS = [{"text": "Arm round 3 + claw round 2: in review", "kind": "warn"},
-          {"text": "Don't print yet: re-slice after the reviews", "kind": "note"}]
+STAMPS = [{"text": "Arm round 4 + claw round 2: reviews running", "kind": "warn"},
+          {"text": "Don't print yet: slicing follows the reviews", "kind": "note"}]
+RESLICE = ("base", "ring", "turntable", "upper", "forearm", "claw_frame", "claw_cover", "claw_pinion", "claw_jaw",
+           "camera_mount")   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
 PAYLOAD = ("with the camera, claw down: ≈160 g lifted at 140–160 mm out, ≈50 g at 180–200 mm, none held straight out; "
            "without it ≈55 g straight out (BUILD_GUIDE payload table)")
 PETG = "petg_orange"
@@ -196,7 +198,7 @@ def main(out_dir: Path):
     # --- viewer config ---------------------------------------------------------------------------
     parts = []
     for k, job in JOBS.items():
-        st = stats(job)
+        st = {} if k in RESLICE else stats(job)
         parts.append({"label": LABELS[k], "job": job, "qty": QTY.get(k, 1), "hours": st.get("print_time_h"),
                       "grams": st.get("filament_g")})
     # reach figures from the assembly check, so the page always matches it
@@ -231,8 +233,10 @@ def main(out_dir: Path):
                      "fingertips, and plugs into your PC; an ESP32 in the base drives the servos. Every part is placed where the "
                      "CAD and the assembly check put it: drag the sliders to pose it, or play the demo."),
             "meta": [["Printed parts", str(sum(p["qty"] for p in parts))],
-                     ["Print time", f"{sum(p['hours'] or 0 for p in parts):.1f} h"],
-                     ["PETG", f"{sum(p['grams'] or 0 for p in parts):.0f} g"], ["Reach", reach]],
+                     ["Print time", f"{sum(p['hours'] for p in parts):.1f} h"
+                      if all(p['hours'] is not None for p in parts) else "slicing after the reviews"],
+                     ["PETG", f"{sum(p['grams'] for p in parts):.0f} g"
+                      if all(p['grams'] is not None for p in parts) else "slicing after the reviews"], ["Reach", reach]],
             "stamps": STAMPS,
             "facts": [["Controller", "ESP32 DevKit (38- or 30-pin) in a cradle in the base"],
                       ["Servos", "3 × MG996R (base, shoulder, elbow), 2 × MG90S (wrist, claw)"],
