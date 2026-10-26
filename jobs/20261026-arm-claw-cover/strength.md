@@ -15,7 +15,8 @@ The cover fails in two places.
    slot B downwards with 5.8 × the fingertip force. That strip is a beam along claw y, which runs across the layers in
    this print orientation. SF **1.36** (yaw stall) and **1.80** (hand push).
 
-Every other check passes with SF 3.6 or more.
+Every other check passes. The lowest of them is 3.19, on the same strip through the front-screw hole under the hand
+push.
 
 ## Load cases
 

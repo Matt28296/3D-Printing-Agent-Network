@@ -4,6 +4,43 @@ VERDICT: NEEDS_TEST
 
 strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
+## Round 4 (claw v2 + Brio, 2026-10-26)
+
+The end effector is now the claw v2 with a Logitech Brio (jobs `20261026-arm-claw-frame`, `-cover`, `-pinion`, `-jaw`
+×2 and `20261026-arm-camera-mount`). `strength_calc.py` reads it from those jobs: the layout from `claw_frame.py`, the
+masses from their `geometry.json`, and their measured CoGs (it warns if a claw part's volume changes). Everything else
+is as in round 2.
+
+- 172 g beyond the wrist horn, CoG 8.3 mm in front of the wrist axis and 39.5 mm outboard of the claw's back face. The
+  Brio's CoG is at world Y 117.6.
+- Fingertip 76.15 mm from the wrist axis (was ≈95), at world Y 75.9 (was 74.8). Wrist servo MG90S, 216 N·mm stall (was
+  SG90, 160). 50 g payload at the fingertip, as before.
+- Weight beyond the shoulder horn, arm straight and horizontal: 625 N·mm in-plane (was 415, now 63 % of stall),
+  186 out-of-plane (was 74).
+
+Changes:
+
+- **Lowest SF 3.94 → 3.90**, now out-of-plane bending at x 15 over the pocket under the yaw-stall sweep (transverse
+  moment 1551 → 1610 N·mm). Plate torsion, the round-2 lowest, goes 3.94 → 4.11 (torsion 1465 → 1403).
+- Other yaw-stall rows: elbow pilot row 4.73 → 4.56, x 30 9.70 → 9.34, shoulder-horn joint 5.80 → 5.95, elbow tab
+  screws 6.57 → 6.95.
+- Hand-push rows rise 7–11 % (x 15 4.65 → 5.00, torsion 6.24 → 6.95, joint 8.42 → 9.22).
+- Weight ×2 rows (SF 4 required): the lowest is now 15.93 (elbow pilot row, was 40.23).
+- Advisory "rails alone" rows: 1.83 → 1.76 (yaw), 2.08 → 2.28 (hand).
+- Proof test (2) still loads at least 1.5 × the hand push: 21 N at the elbow axis is 1.6 × the new transverse moment at
+  the horn, and 7.5 N on 185 mm is 1.67 × the new torsion.
+
+**Verdict unchanged: NEEDS_TEST.**
+
+**Advisory, not in this job's load cases.** The claw and camera-mount specs add a 10 N tug on the Brio's USB cable at
+the camera. Applied at either end of the camera in any direction, and scaled down wherever a servo would backdrive (as
+in the yaw sweep), it gives a transverse moment of 2489 N·mm at x 15 and a torsion of 1764 N·mm. The SFs are then: x 15
+2.52, elbow pilot row 2.89, plate torsion 3.27, shoulder-horn joint 4.49. That is below 3, so this verdict holds only if
+a snag cannot pull on the camera: tie the cable along each link with a slack loop at each joint, and anchor it at the
+base. To design the arm for the tug instead, this part needs another round.
+
+## Round 2 summary
+
 Every check is at SF 3.94 or above. The lowest is plate torsion under the yaw-stall sweep (1465 N·mm), conservatively
 taken as interlayer shear.
 
@@ -75,6 +112,8 @@ Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (se
 softening at about 70 °C: margin of 25 °C or more, OK.
 
 ## Results (copied from `python3 strength_calc.py`)
+
+Round-2 values. The script now prints the round-4 values; the rows that changed are listed under Round 4 at the top.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|

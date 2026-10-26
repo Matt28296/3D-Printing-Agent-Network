@@ -4,6 +4,42 @@ VERDICT: NEEDS_TEST
 
 strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
+## Round 4 (claw v2 + Brio, 2026-10-26)
+
+The end effector is now the claw v2 with a Logitech Brio (jobs `20261026-arm-claw-frame`, `-cover`, `-pinion`, `-jaw`
+×2 and `20261026-arm-camera-mount`). `strength_calc.py` reads it from those jobs: the layout from `claw_frame.py`, the
+masses from their `geometry.json`, and their measured CoGs (it warns if a claw part's volume changes). Everything else
+is as in round 3.
+
+- 172 g beyond the wrist horn, CoG 8.3 mm in front of the wrist axis and 39.5 mm outboard of the claw's back face. The
+  Brio's CoG is at world Y 117.6.
+- Fingertip 76.15 mm from the wrist axis (was ≈95), at world Y 75.9 (was 74.8). Wrist servo MG90S, 216 N·mm stall (was
+  SG90, 160). 50 g payload at the fingertip, as before.
+- Arm straight and horizontal: shoulder 625 N·mm (was 415), elbow 275 (was 186), about the yaw axis 665 (was 442).
+
+Changes:
+
+- **Lowest SF 4.36 → 4.29**, now the lower tab-pilot row (front face) under the yaw-stall sweep. In round 3 it was the
+  same section under the hand push.
+- Yaw-stall rows drop 2–3 % (upright-root M_x 1603 → 1645 N·mm): lower tab-pilot row 4.43 → 4.29, gusset toe
+  4.55 → 4.45, window bottom 4.66 → 4.52, disk 5.26 → 5.14, base-horn joint 4.43 → 4.34.
+- Hand-push rows rise 6–7 % (root M_x 1590 → 1496): lower tab-pilot row 4.36 → 4.66, window bottom 4.61 → 4.92.
+- Weight ×2 rows (SF 4 required) about halve and stay at 10.9 or more: lower tab-pilot row 22.91 → 11.30, base-horn
+  joint 19.99 → 10.92, gusset toe 30.31 → 14.94, disk 45.35 → 19.71.
+- Shoulder stall on the desk, M_y 1158 → 1171: rows 4–5 drop 1 %. The proof advisory row (1 kg at the elbow, base-horn
+  joint) goes 19.60 → 17.10.
+
+**Verdict unchanged: NEEDS_TEST.** The §8 proof test still applies.
+
+**Advisory, not in this job's load cases.** The claw and camera-mount specs add a 10 N tug on the Brio's USB cable at
+the camera. Applied at either end of the camera in any direction, and scaled down wherever a servo would backdrive (as
+in the yaw sweep), it gives M_x 3020 N·mm at the upright root (yaw sweep: 1645). The SFs are then: lower tab-pilot row
+2.27, window bottom 2.41, gusset toe 2.57, base-horn joint 2.69, disk 2.87. That is below 3, so this verdict holds only
+if a snag cannot pull on the camera: tie the cable along each link with a slack loop at each joint, and anchor it at the
+base. To design the arm for the tug instead, this part needs another round.
+
+## Round 3 summary
+
 Round 3: the front root wedge now stops at |X| ≥ 6 (WASHER_CLEAR_X), so the Ø9 clamp washer seats flat and the
 clamped base-horn joint gets its full capacity. Every check is at SF 4.36 or above; the lowest is the lower tab-pilot
 row of the upright under the 5 N hand push. No open fit or strength items.
@@ -83,6 +119,8 @@ Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (se
 softening at about 70 °C: margin of 25 °C or more, OK.
 
 ## Results (copied from `python3 strength_calc.py`)
+
+Round-3 values. The script now prints the round-4 values; the rows that changed are listed under Round 4 at the top.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|

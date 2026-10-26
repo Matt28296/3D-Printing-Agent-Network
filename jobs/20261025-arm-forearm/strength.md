@@ -4,6 +4,46 @@ VERDICT: NEEDS_TEST
 
 strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
+## Round 4 (claw v2 + Brio, 2026-10-26)
+
+The end effector is now the claw v2 with a Logitech Brio (jobs `20261026-arm-claw-frame`, `-cover`, `-pinion`, `-jaw`
+×2 and `20261026-arm-camera-mount`). `strength_calc.py` reads it from those jobs: the layout from `claw_frame.py`, the
+masses from their `geometry.json`, and their measured CoGs (it warns if a claw part's volume changes). Everything else
+is as in round 3.
+
+- 172 g beyond the wrist horn, CoG 8.3 mm in front of the wrist axis and 39.5 mm outboard of the claw's back face. The
+  Brio's CoG is at world Y 117.6.
+- Fingertip 76.15 mm from the wrist axis (was ≈95), at world Y 75.9 (was 74.8). 50 g payload at the fingertip, as
+  before.
+- Weight beyond the elbow horn, arm straight and horizontal: 275 N·mm in-plane (was 186), 117 out-of-plane (was 34).
+- **Wrist servo SG90 → MG90S** (216 N·mm stall, was 160). `tools/hobby_parts.py` gives the MG90S the SG90 body, so the
+  window and pilots are as reviewed. This job's `model.py` and spec still say SG90: rename them, and read the proof
+  test's pass criterion as "the MG90S tabs don't lift".
+
+Changes:
+
+- **Lowest SF 3.28 → 3.78**, still the wrist tab screws under the yaw-stall sweep. The shorter claw lowers the moments at
+  the wrist end (torsion 892 → 749 N·mm).
+- Other yaw-stall rows: x 15 3.72 → 3.90, plate torsion 4.60 → 5.48, wrist pilot row 5.84 → 6.19, elbow-horn joint
+  8.13 → 9.27.
+- Wrist-stall rows with the MG90S's 216 N·mm: pilot bearing 54.02 → 40.01, ligament tear-out 64.82 → 48.02. Window
+  bending (M 603 → 558) goes 16.55 → 17.89.
+- Weight ×2 rows (SF 4 required): the lowest is now 19.76 (x 15, was 67.41). The claw + camera ligament row goes
+  149.61 → 84.02.
+- Hand-push rows rise 12–25 %. Advisory "rails alone" rows: 2.57 → 2.73 (yaw), 3.91 → 4.68 (hand). The stock bag
+  screws (≈5 mm engaged) would now give 1.99, still below 3, so keep the M2×12.
+- Proof test (2): 7.5 N on the 95 mm lever (≈710 N·mm) is now 0.95 × the yaw-stall torsion (was 0.8 ×).
+
+**Verdict unchanged: NEEDS_TEST.**
+
+**Advisory, not in this job's load cases.** The claw and camera-mount specs add a 10 N tug on the Brio's USB cable at
+the camera. Applied at either end of the camera in any direction, and scaled down wherever a servo would backdrive (as
+in the yaw sweep), it gives a lowest SF of 3.07 here (x 15), with the wrist tab screws at 3.20. The forearm covers it.
+The base, turntable and upper link do not (their lowest SFs are 2.27 to 2.80), so tie the cable along each link with a slack loop at each
+joint, and anchor it at the base.
+
+## Round 3 summary
+
 Round 3: the wrist SG90 is now fixed with 2 × M2×12 self-tapping screws (spec §2, BUILD_GUIDE), engaging 9.5 mm in
 the 10 mm forearm. The last failing check, tab-screw pull-out under the yaw-stall sweep, moves from SF 1.73 to
 **3.28**, which is now the lowest SF. Everything else is at SF 3.72 or above. With the stock bag screws (~5 mm
@@ -80,6 +120,8 @@ Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (se
 softening at about 70 °C: margin of 25 °C or more, OK.
 
 ## Results (copied from `python3 strength_calc.py`)
+
+Round-3 values. The script now prints the round-4 values; the rows that changed are listed under Round 4 at the top.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|

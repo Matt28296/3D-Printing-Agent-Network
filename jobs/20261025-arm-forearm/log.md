@@ -14,3 +14,4 @@
 - 2026-10-26T01:29:19+00:00 · print-ops-lead · wrote preflight.md · ok
 - 2026-10-26T01:29:19+00:00 · head-orchestrator · stage -> AWAITING_APPROVAL (DESIGN, SLICE gates pass) · ok
 - 2026-10-26T06:39:59+00:00 · head-orchestrator · stage AWAITING_APPROVAL -> DESIGN: deep review 01 B1 + B2: the wrist MG90S's lead can't pass its window, and the MG90S spline sits 3.2 mm higher than modelled. Do not approve or print this job's current G-code · reopened
+- 2026-10-26T06:55:40Z · strength-analyst · round 4 (claw v2 + Brio): strength_calc.py takes the end effector from the claw jobs (172 g, fingertip 76.15, MG90S wrist), rerun; strength.md gets a Round 4 section; lowest SF 3.28 -> 3.78 (wrist now MG90S); USB-tug advisory 3.07 · NEEDS_TEST

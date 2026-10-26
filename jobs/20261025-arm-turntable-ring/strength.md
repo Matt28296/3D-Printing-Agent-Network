@@ -4,6 +4,35 @@ VERDICT: NEEDS_TEST
 
 strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
+## Round 4 (claw v2 + Brio, 2026-10-26)
+
+The end effector is now the claw v2 with a Logitech Brio (jobs `20261026-arm-claw-frame`, `-cover`, `-pinion`, `-jaw`
+×2 and `20261026-arm-camera-mount`). `strength_calc.py` reads it from those jobs: the layout from `claw_frame.py`, the
+masses from their `geometry.json`, and their measured CoGs (it warns if a claw part's volume changes). Everything else
+is as in round 2.
+
+- 172 g beyond the wrist horn, CoG 8.3 mm in front of the wrist axis and 39.5 mm outboard of the claw's back face. The
+  Brio's CoG is at world Y 117.6.
+- Fingertip 76.15 mm from the wrist axis (was ≈95), at world Y 75.9 (was 74.8). Wrist servo MG90S, 216 N·mm stall (was
+  SG90, 160). 50 g payload at the fingertip, as before.
+- Arm straight and horizontal: shoulder 625 N·mm (was 415), elbow 275 (was 186), about the yaw axis 665 (was 442).
+
+For the ring, only the catch forces change: the yaw-stall catch goes 45.2 → 46.3 N and the hand-push catch 44.5 → 41.9 N.
+
+| Rows | Round 2 SF | Round 4 SF |
+|---|---|---|
+| 6–10 yaw-stall catch: wall bearing / edgewise bending / interlayer shear / tab bearing / tab tear-out | 16.59 / 11.06 / 27.65 / 16.59 / 14.93 | 16.20 / 10.80 / 27.00 / 16.20 / 14.58 |
+| 11–15 hand-push catch: same order | 16.87 / 11.25 / 28.12 / 16.87 / 15.18 | 17.89 / 11.93 / 29.82 / 17.89 / 16.11 |
+
+**Verdict unchanged: NEEDS_TEST.** The lowest SF is still 3.39 (screw-head clamp at assembly), and the §8 proof test
+still applies.
+
+**Advisory, not in this job's load cases.** The claw and camera-mount specs add a 10 N tug on the Brio's USB cable at
+the camera. Servo-capped as in the yaw sweep, it would make the turntable catch on the ring with 82.9 N. The lowest ring
+row is then 6.03 (wall edgewise bending), so the ring covers it.
+
+## Round 2 summary
+
 The ring only takes load when the turntable rocks 1.5 mm onto it, and the clamped base horn makes that less likely
 than in round 1. Every check is at SF 3.39 or above. The governing row is the assembly case: the tab crushed under a
 pan head with no washer.
@@ -55,6 +84,8 @@ Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (se
 softening at about 70 °C: margin of 25 °C or more, OK.
 
 ## Results (copied from `python3 strength_calc.py`)
+
+Round-2 values. The script now prints the round-4 values; the rows that changed are listed under Round 4 at the top.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|

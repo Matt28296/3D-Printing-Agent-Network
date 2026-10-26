@@ -14,7 +14,7 @@ This slice covers how the whole robot works:
 The other slices are elsewhere, and this report refers to them instead of repeating them:
 
 - Per-part printability: each job's `design_review.md`.
-- Printed-part strength: `strength.md`, in progress.
+- Printed-part strength: each job's `strength.md`.
 - Bought parts and BOM: [01-bought-parts.md](01-bought-parts.md).
 - Wiring and firmware: [02-electronics-firmware.md](02-electronics-firmware.md).
 
@@ -30,7 +30,7 @@ What works:
 
 Why it lacks margin:
 
-- **Torque.** The robot weighs about 662 g, not 0.6 kg. In a tripod, the leg that stands alone on its side carries 41 % of that weight. Each femur servo therefore holds 110–127 N·mm before any dynamic factor, which is 51–59 % of the MG90S's 216 N·mm stall. The specs' own ×2 walking factor takes that past stall, and the 4 N foot load used in every part spec is 40 % too low.
+- **Torque.** The robot weighs about 662 g, not 0.6 kg. In a tripod, the leg that stands alone on its side carries 41 % of that weight. Each femur servo therefore holds 110–127 N·mm before any dynamic factor, which is 51–59 % of the MG90S's 216 N·mm stall. The specs' own ×2 walking factor takes that past stall. The specs' 4 N foot load is 40 % too low; the new strength reviews already use 2.90 / 5.80 N.
 - **Test gait.** The test sketch walks by swinging only the coxae. That forces every planted foot to slide 18–20 mm per stroke and makes the robot crab about 12° to the right. On carpet, the servos resisting the slide reach 61–89 % of stall.
 
 Most of this is a software fix: an inverse-kinematics (IK) gait with the tibias tucked 15° inward, at the same body height.
@@ -48,22 +48,22 @@ None of my findings blocks the build on its own. Two blockers in 01 must be clea
 
 B2 does not break the kinematics checked here: the critical poses keep at least 19.5 mm between legs.
 
-**Count:** 0 blockers, 7 should fix, 7 notes.
+**Count:** 0 blockers, 6 should fix, 8 notes.
 
 ## Findings
 
 | ID | Severity | Area | Finding | Evidence | Fix |
 |---|---|---|---|---|---|
 | SYS-1 | Should fix | Torque, stance | Static femur torque is 110–127 N·mm on the tripod leg that stands alone on its side: 51–59 % of stall, and 2.6–2.9 × the "1/5 of stall" guideline [4]. The specs' ×2 walking factor goes past stall (≈240 N·mm) | Mass 662 g (W 6.50 N). Lone-leg foot load 2.67–2.80 N (41 %). Femur 112.4 N·mm in the neutral tripod, 117.9 in the test gait, 126.6 in a 40 mm IK stride. Stall 216 N·mm [1] | Change the IK neutral stance: tibias tucked 15° in at the same height (femur −3°, tibia −12° in the sketch's terms). Peak static torque drops to 78–90 N·mm (36–42 %) at a 30–40 mm stride. If femurs still run hot, use 3.5 kg·cm-class servos [8] |
-| SYS-2 | Should fix | Load basis | Every part spec uses 0.6 kg, 2 N per foot and ×2 = 4 N. The real figures are 2.8 N static and 5.6 N with ×2, which is 40 % more. The coxa hub moment is ≈440 N·mm, not 310 | §4 of every part spec, e.g. `coxa/spec.md:22,26`, `femur/spec.md:21`. `assembly_plan.md:11` says "≈90 N·mm" | Update the five specs and the plan. Tell the strength analysts now: their checks use 4 N |
+| SYS-2 | Note | Load basis | Every part spec uses 0.6 kg, 2 N per foot and ×2 = 4 N. The real figures are 2.8 N static and 5.6 N with ×2, which is 40 % more. The coxa hub moment is ≈440 N·mm, not 310. The new strength reviews already use 2.90 / 5.80 N, which agrees | §4 of every part spec, e.g. `coxa/spec.md:22,26`, `femur/spec.md:21`. `assembly_plan.md:11` says "≈90 N·mm". Each `strength.md` "Robot mass" row | Bring the five specs and the plan in line with the strength reviews' loads |
 | SYS-3 | Should fix | Gait | The coxa-only sweep forces 18–20 mm of slide per planted foot per stroke. The body crabs 5 mm right per 24 mm step (≈12°) and yaws ±4° every step. On carpet, friction loads the resisting servos to 61–89 % of stall | `hexapod_test.ino:41–50, 81–82`. Planted-foot spacings change by up to 27.6 mm per stroke | Use an IK straight-line gait: stride 30–40 mm, lift 20 mm, 10–20 % double support. Checked collision-free (closest neighbour gap 25.0 mm). Coxa stays within ±20°, femur −12…+24°, tibia −37…+1° |
 | SYS-4 | Should fix | Wiring layout | Through the four corner slots (guide step 5), every femur lead is 44–122 mm short. The middle legs' coxa leads are 21–41 mm short, and their tibia leads 28–37 mm short even with the 15 cm extensions. One board's channel order runs back to front | `BUILD_GUIDE.md:33, 66`. Slots at x ±50 (`body-top/model.py:74–76`). MG90S lead 24 cm [2] | Run each leg's leads up the deck edge beside that leg. Add 6 × 15 cm extensions for the femurs (12 in all). Put each board's front leg on the channels at that board's front end |
 | SYS-5 | Should fix | Strain relief | No part has a tie point. The femur and tibia leads cross the coxa joint in the 9.4 mm gap under the plate, with 2.6 mm between the bracket and the servo case. The tibia lead crosses the femur joint beside the femur servo's horn | Coxa, femur and bottom-plate `model.py`: no tie slots. Only the deck has `TIE_SLOT` (`body-top/model.py:35`) | Add 3.2 × 1.8 tie slots: bottom-plate edge by each window, coxa bracket's outer plate end, femur near its horn. Leave free loops of ≈30 mm at the coxa and ≈20 mm at the femur |
-| SYS-6 | Should fix | Coxa joint | Each leg hangs on its coxa servo's output shaft alone. The shaft sees 187–203 N·mm of bending in a static tripod (≈0.9 × the servo's own stall torque) and ≈255 N·mm in the 20 cm drop. No proof test loads a real servo | MG90S: "one bearing" [1]. `coxa/spec.md:47` clamps the horn in a vice instead | Proof-test one assembled leg on its coxa servo. The tucked stance lowers the moment to 156–161 N·mm. If the play grows, add a second support opposite the horn |
+| SYS-6 | Should fix | Coxa joint | Each leg hangs on its coxa servo's output shaft alone. The shaft sees 187–203 N·mm of bending in a static tripod (≈0.9 × the servo's own stall torque). In the 20 cm drop it sees 1.1–1.5 N·m, using the strength reviews' foot-load cap. No proof test loads a real servo | MG90S: "one bearing" [1]. `coxa/spec.md:47` clamps the horn in a vice instead. Drop cap 14.4–19.2 N per foot (`hexapod-femur/strength.md:55`) | Proof-test one assembled leg on its coxa servo. Do not run the bottom-plate drop test (`body-bottom/spec.md:48`) on the robot's own coxa servos. The tucked stance lowers the static moment to 156–161 N·mm. If the play grows, add a second support opposite the horn |
 | SYS-7 | Should fix | Power | Walking draws 3.3–4.0 A on a hard floor and 3.8–4.7 A on carpet from a 5 A UBEC. Every 25 ms gait frame starts 10–14 A of servo current. Run time is 11–16 min | UBEC: 5 A continuous, 15 A burst [3]. MG90S stall 0.7 A at 5 V [2], up to 1.2 A at 6 V [5] | As 02 N-H4 (8–10 A rail, or one UBEC per board, ≈1000 µF per board) and 02 H3 (stagger the start). Use a pack rated 20 C or more (01 S15). The SYS-1/SYS-3 gait lowers the draw |
 | SYS-8 | Note | Kinematics | The legs are rotated copies, not mirrored. Every foot sits 15.8 mm clockwise of its coxa line (22.2 mm with 01-B2's servo), so the left feet stand forward and the right feet back | `assembly_check.json` `feet_xy`; `hex_frame.py:31` | Harmless with IK. Otherwise turn the coxa zeros by 11.6°, or mirror the bracket for one side |
 | SYS-9 | Note | Stability, clearance | Fine. Margin is at least 40.1 mm in the test gait and 35.7 mm in the recommended gait, and no parts touch. The "49 mm body underside" is really the coxa brackets; the plate is 96.4 mm up | Scripts below | Correct the wording (SYS-14) |
-| SYS-10 | Note | Battery, switch, UBEC | The LiPo slides out between the columns (2 mm per side). There is no switch mount and no place for the balance lead. The UBEC (2.7–3.3 W of loss) sits 4.5 mm from the LiPo and within 0.5 mm of a tab-screw tip | `viz_export.py:77`; DFM round 2 of the bottom plate | Cut a switch hole in the deck. Park the balance lead at the rear. Leave an air gap for the UBEC and add it to `assembly_check.py` |
+| SYS-10 | Note | Battery, switch, UBEC | The LiPo slides out between the columns (2 mm per side). There is no switch mount and no place for the balance lead. The UBEC (2.7–3.3 W of loss) sits 4.5 mm from the LiPo and 0.35–0.75 mm from a tab-screw tip | `viz_export.py:77`; DFM round 2 of the bottom plate | Cut a switch hole in the deck. Park the balance lead at the rear. Leave an air gap for the UBEC and add it to `assembly_check.py` |
 | SYS-11 | Note | Assembly order | The order works. Building each leg off the body and hanging it on the coxa spline last keeps every clamp screw reachable. Some steps need rewording | `BUILD_GUIDE.md:55–66` | See details |
 | SYS-12 | Note | Servicing | Each servo can be replaced (procedures in the details). Lifting the deck needs slack in 18 leads. M3 self-tapping screws in the PETG columns wear | `BUILD_GUIDE.md:66` | Heat-set inserts if the deck comes off often |
 | SYS-13 | Note | Interfaces | Link-to-case, hub-to-screw and engagement stacks are fine. Clamp-screw depth is in 01 S2, window fit in 01 S1, lead exit in 01 B1 and spline height in 01 B2. B2 raises the body 3.2 mm and moves the feet 6.4 mm sideways, but leaves at least 19.5 mm between legs | `hobby_parts.py:96–103, 425`; `b2_sensitivity.py` | See details |
@@ -126,7 +126,7 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
 
   The two balance at about −15°.
 - Neutral pose in the sketch's convention: femur −3.0°, tibia −12.0°. This keeps the body underside at 96.4 mm and moves each foot ≈18 mm inward.
-- Neutral feet then sit at (±115.2, ±67.7), (±15.8, ±110.8) and (±94.9, ±91.9).
+- Neutral feet then sit at LF (115.2, 67.7), LM (15.8, 110.8) and LR (−94.9, 91.9). The right legs are the same points turned 180°.
 - Lowering the body does not help more: knee-up, 14 mm lower gives 81 / 97 N·mm.
 - Leave the stance height as it is.
 
@@ -135,7 +135,15 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
 - Shortening the femur is only possible if the femur horn arm is turned to point backwards. The horn pocket and the tibia window are 11.8 mm apart.
 - If femur cases still pass about 50 °C after 5 min of walking, fit 3.5 kg·cm-class micro servos (343 N·mm) to the femurs and tibias. Example: TowerPro MG92B, 13.8 g, 22.8 × 12 × 31 mm [8]. Its case and tab heights differ from the MG90S model, so check the fit first.
 
-### SYS-2. Should fix: the design load in every part spec is 40 % low
+### SYS-2. Note: the design load in every part spec is 40 % low
+
+The strength reviews written today already work from corrected loads:
+
+- 683 g, an upper bound with solid parts;
+- a lone-leg share of 41.5–43.3 %;
+- 2.90 N sustained and 5.80 N walking.
+
+Those agree with this review's 662 g (with infill), 2.8 N and 5.6 N. What remains is the text in the specs.
 
 - **The specs' basis:** 0.6 kg, an equal share of 2 N per foot, ×2 = 4 N. This text is identical in every part spec's §4 (`coxa/spec.md:22`, `femur/spec.md:21`, `tibia/spec.md:21`, `body-bottom/spec.md:23`, `body-top/spec.md:22`).
 - **The real loads:** 2.8 N static on the lone tripod leg (1.9 N on the paired legs), 5.6 N with ×2.
@@ -145,7 +153,7 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
   - **Coxa vertical plate, out of plane:** the DFM's 126 N·mm at 4 N becomes ≈177 N·mm at 5.6 N.
 - **Elsewhere:** `assembly_plan.md:11` "≈90 N·mm static at the femur" should read 110–127 N·mm.
 
-**Fix:** update the five specs, then re-run the strength checks that are in progress.
+**Fix:** update the five specs and the plan to the strength reviews' basis, so later DFM and strength rounds start from the right loads.
 
 ### SYS-3. Should fix: the test gait slides every planted foot 18–20 mm per stroke
 
@@ -169,7 +177,7 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
 | µ (foot on floor) | Front/rear leg (1.9 N): tibia, femur | Middle leg (2.8 N): coxa |
 |---|---|---|
 | 0.3 (hard floor) | 40, 126 N·mm (femur 58 %) | 66 N·mm (31 %) |
-| 0.6 (carpet) | 80, 166 N·mm (77 %) | 132 N·mm (61 %) |
+| 0.6 (carpet) | 80, 165 N·mm (77 %) | 132 N·mm (61 %) |
 | 0.8 (foot caught in pile) | 106, 192 N·mm (89 %) | 176 N·mm (81 %) |
 
 **Also in the sketch**
@@ -236,8 +244,8 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
 
 **Pinch point 2: the femur joint**
 
-- The tibia lead leaves the tibia servo 8.9 mm behind the femur's back face (case bottom at C y −13.0, femur back face at −4.1).
-- That puts it in the 9.4 mm space between the turning femur and the bracket's vertical plate, next to the femur servo's horn.
+- The tibia servo's case reaches 8.9 mm behind the femur's back face (case bottom at C y −13.0, femur back face at −4.1). Its lead leaves about 6.4 mm behind that face.
+- That puts the lead in the 9.4 mm space between the turning femur and the bracket's vertical plate, next to the femur servo's horn.
 
 **Fix**
 
@@ -260,15 +268,18 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
 | Case | Bending at the coxa horn (N·mm) |
 |---|---|
 | Six legs down | 77 |
-| Static tripod, neutral / test gait / 40 mm IK stride | 187–190 / 200 / 203 |
-| 20 cm drop (3 × W over 6 feet = 3.25 N) | ≈255 |
+| Static tripod, neutral / test gait / 40 mm IK stride | 187–191 / 200 / 203 |
+| 20 cm drop at the spec's 3 × W over 6 feet (3.25 N) | ≈255 |
+| 20 cm drop at the strength reviews' cap: femur and knee servos back-drive at 1.5–2 × stall, 14.4–19.2 N per foot (`hexapod-femur/strength.md:55, 61`) | **1130–1510** |
 | Recommended tucked stance, 30–40 mm stride | 156–161 |
 
 **Why it matters**
 
 - The static tripod value is about 0.9 × the servo's own stall torque, applied sideways to a shaft that runs in "one bearing" [1].
+- In a drop, the moment is 5–7 × stall. The coxa servo is then probably the weakest bought part in the leg.
 - TowerPro publishes no side-load rating.
 - The coxa proof test (`coxa/spec.md:47`) clamps the horn in a vice, so no test so far loads a real servo's shaft.
+- The bottom plate's drop proof test (`body-bottom/spec.md:48`: three 20 cm drops onto carpet) would load all six coxa servos this way.
 
 **Fix**
 
@@ -277,7 +288,8 @@ B2 does not break the kinematics checked here: the critical poses keep at least 
   2. Measure the foot's vertical play under ±1 N.
   3. Walk for 30 min and measure again.
   4. Pass: play grows by less than 1 mm at the foot, with no clicking or skipped teeth.
-- **If it fails:** support the bracket on both sides of the joint, with the servo between two plates and a pivot pin opposite the horn. That means a new body.
+- **Drop test:** run the bottom plate's drop test with spare coxa servos, or replace it with a lower drop (5 cm) until a two-sided support exists.
+- **If the proof test fails:** support the bracket on both sides of the joint, with the servo between two plates and a pivot pin opposite the horn. That means a new body.
 
 ### SYS-7. Should fix: the servo supply is near its limit when walking on carpet
 
@@ -381,7 +393,7 @@ Under the robot's 180° symmetry, "B swings at p" is "A swings at 1 − p" turne
 **UBEC placement** (`viz_export.py:77`: on its side, y 22–31, x −34…11, 20 mm tall)
 
 - It is 4.5 mm from the LiPo and loses 2.7–3.3 W while walking.
-- The tip of the left-middle coxa servo's inner tab screw stands 1.5 mm proud of the plate at y ≈ 32.4–32.75, within 0.5 mm of the UBEC.
+- The tip of the left-middle coxa servo's inner tab screw stands 1.5 mm proud of the plate at y ≈ 32.4–32.75, 0.35–0.75 mm from the UBEC.
 - The rear-left column's fillet foot is 0.5 mm from the UBEC's end.
 - Keep an air gap to the pack, check the screw tip, and add a UBEC dummy to `assembly_check.py` (bottom-plate DFM).
 
@@ -483,7 +495,7 @@ Each replacement ends the same way: centre the new servo with `c`, fit the link 
 - `BUILD_GUIDE.md`, `assembly_plan.md`, `spec.md`, `hex_frame.py`, `assembly_check.py`, `assembly_check.json`, `viz_export.py` and `hexapod_test.ino`.
 - The five part jobs' `spec.md`, `design_brief.md`, `model.py`, `geometry.json`, `print_requirements.json`, renders and DFM reviews.
 - `tools/hobby_parts.py` and `tools/assembly_viz.py`.
-- Reviews 01 and 02, so as not to repeat their findings.
+- Reviews 01 and 02, and the hexapod `strength.md` files that appeared during this review, so as not to repeat their findings.
 
 **Computed** with the project's own models. Nothing in the repo was changed.
 
