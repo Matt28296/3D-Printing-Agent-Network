@@ -34,6 +34,7 @@ Print times and filament for each part are in its `slice_stats.json` (see the su
 | 3 | M3 × 10 self-tapping (pan head) | cradle, from below into the counterbores (not longer: the boss pilots are 6 mm deep) |
 | 3 | M3 × 16 screw + Ø9 (M3 large) washer | MG996R horn clamp screws: base, shoulder, elbow. Replace the short horn screw from the bag. |
 | 2 | M2 × 12 screw + Ø6 washer | SG90 horn clamp screws: wrist, gripper |
+| 2 | M2 × 12 self-tapping screws | wrist SG90 tab screws in the 10 mm forearm (the bag screws are too short to hold under a sideways knock) |
 | 4 | M3 × 50 (or #4 × 2") wood screws, or 2 desk clamps | **required**: base to desk or to a board. With the arm out, the arm tips the base over |
 | — | Spiral cable wrap or zip ties, 4 rubber feet | tidy the servo leads along the links |
 
@@ -72,7 +73,7 @@ The horns must go on with every servo at its centre position (90°), and the lin
 3. **Horns into the links:** press each horn into its pocket on the link's back face, double-arm horns along the link's long axis. Drill 1.5 mm pilots through two of the horn's arm holes into the plastic and screw the horn down with the small horn screws: they stop it turning. The **centre clamp screw** (M3×16 + washer on the big servos, M2×12 + washer on the small ones) goes in from the link's front face, through the link and the horn into the spline. It holds the link on, so tighten it firmly.
 4. **Turntable, before the shoulder servo** (the servo body covers the centre hole once fitted): lay the base horn flat on the turntable's underside, centred on the Ø3.4 hole and pointing along X, and drill/screw it through two arm holes. Push it onto the base servo's spline with the upright facing **+X** and drive the M3×16 + washer from the top (a screwdriver with a shaft of 75 mm or more clears the upright). **Then** put the shoulder MG996R through the upright window from the front (+Y side), shaft facing forward, body horizontal, and fix it with 4 tab screws.
 5. **Upper link:** fit the elbow MG996R in the link's far window (tabs on the front face, shaft forward). Push the link's horn onto the shoulder spline with the link pointing **straight up** (servo 90° = upright), then fit the clamp screw.
-6. **Forearm:** fit the wrist SG90 in the forearm's far window, shaft forward. Push the forearm onto the elbow spline **in line with the upper link** (elbow 90° = straight).
+6. **Forearm:** fit the wrist SG90 in the forearm's far window, shaft forward, with 2 × M2×12 self-tapping screws. Push the forearm onto the elbow spline **in line with the upper link** (elbow 90° = straight).
 7. **Gripper:** fit the gripper SG90 in the gripper base window. Push the gripper base onto the wrist spline **in line with the forearm**. Push the moving jaw onto the gripper spline with the jaws **closed**.
 8. Run the leads down each link with spiral wrap, leaving slack at every joint, and through the base's cable slot to the bus and the ESP32.
 

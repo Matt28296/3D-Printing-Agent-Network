@@ -1,0 +1,29 @@
+"""Idler (×2): the drive sprocket's geometry with a round running bore, free on an M3 bolt
+held in the chassis's tension slot. Toothed so the track wraps it exactly like the sprocket
+(a smooth idler would stretch the polygonal wrap). Printed outer face down, hub up.
+"""
+import runpy
+from pathlib import Path
+
+_sp = runpy.run_path(str(Path(__file__).resolve().parent.parent / "20261026-rover-sprocket" / "model.py"),
+                     init_globals={"__file__": str(Path(__file__).resolve().parent.parent
+                                                   / "20261026-rover-sprocket" / "model.py")},
+                     run_name="sprocket")
+
+# --- parameters (mm) -----------------------------------------------------------
+ROUND_BORE = 3.2      # printed running bore on the M3 bolt (+ HOLE_COMP in the sprocket model)
+
+
+def design():
+    g = _sp["design"].__globals__
+    g["BORE"], g["ROUND_BORE"] = "round", ROUND_BORE
+    try:
+        return _sp["design"]()
+    finally:
+        g["BORE"] = "D"
+
+
+def build():
+    from build123d import Rot
+    from cadlib import to_bed
+    return to_bed(Rot(180, 0, 0) * design())

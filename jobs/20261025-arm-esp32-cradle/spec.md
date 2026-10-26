@@ -7,8 +7,8 @@ Open frame that hangs under the base top plate on 3 bosses and holds an ESP32 De
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 66.5 × 43 × 10 mm. Interfaces: 3 × Ø3.4 holes with Ø6.5 × 6 counterbores from below, matching the base cradle pilots; PCB pocket 29.5 wide with end ledges at PCB-bottom height (Z −11.6).
-- Fasteners used: 3 × M3×12 self-tapping into the base bosses (4 mm clamp + ~8 mm thread)
+- Mating parts and their dimensions: 66.5 × 43 × 10 mm. Interfaces: 3 × Ø3.4 holes with Ø6.5 × 6 counterbores from below (M3×10), matching the base cradle pilots; PCB pocket 29.5 wide with end ledges at PCB-bottom height (Z −11.6).
+- Fasteners used: 3 × M3×10 self-tapping into the base bosses (4 mm clamp + 6 mm thread; M3×12 would bottom out)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |

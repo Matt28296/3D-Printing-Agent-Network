@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261025-arm-turntable/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 01:21:55 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 24323,
+    "print_time_h": 6.76,
+    "filament_g": 76.97,
+    "filament_mm": 25196.15,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 5.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 404,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        175.376
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        129.8
+      ]
+    }
+  },
+  "sha256": "ee1bdc36d0666cc9d7bd0f5963aa2a9fabfbf30f049ec109e810080e15a8232d",
+  "validator_version": "1.0.0"
+}

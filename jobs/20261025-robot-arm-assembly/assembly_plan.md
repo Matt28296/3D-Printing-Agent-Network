@@ -67,4 +67,4 @@ Reach (round 2 geometry): 304 mm from the yaw axis at full horizontal extension;
 
 | # | Piece | Status |
 |---|---|---|
-| 1–8 | all | round 2: DFM (7 FAIL) and strength (6 FAIL, 2 NEEDS_TEST) round-1 findings applied, rebuilt, mesh-checked, assembly re-checked; round-2 reviews next |
+| 1–8 | all | AWAITING_APPROVAL: DFM PASS, strength NEEDS_TEST (proof tests in §8), G-code audit PASS (round 3) |

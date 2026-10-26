@@ -42,3 +42,8 @@ None.
 
 1. The SG90 window ends now have about 0.1 mm of clearance each, and the spec's acceptance step already says to measure the servo first. A body over 22.6 mm long won't go in, so sand the window ends rather than enlarging the pilots' side.
 2. The 1.80 mm printed ligament assumes the default 0.2 mm hole shrinkage. Once `hole_comp_mm` is measured, re-check it.
+
+## Round 3 check (BOM change only)
+
+The wrist SG90 tab screws are now 2 × M2×12 self-tapping (spec §2). There is no geometry change: the rebuild gives 29381.4 mm³, matching geometry.json. With the screw through the 2.5 mm tab, 9.5 mm engages in the 10 mm plate. The pilot is a through-cut (Ø1.7 CAD, about Ø1.5 printed, ≈0.75 × the 2.0 mm major diameter, a normal self-tap ratio), so the screw cannot bottom out and its tip stays 0.5 mm inside the back face. The thread crest cuts about 0.25 mm into the ≈1.8 mm printed ligament, the same as with the bag screws in round 2. Nothing new; the verdict stays PASS.
+

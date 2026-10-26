@@ -457,7 +457,7 @@ def link_checks(job, P, far, far_name, far_stall, far_holes, far_lig, far_pilot,
         if m != "w":
             check(f"{lbl}: plate torsion, full width (Z shear)", torsion_thin(SW[m]["x30"]["T"], [(2 * HW, T)]), True, req,
                   shear=True)
-            check(f"{lbl}: {far_name} tab screws pull-out (L {far_screw_L:.0f})",
+            check(f"{lbl}: {far_name} tab screws pull-out (L {far_screw_L:.1f})",
                   pullout(SW[m]["far"]["Fs"], far_pilot, far_screw_L), True, req, shear=True)
             check(f"{lbl}: {far_name} window rails alone, servo case ignored (Kt 2.5)", bend(SW[m]["row"]["Mt"], Iw, cw),
                   False, req, Kt=2.5, info=True)
@@ -467,19 +467,18 @@ def link_checks(job, P, far, far_name, far_stall, far_holes, far_lig, far_pilot,
 P = FA
 WIN_W = SG90.width + P.CLR + HOLE_COMP
 PILOT = SG90.screw_pilot_d                         # printed pilot 1.5 (CAD 1.7)
+WRIST_SCREW = 12.0                                 # spec 2 / BUILD_GUIDE: 2 x M2x12 self-tapping (not the bag screws)
+WRIST_L = min(P.T, WRIST_SCREW - SG90.tab_t)       # engaged length in the forearm
 # printed ligament: pilot inner edge (8.55 - 0.75) to the window end (5.9 + END_CLR / 2)
 LIG = (SG90.hole_dx / 2 + (-(SG90.length - SG90.shaft_from_end) + SG90.length / 2)) - PILOT / 2 \
     - (SG90.shaft_from_end + P.END_CLR / 2)
 M_WIN = STALL_MG996R_NMM * (L2 + L3 - (P.L - (SG90.length - SG90.shaft_from_end))) / (L2 + L3)
 SW = link_checks("20261025-arm-forearm", P, "W", "wrist SG90", STALL_SG90_NMM, [(-19.25, 0.0), (8.55, 0.0)], LIG, PILOT,
-                 min(P.T, 5.0), (SG90.hole_dx, 2 * SG90.width / 2), M_WIN, WIN_W, 2, "elbow", 1, "E",
+                 WRIST_L, (SG90.hole_dx, 2 * SG90.width / 2), M_WIN, WIN_W, 2, "elbow", 1, "E",
                  "x15 1927, x30 2163, x70.75 2021, window 1113")
 check("gripper weight x2 + 1 N along x: SG90 pilot ligament tear-out", tearout(DYN * weight_n(3) + 1.0, LIG, P.T), False,
       SF_STATIC, shear=True)
 worst, fails = report("20261025-arm-forearm")
-L_LONG = P.T - 0.5
-print(f"\nWHAT-IF  wrist SG90 fixed with M2x12 self-tapping screws instead of the bag screws (engaged {L_LONG:.1f} mm in the"
-      f" {P.T:.0f} mm forearm, printed pilot {PILOT}):")
-for m in ("yaw", "hand"):
-    sf = allow_mpa(True, True) / pullout(SW[m]["far"]["Fs"], PILOT, L_LONG)
-    print(f"  {m}: wrist SG90 tab screws pull-out SF {sf:.2f} {'OK' if sf >= 3 else 'FAIL'}")
+print(f"wrist SG90 tab screws: M2x{WRIST_SCREW:.0f} through the {SG90.tab_t} mm tab -> {WRIST_L:.1f} mm engaged"
+      f" (bag screws would give ~5 mm: yaw-stall SF "
+      f"{allow_mpa(True, True) / pullout(SW['yaw']['far']['Fs'], PILOT, 5.0):.2f})")

@@ -23,7 +23,7 @@ Open-bottom box (110 × 104 × 40 mm) that holds the base-yaw MG996R (hanging th
 Printed targets: servo windows +0.4 total (SG90 window ends +0.2), horn pockets +0.5 total, M3 clearance Ø3.4, M2 clearance Ø2.4, self-tap pilots Ø2.6 (MG996R tab screws) and Ø1.5 (SG90 tab screws). Every hole and pocket also gets **HOLE_COMP = +0.2 mm** in CAD (fdm-design-rules default; no library row yet), applied in tools/hobby_parts.py cutters and each model.py. Horn joints: the horn's centre screw is replaced by a longer one + washer through the link, clamping link and horn onto the spline (strength round 1).
 
 ## Parameters exposed by model.py
-BX, BY, H, WALL, PLATE_T, CORNER_R, PILLAR_D, PILLAR_HOLE, SERVO_BOSS_D, SERVO_BOSS_L, RING_PILOT_R, RING_PILOT_ANG, CRADLE_PILOTS, CRADLE_BOSS_D, CRADLE_BOSS_L, PILOT, USB_SLOT, USB_Y, USB_Z, JACK_D, JACK_Y, JACK_Z, CABLE_SLOT
+HOLE_COMP, SERVO_CLR, BED_CHAMFER, BX, BY, H, WALL, PLATE_T, CORNER_R, PILLAR_D, PILLAR_HOLE, SERVO_BOSS_D, SERVO_BOSS_L, RING_PILOT_R, RING_PILOT_ANG, CRADLE_PILOTS, CRADLE_BOSS_D, CRADLE_BOSS_L, PILOT, USB_SLOT, USB_Y, USB_Z, JACK_D, JACK_Y, JACK_Z, CABLE_SLOT
 
 ## Risks
 - Wall openings printed as overhangs → 45° roofs / teardrop pointing up in print

@@ -1,6 +1,6 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review (round 2): 20261025-arm-esp32-cradle
+# DFM review (round 3): 20261025-arm-esp32-cradle
 
 Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), base model.py and spec.md, tools/hobby_parts.py, assembly_plan.md, library/lessons.md (no entries).
 Outputs are current: `build()` gives 11498.6 mm³, matching geometry.json (11498.57 mm³).
@@ -19,7 +19,7 @@ Outputs are current: `build()` gives 11498.6 mm³, matching geometry.json (11498
 | 8 | HOLE_COMP | PASS | Holes Ø3.6 and counterbores Ø6.7 in CAD (geometry.json). `HALF = 14.15 + 0.6 + 0.1` = 14.85, so the pocket is 29.7 in CAD and prints at about 29.5 (spec §3) |
 | 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(c, BOT, 0.4)` |
 | 10 | Internal corners | PASS | Non-structural |
-| 11 | Fasteners | **FAIL** | Spec §2 calls for "3 × M3×12 … (4 mm clamp + ~8 mm thread)", but the base's cradle pilots are only **6 mm** deep: Ø2.8 from Z −10 to −4, blind (base model.py `CRADLE_BOSS_L + 1` cylinder starting at Z −11). With the head on the counterbore floor at Z −14 (BOT −20 + `CBORE_DEPTH` 6), an M3×12 tip reaches Z −2, 2 mm into unpiloted plate with only 2 mm of plate left under the base's bed face. The screw bottoms out before it clamps, or cracks or raises the plate top |
+| 11 | Fasteners | PASS | Spec §2 now says "3 × M3×10 … (4 mm clamp + 6 mm thread)". The head sits on the counterbore floor at Z −14 and the tip reaches Z −4, the end of the base's 6 mm Ø2.8 boss pilot (Z −10 to −4). That gives 6 mm of engagement with no overshoot |
 | 12 | Critical dims named | PASS | `HALF`, `PCB_BOT`, `CBORE_D`, `CBORE_DEPTH`, and `SCREWS` matching the base `CRADLE_PILOTS` |
 | 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
 | 14 | lessons.md | N/A | No entries |
@@ -27,7 +27,7 @@ Outputs are current: `build()` gives 11498.6 mm³, matching geometry.json (11498
 
 ## Required fixes
 
-1. **Use M3×10, not M3×12** (rule §4, checklist 11). The head seats at Z −14 and the tip reaches Z −4, which is exactly the end of the 6 mm pilot: 6 mm of engagement plus the 4 mm clamp. Update this spec, the base spec §2 and the assembly plan's fastener row. The alternative is deepening the base pilots (see the base review).
+None.
 
 ## Round 1 → round 2
 
@@ -42,4 +42,10 @@ Outputs are current: `build()` gives 11498.6 mm³, matching geometry.json (11498
 ## Notes
 
 1. The USB ledge (x 48.2–51) relies on the last header pins sitting at x ≤ 47.9 (model.py comment), which leaves 0.3 mm to the jumper housings. That figure isn't in `BoardSpec`, so check it on your board.
-2. The assembly plan's "Decisions" row still lists M3×8 for the ring and the cradle, which is stale against the specs (M3×6 ring, and M3×12, to become M3×10, for the cradle).
+2. The assembly plan's fastener row is now current (M3×6 ring, M3×10 cradle).
+
+## Round 2 → round 3
+
+| Round-2 finding | Status | How I checked |
+|---|---|---|
+| M3×12 overshoots the base pilots by 2 mm | Closed | This spec §2, the base spec §2, assembly_plan.md line 16 and BUILD_GUIDE.md line 34 ("not longer: the boss pilots are 6 mm deep") all say M3×10. The geometry is unchanged: rebuilt 11498.6 mm³ = geometry.json |

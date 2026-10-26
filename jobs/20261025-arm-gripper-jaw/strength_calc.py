@@ -412,10 +412,9 @@ def jaw_oop(x):
 
 
 def jaw_in(x):
-    """In-plane I, c at x (stress along x varies with y); pocket region counted at the floor thickness."""
+    """In-plane I, c at x (stress along x varies with y); the pocket removes 2 mm over its width (CAD x8 Izz 1774)."""
     if x < SG90.horn_arm_len + SG90.horn_tip_d / 2 + 0.35:
         wp = 2 * pocket_half_w(SG90, x)
-        rects = [(P.T, BW, 0.0), (-HORN_DEPTH, wp, (P.BAR_Y0 + P.BAR_Y1) / 2 - (P.BAR_Y0 + P.BAR_Y1) / 2)]
         I = P.T * BW ** 3 / 12 - HORN_DEPTH * wp ** 3 / 12
     else:
         I = P.T * BW ** 3 / 12

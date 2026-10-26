@@ -1,53 +1,55 @@
 VERDICT: NEEDS_TEST
 
-# Strength check: 20261025-arm-turntable-ring
+# Strength check: 20261025-arm-turntable-ring (round 2)
 
-strength-analyst · 2026-10-26 · calculations in `strength_calc.py` (plain python3; section properties cross-checked against build123d sections of `design()`)
+strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
-The ring is only loaded when the turntable rocks 1.5 mm onto it. Every check is at SF 3.67 or above. Because the
-allowables are placeholders, NEEDS_TEST is the best verdict possible.
+The ring only takes load when the turntable rocks 1.5 mm onto it, and the clamped base horn makes that less likely
+than in round 1. Every check is at SF 3.39 or above. The governing row is the assembly case: the tab crushed under a
+pan head with no washer.
+
+## Round 1 → round 2
+
+| | Round 1 | Round 2 |
+|---|---|---|
+| Lowest SF | 3.67, screw-head clamp | 3.39, screw-head clamp (the tab hole is now Ø3.6 in CAD, so the head's bearing ring is smaller) |
+| Wall | 3.5 thick, 13 tall | 3.0 thick (R_OUT 44), 15 tall: friction checks SF ≥ 8.6 |
+| Worst ring catch | 52.5 N | 45.2 N |
 
 ## Load cases
 
-The ring force comes from the turntable cases (see ../20261025-arm-turntable/strength_calc.py), re-derived from
-servo stall torques and masses: R = M_x / (ring mid radius 42.75 − hub radius 5.5).
+**Inputs, re-derived (round 2).** Each script now reads its parameters from the jobs' `model.py` (top-level constants
+evaluated with `ast`), servo data from `tools/hobby_parts.py`, and masses from each `geometry.json` volume x 1.27 g/cm³:
+upper link 50.4 g, forearm 37.3 g, gripper base 30.8 g, jaw 8.5 g, turntable 113.5 g. MG996R 55 g and SG90 9 g; horn
++ clamp screw 5 g (MG996R) / 2 g (SG90); 10 g cable allowance; 50 g payload. CGs come from the parameters (within
+4 mm of the build123d centres of mass). The world-Y stack is rebuilt from the new thicknesses: horn faces at Y 11.5 /
+36.0 / 55.4 / 72.8 and the fingertip at Y 74.8 (assembly plan: ≈75). Static moments with the arm straight and
+horizontal: about the yaw axis 442 N·mm, shoulder 415 (plan ≈410, 41 % of stall), elbow 186 (plan ≈180), wrist 71,
+gripper 29. Pose-independent out-of-plane weight moments: shoulder horn 74, elbow 34, wrist 13, upright root 137 N·mm.
+Dynamic factor x2.
 
-| Case | Load | Applied at, direction | Duration | Source |
-|---|---|---|---|---|
-| 20 N on the turntable rim | R = 20 N | ring top, down | short-term | spec |
-| Base-yaw stall into an obstacle (sweep) | R = 52.5 N, friction 0.3R tangential | ring top | short-term | **added** |
-| Hand push 5 N sideways at the fingertip (arm up) | R = 44.4 N | ring top | short-term | **added** |
-| Tab screw clamp (assembly) | 100 N under an M3 pan head, no washer | tab | sustained | **added** |
-
-Build direction: the ring prints as modelled (tabs on the bed). Ring-wall compression is across the layers but does
-not separate them. Edgewise bending of the wall from friction puts stress across the layers. Tab bearing and
-tear-out run along the layers.
+Ring force R = M_x/(ring mid radius 42.5 − hub radius 5.5) from the turntable sweep: spec 20 N on the rim, the 50 N
+§8 proof (advisory rows), a yaw-stall catch of 45.2 N and a hand-push catch of 44.5 N. Friction 0.3R acts tangentially,
+which puts edgewise bending (across the layers) and interlayer shear in the wall. Screw clamp: 100 N under an M3 pan
+head (assembly, sustained).
 
 ## Assumptions
 
-- Contact patch: 10 mm of arc × the 3.5 mm wall. The friction coefficient is 0.3 and acts tangentially (the turntable
-  yaws), i.e. in the plane of the wall. A 26 mm wall segment (45° spread over the 13 mm height) bends edgewise.
-- Friction is taken by a single tab (conservative). The tab hole is 3.4 mm with an M3 shank, edge distance 4.5 mm.
-- Screw clamp: a snug hand-tightened self-tapper is taken as 100 N. A PETG ring creeps under a cranked screw, so tighten
-  until snug, or fit an M3 washer (which doubles the bearing area).
-- Pull-out and thread stripping: τ = F/(π·d_pilot·L), checked against the interlayer shear allowable.
-- Bearing and tear-out at vertical pilots in flat plates are in-plane. Tear-out from horizontal holes in vertical
-  walls shears the layers.
-- Combined moments are added rather than combined vectorially, except where the script says otherwise (conservative).
-- Pilot holes are taken at their nominal size. Hoop stress from driving the self-tapping screws into thin ligaments is
-  not computable by hand, so it is left to the proof test and the fit coupon.
+- Contact patch: 10 mm of arc × the 3 mm wall. The bending wall segment is 2 x the 15 mm height.
+- Friction is taken by a single tab. The tab hole is Ø3.6 (CAD), edge distance 4.5.
+- A snug hand-tightened M3×6 is taken as 100 N. Tighten until snug, or fit an M3 washer (which doubles the bearing area).
 
 ## Allowables and sources
-`library/materials.csv` has no measured row and no printed-specimen datasheet is in `inputs/`, so these are the
+`library/materials.csv` still has no measured row, and no printed-specimen datasheet is in `inputs/`, so these are the
 strength-checks **placeholder** values for PETG. **NEEDS_TEST is the best verdict possible.**
 
 | Quantity | Value | Source |
 |---|---|---|
 | Tension/bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
 | Tension/bending across the layers (Z) | 12.5 MPa | placeholder x 0.5 |
-| Shear in-plane / interlayer (incl. screw pull-out, tear-out in vertical walls) | 12.5 / 6.25 MPa | 0.5 x the normal value (Tresca), assumption |
+| Shear in-plane / interlayer (screw pull-out, washer pull-through, tear-out in vertical walls) | 12.5 / 6.25 MPa | 0.5 x the normal value (Tresca), assumption |
 | Bearing, compression (any direction) | 25 MPa | in-plane value: compression does not separate layers |
-| Kt | 2.5 sharp internal corner or window corner; 2 hole (PETG); 1.5 rounded pocket tip | skill |
+| Kt | 2.5 sharp internal corner or window corner; 2.0 the 45° root wedge (two 135° corners); 2 hole; 1.5 rounded pocket tip | skill (2.0 for the wedge is my interpolation) |
 
 Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (servo cases up to 45 °C) against PETG
 softening at about 70 °C: margin of 25 °C or more, OK.
@@ -56,26 +58,42 @@ softening at about 70 °C: margin of 25 °C or more, OK.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|
-| 1 | 20 N on the rim (spec): ring wall bearing (compression across layers), R 20.0 N | XY | 0.57 | 25.00 | 43.75 | 3 | OK |
-| 2 | 20 N on the rim (spec): wall edgewise bending from friction 0.3R, 26 mm segment (Z, Kt 2.5) | Z | 0.49 | 12.50 | 25.28 | 3 | OK |
-| 3 | 20 N on the rim (spec): interlayer shear in the wall from friction (Z shear) | Z shear | 0.10 | 6.25 | 63.19 | 3 | OK |
+| 1 | 20 N on the rim (spec): ring wall bearing, R 20.0 N (compression) | XY | 0.67 | 25.00 | 37.50 | 3 | OK |
+| 2 | 20 N on the rim (spec): wall edgewise bending from friction 0.3R, 30 mm segment (Z, Kt 2.5) | Z | 0.50 | 12.50 | 25.00 | 3 | OK |
+| 3 | 20 N on the rim (spec): interlayer shear in the wall from friction | Z shear | 0.10 | 6.25 | 62.50 | 3 | OK |
 | 4 | 20 N on the rim (spec): tab bearing on the M3 shank from friction (one tab) | XY | 0.67 | 25.00 | 37.50 | 3 | OK |
-| 5 | 20 N on the rim (spec): tab tear-out to its edge (e 4.5) | XY shear | 0.36 | 12.50 | 35.00 | 3 | OK |
-| 6 | yaw-stall ring catch: ring wall bearing (compression across layers), R 52.5 N | XY | 1.50 | 25.00 | 16.66 | 3 | OK |
-| 7 | yaw-stall ring catch: wall edgewise bending from friction 0.3R, 26 mm segment (Z, Kt 2.5) | Z | 1.30 | 12.50 | 9.62 | 3 | OK |
-| 8 | yaw-stall ring catch: interlayer shear in the wall from friction (Z shear) | Z shear | 0.26 | 6.25 | 24.06 | 3 | OK |
-| 9 | yaw-stall ring catch: tab bearing on the M3 shank from friction (one tab) | XY | 1.75 | 25.00 | 14.28 | 3 | OK |
-| 10 | yaw-stall ring catch: tab tear-out to its edge (e 4.5) | XY shear | 0.94 | 12.50 | 13.33 | 3 | OK |
-| 11 | hand-push 5 N ring catch: ring wall bearing (compression across layers), R 44.4 N | XY | 1.27 | 25.00 | 19.69 | 3 | OK |
-| 12 | hand-push 5 N ring catch: wall edgewise bending from friction 0.3R, 26 mm segment (Z, Kt 2.5) | Z | 1.10 | 12.50 | 11.38 | 3 | OK |
-| 13 | hand-push 5 N ring catch: interlayer shear in the wall from friction (Z shear) | Z shear | 0.22 | 6.25 | 28.45 | 3 | OK |
-| 14 | hand-push 5 N ring catch: tab bearing on the M3 shank from friction (one tab) | XY | 1.48 | 25.00 | 16.88 | 3 | OK |
-| 15 | hand-push 5 N ring catch: tab tear-out to its edge (e 4.5) | XY shear | 0.79 | 12.50 | 15.76 | 3 | OK |
-| 16 | assembly: screw-head clamp 100 N on the tab, no washer (compression) | XY | 6.81 | 25.00 | 3.67 | 3 | OK |
+| 5 | 20 N on the rim (spec): tab tear-out to its edge (e 4.5) | XY shear | 0.37 | 12.50 | 33.75 | 3 | OK |
+| 6 | yaw-stall ring catch: ring wall bearing, R 45.2 N (compression) | XY | 1.51 | 25.00 | 16.59 | 3 | OK |
+| 7 | yaw-stall ring catch: wall edgewise bending from friction 0.3R, 30 mm segment (Z, Kt 2.5) | Z | 1.13 | 12.50 | 11.06 | 3 | OK |
+| 8 | yaw-stall ring catch: interlayer shear in the wall from friction | Z shear | 0.23 | 6.25 | 27.65 | 3 | OK |
+| 9 | yaw-stall ring catch: tab bearing on the M3 shank from friction (one tab) | XY | 1.51 | 25.00 | 16.59 | 3 | OK |
+| 10 | yaw-stall ring catch: tab tear-out to its edge (e 4.5) | XY shear | 0.84 | 12.50 | 14.93 | 3 | OK |
+| 11 | hand-push 5 N ring catch: ring wall bearing, R 44.5 N (compression) | XY | 1.48 | 25.00 | 16.87 | 3 | OK |
+| 12 | hand-push 5 N ring catch: wall edgewise bending from friction 0.3R, 30 mm segment (Z, Kt 2.5) | Z | 1.11 | 12.50 | 11.25 | 3 | OK |
+| 13 | hand-push 5 N ring catch: interlayer shear in the wall from friction | Z shear | 0.22 | 6.25 | 28.12 | 3 | OK |
+| 14 | hand-push 5 N ring catch: tab bearing on the M3 shank from friction (one tab) | XY | 1.48 | 25.00 | 16.87 | 3 | OK |
+| 15 | hand-push 5 N ring catch: tab tear-out to its edge (e 4.5) | XY shear | 0.82 | 12.50 | 15.18 | 3 | OK |
+| 16 | assembly: screw-head clamp 100 N on the tab, no washer (compression) | XY | 7.36 | 25.00 | 3.39 | 3 | OK |
 
-**lowest SF 3.67 (required 3) at: assembly: screw-head clamp 100 N on the tab, no washer (compression)**
+Advisory rows (not in the verdict, reason under Assumptions):
 
-## Proof test (spec §8 confirmed, with the base test raised)
-The ring is covered by the base proof test, which should be raised from 20 N to **50 N on the turntable rim, 1 min at
-each of 4 positions 90° apart**. Pass: no cracks in the tabs or the ring wall, no crushing of the ring top (the
-1.5 mm running gap still clears), and the turntable then turns freely through ±90° with no rubbing.
+| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |
+|---|---|---|---|---|---|
+| 50 N proof on the rim (spec 8): ring wall bearing, R 50.0 N (compression) | XY | 1.67 | 25.00 | 15.00 | 2 |
+| 50 N proof on the rim (spec 8): wall edgewise bending from friction 0.3R, 30 mm segment (Z, Kt 2.5) | Z | 1.25 | 12.50 | 10.00 | 2 |
+| 50 N proof on the rim (spec 8): interlayer shear in the wall from friction | Z shear | 0.25 | 6.25 | 25.00 | 2 |
+| 50 N proof on the rim (spec 8): tab bearing on the M3 shank from friction (one tab) | XY | 1.67 | 25.00 | 15.00 | 2 |
+| 50 N proof on the rim (spec 8): tab tear-out to its edge (e 4.5) | XY shear | 0.93 | 12.50 | 13.50 | 2 |
+
+**lowest SF 3.39 (required 3) at: assembly: screw-head clamp 100 N on the tab, no washer (compression)**
+
+Script notes:
+
+```
+arm model: Y horn faces shoulder 11.5, elbow 36.0, wrist 55.4, gripper 72.8; fingertip Y 74.8; masses UL 50.4 FA 37.3 GB 30.8 JW 8.5 TT 113.5 g; CG x UL 39.9 FA 35.5 GB 52.6 (z 6.8) JW 20.5
+```
+
+## Proof test (spec §8 confirmed)
+Covered by the base test: 50 N on the rim at 4 positions. At 50 N every ring check is at SF 10 or above (advisory rows).
+Pass criteria as in §8: no cracks in the tabs or the wall, the 1.5 mm running gap still clears, and the turntable turns
+freely through ±90°.

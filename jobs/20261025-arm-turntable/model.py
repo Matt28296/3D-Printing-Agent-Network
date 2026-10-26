@@ -28,6 +28,7 @@ UP_TOP = ZS + WIN_HALF_H + ROOF_H + 6.0         # 6 mm above the roof apex
 GUSSET_T, GUSSET_X = 4.0, 30.5                  # |X| 28.5-32.5, outside the body (±20.4) and its cable
 GUSSET_LEN, GUSSET_H = 23.0, 70.0               # toe at r 47.6 < disk r 48 (DFM round 1); 70 tall (strength)
 ROOT_FILLET = 3.0              # 45° wedge both sides of the upright root (stress relief across layers)
+WASHER_CLEAR_X = 6.0           # front wedge stops at |X| >= 6 so the Ø9 clamp washer seats flat (DFM/strength round 2)
 BED_CHAMFER = 0.4
 
 
@@ -56,7 +57,8 @@ def design():
     part = disk + Pos(0, UP_Y - UP_T / 2, top) * Box(UP_W, UP_T, up_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
     # root wedges (front and back) along the full upright width
     f = ROOT_FILLET
-    part += _yz_prism([(UP_Y - 0.01, top), (UP_Y + f, top), (UP_Y - 0.01, top + f)], -UP_W / 2, UP_W)
+    for x0 in (-UP_W / 2, WASHER_CLEAR_X):   # front wedge in two pieces, clear of the clamp washer
+        part += _yz_prism([(UP_Y - 0.01, top), (UP_Y + f, top), (UP_Y - 0.01, top + f)], x0, UP_W / 2 - WASHER_CLEAR_X)
     part += _yz_prism([(y_back + 0.01, top), (y_back - f, top), (y_back + 0.01, top + f)], -UP_W / 2, UP_W)
     # gussets behind the upright (−Y side), outside the servo body (|X| <= 20.4)
     for sx in (-1, 1):

@@ -1,11 +1,3 @@
-"""Strength check for jobs/20261025-arm-esp32-cradle. Run: python3 jobs/20261025-arm-esp32-cradle/strength_calc.py
-
-strength-analyst, 2026-10-25. Plain python3 (no build123d): geometry is copied from model.py, and the section
-properties were cross-checked against build123d sections of design() (printed "CAD" values).
-ESP32 cradle: USB insertion into the far block and screws, jumper pull on the ledges and walls; what-if.
-Units: N, mm, MPa, N.mm. Allowables are PETG placeholders (no measured row in library/materials.csv), so the best
-possible verdict is NEEDS_TEST. Directions: "XY" = stress along the layers, "Z" = across the layers (or shearing them).
-"""
 import math
 
 # --- allowables -------------------------------------------------------------------
@@ -94,46 +86,139 @@ def report(title):
     print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables; PASS not possible without measured data)")
     return worst, fails
 
-# --- 20261025-arm-esp32-cradle: parameters copied from model.py -----------------------------------
-TOP, BOT, WALL, CLR = -10.0, -16.0, 2.5, 0.6
-PCB_BOT = -11.6
-HOLE = 3.4
-FAR_X, FAR_BLOCK_X0 = 51.0 - 54.4, -13.0
-USB_END_X = 51.0
-H_FRAME = TOP - BOT                  # 6
-LEDGE_H = PCB_BOT - BOT              # 4.4
-F_USB = 20.0                         # micro-USB insertion (spec max 35 N; typical 10-20 N) - assumed
-F_JUMPER = 10.0                      # pulling a bundle of female jumpers off the pins - assumed (spec: 5 N)
-BOARD_G = 10.0
+# --- read the real parameters (model.py / tools/hobby_parts.py / geometry.json) ---------------------------
+# model.py imports build123d, which plain python3 doesn't have, so its top-level constants are evaluated with
+# ast against stand-ins for the hobby_parts names. Anything that can't be evaluated that way is skipped.
+import ast
+import json
+import os
+from types import SimpleNamespace
 
-# 1. USB insertion pushes the board -X into the far block
-check(f"USB insertion {F_USB:.0f} N: PCB edge bearing on the far block (1.6 x 28)", F_USB / (1.6 * 28.0), False, SF_STATIC)
-check(f"USB insertion: M3 shank bearing in the far-block holes (2 of 3 share)", bearing(F_USB / 2, 3.0, H_FRAME), False,
-      SF_STATIC)
-check("USB insertion: far-block hole tear-out toward the pocket (e-r 3.7)", tearout(F_USB / 2, 3.7, H_FRAME), False,
-      SF_STATIC, shear=True)
-# 2. jumper pull-off pulls the board down onto the ledges
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+JOBS = os.path.join(ROOT, "jobs")
+_SERVO_FIELDS = ["name", "length", "width", "case_top", "total_h", "tab_height", "tab_t", "tab_span", "hole_dx",
+                 "hole_dy", "tab_hole_d", "screw_pilot_d", "shaft_from_end", "horn_kind", "horn_d", "horn_t"]
+_SERVO_DEFAULTS = dict(horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1, horn_screw_clear_d=3.4, stall_torque_nmm=0.0,
+                       mass_g=0.0)
+_BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+
+
+def _lit(node):
+    return ast.literal_eval(node)
+
+
+def _read_hobby():
+    tree = ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read())
+    ns = {}
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)):
+            continue
+        name, v = node.targets[0].id, node.value
+        fn = getattr(getattr(v, "func", None), "id", "")
+        if fn == "ServoSpec":
+            d = dict(_SERVO_DEFAULTS)
+            d.update(zip(_SERVO_FIELDS, [_lit(a) for a in v.args]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        elif fn == "BoardSpec":
+            ns[name] = SimpleNamespace(**dict(zip(_BOARD_FIELDS, [_lit(a) for a in v.args])))
+        elif fn == "replace":
+            d = dict(vars(ns[v.args[0].id]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        else:
+            try:
+                ns[name] = _lit(v)
+            except Exception:
+                pass
+    cad = ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read())
+    for node in cad.body:
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "HOLE_COMP_DEFAULT":
+            ns["HOLE_COMP_DEFAULT"] = _lit(node.value)
+    return ns
+
+
+HOBBY = _read_hobby()
+MG996R, SG90 = HOBBY["MG996R"], HOBBY["SG90"]
+HORN_DEPTH = HOBBY.get("HORN_DEPTH", 2.0)
+
+
+def horn_face_z(s):
+    return (s.total_h - s.tab_height) + 0.6          # same formula as tools/hobby_parts.py
+
+
+def link_back_z(s, depth=HORN_DEPTH):
+    return horn_face_z(s) - depth
+
+
+def model_params(job):
+    """Top-level constants of jobs/<job>/model.py, evaluated in order."""
+    ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
+    base = set(ns)
+    tree = ast.parse(open(os.path.join(JOBS, job, "model.py")).read())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        try:
+            val = eval(compile(ast.Expression(node.value), "model.py", "eval"), ns)
+        except Exception:
+            continue
+        t = node.targets[0]
+        if isinstance(t, ast.Name):
+            ns[t.id] = val
+        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
+            for e, v in zip(t.elts, val):
+                ns[e.id] = v
+    return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+
+
+def volume_mm3(job):
+    return json.load(open(os.path.join(JOBS, job, "geometry.json")))["volume_mm3"]
+
+
+HOLE_COMP = HOBBY["HOLE_COMP_DEFAULT"]
+
+# --- 20261025-arm-esp32-cradle (round 2) -----------------------------------------------------------------
+P = model_params("20261025-arm-esp32-cradle")
+H_FRAME = P.TOP - P.BOT
+LEDGE_H = P.PCB_BOT - P.BOT
+CBORE = P.CBORE_D + HOLE_COMP
+CLAMP_T = H_FRAME - P.CBORE_DEPTH
+F_USB, F_JUMPER, BOARD_G = 20.0, 10.0, 10.0
 F_end = F_JUMPER / 2
-# USB-end ledge: a 1.6 (x) x 4.4 (z) strip from the -Y wall (y 13.25) to y 42.5; the +Y wall stops at x 44 (pillar).
-# The centre spine (8 x 4, 55 mm cantilever from the far block, k ~1.4 N/mm) is ~13x softer than the strip
-# (k ~18 N/mm at y 28), so the strip works as a 29 mm cantilever from the -Y wall. PCB contact y 13.85-41.75.
-STRIP_W, STRIP_L, STRIP_ARM = 1.6, 42.5 - 13.25, (41.75 + 13.85) / 2 - 13.25
-for lbl, F in ((f"spec 5 N pull", 2.5), (f"jumper pull {F_JUMPER:.0f} N", F_end)):
+Y_IN0 = P.YC - P.HALF
+STRIP_L = P.USB_LEDGE_Y1 - Y_IN0
+PCB_Y0, PCB_Y1 = P.YC - max(b.width for b in P.BOARDS) / 2, min(P.YC + max(b.width for b in P.BOARDS) / 2, P.USB_LEDGE_Y1)
+STRIP_ARM = (PCB_Y0 + PCB_Y1) / 2 - Y_IN0
+FAR_FACE = P.FAR_X - P.CLR
+print(f"frame {H_FRAME:.0f} tall, ledges {LEDGE_H:.1f} tall; USB-end strip {P.USB_LEDGE_W} x {LEDGE_H:.1f}, {STRIP_L:.2f} long,"
+      f" load arm {STRIP_ARM:.2f}; screw clamp {CLAMP_T:.0f} mm under the head")
+
+check(f"USB insertion {F_USB:.0f} N: PCB edge bearing on the far block (1.6 x 28)", F_USB / (1.6 * 28.0), False, SF_STATIC)
+check("USB insertion: M3 shank bearing in the far-block holes (2 of 3, clamp length only)",
+      bearing(F_USB / 2, 3.0, CLAMP_T), False, SF_STATIC)
+lig = (FAR_FACE - P.SCREWS[0][0]) - CBORE / 2
+check(f"USB insertion: far-block tear-out toward the pocket past the counterbore (ligament {lig:.2f})",
+      tearout(F_USB / 2, lig, H_FRAME), False, SF_STATIC, shear=True)
+check(f"USB insertion: counterbore wall to the far-block end (ligament {(P.SCREWS[0][0] - P.FAR_BLOCK_X0) - CBORE / 2:.2f})",
+      tearout(F_USB / 2, (P.SCREWS[0][0] - P.FAR_BLOCK_X0) - CBORE / 2, P.CBORE_DEPTH), False, SF_STATIC, shear=True)
+check(f"jumper pull: screw head through the {CLAMP_T:.0f} mm counterbore floor (head D5.5)",
+      F_end / (math.pi * 5.5 * CLAMP_T), True, SF_STATIC, shear=True)
+for lbl, F in (("spec 5 N pull", 2.5), (f"jumper pull {F_JUMPER:.0f} N", F_end), ("15 N proof (spec 8)", 7.5)):
     check(f"{lbl}, {F:.1f} N on the USB end: USB-end ledge strip, cantilever from the -Y wall (Kt 2.5)",
-          F * STRIP_ARM / (STRIP_W * LEDGE_H ** 2 / 6), False, SF_STATIC, Kt=2.5)
-# -Y wall (2.5 x 6) cantilevered from the x40 screw pad (edge x44.5) to the USB ledge centroid x50.2
-check(f"jumper pull: -Y wall cantilever from the x40 pad (Kt 2.5)",
-      6 * F_end * (50.2 - 44.5) / (WALL * H_FRAME ** 2), False, SF_STATIC, Kt=2.5)
-# far ledge: a 2.8 mm step (4.4 tall) on the full-height far block, loaded along its 29.5 mm length
-check("jumper pull: far-ledge root on the far block (cantilever 2.8, b 29.5, Kt 2.5)",
-      6 * F_end * 1.4 / (29.5 * LEDGE_H ** 2), False, SF_STATIC, Kt=2.5)
-# 3. sustained: board weight on the ledges (trivial) -> listed for completeness
-check("board weight x2 (sustained): USB-end ledge strip", DYN * BOARD_G * G_N_PER_G / 2 * STRIP_ARM / (STRIP_W * LEDGE_H ** 2 / 6),
-      False, SF_SUSTAINED, Kt=2.5)
+          F * STRIP_ARM / (P.USB_LEDGE_W * LEDGE_H ** 2 / 6), False, 1.5 if "proof" in lbl else SF_STATIC, Kt=2.5,
+          info="proof" in lbl)
+pad_edge = P.SCREWS[2][0] + P.PAD_R
+lever = (P.USB_END_X - P.USB_LEDGE_W / 2) - pad_edge
+check(f"jumper pull: -Y wall cantilever from the x40 pad (lever {lever:.1f}, Kt 2.5)",
+      6 * F_end * lever / (P.WALL * H_FRAME ** 2), False, SF_STATIC, Kt=2.5)
+check("jumper pull: far-ledge root on the far block (Kt 2.5)", 6 * F_end * 1.4 / (29.5 * LEDGE_H ** 2), False, SF_STATIC,
+      Kt=2.5)
+check("board weight x2 (sustained): USB-end ledge strip",
+      DYN * BOARD_G * G_N_PER_G / 2 * STRIP_ARM / (P.USB_LEDGE_W * LEDGE_H ** 2 / 6), False, SF_SUSTAINED, Kt=2.5)
 worst, fails = report("20261025-arm-esp32-cradle")
-print("\nWHAT-IF  USB-end ledge x 51-1.6 -> 51-2.8 (2.8 wide, still clear of the end-pin housings at x <= 48.0)"
-      " and BOT -16 -> -20 (ledges 4.4 -> 8.4 tall; PCB_BOT unchanged):")
-for lbl, F in (("spec 5 N pull", 2.5), (f"jumper pull {F_JUMPER:.0f} N", F_end)):
-    sf = allow_mpa(False) / (2.5 * F * STRIP_ARM / (2.8 * 8.4 ** 2 / 6))
-    print(f"  {lbl}: USB-end ledge strip SF {sf:.2f} {'OK' if sf >= 3 else 'FAIL'}")
-print("note: M3x8 through the 6 mm frame leaves ~2 mm of thread in the base boss -> use M3x12 (boss pilot is 6 deep)")
+CR_SCREW = 10.0             # spec 2 / BUILD_GUIDE: 3 x M3x10 from below
+BOSS_PILOT = 6.0            # base: blind cradle pilot, boss end Z -10 to the plate underside Z -4
+print(f"FIT: M3x{CR_SCREW:.0f} from the counterbore floor leaves {CR_SCREW - CLAMP_T:.0f} mm beyond the cradle vs a {BOSS_PILOT:.0f} mm"
+      f" pilot -> {'ok, fully engaged without bottoming' if CR_SCREW - CLAMP_T <= BOSS_PILOT else 'OVERRUN'}")

@@ -1,9 +1,9 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review (round 2): 20261025-arm-turntable
+# DFM review (round 3): 20261025-arm-turntable
 
 Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), tools/hobby_parts.py (round 2), assembly_plan.md, library/lessons.md (no entries).
-Outputs are current: `build()` gives 89389.4 mm³, matching geometry.json (89389.42 mm³). The geometry.json `holes` field still holds an error (toolsmith, advisory), so I measured the holes from model parameters and part.stl sections.
+Outputs are current: `build()` gives 89335.6 mm³, matching geometry.json (89335.6 mm³). The STL and renders are newer than model.py. The geometry.json `holes` field still holds an error (toolsmith, advisory), so I measured the holes from model parameters and part.stl sections.
 
 ## Checklist
 
@@ -18,8 +18,8 @@ Outputs are current: `build()` gives 89389.4 mm³, matching geometry.json (89389
 | 7 | Walls | PASS | DISK_T 8, UP_T 7, GUSSET_T 4. Window-to-pilot ligament is 2.25 mm (section at print z 39: solid from x 20.65 to 22.90). No region under 1.8 mm in sections at z 4, 8.5, 30 and 60 |
 | 8 | HOLE_COMP / horizontal holes | PASS | `HOLE_COMP` 0.2 on the window (41.3 × 20.3 CAD), the pilots (Ø2.8 CAD) and the clamp hole (Ø3.6 CAD). The 4 horizontal pilots are teardrops pointing +Z (`pilot_teardrop="-y"`, where servo −y is world +Z). front.png shows the points up, and there are no downward faces in mesh_check |
 | 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(disk, Z0, 0.4)` |
-| 10 | Internal corners on load paths | PASS | 3 mm 45° root wedges run the full 66 mm width on both faces (right.png) |
-| 11 | Fasteners | **FAIL** | The spec §2 base-horn clamp is an "M3×16 centre screw + Ø9 washer from the top". The front root wedge runs from the upright face at y −5 to **y −2.0** at the disk top. A section along x = 0 at print z 8.25 has solid out to y −2.24, and the Ø3.6 clamp hole edge is at y −1.8. A Ø9 washer reaches y −4.5, where the wedge is about 2.5 mm tall, and even a bare M3 head (Ø5.5, y −2.75) lands on 0.75 mm of wedge. The washer and head cannot seat flat, so the clamp, which is now the only thing holding the disk on the horn axially, would sit tilted. top.png shows the hole touching the wedge band |
+| 10 | Internal corners on load paths | PASS | 3 mm 45° root wedges: the back one runs the full 66 mm, and the front one is in two pieces at 6 ≤ \|x\| ≤ 33, leaving a 12 mm gap at the clamp screw (top.png). strength-analyst should confirm the gap |
+| 11 | Fasteners | PASS | Sections along y at print z 8.25 (0.25 above the disk top) end at y −4.99, the upright face, for x = 0, 4.5 and 5.9, and only reach −2.24 at x 6.5. The Ø9 clamp washer (y ≥ −4.5, \|x\| ≤ 4.5) seats on the flat disk top with 0.5 mm to the upright and 1.5 mm to the wedge ends. Shoulder tab pilots are teardrops through 7 mm |
 | 12 | Critical dims named | PASS | `XS` 10.15, `ZS` 60.5, `CLR`, `HOLE_COMP`, `Z0 = horn_face_z` = 16.5 |
 | 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
 | 14 | lessons.md | N/A | No entries |
@@ -27,7 +27,7 @@ Outputs are current: `build()` gives 89389.4 mm³, matching geometry.json (89389
 
 ## Required fixes
 
-1. **Clear the clamp-screw seat** (rule §4, checklist 11). Interrupt the front root wedge for |x| ≤ 6 mm, which leaves a flat Ø12 seat around the hole: the washer reaches y −4.5 against the upright face at −5.0. The rest of the wedge (|x| 6–33) keeps the root relief. strength-analyst should confirm the root with the 12 mm gap. Alternative: specify a washer of Ø7 or less and still cut the wedge back to |x| ≥ 4.5.
+None.
 
 ## Round 1 → round 2
 
@@ -44,3 +44,9 @@ Outputs are current: `build()` gives 89389.4 mm³, matching geometry.json (89389
 
 1. Screwdriver access: with the driver on the axis at y 0, the 7 mm upright face is 5 mm away and rises 72.8 mm above the disk top. A driver handle (about Ø25) clears it only with a shaft of at least 75 mm, so say so in the assembly steps.
 2. The MG996R tab-screw pilot (printed Ø2.6) is still unverified against the servo-bag screw.
+
+## Round 2 → round 3
+
+| Round-2 finding | Status | How I checked |
+|---|---|---|
+| Ø9 washer and M3 head land on the front root wedge | Closed | `WASHER_CLEAR_X = 6.0`: the front wedge is built as two prisms from x −33 to −6 and from 6 to 33. Sections and top.png show a flat seat. mesh_check: `overhang_pct` 0.0, no bridges, watertight. A 1.8 mm opening test at z 8.5 and 30 finds no thin regions |

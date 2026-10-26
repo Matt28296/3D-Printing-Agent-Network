@@ -1,88 +1,83 @@
-VERDICT: FAIL
+VERDICT: NEEDS_TEST
 
-# Strength check: 20261025-arm-turntable
+# Strength check: 20261025-arm-turntable (round 3)
 
-strength-analyst · 2026-10-26 · calculations in `strength_calc.py` (plain python3; section properties cross-checked against build123d sections of `design()`)
+strength-analyst · 2026-10-26 · `python3 strength_calc.py` reads model.py, tools/hobby_parts.py and geometry.json
 
-The spec's in-plane stall cases all pass with large margins. The part fails on two kinds of load that aren't in
-the spec. The **base-horn joint** (the disk is held on the horn by two M2 screws in a 3 mm floor) fails even under
-the spec's own shoulder stall when the fingertip presses on the desk (SF 2.66). The **out-of-plane loads** overload
-the upright at its lower tab-pilot row and window corner, and the disk in front of the upright. Lowest SF 0.42.
-The design brief also needs correcting: shoulder torque bends the upright in its own plane, but the resulting stress
-runs along Z, which is **across** the layers, not along them as the brief says (SF ≥ 13 there, so harmless).
+Round 3: the front root wedge now stops at |X| ≥ 6 (WASHER_CLEAR_X), so the Ø9 clamp washer seats flat and the
+clamped base-horn joint gets its full capacity. Every check is at SF 4.36 or above; the lowest is the lower tab-pilot
+row of the upright under the 5 N hand push. No open fit or strength items.
+
+## Round 1 → round 2 → round 3
+
+| | Round 1 | Round 2 |
+|---|---|---|
+| Verdict / lowest SF | FAIL / 0.42 (base-horn arm screws, yaw stall) | NEEDS_TEST / 4.36 (lower tab-pilot row, hand push) |
+| Base-horn joint, yaw stall | 0.42 (2 M2 screws in a 3 mm floor) | 4.43 (clamped, 8 mm floor, no pocket) |
+| Disk at the upright front | 1.41 | 5.26 (t 8, root wedge) |
+| Lower tab-pilot row, front face | 1.74 | 4.43 yaw / 4.36 hand (UP_T 7, 70 mm gussets with a 23 mm run) |
+| Window corner | 2.29 | 4.66 |
+| Base-yaw torque into the disk | slot walls | no pocket: 2 arm screws in bearing, SF 6.0 with friction ignored |
+
+**Round 2 → round 3:** the front wedge is split at |X| < 6. The washer clash is gone (script FIT line: clear). The
+12 mm gap leaves a sharp root corner, already checked with Kt 2.5 (rows "at the washer gap", SF ≥ 10.6). Volume
+89389 → 89336 mm³; no SF changed.
 
 ## Load cases
 
-**Mass model (re-derived, not taken from the spec).** Printed parts = geometry.json volume x 1.27 g/cm³ (upper
-link 27.0 g, forearm 15.3 g, gripper base 19.9 g, jaw 4.3 g, turntable 77.0 g), CG from the build123d centre of mass of
-`design()`; MG996R 55 g, SG90 9 g (hobby_parts.py); horn + screws 4 g (MG996R) / 1.5 g (SG90); 10 g cable allowance;
-50 g payload at the fingertip. Arm straight and horizontal, static moments: about the yaw axis 358 N·mm, shoulder
-337 (spec 310), elbow 156 (spec 140), wrist 63, gripper 28. Because the arm steps forward in +Y, the weight also
-puts a pose-independent **out-of-plane** moment on every joint: 43 N·mm at the shoulder horn, 21 at the elbow, 8.6
-at the wrist, 98 at the upright root (the spec assumed 120). The dynamic factor is x2, as the spec uses.
+**Inputs, re-derived (round 2).** Each script now reads its parameters from the jobs' `model.py` (top-level constants
+evaluated with `ast`), servo data from `tools/hobby_parts.py`, and masses from each `geometry.json` volume x 1.27 g/cm³:
+upper link 50.4 g, forearm 37.3 g, gripper base 30.8 g, jaw 8.5 g, turntable 113.5 g. MG996R 55 g and SG90 9 g; horn
++ clamp screw 5 g (MG996R) / 2 g (SG90); 10 g cable allowance; 50 g payload. CGs come from the parameters (within
+4 mm of the build123d centres of mass). The world-Y stack is rebuilt from the new thicknesses: horn faces at Y 11.5 /
+36.0 / 55.4 / 72.8 and the fingertip at Y 74.8 (assembly plan: ≈75). Static moments with the arm straight and
+horizontal: about the yaw axis 442 N·mm, shoulder 415 (plan ≈410, 41 % of stall), elbow 186 (plan ≈180), wrist 71,
+gripper 29. Pose-independent out-of-plane weight moments: shoulder horn 74, elbow 34, wrist 13, upright root 137 N·mm.
+Dynamic factor x2.
 
-**Loads the spec misses (added here).** The spec treats every arm load as acting in the plane of its link. The
-pitch servos only resist moments about their own axes, so a sideways load on the arm is carried by nothing but the
-printed plates and the horn joints:
-1. **Base-yaw stall into a side obstacle** (the yaw servo, or a hand stopping a yaw move): F = 1000 N·mm / R at the
-   contact, horizontal and tangential. Swept over shoulder 0–180°, elbow ±90° and wrist ±90° in 5° steps, with the
-   joints kept above the desk, and scaled down wherever a pitch servo would backdrive first (shoulder and elbow
-   1000 N·mm, wrist 160 N·mm). Up to 12 N at the fingertip, of which up to 8.2 N is out of plane. This is the spec's
-   own "a stalled servo is the worst case" basis. Short-term, SF 3.
-2. **Hand push 5 N sideways (±Y) at the fingertip**, any pose (with the arm pointing up, no servo backdrives under it).
-   Short-term, SF 3.
-3. **Horn joints.** Each link is held on its horn only by the small screws through the horn arms: the centre screw
-   passes through the Ø6.5 access hole and its head bears on the horn, not on the link. Out-of-plane moments pull those
-   screws out of the floor left above the 2 mm pocket (3 or 4 mm), shearing the layers. For torsion about the link axis
-   the screws sit on the axis, so the only lever is the hub radius (5.5 mm on the MG996R, 3.6 mm on the SG90).
-   Assumed: M2 self-tapping screws, Ø1.6 drilled pilot, engagement = floor thickness, MG996R outermost arm hole r 15
-   (transverse lever 15 + 17.5 = 32.5, one screw), SG90 inner arm hole r 7 (weak-direction lever 14 − 7 = 7).
+**Load cases** (spec §4 now lists them all): every servo stall (MG996R 1000 N·mm, SG90 160 N·mm); weight x2 (sustained,
+SF 4); a **base-yaw stall into a side obstacle**, swept over shoulder 0–180°, elbow ±90° and wrist ±90° in 5° steps
+(F = 1000/R, tangential, scaled down wherever a pitch servo backdrives first; up to 12 N at the fingertip); a **5 N
+sideways hand push** at the fingertip; and the shoulder stall with the fingertip pressing on the desk (1158 N·mm about
+the base horn). Short-term cases need SF 3.
 
-| Case | Load | Applied at, direction | Duration | Source |
-|---|---|---|---|---|
-| Base-servo stall | 1000 N·mm about Z | horn-slot walls (bearing); upright torsion | short-term | spec |
-| Shoulder-servo stall | 1000 N·mm about Y | 4 horizontal tab pilots; upright in-plane bending | short-term | spec |
-| Shoulder stall with the fingertip on the desk (91 mm) | 1152 N·mm about Y | through the base-horn arm screws and the upright | short-term | **added** |
-| Arm weight out of the upright plane x2 | 196 N·mm at the root (98 static) | upright, disk, base horn | sustained | spec: 120 assumed |
-| Arm weight about the yaw axis x2 | 716 N·mm | base-horn arm screws | sustained | **added** |
-| Base-yaw stall sweep | M_x up to 1920 (root) / 1957 (disk), M_y up to 1511, M_z 1000 N·mm | upright, disk, base horn | short-term | **added** |
-| Hand push 5 N sideways, arm vertical | M_x up to 1630 (root) / 1655 (disk) N·mm | upright, disk, base horn | short-term | **added** |
-| Spec proof test (1 kg at the elbow) | 1439 N·mm about Y at the base horn | base horn | test | spec §8 (advisory row) |
-
-Build direction: the disk prints on the bed and the upright stands vertical. All upright bending, in-plane and out of
-plane, puts stress along Z, across the layers. Upright torsion shears the layers. Disk bending runs along them.
+Build direction: the disk prints on the bed and the upright stands vertical. All upright bending puts stress along Z,
+across the layers; upright torsion shears the layers; disk bending runs along them.
 
 ## Assumptions
 
-- Upright sections (root Z 19.6, window bottom Z 51, lower tab-pilot row Z 56) are computed from the parameters and
-  match the CAD sections exactly (I_xx 60937 / 4530 / 2254 mm⁴).
-- The shoulder servo passes M_x to the upright as a couple between the tab screws and the opposite tab edge
-  (lever 14.85). At Z 56 that leaves 0.97 of the moment for front-face tension and 0.64 for gusset-toe tension.
-- Disk: everything that supports the upright under forward tipping (hub, screws, ring) lies in front of its front
-  face, so the full M_x crosses the disk there. b_eff = 66 (the upright width), sharp corner, Kt 2.5.
-- Base-horn screws: transverse moment on one screw at lever 32.5, plus torsion on two screws at the hub radius 5.5.
-  The ring (1.5 mm gap) is not counted: the screws would have to lift about 0.2 mm (across the arms) or about 1.8 mm
-  (along the arms) before the ring takes load.
-- Advisory row: the spec's proof test loads the base-horn screws to SF 2.1 on the placeholder allowable. The test may
-  strip them before it proves anything about the upright.
-- Pull-out and thread stripping: τ = F/(π·d_pilot·L), checked against the interlayer shear allowable.
-- Bearing and tear-out at vertical pilots in flat plates are in-plane. Tear-out from horizontal holes in vertical
-  walls shears the layers.
-- Combined moments are added rather than combined vectorially, except where the script says otherwise (conservative).
-- Pilot holes are taken at their nominal size. Hoop stress from driving the self-tapping screws into thin ligaments is
-  not computable by hand, so it is left to the proof test and the fit coupon.
+- Upright sections (above the wedge at Z 28, window bottom Z 51, lower tab-pilot row Z 56) are computed from the
+  parameters and match the CAD sections (I_xx 35227 / 10448 / 7507 mm⁴).
+- Root wedges (3 mm, 45°): checked just above the wedge with Kt 2.0. The front wedge stops at |X| < 6 around the
+  clamp washer; that stretch has a sharp corner (rows "at the washer gap", Kt 2.5).
+- Shoulder-servo M_x enters the upright as a couple between the tab screws and the opposite tab edge (lever 14.85).
+- Disk: the full M_x crosses the disk at the upright's front face, b_eff 66, Kt 2.0.
+- **Clamped horn joints (new).** The centre screw (M3×16 + DIN 9021 Ø9 washer on the MG996R joints, M2×12 + Ø6 washer
+  on the SG90 joints) clamps link and horn onto the spline. Capacity = washer pull-through (π·D_washer·floor) plus the
+  anti-rotation arm screws (M2, Ø1.6 pilot, about 5 mm engaged), both against the interlayer shear allowable. Levers:
+  MG996R transverse 17.5 (washer) / 32.5 (arm screw at r 15), torsion 5.5 (hub radius); SG90 weak direction 3.6
+  (washer) / 10.6 (arm screw at r 7), torsion 3.6. Utilisation per pose = M_t/cap_t + T/cap_T, worst over the sweep.
+  The clamp screw's thread in the spline (metal on the MG996R, plastic on the SG90) is bought hardware and is left to
+  the proof test.
+- Pull-out: τ = F/(π·d_pilot·L), with the printed pilot sizes (MG996R 2.6, SG90 1.5) and the real screw engagement
+  (MG996R tab screws about 7 mm, SG90 bag tab screws about 5 mm; screws can't engage more than their own length).
+- Bearing and tear-out at vertical pilots in flat plates are in-plane. Tear-out from horizontal holes in vertical walls
+  shears the layers. Combined moments are added (conservative).
+- Advisory "rails alone" rows: the servo case (bolted across its window at both tab rows, about 40 x stiffer than the
+  rails) carries the out-of-plane moment between the tab rows. The verdict rows check the tab screws that make that
+  path work.
 
 ## Allowables and sources
-`library/materials.csv` has no measured row and no printed-specimen datasheet is in `inputs/`, so these are the
+`library/materials.csv` still has no measured row, and no printed-specimen datasheet is in `inputs/`, so these are the
 strength-checks **placeholder** values for PETG. **NEEDS_TEST is the best verdict possible.**
 
 | Quantity | Value | Source |
 |---|---|---|
 | Tension/bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
 | Tension/bending across the layers (Z) | 12.5 MPa | placeholder x 0.5 |
-| Shear in-plane / interlayer (incl. screw pull-out, tear-out in vertical walls) | 12.5 / 6.25 MPa | 0.5 x the normal value (Tresca), assumption |
+| Shear in-plane / interlayer (screw pull-out, washer pull-through, tear-out in vertical walls) | 12.5 / 6.25 MPa | 0.5 x the normal value (Tresca), assumption |
 | Bearing, compression (any direction) | 25 MPa | in-plane value: compression does not separate layers |
-| Kt | 2.5 sharp internal corner or window corner; 2 hole (PETG); 1.5 rounded pocket tip | skill |
+| Kt | 2.5 sharp internal corner or window corner; 2.0 the 45° root wedge (two 135° corners); 2 hole; 1.5 rounded pocket tip | skill (2.0 for the wedge is my interpolation) |
 
 Required SF: 3 short-term, 4 sustained or cyclic. Service temperature 40 °C (servo cases up to 45 °C) against PETG
 softening at about 70 °C: margin of 25 °C or more, OK.
@@ -91,87 +86,69 @@ softening at about 70 °C: margin of 25 °C or more, OK.
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|
-| 1 | base stall 1000 N.mm: horn-slot wall bearing | XY | 2.82 | 25.00 | 8.88 | 3 | OK |
-| 2 | yaw stall: upright torsion at root (open section) | Z shear | 1.32 | 6.25 | 4.74 | 3 | OK |
-| 3 | yaw stall: window ligament pair, Z51 toe | Z | 0.80 | 12.50 | 15.57 | 3 | OK |
-| 4 | shoulder stall on desk: upright in-plane bending, root (Kt 2.5) | Z | 0.28 | 12.50 | 45.10 | 3 | OK |
-| 5 | shoulder stall on desk: upright in-plane bending, window Z60.5 (Kt 2.5) | Z | 0.72 | 12.50 | 17.24 | 3 | OK |
-| 6 | yaw sweep: upright in-plane bending, root (Kt 2.5) | Z | 0.35 | 12.50 | 35.72 | 3 | OK |
-| 7 | yaw sweep: upright in-plane bending, window Z60.5 (Kt 2.5) | Z | 0.92 | 12.50 | 13.66 | 3 | OK |
-| 8 | weight x2 (sustained): upright root, front face (Kt 2.5) | Z | 0.08 | 12.50 | 158.19 | 4 | OK |
-| 9 | weight x2 (sustained): upright root, gusset toe (Kt 2.5) | Z | 0.20 | 12.50 | 62.08 | 4 | OK |
-| 10 | weight x2 (sustained): Z51 window bottom, front face (Kt 2.5) | Z | 0.56 | 12.50 | 22.15 | 4 | OK |
-| 11 | weight x2 (sustained): Z51 window bottom, gusset toe | Z | 0.40 | 12.50 | 31.61 | 4 | OK |
-| 12 | weight x2 (sustained): Z56 lower tab-pilot row, front face (Kt 2 hole) | Z | 0.74 | 12.50 | 16.85 | 4 | OK |
-| 13 | weight x2 (sustained): Z56 lower tab-pilot row, gusset toe | Z | 0.40 | 12.50 | 31.37 | 4 | OK |
-| 14 | weight x2 (sustained): shoulder tab screws pull-out (2 screws, L 5) | Z shear | 0.14 | 6.25 | 43.37 | 4 | OK |
-| 15 | weight x2 (sustained): disk at upright front face, b 66 (Kt 2.5) | XY | 1.08 | 25.00 | 23.25 | 4 | OK |
-| 16 | yaw-stall sweep: upright root, front face (Kt 2.5) | Z | 1.13 | 12.50 | 11.11 | 3 | OK |
-| 17 | yaw-stall sweep: upright root, gusset toe (Kt 2.5) | Z | 2.33 | 12.50 | 5.37 | 3 | OK |
-| 18 | yaw-stall sweep: Z51 window bottom, front face (Kt 2.5) | Z | 5.46 | 12.50 | 2.29 | 3 | **FAIL** |
-| 19 | yaw-stall sweep: Z51 window bottom, gusset toe | Z | 3.83 | 12.50 | 3.27 | 3 | OK |
-| 20 | yaw-stall sweep: Z56 lower tab-pilot row, front face (Kt 2 hole) | Z | 7.20 | 12.50 | 1.74 | 3 | **FAIL** |
-| 21 | yaw-stall sweep: Z56 lower tab-pilot row, gusset toe | Z | 3.85 | 12.50 | 3.24 | 3 | OK |
-| 22 | yaw-stall sweep: shoulder tab screws pull-out (2 screws, L 5) | Z shear | 1.39 | 6.25 | 4.48 | 3 | OK |
-| 23 | yaw-stall sweep: disk at upright front face, b 66 (Kt 2.5) | XY | 17.79 | 25.00 | 1.41 | 3 | **FAIL** |
-| 24 | hand push 5 N: upright root, front face (Kt 2.5) | Z | 0.66 | 12.50 | 18.99 | 3 | OK |
-| 25 | hand push 5 N: upright root, gusset toe (Kt 2.5) | Z | 1.68 | 12.50 | 7.45 | 3 | OK |
-| 26 | hand push 5 N: Z51 window bottom, front face (Kt 2.5) | Z | 4.76 | 12.50 | 2.63 | 3 | **FAIL** |
-| 27 | hand push 5 N: Z51 window bottom, gusset toe | Z | 3.33 | 12.50 | 3.75 | 3 | OK |
-| 28 | hand push 5 N: Z56 lower tab-pilot row, front face (Kt 2 hole) | Z | 6.30 | 12.50 | 1.98 | 3 | **FAIL** |
-| 29 | hand push 5 N: Z56 lower tab-pilot row, gusset toe | Z | 3.36 | 12.50 | 3.72 | 3 | OK |
-| 30 | hand push 5 N: shoulder tab screws pull-out (2 screws, L 5) | Z shear | 1.21 | 6.25 | 5.15 | 3 | OK |
-| 31 | hand push 5 N: disk at upright front face, b 66 (Kt 2.5) | XY | 15.05 | 25.00 | 1.66 | 3 | **FAIL** |
-| 32 | shoulder stall: tab-pilot bearing (compression) | XY | 0.93 | 25.00 | 26.78 | 3 | OK |
-| 33 | shoulder stall: pilot-to-window ligament tear-out | Z shear | 0.51 | 6.25 | 12.36 | 3 | OK |
-| 34 | weight x2 (sustained): base-horn arm screw pull-out (floor 3) | Z shear | 2.18 | 6.25 | 2.87 | 4 | **FAIL** |
-| 35 | shoulder stall on desk: base-horn arm screw pull-out (floor 3) | Z shear | 2.35 | 6.25 | 2.66 | 3 | **FAIL** |
-| 36 | yaw-stall sweep: base-horn arm screw pull-out (floor 3) | Z shear | 14.88 | 6.25 | 0.42 | 3 | **FAIL** |
-| 37 | hand push 5 N: base-horn arm screw pull-out (floor 3) | Z shear | 9.98 | 6.25 | 0.63 | 3 | **FAIL** |
+| 1 | base stall 1000 N.mm: arm-screw bearing in the disk (no pocket, friction ignored, L 5) | XY | 4.17 | 25.00 | 6.00 | 3 | OK |
+| 2 | yaw stall: upright torsion above the wedges (open section) | Z shear | 0.88 | 6.25 | 7.07 | 3 | OK |
+| 3 | yaw stall: window ligament pair, toe | Z | 0.46 | 12.50 | 26.92 | 3 | OK |
+| 4 | shoulder stall on desk: upright in-plane bending, root (Kt 2.0) | Z | 0.23 | 12.50 | 54.25 | 3 | OK |
+| 5 | shoulder stall on desk: upright in-plane bending, window (Kt 2.5) | Z | 0.46 | 12.50 | 27.45 | 3 | OK |
+| 6 | yaw sweep: upright in-plane bending, root (Kt 2.0) | Z | 0.27 | 12.50 | 45.98 | 3 | OK |
+| 7 | yaw sweep: upright in-plane bending, window (Kt 2.5) | Z | 0.54 | 12.50 | 23.27 | 3 | OK |
+| 8 | weight x2 (sustained): upright root above the wedge, front (Kt 2.0) | Z | 0.12 | 12.50 | 108.62 | 4 | OK |
+| 9 | weight x2 (sustained): upright root, front, at the washer gap |X|<6 (no wedge, Kt 2.5) | Z | 0.14 | 12.50 | 86.90 | 4 | OK |
+| 10 | weight x2 (sustained): upright root, gusset toe (Kt 2.5) | Z | 0.41 | 12.50 | 30.31 | 4 | OK |
+| 11 | weight x2 (sustained): window bottom, front face (Kt 2.5) | Z | 0.51 | 12.50 | 24.55 | 4 | OK |
+| 12 | weight x2 (sustained): window bottom, gusset toe | Z | 0.36 | 12.50 | 35.04 | 4 | OK |
+| 13 | weight x2 (sustained): lower tab-pilot row, front face (Kt 2 hole) | Z | 0.55 | 12.50 | 22.91 | 4 | OK |
+| 14 | weight x2 (sustained): lower tab-pilot row, gusset toe | Z | 0.28 | 12.50 | 44.39 | 4 | OK |
+| 15 | weight x2 (sustained): shoulder tab screws pull-out (2 screws, L 7) | Z shear | 0.16 | 6.25 | 38.40 | 4 | OK |
+| 16 | weight x2 (sustained): disk at the upright front, b 66 t 8 (Kt 2.0) | XY | 0.55 | 25.00 | 45.35 | 4 | OK |
+| 17 | yaw-stall sweep: upright root above the wedge, front (Kt 2.0) | Z | 0.94 | 12.50 | 13.25 | 3 | OK |
+| 18 | yaw-stall sweep: upright root, front, at the washer gap |X|<6 (no wedge, Kt 2.5) | Z | 1.18 | 12.50 | 10.60 | 3 | OK |
+| 19 | yaw-stall sweep: upright root, gusset toe (Kt 2.5) | Z | 2.75 | 12.50 | 4.55 | 3 | OK |
+| 20 | yaw-stall sweep: window bottom, front face (Kt 2.5) | Z | 2.68 | 12.50 | 4.66 | 3 | OK |
+| 21 | yaw-stall sweep: window bottom, gusset toe | Z | 1.88 | 12.50 | 6.65 | 3 | OK |
+| 22 | yaw-stall sweep: lower tab-pilot row, front face (Kt 2 hole) | Z | 2.82 | 12.50 | 4.43 | 3 | OK |
+| 23 | yaw-stall sweep: lower tab-pilot row, gusset toe | Z | 1.48 | 12.50 | 8.43 | 3 | OK |
+| 24 | yaw-stall sweep: shoulder tab screws pull-out (2 screws, L 7) | Z shear | 0.86 | 6.25 | 7.29 | 3 | OK |
+| 25 | yaw-stall sweep: disk at the upright front, b 66 t 8 (Kt 2.0) | XY | 4.75 | 25.00 | 5.26 | 3 | OK |
+| 26 | hand push 5 N: upright root above the wedge, front (Kt 2.0) | Z | 0.67 | 12.50 | 18.77 | 3 | OK |
+| 27 | hand push 5 N: upright root, front, at the washer gap |X|<6 (no wedge, Kt 2.5) | Z | 0.83 | 12.50 | 15.02 | 3 | OK |
+| 28 | hand push 5 N: upright root, gusset toe (Kt 2.5) | Z | 2.39 | 12.50 | 5.24 | 3 | OK |
+| 29 | hand push 5 N: window bottom, front face (Kt 2.5) | Z | 2.71 | 12.50 | 4.61 | 3 | OK |
+| 30 | hand push 5 N: window bottom, gusset toe | Z | 1.90 | 12.50 | 6.57 | 3 | OK |
+| 31 | hand push 5 N: lower tab-pilot row, front face (Kt 2 hole) | Z | 2.87 | 12.50 | 4.36 | 3 | OK |
+| 32 | hand push 5 N: lower tab-pilot row, gusset toe | Z | 1.50 | 12.50 | 8.33 | 3 | OK |
+| 33 | hand push 5 N: shoulder tab screws pull-out (2 screws, L 7) | Z shear | 0.87 | 6.25 | 7.20 | 3 | OK |
+| 34 | hand push 5 N: disk at the upright front, b 66 t 8 (Kt 2.0) | XY | 4.67 | 25.00 | 5.35 | 3 | OK |
+| 35 | shoulder stall: tab-pilot bearing (compression) | XY | 0.67 | 25.00 | 37.49 | 3 | OK |
+| 36 | shoulder stall: pilot-to-window ligament 2.20 tear-out | Z shear | 0.39 | 6.25 | 15.86 | 3 | OK |
+| 37 | weight x2 (sustained): clamped base-horn joint (washer D9 + 2 arm screws, floor 8) | Z shear | 0.31 | 6.25 | 19.99 | 4 | OK |
+| 38 | shoulder stall on desk: clamped base-horn joint (washer D9 + 2 arm screws, floor 8) | Z shear | 0.24 | 6.25 | 25.77 | 3 | OK |
+| 39 | yaw-stall sweep: clamped base-horn joint (washer D9 + 2 arm screws, floor 8) | Z shear | 1.41 | 6.25 | 4.43 | 3 | OK |
+| 40 | hand push 5 N: clamped base-horn joint (washer D9 + 2 arm screws, floor 8) | Z shear | 1.08 | 6.25 | 5.78 | 3 | OK |
 
 Advisory rows (not in the verdict, reason under Assumptions):
 
 | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |
 |---|---|---|---|---|---|
-| proof test (1 kg at elbow): base-horn arm screw | Z shear | 2.94 | 6.25 | 2.13 | 1 |
+| proof test (1 kg at the elbow): clamped base-horn joint | Z shear | 0.32 | 6.25 | 19.60 | 1 |
 
-**lowest SF 0.42 (required 3) at: yaw-stall sweep: base-horn arm screw pull-out (floor 3)**
+**lowest SF 4.36 (required 3) at: hand push 5 N: lower tab-pilot row, front face (Kt 2 hole)**
 
-## Geometry changes that pass (what-if below, lowest SF 3.24)
-1. **DISK_T 5 → 8** (floor over the base horn 3 → 6 mm; disk bending SF 1.41 → 3.60). The shoulder axis stays at Z 60.5.
-2. **UP_T 5 → 7** (grows toward −Y; the tab plane UP_Y = −5 is unchanged) and **GUSSET_H 50 → 70**: lower tab-pilot row
-   SF 1.74 → 5.13, window corner 2.29 → 5.38. The gussets stay at |X| ≥ 28.5, clear of the servo body (|X| ≤ 20.4).
-3. **Clamp the disk to the base horn with the horn's own centre screw:** pass `screw_access_d=3.4` to
-   `horn_pocket_cutter` and fit an M3×12 screw with a DIN 9021 Ø9 washer on the disk top, keeping the two arm screws.
-   Base-horn joint SF 0.42 → 3.24. Fit this screw before the shoulder servo, which sits over it.
-   DISK_T must be 8: at 7 the 5 mm floor brings the clamped joint down to about SF 2.7.
-
-## Proof test to put in §8 once changed (the best verdict will still be NEEDS_TEST)
-Keep the 1 kg-at-the-elbow test (in-plane), and add: **arm assembled and pointing straight up, servos unpowered.
-Push 10 N (≈1 kg on a luggage scale) sideways (±Y) at the fingertip, 1 min each way, then repeat with the elbow at
-90°. Pass: no cracks or whitening at the upright window corners, the tab pilots, the gusset toes or the upright–disk
-corner; the base horn doesn't lift off; the fingertip returns to within 1 mm (no permanent lean).** 10 N is 2 x the
-hand push and 1.2 x the largest out-of-plane yaw-stall force.
-
-### Script output: what-if / stability
+Script notes:
 
 ```
-WHAT-IF  DISK_T 5->8, UP_T 5->7, GUSSET_H 50->70, base horn clamped by its centre screw (access hole 6.5 -> 3.4, M3x12 + OD9 washer):
-  yaw: root front (Kt2.5)                            SF 13.42 (req 3) OK
-  yaw: root toe (Kt2.5)                              SF  6.11 (req 3) OK
-  yaw: Z51 front (Kt2.5)                             SF  5.38 (req 3) OK
-  yaw: Z51 toe                                       SF  7.76 (req 3) OK
-  yaw: Z56 front (Kt2)                               SF  5.13 (req 3) OK
-  yaw: disk at upright (Kt2.5)                       SF  3.60 (req 3) OK
-  yaw: clamped base-horn joint                       SF  3.24 (req 3) OK
-  hand: root front (Kt2.5)                           SF 23.26 (req 3) OK
-  hand: root toe (Kt2.5)                             SF  8.41 (req 3) OK
-  hand: Z51 front (Kt2.5)                            SF  6.17 (req 3) OK
-  hand: Z51 toe                                      SF  8.91 (req 3) OK
-  hand: Z56 front (Kt2)                              SF  5.87 (req 3) OK
-  hand: disk at upright (Kt2.5)                      SF  4.25 (req 3) OK
-  hand: clamped base-horn joint                      SF  4.78 (req 3) OK
-  shoulder stall on desk: clamped base-horn joint    SF 21.43 (req 3) OK
-  weight x2 (sustained): clamped base-horn joint     SF 22.73 (req 4) OK
-  what-if lowest SF 3.24
+arm model: Y horn faces shoulder 11.5, elbow 36.0, wrist 55.4, gripper 72.8; fingertip Y 74.8; masses UL 50.4 FA 37.3 GB 30.8 JW 8.5 TT 113.5 g; CG x UL 39.9 FA 35.5 GB 52.6 (z 6.8) JW 20.5
+section Z=28.0: A=636.8 Ixx=35229 (CAD 35227) ybar=-12.46 c_front=7.46 c_toe=21.39
+section Z=51.0: A=287.2 Ixx=10454 (CAD 10448) ybar=-12.74 c_front=7.74 c_toe=13.55
+section Z=56.0: A=237.5 Ixx=7512 (CAD 7507) ybar=-12.69 c_front=7.69 c_toe=11.96
+M_y shoulder stall on desk 1158; arm weight about the yaw axis 442 static; proof 1 kg at elbow 1522 N.mm
+yaw  sweep: root Mx=1603 My=1367 Mz=1114; wb Mx=1456 My=1107 Mz=1116; pr Mx=1426 My=1056 Mz=1116; disk Mx=1673 My=1489 Mz=1000
+hand sweep: root Mx=1590 My=0 Mz=1000; wb Mx=1473 My=0 Mz=1000; pr Mx=1450 My=0 Mz=1000; disk Mx=1645 My=0 Mz=1000
+ring catch force if the disk rocks onto the ring: 45.2 N
+FIT: clamp washer D9 (r 4.5) vs front-wedge gap |X| < 6.0 -> clear, seats flat
 ```
+
+## Proof test (spec §8 confirmed)
+(1) 1 kg at the elbow axis: base-horn joint SF 19.6 at that load (advisory). (2) 10 N sideways at the fingertip, arm
+up, then with the elbow at 90°: 2 x the hand push and 1.2 x the largest out-of-plane yaw-stall force. Keep both.

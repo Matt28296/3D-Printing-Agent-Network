@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261025-arm-esp32-cradle/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 01:21:46 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 3704,
+    "print_time_h": 1.03,
+    "filament_g": 10.81,
+    "filament_mm": 3537.43,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 3.0,
+    "fill_density": 25.0,
+    "fill_pattern": "gyroid",
+    "layers": 50,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        160.627
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        59.0
+      ]
+    }
+  },
+  "sha256": "710b3b9a94d84adbbc177bd17d005727cd15cb970b8834315d00388e42f25f3e",
+  "validator_version": "1.0.0"
+}

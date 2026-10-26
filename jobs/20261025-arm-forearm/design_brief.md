@@ -26,3 +26,4 @@ HORN_SERVO, WRIST, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, END_CLR, BED_
 ## Risks
 - SG90 pilot-to-window wall 1.55 mm (DFM round 1) → Ø1.5 printed pilot + 0.2 end clearance → 1.8 mm printed
 - Sideways loads (strength round 1) → T 5→10, slot removed, centre-screw clamp
+- Wrist SG90 tab screws pull out (strength round 2) → M2×12 self-tapping, 9.5 mm engaged

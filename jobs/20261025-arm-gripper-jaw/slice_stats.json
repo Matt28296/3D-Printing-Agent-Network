@@ -1,0 +1,15 @@
+{
+  "print_time_s": 1992,
+  "print_time_h": 0.55,
+  "filament_g": 6.16,
+  "filament_mm": 2017.73,
+  "layers": 40,
+  "max_z_mm": 57.0,
+  "filament_type": "PETG",
+  "nozzle_temp_c": 250.0,
+  "bed_temp_c": 90.0,
+  "layer_height": 0.2,
+  "perimeters": 4.0,
+  "fill_density": 40.0,
+  "fill_pattern": "gyroid"
+}

@@ -488,7 +488,7 @@ for lbl, M, req in (("weight x2 (sustained)", {n: DYN * abs(W_OOP[n]) for n in p
                     ("hand push 5 N", {n: SW["hand"][n]["Mx"] for n in pts}, SF_STATIC)):
     sy = bend(SW["yaw"]["root"]["My"], upright_y_I(Z_ROOT), P.UP_W / 2) if lbl.startswith("yaw") else 0.0
     check(f"{lbl}: upright root above the wedge, front (Kt {KT_WEDGE})", bend(M["root"], Ir, cfr) + sy, True, req, Kt=KT_WEDGE)
-    check(f"{lbl}: upright root, front, wedge cut away at the washer (Kt 2.5)", bend(M["root"], Ir, cfr) + sy, True, req,
+    check(f"{lbl}: upright root, front, at the washer gap |X|<6 (no wedge, Kt 2.5)", bend(M["root"], Ir, cfr) + sy, True, req,
           Kt=2.5)
     check(f"{lbl}: upright root, gusset toe (Kt 2.5)", bend(M["root"], Ir, cbr) + sy, True, req, Kt=2.5)
     check(f"{lbl}: window bottom, front face (Kt 2.5)", bend(M["wb"], Iwb, cfwb), True, req, Kt=2.5)
@@ -514,7 +514,6 @@ for lbl, My, Mx, req in (("weight x2 (sustained)", DYN * M_W_YAW, DYN * abs(W_OO
 check_util("proof test (1 kg at the elbow): clamped base-horn joint", M_PROOF_Y / cap_t, 1.0, info=True)
 R_RING = max(SW[m]["disk"]["Mx"] for m in SW) / (RING_R - HUB_R)
 print(f"ring catch force if the disk rocks onto the ring: {R_RING:.1f} N")
-WASHER_EDGE_Y = -WASHER_D["MG996R"] / 2
-print(f"FIT: clamp washer D{WASHER_D['MG996R']:.0f} reaches Y {WASHER_EDGE_Y:.1f}; front root wedge occupies Y {P.UP_Y:.1f}"
-      f" to {P.UP_Y + P.ROOT_FILLET:.1f} -> {'CLASH' if WASHER_EDGE_Y < P.UP_Y + P.ROOT_FILLET else 'clear'}")
+print(f"FIT: clamp washer D{WASHER_D['MG996R']:.0f} (r {WASHER_D['MG996R'] / 2}) vs front-wedge gap |X| < {P.WASHER_CLEAR_X}"
+      f" -> {'clear, seats flat' if WASHER_D['MG996R'] / 2 <= P.WASHER_CLEAR_X else 'CLASH'}")
 worst, fails = report("20261025-arm-turntable")

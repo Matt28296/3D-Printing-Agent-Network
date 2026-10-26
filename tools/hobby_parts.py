@@ -279,3 +279,112 @@ def chamfer_plane_edges(part: Part, z: float, size: float = 0.4) -> Part:
     if not edges:
         raise ValueError(f"no edges in the plane Z = {z}")
     return chamfer(edges, length=size)
+
+
+# ----------------------------------------------------------------------------------------
+# Small DC gear motors, power and sensor parts (tracked rover). Nominal: measure yours.
+# ----------------------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class GearMotorSpec:
+    """N20-style micro gear motor. Frame: origin on the shaft axis at the GEARBOX FACE,
+    +Z = shaft direction (out of the gearbox), body towards -Z; the gearbox's 12 mm side
+    (and the two face screw holes) along X."""
+    name: str
+    gb_w: float            # gearbox width (x), carries the face screw holes
+    gb_h: float            # gearbox height (y)
+    gb_len: float          # gearbox length (z)
+    can_d: float           # motor can diameter
+    can_flat: float        # across the can's flats (y)
+    can_len: float         # can length incl. end cap
+    term_len: float        # terminals behind the can
+    shaft_d: float
+    shaft_flat: float      # D-flat: distance from the flat to the far side of the shaft
+    shaft_len: float       # from the gearbox face
+    boss_d: float          # bearing boss round the shaft on the face
+    boss_h: float
+    face_hole_dx: float    # face screw spacing along x
+    face_screw_d: float    # thread size (M1.6)
+    stall_torque_nmm: float
+    mass_g: float
+
+
+# GA12-N20, 6 V, 100 rpm metal gearbox (typical; the gearbox length grows with the ratio).
+N20_100RPM = GearMotorSpec(
+    name="N20 6V 100rpm", gb_w=12.0, gb_h=10.0, gb_len=9.0, can_d=12.0, can_flat=10.0, can_len=15.5,
+    term_len=2.5, shaft_d=3.0, shaft_flat=2.5, shaft_len=10.0, boss_d=4.0, boss_h=0.8,
+    face_hole_dx=9.0, face_screw_d=1.6, stall_torque_nmm=130.0, mass_g=10.0)
+
+
+def gearmotor_dummy(m: GearMotorSpec) -> Part:
+    """Approximate N20 solid in its frame (gearbox, can with flats, terminals, boss, shaft)."""
+    from build123d import Box as _B
+    gb = Pos(0, 0, -m.gb_len / 2) * _B(m.gb_w, m.gb_h, m.gb_len)
+    can = Pos(0, 0, -m.gb_len - m.can_len / 2) * (Cylinder(m.can_d / 2, m.can_len)
+                                                  & _B(m.can_d, m.can_flat, m.can_len))
+    term = Pos(0, 0, -m.gb_len - m.can_len - m.term_len / 2) * _B(6.0, 4.0, m.term_len)
+    boss = Cylinder(m.boss_d / 2, m.boss_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    shaft = Cylinder(m.shaft_d / 2, m.shaft_len, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return gb + can + term + boss + shaft
+
+
+def gearmotor_wall_cutter(m: GearMotorSpec, wall_t: float, hole_comp: float = HOLE_COMP_DEFAULT,
+                          teardrop: str | None = "+y", boss_clear: float = 0.6) -> Part:
+    """Cutter for a wall the gearbox face bolts against (wall occupies z in [0, wall_t] in the
+    motor frame): shaft/boss clearance hole and the two face-screw clearance holes."""
+    d_boss = m.boss_d + boss_clear + hole_comp
+    d_scr = m.face_screw_d + 0.4 + hole_comp
+    c = _teardrop_z(d_boss, wall_t, teardrop)
+    for sx in (-1, 1):
+        c = c + Pos(sx * m.face_hole_dx / 2, 0, 0) * _teardrop_z(d_scr, wall_t, teardrop)
+    return c
+
+
+def d_shaft_bore_cutter(m: GearMotorSpec, depth: float, clearance: float = 0.1,
+                        hole_comp: float = HOLE_COMP_DEFAULT) -> Part:
+    """D-shaped bore for the motor shaft along +Z from z = 0 to depth (press fit + grub screw).
+    The flat is on the +Y side."""
+    d = m.shaft_d + clearance + hole_comp
+    flat_y = m.shaft_flat - m.shaft_d / 2 + (clearance + hole_comp) / 2   # flat's distance from the axis
+    bore = Cylinder(d / 2, depth, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    keep = Pos(0, -d / 2 + (d / 2 + flat_y) / 2, 0) * Box(d, d / 2 + flat_y, depth,
+                                                         align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return bore & keep
+
+
+def _teardrop_z(d: float, length: float, point: str | None) -> Part:
+    """Round hole of diameter d along +Z (z 0..length, extended 1 mm each end), with an optional
+    45° point towards +x/-x/+y/-y (the up direction when the wall is printed standing)."""
+    r = d / 2
+    h = Pos(0, 0, -1) * Cylinder(r, length + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if point:
+        ux, uy = {"+x": (1, 0), "-x": (-1, 0), "+y": (0, 1), "-y": (0, -1)}[point]
+        h = h + Pos(ux * r / 2 ** 0.5, uy * r / 2 ** 0.5, -1) * Rot(0, 0, 45) * Box(
+            r, r, length + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return h
+
+
+@dataclass(frozen=True)
+class BoxSpec:
+    """A stock component approximated by a box (and its notes)."""
+    name: str
+    length: float
+    width: float
+    height: float
+    mass_g: float = 0.0
+    note: str = ""
+
+
+BATT_2X18650 = BoxSpec("2 × 18650 series holder", 77.0, 41.0, 21.0, 135.0,
+                       "holder ~40 g + two cells ~47 g each; use protected cells or a 2S BMS")
+TB6612_CARRIER = BoxSpec("TB6612FNG carrier (Pololu-size)", 20.3, 15.2, 3.0, 2.0)
+MINI_BREADBOARD = BoxSpec("mini breadboard, 170 tie points", 47.0, 35.0, 8.5, 10.0, "adhesive back")
+MP1584_BUCK = BoxSpec("MP1584 buck module", 22.0, 17.0, 4.0, 2.0, "set to 5.0 V before connecting the ESP32")
+HCSR04 = BoxSpec("HC-SR04 ultrasonic", 45.0, 20.0, 15.0, 9.0,
+                 "transducers Ø16 at ±13.0 mm from the board centre, 12 mm tall")
+HCSR04_TX_D, HCSR04_TX_DX = 16.0, 26.0
+KCD11_SWITCH_CUTOUT = (15.0, 10.0)    # mini rocker switch panel cut-out (w, h)
+
+__all__ += ["GearMotorSpec", "N20_100RPM", "gearmotor_dummy", "gearmotor_wall_cutter", "d_shaft_bore_cutter",
+            "BoxSpec", "BATT_2X18650", "TB6612_CARRIER", "MINI_BREADBOARD", "MP1584_BUCK", "HCSR04",
+            "HCSR04_TX_D", "HCSR04_TX_DX", "KCD11_SWITCH_CUTOUT"]

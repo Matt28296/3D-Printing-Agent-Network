@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261025-arm-upper-link/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 01:22:06 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 10722,
+    "print_time_h": 2.98,
+    "filament_g": 33.87,
+    "filament_mm": 11088.8,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 5.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 50,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        200.376
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        59.0
+      ]
+    }
+  },
+  "sha256": "c2d50e7acb4a6c71a70047880faff621b5d00f7ad38e179f3d433bf0a4244de6",
+  "validator_version": "1.0.0"
+}

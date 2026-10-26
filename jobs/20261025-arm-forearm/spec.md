@@ -8,7 +8,7 @@ Flat 10 mm plate on the elbow servo's double-arm horn, carrying the wrist SG90 a
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 129 × 26 × 10 mm. Interfaces: MG996R horn slot with Ø3.4 clamp hole at x 0; SG90 window 22.7 × 12.4 (printed) at x 90 with 2 Ø1.5 slotted pilots.
-- Fasteners used: Elbow horn: M3×16 centre screw + Ø9 washer from the front face + 2 arm screws; wrist SG90: its 2 tab screws
+- Fasteners used: Elbow horn: M3×16 centre screw + Ø9 washer from the front face + 2 arm screws; wrist SG90: 2 × M2×12 self-tapping screws (NOT the short bag screws: they engage only ~5 mm and pull out under the yaw-stall case, strength round 2)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -44,7 +44,7 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, S
 
 ## 8. Acceptance criteria (measurable)
 - [ ] SG90 fits the window (measure it first: ends have only 0.1 mm clearance each); tab screws bite
-- [ ] **Proof test:** (1) Clamp at the elbow horn, 1 kg at the wrist axis for 1 min: no cracks, no set. (2) Same clamping, 15 N sideways (out of plane) at the wrist axis for 1 min each way, then 7.5 N sideways at the end of a 95 mm lever on the wrist tab holes. Pass: no cracks at the pocket or the SG90 pilots, no lift off the horn, no permanent set.
+- [ ] **Proof test:** (1) Clamp at the elbow horn, 1 kg at the wrist axis for 1 min: no cracks, no set. (2) Same clamping, 15 N sideways (out of plane) at the wrist axis for 1 min each way, then 7.5 N sideways at the end of a 95 mm lever on the wrist tab holes. Pass: no cracks at the pocket or the SG90 pilots, the SG90 tabs don't lift, no lift off the horn, no permanent set. Run (2) with the M2×12 tab screws fitted.
 
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

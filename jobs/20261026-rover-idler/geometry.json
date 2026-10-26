@@ -1,0 +1,41 @@
+{
+  "bbox_mm": [
+    35.777,
+    34.582,
+    20.0
+  ],
+  "bbox_min_mm": [
+    -17.888,
+    -17.291,
+    0.0
+  ],
+  "volume_mm3": 5156.67,
+  "area_mm2": 3116.87,
+  "solids": 1,
+  "holes": [
+    {
+      "diameter": 3.4,
+      "axis": [
+        -0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        0.0,
+        0.0,
+        10.0
+      ],
+      "arc_deg": 355.0
+    }
+  ],
+  "min_z_mm": 0.0,
+  "watertight": true,
+  "mesh_faces": 1448,
+  "fits_bed": true,
+  "bed_mm": [
+    250,
+    210,
+    210
+  ],
+  "margin_mm": 5.0
+}

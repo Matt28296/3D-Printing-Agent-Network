@@ -26,4 +26,4 @@ BOARDS, HOLE_COMP, USB_END_X, YC, PCB_BOT, TOP, BOT, CLR, WALL, HALF, ROW_KEEP, 
 - Jumper housings blocked by the frame → nothing passes under the pin rows (|y − 28| between 11 and 15)
 - Base corner pillar → +Y wall stops at x 44, USB ledge at y 41.5
 - USB-end ledge cantilever (strength round 1) → 2.8 wide, frame 10 tall
-- 2 mm screw engagement (both reviews) → counterbores + M3×12
+- 2 mm screw engagement (both reviews) → counterbores + M3×10 (6 mm thread, matches the 6 mm boss pilot)

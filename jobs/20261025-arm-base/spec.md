@@ -8,7 +8,7 @@ Open-bottom box (110 × 104 × 40 mm) that holds the base-yaw MG996R (hanging th
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 110 × 104 × 40 mm. Interfaces: MG996R window 41.1 × 20.1 mm with 4 × Ø2.6 pilots (48.5 × 10 mm pattern) through 4 mm plate + 6 mm bosses; 3 × Ø2.6 ring pilots at r47.5 (30°, 150°, 270°); 3 × Ø2.6 cradle pilots on Ø7 bosses; DC jack Ø11.4 teardrop; USB slot 13 × 7; cable slot 14 × 8 at (−40, −36); 4 × Ø3.4 desk holes in corner pillars.
-- Fasteners used: 4 × MG996R tab screws (from the servo bag) self-tapping into Ø2.6 pilots; 3 × M3×6 self-tapping for the ring; 3 × M3×12 for the cradle (from below, heads in counterbores); 4 × M3×50 (or #4 × 2") wood screws to the desk or a board: REQUIRED, the arm tips the base over with the arm out (strength round 1)
+- Fasteners used: 4 × MG996R tab screws (from the servo bag) self-tapping into Ø2.6 pilots; 3 × M3×6 self-tapping for the ring; 3 × M3×10 for the cradle (from below, heads in counterbores: 4 mm clamp + 6 mm into the boss pilots); 4 × M3×50 (or #4 × 2") wood screws to the desk or a board: REQUIRED, the arm tips the base over with the arm out (strength round 1)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |

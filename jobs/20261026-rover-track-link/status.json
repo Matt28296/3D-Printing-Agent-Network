@@ -1,0 +1,20 @@
+{
+  "job_id": "20261026-rover-track-link",
+  "stage": "SPEC",
+  "kind": "part",
+  "iterations": {
+    "DESIGN": 0,
+    "SLICE": 0
+  },
+  "gates": {
+    "SPEC": null,
+    "DESIGN": null,
+    "SLICE": null,
+    "APPROVAL": null,
+    "PRINT": null,
+    "INSPECT": null,
+    "RECORD": null
+  },
+  "open_questions": [],
+  "updated": "2026-10-26T01:23:34+00:00"
+}
