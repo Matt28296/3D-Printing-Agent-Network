@@ -1,4 +1,4 @@
-"""Strength check for jobs/20261026-rover-sprocket (tracked rover, PETG), round 3.
+"""Strength check for jobs/20261026-rover-sprocket (tracked rover, PETG), round 3 with the round 4 shaft-end re-check.
 
 Run from the project root with the CAD venv active (build123d):
     source /home/claude/.venv-cad/bin/activate
@@ -8,6 +8,10 @@ Round 3: the sprocket is a 7 mm toothed disc bolted with 4 x M3 x 12 through rad
 aluminium hub that clamps the N20's D-shaft. The torque path is metal up to the disc; the printed part carries the teeth,
 the slot bearing and the rim. The tooth-root section is cut from the build123d solid. Rows tagged as drop rows scale
 linearly with the drop height.
+Round 4 re-check (no change to the sprocket): chassis round 4 thickened the skin in front of the gearbox from 1 to 2 mm,
+so the gearbox face moved 1 mm inward (rover_frame.MOTOR_FACE_Y 44.0) while the thrust washer, hub and disc stayed put.
+The shaft end's depth in the disc's centre hole is now computed from rover_frame (gearbox face + shaft length) instead
+of being hard-coded, and the shaft-end rows H4/H5 are checked at the shortest shaft the round-4 BUILD_GUIDE allows.
 """
 # ===================== shared rover block, round 3 (identical in all six rover strength_calc.py) =====================
 import json
@@ -243,16 +247,51 @@ check(f"H2 hub-screw bearing, everyday {L.F_trac * F.RP:.0f} N*mm", bearing(L.F_
 F_scr_R = L.drop / (n_bear * math.cos(math.radians(45)))
 check(f"H3 hub-screw bearing, 5 cm rear corner {L.drop:.1f} N (slots at 45° to the load, {n_bear} bearing)",
       bearing(F_scr_R, d_scr, t_disc), False, SF_STATIC, drop=True)
-# the disc can shift 0.2 mm on the screws until the shaft end bears in the Ø3.4 centre hole (the shaft end is at
-# world |y| 54 or 55, so 2.5 or 3.5 mm of it is inside the 7 mm disc)
+# --- round 4 re-check: the shaft end in the centre hole, computed from rover_frame -------------------------------------
+# Chassis round 4 (2 mm skin) moved the gearbox face from |y| 45 to F.MOTOR_FACE_Y = 44.0; the thrust washer, the hub
+# (46.5-51.5) and the disc (51.5-58.5) stayed put, so every shaft end sits 1 mm less deep in the disc. Shaft lengths are
+# measured from the gearbox face (the flat metal plate; the Ø4 bushing stands proud of it). The disc can shift about
+# 0.2 mm on the screws until the shaft end bears in the Ø3.4 centre hole.
 r_hole = (p.SHAFT_CLEAR_D + p.HOLE_COMP) / 2
 r_slot_in = p.SLOT_R[0] - (p.HUB_SCREW_D + p.HOLE_COMP) / 2
 lig_in = r_slot_in - r_hole                          # 1.9: centre hole to a slot's inner end
-L_shaft = 54.0 - F.HUB_Y1                            # 9 mm shaft: 2.5 mm in the disc (10 mm shaft: 3.5)
-check(f"H4 shaft end bearing in the centre hole, 5 cm rear corner (9 mm shaft: {L_shaft:.1f} mm engaged)",
-      bearing(L.drop, M.shaft_d, L_shaft), False, SF_STATIC, drop=True)
-check(f"H5 centre-hole-to-slot ligament ({lig_in:.2f} mm) shear-out, 5 cm rear corner toward a slot",
-      L.drop / (2 * lig_in * L_shaft), False, SF_STATIC, shear=True, drop=True)
+SHAFT_9, SHAFT_NOM = 9.0, M.shaft_len                # a "9 mm" N20, and the specified N20 (10 mm, as Pololu's motors)
+SHAFT_MIN = 9.6                                      # round 4: the shortest shaft BUILD_GUIDE §1 row 2 may allow
+
+
+def engaged(shaft_len):
+    """Length of shaft inside the disc's centre hole (the disc spans HUB_Y1 .. HUB_Y1 + 2 DISC_HALF)."""
+    return min(max(F.MOTOR_FACE_Y + shaft_len - F.HUB_Y1, 0.0), 2 * F.DISC_HALF)
+
+
+L_min, L_9, L_nom = engaged(SHAFT_MIN), engaged(SHAFT_9), engaged(SHAFT_NOM)
+L_req_H5 = L.drop / (2 * lig_in * allow_mpa(False, shear=True) / SF_STATIC)     # engagement H5 needs for SF 3
+L_req_H4 = L.drop / (M.shaft_d * allow_mpa(False) / SF_STATIC)                   # and H4
+print(f"\nround 4 shaft end: gearbox face |y| {F.MOTOR_FACE_Y:.1f} (round 3: 45.0), hub {F.HUB_Y0:.1f}..{F.HUB_Y1:.1f}, disc"
+      f" {F.HUB_Y1:.1f}..{F.HUB_Y1 + 2 * F.DISC_HALF:.1f}; a {SHAFT_9:.0f} / {SHAFT_MIN} / {SHAFT_NOM:.0f} mm shaft ends at"
+      f" {F.MOTOR_FACE_Y + SHAFT_9:.1f} / {F.MOTOR_FACE_Y + SHAFT_MIN:.1f} / {F.MOTOR_FACE_Y + SHAFT_NOM:.1f}: {L_9:.1f} / {L_min:.1f} /"
+      f" {L_nom:.1f} mm in the disc (round 3: 2.5 / - / 3.5). For SF {SF_STATIC:.0f} in the 5 cm corner drop H5 needs"
+      f" {L_req_H5:.2f} mm (a shaft >= {F.HUB_Y1 + L_req_H5 - F.MOTOR_FACE_Y:.2f} mm from the gearbox face), H4 {L_req_H4:.2f} mm")
+check(f"H4 shaft end bearing in the centre hole, 5 cm rear corner (round 4: shortest allowed shaft, {SHAFT_MIN} mm from the"
+      f" gearbox face, {L_min:.1f} mm in the disc)", bearing(L.drop, M.shaft_d, L_min), False, SF_STATIC, drop=True)
+check(f"H5 centre-hole-to-slot ligament ({lig_in:.2f} mm) shear-out, 5 cm rear corner toward a slot (round 4: {L_min:.1f} mm"
+      f" engaged)", tearout(L.drop, lig_in, L_min), False, SF_STATIC, shear=True, drop=True)
+# Can the hub screws (H3) or the rest of the disc take the drop load off the shaft end? Printed for the record.
+c_hole = (p.SHAFT_CLEAR_D - M.shaft_d) / 2           # 0.20 radial, printed Ø3.4 on the Ø3.0 shaft (round side)
+c_slot = (p.HUB_SCREW_D - d_scr) / 2                 # 0.20 each side of an M3 in its printed 3.4 slot
+w_slot = p.HUB_SCREW_D + p.HOLE_COMP                 # 3.6 CAD: the ligament's span across the slot's end
+I_lig = L_9 * lig_in ** 3 / 12
+d_shaft_path = (L.drop * w_slot ** 3 / (192 * E_PETG_MPA * I_lig) + 1.2 * L.drop * w_slot / (4 * G_PETG_MPA * lig_in * L_9)
+                + L.drop / (E_PETG_MPA * L_9))       # ligament bending + shear, plus a contact allowance F / (E L)
+F_spread = L.drop * (L_req_H5 - L_9) / L_req_H5      # what a 9 mm shaft's ligament would have to pass to deeper layers
+print(f"load path, 5 cm corner {L.drop:.1f} N: shaft gap {c_hole:.2f}; screw gap {c_slot:.2f} a side, so the screws close at a"
+      f" disc shift of {c_slot:.2f} (load toward a slot: the two screws across it) to {c_slot / math.sin(math.radians(45)):.2f}"
+      f" (load at 45° to the slots, where the shaft end bears between two slots). Shaft-end path at {L_9:.1f} mm engaged:"
+      f" about {d_shaft_path:.3f} mm of give at the full load, less than the {c_slot / math.sin(math.radians(45)) - c_hole:.3f} mm"
+      f" the screws still need at 45°; toward a slot the nominal gaps are equal ({c_slot:.2f} = {c_hole:.2f}), so which path"
+      f" bears first is set by the printed hole and slot sizes (no library row for hole compensation). H3 does not relieve"
+      f" H4/H5. Spreading a 9 mm shaft's load deeper into the disc would need {F_spread:.1f} N across the layer interfaces of"
+      f" the ligament ({lig_in:.1f} x {w_slot:.1f} mm, the last layers printed): not in the skill's tear-out formula, not credited")
 # --- rim under a link in a corner drop (rounds 1-2 row) ------------------------------------------------------------------
 perim = json.load(open(os.path.join(JOBS, JOB, "print_requirements.json")))["min"]["perimeters"]
 check("R1 disc rim bearing under a link, 5 cm rear corner", L.drop / (t_disc * 2 * perim * 0.45), False, SF_STATIC, drop=True)
@@ -276,8 +315,12 @@ check("tooth root, stall, if the chamfer acts like a sharp corner (Kt 2.0)", too
       info=True)
 check(f"tooth root, stall pull at the TIP (a link riding over a tooth on a slack track)", tooth_root(L.F_stall, arm_tip), False,
       SF_STATIC, info=True)
-check(f"H3/H4, 5 cm corner, stiff landing (stopping distance {DELTA_STIFF_MM} mm, {L.drop_stiff:.0f} N): shaft end bearing",
-      bearing(L.drop_stiff, M.shaft_d, L_shaft), False, SF_STATIC, info=True)
+for lab, Ls in ((f"{SHAFT_9:.0f} mm shaft (excluded by the round-4 BUILD_GUIDE row)", L_9),
+                (f"{SHAFT_NOM:.0f} mm shaft (the specified N20; Pololu micro metal gearmotors)", L_nom)):
+    check(f"round 4 H4, {lab}: {Ls:.1f} mm in the disc", bearing(L.drop, M.shaft_d, Ls), False, SF_STATIC, info=True)
+    check(f"round 4 H5, {lab}: {Ls:.1f} mm in the disc", tearout(L.drop, lig_in, Ls), False, SF_STATIC, shear=True, info=True)
+check(f"H3/H4, 5 cm corner, stiff landing (stopping distance {DELTA_STIFF_MM} mm, {L.drop_stiff:.0f} N): shaft end bearing,"
+      f" {L_min:.1f} mm engaged", bearing(L.drop_stiff, M.shaft_d, L_min), False, SF_STATIC, info=True)
 for T_nm in (0.3, 0.8):
     P_t = T_nm * 1000 / (0.2 * 3.0)
     check(f"assembly: M3 x 12 into the hub at {T_nm} N*m (P {P_t:.0f} N): washer on the disc ({A_wash:.1f} mm² beside the slot)",
