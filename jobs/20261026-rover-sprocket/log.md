@@ -12,3 +12,4 @@
 - 2026-10-26T08:54Z · dfm-reviewer (round 3, independent) · design_review.md · PASS
 - 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · NEEDS_TEST
 - 2026-10-26T10:25Z · architect · spec §8 proof test updated to the round-3 strength review · ok
+- 2026-10-26T11:18Z · architect (as head-orchestrator) · status.json: strength rows H4/H5 reopened for a re-check, because chassis round 4 (2 mm skin) moved the motor shaft end 1 mm inward; no geometry change to the sprocket · ok

@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "pass (DFM PASS round 3; strength NEEDS_TEST, proof test in spec \u00a78)",
+    "DESIGN": "re-check: the chassis round 4 moved the motor shaft end 1 mm inward (1.5 mm into the centre hole with a 9 mm shaft); strength rows H4/H5 re-run with the round 4 reviews",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:25:32+00:00"
+  "updated": "2026-10-26T11:18:14+00:00"
 }

@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 3 (strength SF 2.49, rail top under the 20 N press): change RAIL_W 2.5 \u2192 4.5 in the next round",
+    "DESIGN": "round 4 in review: RAIL_W 4.5, tie slots moved out",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:25:32+00:00"
+  "updated": "2026-10-26T11:18:14+00:00"
 }
