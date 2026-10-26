@@ -11,7 +11,7 @@ Robot 2 of 3. **Ready for your approval (26 Oct 2026).** All six printed parts p
 | Road wheel | `20261026-rover-wheel` | 32 × 32 × 33 each | 2 × 2 | 2.3 h | 25 g | AWAITING_APPROVAL |
 | Track link | `20261026-rover-track-link` | 16 × 24 × 8 each | 35 × 2 | 6.2 h | 45 g | AWAITING_APPROVAL |
 
-Eight plates in all: about **34 h and 335 g of PETG**, on the smooth PEI sheet with a thin layer of glue stick. Build the 5-link test chain from the first track-link plate before printing the second.
+Eight plates in all: about **33 h and 335 g of PETG**, on the smooth PEI sheet with a thin layer of glue stick. Build the 5-link test chain from the first track-link plate before printing the second.
 
 **Buy before you build** (BUILD_GUIDE §1 has the full list):
 - N20 gear motors with a **3 mm D-shaft 10 mm long** from the flat gearbox face (at least 9.6 mm); a 9 mm shaft is too short for the sprocket.
