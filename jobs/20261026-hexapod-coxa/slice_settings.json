@@ -1,0 +1,38 @@
+{
+  "prusaslicer": "PrusaSlicer-2.7.2+UNKNOWN based on Slic3r (with GUI support)",
+  "command": [
+    "/usr/bin/prusa-slicer",
+    "--export-gcode",
+    "--load",
+    "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+    "--load",
+    "profiles/print/0.20mm_QUALITY_@MK3.ini",
+    "--load",
+    "profiles/filament/Prusament_PETG.ini",
+    "--load",
+    "jobs/20261026-hexapod-coxa/slice_overrides.ini",
+    "--duplicate",
+    "2",
+    "jobs/20261026-hexapod-coxa/part.stl",
+    "--output",
+    "jobs/20261026-hexapod-coxa/part.gcode"
+  ],
+  "profiles": {
+    "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini": "847564b7bc40cfa4b16a44784146fc797b5a793a3dffc658682dbc6b0543c4a6",
+    "profiles/print/0.20mm_QUALITY_@MK3.ini": "af0938f7c92a88c15c169371076126d5c518e110f15afbdad79ed8bc33ce0aed",
+    "profiles/filament/Prusament_PETG.ini": "28725504aab173ab3e568c4d6076fb7d7e0d30179a052c41ef78802952e6713f"
+  },
+  "overrides": {
+    "perimeters": 4,
+    "top_solid_layers": 5,
+    "bottom_solid_layers": 5,
+    "fill_density": "100%",
+    "fill_pattern": "rectilinear",
+    "layer_height": 0.2,
+    "elefant_foot_compensation": 0.2,
+    "seam_position": "aligned",
+    "brim_width": 0
+  },
+  "copies": 2,
+  "warnings": []
+}

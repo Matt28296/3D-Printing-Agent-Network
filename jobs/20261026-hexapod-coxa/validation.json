@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-hexapod-coxa/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 11:30:25 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 15763,
+    "print_time_h": 4.38,
+    "filament_g": 59.12,
+    "filament_mm": 19354.75,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 100.0,
+    "fill_pattern": "rectilinear",
+    "layers": 205,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        157.426
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        90.0
+      ]
+    }
+  },
+  "sha256": "c7041e79c6979b2476ff7f108acb702b8de99383efd6eeaffd8ffaf3febcf6e0",
+  "validator_version": "1.0.0"
+}

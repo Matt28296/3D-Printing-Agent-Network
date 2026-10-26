@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-hexapod-body-top/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 11:44:30 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 9849,
+    "print_time_h": 2.74,
+    "filament_g": 36.18,
+    "filament_mm": 11844.78,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 3.0,
+    "fill_density": 20.0,
+    "fill_pattern": "gyroid",
+    "layers": 40,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        192.377
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        57.0
+      ]
+    }
+  },
+  "sha256": "2c980cd0b0c7993c5b599520c00ccab33c6199a8ab6a4ce63b847b20a2deaf42",
+  "validator_version": "1.0.0"
+}

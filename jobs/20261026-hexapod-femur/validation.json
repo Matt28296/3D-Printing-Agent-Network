@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-hexapod-femur/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 11:35:23 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 7454,
+    "print_time_h": 2.07,
+    "filament_g": 19.45,
+    "filament_mm": 6368.16,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 50.0,
+    "fill_pattern": "gyroid",
+    "layers": 35,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        159.819
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        56.0
+      ]
+    }
+  },
+  "sha256": "95c38d5c846cf7f377aec8e4eda2f907668cfd0eaac5a39faa6a2d408831a5d8",
+  "validator_version": "1.0.0"
+}
