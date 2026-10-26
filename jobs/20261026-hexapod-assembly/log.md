@@ -10,3 +10,4 @@
 - 2026-10-26T10:38Z · architect · BUILD_GUIDE BOM: the XT30 pigtail is male (LiPo leads carry the female plug), found while pricing the parts · ok
 - 2026-10-26T11:23Z · architect · BUILD_GUIDE step 5: coxa tab screws tightened by feel with dry threads (strength round 4: 0.045 N·m gives SF 3.09 dry, 2.31 oiled); status.json updated · ok
 - 2026-10-26T11:51Z · architect · BUILD_GUIDE §1 and step 6: screw-strip check on the first coxa plate and the femur plate (user decision: keep the 1.35–1.45 mm strips) · ok
+- 2026-10-26T11:57Z · architect · BUILD_GUIDE §1: femur and tibia 3 per plate × 2 plates; sliced times and filament (31.6 h, 388 g for 9 plates); screw-strip check names the first femur plate · ok

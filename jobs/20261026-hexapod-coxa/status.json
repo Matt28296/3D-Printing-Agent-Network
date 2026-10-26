@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-hexapod-coxa",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 4: DFM PASS; strength NEEDS_TEST, lowest SF 4.22, proof test in spec \u00a78; print 100 % rectilinear, 2 per plate)",
-    "SLICE": null,
+    "SLICE": "pass (2 per plate \u00d7 3 plates, 4.38 h and 59.1 g per plate, 100 % rectilinear; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:23:38+00:00"
+  "updated": "2026-10-26T11:57:04+00:00"
 }

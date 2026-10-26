@@ -10,12 +10,12 @@ Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo dri
 | Bottom body plate (with columns) | `20261026-hexapod-body-bottom` | 1 | 1 |
 | Top plate / electronics deck | `20261026-hexapod-body-top` | 1 | 1 |
 | Coxa bracket (solid, 100 % infill) | `20261026-hexapod-coxa` | 2 | 3 |
-| Femur | `20261026-hexapod-femur` | 6 | 1 |
-| Tibia | `20261026-hexapod-tibia` | 6 | 1 |
+| Femur | `20261026-hexapod-femur` | 3 | 2 |
+| Tibia | `20261026-hexapod-tibia` | 3 | 2 |
 
-Print times and filament: each job's `slice_stats.json` once it is sliced. Round 3 changed the bottom plate, the deck, the coxa bracket and the femur, so those four need slicing again. Round 4 changed the bottom plate and the coxa bracket once more.
+Sliced on 26 Oct 2026 (each job's `slice_stats.json`, stock Prusa PETG profiles, 0.2 mm layers): bottom plate 7.8 h / 94 g; deck 2.7 h / 36 g; coxa brackets 4.4 h / 59 g per plate; femurs 2.1 h / 19.5 g per plate; tibias 1.9 h / 20.7 g per plate. All nine plates: about **31.6 h and 388 g** of PETG. Every plate goes on the smooth PEI sheet with a thin layer of glue stick (each job's `preflight.md`).
 
-**Screw-strip check (26 Oct 2026).** The coxa bracket and the femur leave only 1.35–1.45 mm of plastic between each servo window and its screw holes, under the project's 1.8 mm rule. You chose to keep the design and check it on the first prints: print the **first coxa plate and the femur plate**, then fit one femur servo in a bracket and one tibia servo in a femur (step 6), drive both screws snug and look at the strips beside the screw holes. If one has turned white or cracked, stop and tell Claude **before printing the other two coxa plates**: the screw holes move out.
+**Screw-strip check (26 Oct 2026).** The coxa bracket and the femur leave only 1.35–1.45 mm of plastic between each servo window and its screw holes, under the project's 1.8 mm rule. You chose to keep the design and check it on the first prints: print the **first coxa plate and the first femur plate**, then fit one femur servo in a bracket and one tibia servo in a femur (step 6), drive both screws snug and look at the strips beside the screw holes. If one has turned white or cracked, stop and tell Claude **before printing the other two coxa plates and the second femur plate**: the screw holes move out.
 
 ### Bought
 | Qty | Item | Notes |

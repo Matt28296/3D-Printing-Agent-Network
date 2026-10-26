@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-hexapod-tibia",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 1,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (DFM PASS round 3; strength NEEDS_TEST, proof test in spec \u00a78)",
-    "SLICE": null,
+    "SLICE": "pass (3 per plate \u00d7 2 plates, 1.93 h and 20.7 g per plate, 50 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:23:38+00:00"
+  "updated": "2026-10-26T11:57:04+00:00"
 }

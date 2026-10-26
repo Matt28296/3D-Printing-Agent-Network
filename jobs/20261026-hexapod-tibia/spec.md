@@ -48,7 +48,7 @@ Round 3's walking stance tucks the tibia 18.7° in, so the foot load now bends t
 - Excluded: PLA (creep under constant servo-holding load); TPU only as optional foot socks
 
 ## 7. Quantity and time
-- Quantity: 6
+- Quantity: 6, printed **3 per plate** (2 plates); 6 on one plate slices to about 3.9 h, over the limit
 - Max acceptable print time per batch (h): 3
 
 ## 8. Acceptance criteria (measurable)
