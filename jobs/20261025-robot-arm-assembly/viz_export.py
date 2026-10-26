@@ -33,10 +33,9 @@ LABELS = {"base": "Base", "ring": "Turntable support ring", "turntable": "Turnta
           "camera_mount": "Brio 4K camera mount"}
 QTY = {"claw_jaw": 2}
 # review status shown on the page (update after each gate)
-STAMPS = [{"text": "Arm round 4 + claw round 2: reviews running", "kind": "warn"},
-          {"text": "Don't print yet: slicing follows the reviews", "kind": "note"}]
-RESLICE = ("base", "ring", "turntable", "upper", "forearm", "claw_frame", "claw_cover", "claw_pinion", "claw_jaw",
-           "camera_mount")   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
+STAMPS = [{"text": "9 of 11 parts awaiting your approval", "kind": "pass"},
+          {"text": "Claw frame + cover: fifth attempt in review", "kind": "warn"}]
+RESLICE = ("claw_frame", "claw_cover")   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
 PAYLOAD = ("with the camera, claw down: ≈160 g lifted at 140–160 mm out, ≈50 g at 180–200 mm, none held straight out; "
            "without it ≈55 g straight out (BUILD_GUIDE payload table)")
 PETG = "petg_orange"
@@ -235,10 +234,10 @@ def main(out_dir: Path):
                      "fingertips, and plugs into your PC; an ESP32 in the base drives the servos. Every part is placed where the "
                      "CAD and the assembly check put it: drag the sliders to pose it, or play the demo."),
             "meta": [["Printed parts", str(sum(p["qty"] for p in parts))],
-                     ["Print time", f"{sum(p['hours'] for p in parts):.1f} h"
-                      if all(p['hours'] is not None for p in parts) else "slicing after the reviews"],
-                     ["PETG", f"{sum(p['grams'] for p in parts):.0f} g"
-                      if all(p['grams'] is not None for p in parts) else "slicing after the reviews"], ["Reach", reach]],
+                     ["Print time", f"{sum(p['hours'] or 0 for p in parts):.1f} h" + ("" if all(p['hours'] is not None for p in parts)
+                      else f" + {sum(p['hours'] is None for p in parts)} to slice")],
+                     ["PETG", f"{sum(p['grams'] or 0 for p in parts):.0f} g" + ("" if all(p['grams'] is not None for p in parts)
+                      else f" + {sum(p['grams'] is None for p in parts)} to slice")], ["Reach", reach]],
             "stamps": STAMPS,
             "facts": [*([["Cost", (lambda c: f"C${c['scratch']:.0f} buying every pack new · C${c['used']:.0f} for the parts it uses · C${c['budget']:.0f} with budget picks (CAD with 15 % HST; docs/costs)")(json.loads((ROOT / 'docs' / 'costs' / 'costs.json').read_text())['arm'])]] if (ROOT / 'docs' / 'costs' / 'costs.json').exists() else []), ["Controller", "ESP32 DevKit (38- or 30-pin) in a cradle in the base"],
                       ["Servos", "3 × MG996R (base, shoulder, elbow), 2 × MG90S (wrist, claw)"],
