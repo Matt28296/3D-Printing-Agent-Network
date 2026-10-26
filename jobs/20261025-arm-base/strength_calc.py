@@ -102,6 +102,7 @@ _SERVO_FIELDS = ["name", "length", "width", "case_top", "total_h", "tab_height",
 _SERVO_DEFAULTS = dict(horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1, horn_screw_clear_d=3.4, stall_torque_nmm=0.0,
                        mass_g=0.0)
 _BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+_BOX_FIELDS = ["name", "length", "width", "height", "mass_g", "note"]
 
 
 def _lit(node):
@@ -123,6 +124,10 @@ def _read_hobby():
             ns[name] = SimpleNamespace(**d)
         elif fn == "BoardSpec":
             ns[name] = SimpleNamespace(**dict(zip(_BOARD_FIELDS, [_lit(a) for a in v.args])))
+        elif fn == "BoxSpec":
+            d = dict(zip(_BOX_FIELDS, [_lit(a) for a in v.args]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
         elif fn == "replace":
             d = dict(vars(ns[v.args[0].id]))
             d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
@@ -180,18 +185,49 @@ def volume_mm3(job):
 HOLE_COMP = HOBBY["HOLE_COMP_DEFAULT"]
 
 # --- arm model, built from the jobs' model.py / geometry.json (assembly_plan.md frames) -------------------
+# Round 4 (claw v2 + Brio, 2026-10-26): the end effector beyond the wrist horn is the rack-and-pinion claw (jobs
+# 20261026-arm-claw-frame, -claw-cover, -claw-pinion, -claw-jaw x2) carrying the optional Brio 4K on
+# 20261026-arm-camera-mount, and the wrist servo is an MG90S (SG90 body and horn, 216 N.mm stall, 13.4 g).
+# Masses: each claw job's geometry.json volume x 1.27 g/cm3. Fingertip lever and camera pose: the shared layout
+# jobs/20261025-robot-arm-assembly/claw_frame.py. Part centres of mass: build123d centre of mass of each design() in
+# the claw frame G (measured 2026-10-26; the script warns if a part's volume has changed since).
+def claw_frame_params():
+    """Top-level constants of the shared claw layout (claw_frame.py), evaluated like model.py."""
+    ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
+    base = set(ns)
+    tree = ast.parse(open(os.path.join(JOBS, "20261025-robot-arm-assembly", "claw_frame.py")).read())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        try:
+            val = eval(compile(ast.Expression(node.value), "claw_frame.py", "eval"), ns)
+        except Exception:
+            continue
+        t = node.targets[0]
+        if isinstance(t, ast.Name):
+            ns[t.id] = val
+        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
+            for e, v in zip(t.elts, val):
+                ns[e.id] = v
+    return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+
+
 UL = model_params("20261025-arm-upper-link")
 FA = model_params("20261025-arm-forearm")
-GB = model_params("20261025-arm-gripper-base")
-JW = model_params("20261025-arm-gripper-jaw")
 TT = model_params("20261025-arm-turntable")
+CF = claw_frame_params()
+MG90S, BRIO = HOBBY["MG90S"], HOBBY["BRIO_4K"]
+WRIST = MG90S                           # wrist servo: MG90S (same body and horn as the SG90 the forearm is drawn for)
 STALL_MG996R_NMM, STALL_SG90_NMM = MG996R.stall_torque_nmm, SG90.stall_torque_nmm
+STALL_WRIST_NMM = WRIST.stall_torque_nmm
 L1, L2 = UL.L, FA.L                     # shoulder->elbow, elbow->wrist
-GRIP_DX, L3 = GB.GRIP_X, GB.JAW_X1      # wrist -> gripper servo axis, wrist -> fingertip
+GRIP_DX, L3 = CF.X_P0, CF.X_TIP         # wrist -> claw-servo output (pinion back face), wrist -> fingertip (was 40 / 95)
 SX, SZ = TT.XS, TT.ZS                   # shoulder axis X, Z
 DESK_Z = -40.0
 F_HAND_N = 5.0                          # handling case (spec 4): hand push out of the arm plane at the fingertip
-HFZ_MG, HFZ_SG = horn_face_z(MG996R), horn_face_z(SG90)
+CAMERA = True                           # optional Brio 4K fitted (the heavier case governs)
+PAYLOAD_G = 50.0
+HFZ_MG, HFZ_SG = horn_face_z(MG996R), horn_face_z(WRIST)
 # world-Y stack: each link's back face sits HORN_DEPTH below the horn face; the next servo's tabs sit on its front face
 Y_SH_HORN = TT.UP_Y + HFZ_MG
 Y_UL_BACK = Y_SH_HORN - HORN_DEPTH
@@ -200,12 +236,9 @@ Y_EL_HORN = Y_EL_TAB + HFZ_MG
 Y_FA_BACK = Y_EL_HORN - HORN_DEPTH
 Y_WR_TAB = Y_FA_BACK + FA.T
 Y_WR_HORN = Y_WR_TAB + HFZ_SG
-Y_GB_BACK = Y_WR_HORN - HORN_DEPTH
-Y_GR_TAB = Y_GB_BACK + GB.T
-Y_GR_HORN = Y_GR_TAB + HFZ_SG
-Y_JW_BACK = Y_GR_HORN - HORN_DEPTH
-Y_HORN = {"shoulder": Y_SH_HORN, "elbow": Y_EL_HORN, "wrist": Y_WR_HORN, "gripper": Y_GR_HORN}
-Y_TIP = Y_JW_BACK + JW.T / 2            # payload / fingertip: middle of the moving-jaw band
+Y_CLAW = Y_WR_HORN - HORN_DEPTH        # claw frame back face (claw z = 0); claw +z = world +Y, claw +x = along the arm
+Y_TIP = Y_CLAW + CF.ZS                  # fingertips and payload on the pinion-axis line
+Y_HORN = {"shoulder": Y_SH_HORN, "elbow": Y_EL_HORN, "wrist": Y_WR_HORN, "gripper": Y_TIP}
 
 
 def _servo_body(s):
@@ -219,21 +252,39 @@ def _plate_cg_x(x0, x1, w, win_x, win_a):
 
 
 _mx, _mz = _servo_body(MG996R)
-_sx, _sz = _servo_body(SG90)
+_sx, _sz = _servo_body(WRIST)
 M_UL, M_FA = volume_mm3("20261025-arm-upper-link") * RHO_G_PER_MM3, volume_mm3("20261025-arm-forearm") * RHO_G_PER_MM3
-M_GB, M_JW = volume_mm3("20261025-arm-gripper-base") * RHO_G_PER_MM3, volume_mm3("20261025-arm-gripper-jaw") * RHO_G_PER_MM3
 M_TT = volume_mm3("20261025-arm-turntable") * RHO_G_PER_MM3
 CG_UL = _plate_cg_x(UL.X0, UL.X1, 2 * UL.HALF_W, UL.L + _mx, MG996R.length * MG996R.width)
-CG_FA = _plate_cg_x(FA.X0, FA.X1, 2 * FA.HALF_W, FA.L + _sx, SG90.length * SG90.width)
-_a_pl = (GB.X1 - GB.X0) * (GB.Y1 - GB.Y0) * GB.T
-_a_jb = (GB.JAW_X1 - GB.JAW_X0) * (GB.JAW_Y1 - GB.JAW_Y0) * (GB.JAW_TOP - GB.T)
-_a_wn = SG90.length * SG90.width * GB.T
-CG_GB = ((_a_pl * (GB.X0 + GB.X1) / 2 + _a_jb * (GB.JAW_X0 + GB.JAW_X1) / 2 - _a_wn * (GB.GRIP_X + _sx))
-         / (_a_pl + _a_jb - _a_wn))
-CGZ_GB = (_a_pl * GB.T / 2 + _a_jb * (GB.T + GB.JAW_TOP) / 2 - _a_wn * GB.T / 2) / (_a_pl + _a_jb - _a_wn)
-_a_hub, _a_bar = math.pi * JW.HUB_R ** 2, (JW.BAR_X1 + 4.0) * (JW.BAR_Y1 - JW.BAR_Y0)
-CG_JW = (_a_bar * (JW.BAR_X1 - 4.0) / 2) / (_a_hub + _a_bar)
-# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 gripper, s along the straight arm, world Y)
+CG_FA = _plate_cg_x(FA.X0, FA.X1, 2 * FA.HALF_W, FA.L + _sx, WRIST.length * WRIST.width)
+# claw parts: (job, copies, volume when the CoG was measured, CoG (x, z) in claw frame G, joint index)
+CLAW_PARTS = [("20261026-arm-claw-frame", 1, 24422.2, (10.96, 12.01), 3),
+              ("20261026-arm-claw-cover", 1, 15434.92, (21.46, 30.47), 3),
+              ("20261026-arm-claw-pinion", 1, 1765.53, (CF.X_P0 + 4.21, CF.ZS), 4),
+              ("20261026-arm-claw-jaw", 2, 6898.26, (42.64, CF.ZS), 4),        # pair: jaw B = jaw A turned about the axis
+              ("20261026-arm-camera-mount", 1, 8846.95, (-8.37, 50.73), 3)]
+_ta = math.radians(CF.CAM_TILT)
+CAM_CG = (CF.CAM_XC + BRIO.height / 2 * math.sin(_ta), CF.CAM_ZC + BRIO.height / 2 * math.cos(_ta))  # Brio box centre
+SCREW14_CG = (CF.CAM_XC - (CF.SEAT_T + 4.0) * math.sin(_ta), CF.CAM_ZC - (CF.SEAT_T + 4.0) * math.cos(_ta))
+_cx, _cz = _servo_body(MG90S)
+CLAW_SERVO_CG = (CF.X_B + _cz, CF.ZS)  # claw MG90S: shaft along claw +x, case centre 4.55 behind the bulkhead face
+EE = []                                 # (name, mass g, joint index, x from the wrist axis, claw z)
+for job, n, v0, (x, z), k in CLAW_PARTS:
+    if job == "20261026-arm-camera-mount" and not CAMERA:
+        continue
+    v = volume_mm3(job)
+    if abs(v - v0) > 0.005 * v0:
+        print(f"WARNING: {job} volume {v:.0f} differs from {v0:.0f} mm3 when its CoG was measured: re-measure the CoG")
+    EE.append((job.split("arm-")[1], n * v * RHO_G_PER_MM3, k, x, z))
+EE += [("claw MG90S", MG90S.mass_g, 3, CLAW_SERVO_CG[0], CLAW_SERVO_CG[1]),
+       ("pinion horn (cut) + M2x10 clamp", 2.0, 4, CF.X_P0 + 1.0, CF.ZS),
+       ("cover / tab screws", 6.0, 3, 14.0, 25.0)]   # 2 x M3x18 at x 7, 2 x M3x12 at the front, 2 x M2x8
+if CAMERA:
+    EE += [("Brio 4K", BRIO.mass_g, 3, CAM_CG[0], CAM_CG[1]), ("1/4-20 thumb screw", 4.0, 3, SCREW14_CG[0], SCREW14_CG[1])]
+M_EE = sum(m for _, m, _, _, _ in EE)
+X_EE = sum(m * x for _, m, _, x, _ in EE) / M_EE
+Z_EE = sum(m * z for _, m, _, _, z in EE) / M_EE
+# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 claw servo, s along the straight arm, world Y)
 ITEMS = [
     ("shoulder MG996R", MG996R.mass_g, 0, -SX, TT.UP_Y + _mz),
     ("shoulder horn + clamp screw", 5.0, 1, 0.0, Y_SH_HORN - 1.4),
@@ -242,19 +293,19 @@ ITEMS = [
     ("cable allowance 1", 6.0, 1, L1, Y_EL_TAB),
     ("elbow horn + clamp screw", 5.0, 2, L1, Y_EL_HORN - 1.4),
     ("forearm", M_FA, 2, L1 + CG_FA, Y_FA_BACK + FA.T / 2),
-    ("wrist SG90", SG90.mass_g, 2, L1 + L2 + _sx, Y_WR_TAB + _sz),
+    ("wrist MG90S", WRIST.mass_g, 2, L1 + L2 + _sx, Y_WR_TAB + _sz),
     ("cable allowance 2", 4.0, 2, L1 + L2, Y_WR_TAB),
     ("wrist horn + clamp screw", 2.0, 3, L1 + L2, Y_WR_HORN - 0.8),
-    ("gripper base", M_GB, 3, L1 + L2 + CG_GB, Y_GB_BACK + CGZ_GB),
-    ("gripper SG90", SG90.mass_g, 3, L1 + L2 + GRIP_DX + _sx, Y_GR_TAB + _sz),
-    ("gripper horn + clamp screw", 2.0, 4, L1 + L2 + GRIP_DX, Y_GR_HORN - 0.8),
-    ("moving jaw", M_JW, 4, L1 + L2 + GRIP_DX + CG_JW, Y_JW_BACK + JW.T / 2),
-    ("payload", 50.0, 4, L1 + L2 + L3, Y_TIP),
+] + [(n, m, k, L1 + L2 + x, Y_CLAW + z) for n, m, k, x, z in EE] + [
+    ("payload", PAYLOAD_G, 4, L1 + L2 + L3, Y_TIP),
 ]
 S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}
-print(f"arm model: Y horn faces {', '.join(f'{k} {v:.1f}' for k, v in Y_HORN.items())}; fingertip Y {Y_TIP:.1f}; "
-      f"masses UL {M_UL:.1f} FA {M_FA:.1f} GB {M_GB:.1f} JW {M_JW:.1f} TT {M_TT:.1f} g; "
-      f"CG x UL {CG_UL:.1f} FA {CG_FA:.1f} GB {CG_GB:.1f} (z {CGZ_GB:.1f}) JW {CG_JW:.1f}")
+print(f"arm model: Y horn faces {', '.join(f'{k} {v:.1f}' for k, v in Y_HORN.items() if k != 'gripper')}; claw back face "
+      f"Y {Y_CLAW:.1f}, fingertip {L3:.2f} from the wrist at Y {Y_TIP:.1f}; masses UL {M_UL:.1f} FA {M_FA:.1f} "
+      f"TT {M_TT:.1f} g; CG x UL {CG_UL:.1f} FA {CG_FA:.1f}")
+print(f"end effector beyond the wrist horn ({'with' if CAMERA else 'without'} the Brio): {M_EE + 2.0:.1f} g incl. the wrist "
+      f"horn, CoG {X_EE:.1f} in front of the wrist axis, {Z_EE:.1f} outboard of the claw back face (Y {Y_CLAW + Z_EE:.1f}); "
+      f"Brio CoG x {CAM_CG[0]:.2f}, z {CAM_CG[1]:.2f} (Y {Y_CLAW + CAM_CG[1]:.1f}); payload {PAYLOAD_G:.0f} g at the fingertip")
 
 
 def beyond(k):
@@ -295,7 +346,7 @@ def sweep(points, mode):
     """Worst moments over the servo ranges (shoulder 0..180, elbow -90..90, wrist -90..90, 5 deg steps, joints above the desk).
 
     mode "yaw":  base-yaw servo stalls with the fingertip against a side obstacle: F = 1000/R, tangential (horizontal);
-                 scaled down where a pitch servo (shoulder/elbow 1000, wrist 160) would backdrive first.
+                 scaled down where a pitch servo (shoulder/elbow 1000, wrist MG90S 216) would backdrive first.
     mode "hand": F_HAND_N at the fingertip along +-Y (out of the arm plane); capped where the yaw servo would backdrive.
     points: {name: (where, link_angle_index or None, (lever_t, lever_T_per_screw) or None)}; where = a joint name
     "S"/"E"/"W"/"G", a fixed (x, y, z), or (joint, distance along the link, dY); "Fs" = worst horn-screw
@@ -315,7 +366,7 @@ def sweep(points, mode):
                     f = STALL_MG996R_NMM / R
                     F = (-P[1] / R * f, P[0] / R * f, 0.0)
                     s = 1.0
-                    for J, st in ((S, STALL_MG996R_NMM), (E, STALL_MG996R_NMM), (W, STALL_SG90_NMM)):
+                    for J, st in ((S, STALL_MG996R_NMM), (E, STALL_MG996R_NMM), (W, STALL_WRIST_NMM)):
                         my = abs(_moment(P, J, F)[1])
                         if my > st:
                             s = min(s, st / my)
