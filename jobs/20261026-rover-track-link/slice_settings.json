@@ -12,7 +12,7 @@
     "--load",
     "jobs/20261026-rover-track-link/slice_overrides.ini",
     "--duplicate",
-    "34",
+    "35",
     "jobs/20261026-rover-track-link/part.stl",
     "--output",
     "jobs/20261026-rover-track-link/part.gcode"
@@ -29,8 +29,10 @@
     "fill_density": "40%",
     "fill_pattern": "gyroid",
     "layer_height": 0.2,
-    "elefant_foot_compensation": 0.2
+    "elefant_foot_compensation": 0.2,
+    "seam_position": "rear",
+    "brim_width": 0
   },
-  "copies": 34,
+  "copies": 35,
   "warnings": []
 }

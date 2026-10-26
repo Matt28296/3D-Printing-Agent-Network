@@ -12,7 +12,7 @@
     "--load",
     "jobs/20261026-rover-wheel/slice_overrides.ini",
     "--duplicate",
-    "4",
+    "2",
     "jobs/20261026-rover-wheel/part.stl",
     "--output",
     "jobs/20261026-rover-wheel/part.gcode"
@@ -23,14 +23,16 @@
     "profiles/filament/Prusament_PETG.ini": "28725504aab173ab3e568c4d6076fb7d7e0d30179a052c41ef78802952e6713f"
   },
   "overrides": {
-    "perimeters": 3,
+    "perimeters": 5,
     "top_solid_layers": 4,
     "bottom_solid_layers": 4,
     "fill_density": "20%",
     "fill_pattern": "gyroid",
     "layer_height": 0.2,
-    "elefant_foot_compensation": 0.2
+    "elefant_foot_compensation": 0.2,
+    "seam_position": "rear",
+    "brim_width": 0
   },
-  "copies": 4,
+  "copies": 2,
   "warnings": []
 }

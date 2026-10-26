@@ -3,15 +3,18 @@
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
  "overrides": {
-  "perimeters": 3,
+  "perimeters": 5,
   "top_solid_layers": 4,
   "bottom_solid_layers": 4,
   "fill_density": "20%",
   "fill_pattern": "gyroid",
   "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "rear",
+  "brim_width": 0
  },
  "model": "part.stl",
- "copies": 4,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; walls/solid layers/infill raised to print_requirements.json; gyroid; 0.2 mm elephant-foot compensation. 4 copies per plate."
+ "copies": 2,
+ "plates": 2,
+ "rationale": "SLICE iteration 1. Fixes the round-2 plan, which had 3 perimeters against the requirement's 5 (deep review S-24; the validator would reject it) and 4 wheels on one plate. Profiles from config/printer.json: stock MK3S printer, 0.20mm QUALITY @MK3, Prusament PETG (filament_type PETG = print_requirements). Its 240 then 250 °C, bed 85 then 90 °C and 30-50 % part fan sit inside the requirements' 230-250 / 80-90 °C and the skill's PETG guidance, so they are not overridden. library/materials.csv and lessons.md are empty: no flow, temperature or xy_size_compensation overrides. Overrides meet print_requirements.json exactly, as strength modelled the wheel: 5 perimeters (2.25 mm rim and bore shells), 4 top / 4 bottom layers, 20 % gyroid (the infill foundation in the crush rows), 0.2 mm layers, elephant-foot compensation 0.2 with the 0.4 mm bed chamfer. Copies: 2 per plate, the same file printed on 2 plates = spec §7 quantity 4. 4 per plate can't meet the 3 h limit (the round-2 plan took 3.88 h at only 3 perimeters, and 5 add time); 3 per plate would need a second, different file for the fourth wheel, and a job holds one part.gcode. Sliced: 2.29 h per plate. Orientation is in the STL (brief): outer flange face on the bed, hub up; no supports (the upper cone is exactly 45°; mesh_check: no overhangs or bridges). Seam: rear, so it forms one straight line that is easy to find. A round part has no corner to hide it in, and the rim rolls on the links while the bore runs on the bolt. Checked in the G-code: every rim, flange and bore loop starts at its +y point; the only exception is one flange-edge loop per wheel on layer 2. The preflight says to feel along that line and scrape any bump. Brim: none (brim_width 0): 758 mm² of flange face on the bed holds a 32.5 mm wheel, and a brim would leave a lip on the outer flange edge that guides the track."
 }

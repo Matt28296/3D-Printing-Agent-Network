@@ -1,8 +1,8 @@
 {
-  "print_time_s": 21625,
-  "print_time_h": 6.01,
-  "filament_g": 43.88,
-  "filament_mm": 14364.49,
+  "print_time_s": 22415,
+  "print_time_h": 6.23,
+  "filament_g": 44.91,
+  "filament_mm": 14701.38,
   "layers": 37,
   "max_z_mm": 56.4,
   "filament_type": "PETG",

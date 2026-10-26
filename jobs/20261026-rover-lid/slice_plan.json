@@ -3,15 +3,18 @@
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
  "overrides": {
-  "perimeters": 3,
+  "perimeters": 5,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
   "fill_density": "20%",
   "fill_pattern": "gyroid",
   "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "rear",
+  "brim_width": 0
  },
  "model": "part.stl",
  "copies": 1,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; walls/solid layers/infill raised to print_requirements.json; gyroid; 0.2 mm elephant-foot compensation. 1 copy per plate."
+ "plates": 1,
+ "rationale": "SLICE iteration 1 (replaces the round-2 plan). Profiles from config/printer.json: stock MK3S printer, 0.20mm QUALITY @MK3, Prusament PETG (filament_type PETG = print_requirements). The filament profile's 240 then 250 °C, bed 85 then 90 °C and 30-50 % part fan sit inside the requirements' 230-250 / 80-90 °C and the skill's PETG guidance, so they are not overridden. library/materials.csv and lessons.md are empty: no flow, temperature or xy_size_compensation overrides. Requirements met: 5 top / 5 bottom layers, 20 % gyroid and 0.2 mm layers (exactly the minimums, the equals and the maximum). Perimeters 5, above the requirement's 3: round 4 widened the ESP32 rails from 2.5 to 4.5 mm, and strength row L1 (rail press at mid-window, SF 3.20) takes the rail as a solid composite section. 3 perimeters filled a 2.5 mm rail, but not a 4.5 mm one. Checked by slicing both: at 3 perimeters the G-code puts 2165 mm of 20 % gyroid inside the rails between Z 3.2 and 6.0; at 5 there is none (perimeters plus 408 mm of solid infill). 5 is also inside the skill's load-bearing baseline (4-6) and fdm-design-rules' 'structural walls at least 4 perimeters'. Cost: +0.13 h and +1.5 g. Elephant-foot compensation 0.2 pairs with the model's bed chamfer. Orientation is in the STL (brief): flat, underside on the bed, rails and ledges up; no supports (mesh_check: no overhangs or bridges). Seam: rear. Checked in the G-code: the deck outline's seam is on its +y long edge, 6 mm from the front end; that edge is flush with the chassis wall's outer face and mates with nothing. Every hole and slot has its seam at its +y point; the only close fit among them is the toggle hole (Ø6.2 on the M6 bushing). The +y rail's seam is on its outer face, the -y rail's on its pocket face at the rail's front end (x 69), inside the pocket's 0.6 mm clearance. Brim: none (brim_width 0): a flat 154 × 76 PETG plate with 9757 mm² on the bed doesn't need one, and a brim would leave a lip on the edge that sits on the chassis wall tops. 1 copy on 1 plate = spec §7 quantity 1; sliced 2.39 h against the 5 h limit."
 }
