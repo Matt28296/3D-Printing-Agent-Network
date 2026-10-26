@@ -9,9 +9,12 @@
   "fill_density": "40%",
   "fill_pattern": "gyroid",
   "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "rear",
+  "brim_width": 0
  },
  "model": "part.stl",
- "copies": 34,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; walls/solid layers/infill raised to print_requirements.json; gyroid; 0.2 mm elephant-foot compensation. 34 copies per plate (print this plate twice: 68 links)."
+ "copies": 35,
+ "plates": 2,
+ "rationale": "SLICE iteration 1 (replaces the round-2 plan's 34 per plate). Profiles from config/printer.json: stock MK3S printer, 0.20mm QUALITY @MK3, Prusament PETG (filament_type PETG = print_requirements). Its 240 then 250 °C, bed 85 then 90 °C and 30-50 % part fan sit inside the requirements' 230-250 / 80-90 °C and the skill's PETG guidance, so they are not overridden. library/materials.csv and lessons.md are empty: no flow, temperature or xy_size_compensation overrides. Overrides meet print_requirements.json exactly: 4 perimeters (the four lines the 1.75 mm knuckle wall is sized for), 5 top / 5 bottom layers, 40 % gyroid, 0.2 mm layers, elephant-foot compensation 0.2 (with the 0.3 mm bed chamfer it keeps the 0.5 mm knuckle gaps open). Copies: 35 per plate, the same file printed on 2 plates = 70 links = spec §7's 68 + 2 spares. The SD export takes one G-code file per job, so the spec's 34 + 36 becomes 35 + 35. Sliced: 6.23 h per plate (6.28 h in silent mode) against the 7 h limit. PrusaSlicer's arrange (duplicate_distance 6) puts the 35 links in X 40-210, Y 33-177, at least 6.4 mm apart. Orientation is in the STL (brief): inner face on the bed, grousers up; no supports (the knuckle undersides start tangent to the bed, DFM item 6). 35 islands per layer (DFM round 2 R3): the stock Prusament PETG retraction (1 mm with a 0.2 mm lift, wipe on) handles the travel; the preflight says to clear strings from the knuckle gaps before pinning. Seam: rear. Checked in the G-code: the link outline's seam is on its +y side face, which only meets the road-wheel flange cones. At the pin-hole heights each knuckle wall prints as its own strip; its seam falls at the strip's +y end, by the hole mouth, on a knuckle end face (some bound the 0.5 mm axial gaps) or on the +y side face. None is along a pin-hole wall, where the 0.3 mm running fit is. Brim: none (brim_width 0): a brim would bond to the knuckles' tangent lines and the bed chamfers that keep the 0.5 mm gaps clear, on 35 small parts. Print plate 1, build the spec §8 five-link test chain and run its proof tests, then print plate 2."
 }

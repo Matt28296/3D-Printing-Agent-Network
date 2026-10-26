@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-rover-track-link/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 12:35:48 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 22415,
+    "print_time_h": 6.23,
+    "filament_g": 44.91,
+    "filament_mm": 14701.38,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 37,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        211.028
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        56.4
+      ]
+    }
+  },
+  "sha256": "4ec34e3ab42a1597c5a003172eb688de39074939bfc16bddbaa34edd53d90e3f",
+  "validator_version": "1.0.0"
+}
