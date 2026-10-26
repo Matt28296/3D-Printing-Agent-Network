@@ -215,7 +215,7 @@ def main(out_dir: Path):
                      ["PETG", f"{sum(p['grams'] * p['plates'] for p in parts):.0f} g" if sliced else "re-slice pending"],
                      ["Stance", f"{ov[0]:.0f} × {ov[1]:.0f} × {ov[2]:.0f} mm"]],
             "stamps": STAMPS,
-            "facts": [["Controller", "ESP32 DevKit + 2 × PCA9685 (0x40, 0x41) on I²C"],
+            "facts": [*([["Cost", (lambda c: f"C${c['scratch']:.0f} buying every pack new · C${c['used']:.0f} for the parts it uses · C${c['budget']:.0f} with budget picks (CAD with 15 % HST; docs/costs)")(json.loads((ROOT / 'docs' / 'costs' / 'costs.json').read_text())['hexapod'])]] if (ROOT / 'docs' / 'costs' / 'costs.json').exists() else []), ["Controller", "ESP32 DevKit + 2 × PCA9685 (0x40, 0x41) on I²C"],
                       ["Servos", "18 × MG90S: coxa, femur, tibia per leg"],
                       ["Legs", f"coxa {H.L_C:.0f} mm, femur {H.L_F:.0f} mm, tibia {H.L_T:.0f} mm"],
                       ["Mass", "≈ 0.91 kg (round 4: solid coxa brackets, bigger bottom plate)"],

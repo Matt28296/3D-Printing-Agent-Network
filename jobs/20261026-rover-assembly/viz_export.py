@@ -240,7 +240,7 @@ def main(out_dir: Path):
                      ["PETG", f"{sum(p['grams'] * p['plates'] for p in parts):.0f} g"
                       if all(p['grams'] is not None for p in parts) else "slicing in progress"], ["Size", "160 × 155 × 73 mm"]],
             "stamps": STAMPS,
-            "facts": [["Controller", "ESP32 DevKit (38- or 30-pin) pins-down on the lid"],
+            "facts": [*([["Cost", (lambda c: f"C${c['scratch']:.0f} buying every pack new · C${c['used']:.0f} for the parts it uses · C${c['budget']:.0f} with budget picks (CAD with 15 % HST; docs/costs)")(json.loads((ROOT / 'docs' / 'costs' / 'costs.json').read_text())['rover'])]] if (ROOT / 'docs' / 'costs' / 'costs.json').exists() else []), ["Controller", "ESP32 DevKit (38- or 30-pin) pins-down on the lid"],
                       ["Drive", "2 × N20 6 V 100 rpm (150:1, LP/MP, 3 mm D-shaft 10 mm long) on Pololu aluminium hubs; "
                                 "TB6612FNG on a mini breadboard; ≈10 N of track pull per side"],
                       ["Tracks", "34 links per side, 10 mm pitch, Ø2 × 24 steel dowel pins; 10-tooth sprocket and idler; "

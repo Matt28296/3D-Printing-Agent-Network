@@ -108,6 +108,6 @@ HEXAPOD = [
 
 PRINT = {  # PETG kg and print hours (latest slices or estimates)
     "Arm": (0.330, 30.2, "Latest slices (arm links round 3, claw round 1); the arm round will change them"),
-    "Rover": (0.303, 30.4, "Round-2 slices; round 3 not sliced yet"),
+    "Rover": (0.335, 33.0, "Slices of 26 Oct 2026: 8 plates (chassis round 6, lid, sprockets, idlers, wheels 2 x 2, links 35 x 2)"),
     "Hexapod": (0.388, 31.6, "Slices of 26 Oct 2026: 9 plates (coxa 2 x 3, femur and tibia 3 x 2, deck, bottom plate)"),
 }

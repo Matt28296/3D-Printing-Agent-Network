@@ -240,7 +240,7 @@ def main(out_dir: Path):
                      ["PETG", f"{sum(p['grams'] for p in parts):.0f} g"
                       if all(p['grams'] is not None for p in parts) else "slicing after the reviews"], ["Reach", reach]],
             "stamps": STAMPS,
-            "facts": [["Controller", "ESP32 DevKit (38- or 30-pin) in a cradle in the base"],
+            "facts": [*([["Cost", (lambda c: f"C${c['scratch']:.0f} buying every pack new · C${c['used']:.0f} for the parts it uses · C${c['budget']:.0f} with budget picks (CAD with 15 % HST; docs/costs)")(json.loads((ROOT / 'docs' / 'costs' / 'costs.json').read_text())['arm'])]] if (ROOT / 'docs' / 'costs' / 'costs.json').exists() else []), ["Controller", "ESP32 DevKit (38- or 30-pin) in a cradle in the base"],
                       ["Servos", "3 × MG996R (base, shoulder, elbow), 2 × MG90S (wrist, claw)"],
                       ["Claw", "rack and 20-tooth pinion, fingers stay parallel; 0–44 mm in 126° of servo; 21.6 N "
                                "into the racks at stall, 10.8 N per jaw; about 5–7.5 N of real grip per finger"],
