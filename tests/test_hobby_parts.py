@@ -189,3 +189,31 @@ def test_trimmed_horn_must_leave_a_stub():
     from hobby_parts import MG90S_DOUBLE, horn_pocket_cutter
     with pytest.raises(ValueError):
         horn_pocket_cutter(MG90S_DOUBLE, trim_r=3.0)
+
+
+def test_mg90s_has_its_own_heights():
+    """Deep review B2: the MG90S spline top is 14.0 mm above the tabs (TowerPro A 32.5 - F 18.5)."""
+    s = hp.MG90S
+    assert s.total_h - s.tab_height == pytest.approx(14.0)
+    assert (s.length, s.width) == (22.8, 12.2)
+    assert hp.horn_face_z(s) == pytest.approx(14.6)
+
+
+def test_mg996r_lead_notch_clears_its_pilots():
+    c = hp.servo_mount_cutter(hp.MG996R, 7.0, lead="notch")
+    bb = c.bounding_box()
+    plain = hp.servo_mount_cutter(hp.MG996R, 7.0).bounding_box()
+    assert c.is_valid and bb.size.X >= plain.size.X - 1e-6        # notches stay inside the pilot span
+
+
+def test_micro_servo_needs_a_shifted_pilot_for_its_lead():
+    with pytest.raises(ValueError):
+        hp.servo_mount_cutter(hp.MG90S, 4.5, lead="notch")           # the notch would cut into the pilot
+    c = hp.servo_mount_cutter(hp.MG90S, 4.5, lead="notch_shift_pilot")
+    pilots = hp._pilot_xy(hp.MG90S, 1.3)
+    assert c.is_valid and max(px for px, _ in pilots) == pytest.approx(max(px for px, _ in hp._pilot_xy(hp.MG90S)) + 1.3)
+
+
+def test_unknown_lead_option_is_refused():
+    with pytest.raises(ValueError):
+        hp.servo_mount_cutter(hp.SG90, 4.0, lead="slot")
