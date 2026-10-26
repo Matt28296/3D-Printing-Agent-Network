@@ -1,4 +1,4 @@
-"""Strength check, round 2: jobs/20261026-arm-claw-jaw (rack + neck + finger, x2).
+"""Strength check, round 3: jobs/20261026-arm-claw-jaw (rack + neck + finger, x2; face 12, grooves to x 70.6, bed chamfer 0.25).
 
 Run from the project root:  python3 jobs/20261026-arm-claw-jaw/strength_calc.py      (add --cad to cross-check the
 hand sections against the build123d solid; that needs the CAD venv)
@@ -324,6 +324,47 @@ report_case(f"handling: {F_HAND:.0f} N at the fingertip, any direction",
              for lab, Q in tip_pts for ang in range(0, 360, 30) for el in (-90, -45, 0, 45, 90)], SF_SHORT)
 
 
+# ---------------------------------------------------------------- round 3: the neck root and the last groove, named
+def worst_in(cases, x0, x1):
+    out = (float("inf"),)
+    for lab, Q, F in cases:
+        x1q = min(x1, Q[0] - 3.0)                      # only sections between the root and the load carry it
+        if x1q < x0:
+            continue
+        sf, x, s, t = scan(Q, F, x0=x0, x1=x1q)
+        if sf < out[0]:
+            out = (sf, lab, x, s, t)
+    return out
+
+
+GRIP1 = [(lab, Q, (0, -F1, 0)) for lab, Q in grip_points("grip")]
+OPEN1 = [(lab, Q, (0, F1, 0)) for lab, Q in grip_points("out")]
+YAW = [(f"{lab}, along {'+' if sgn > 0 else '-'}z", Q, (0, 0, sgn * F_YAW_Z)) for lab, Q in tip_pts for sgn in (1, -1)]
+for name, cases in ((f"neck root (x {C.X_P1}..{C.X_P1 + 0.5}, r 4 fillets, toothed bottom edge): one jaw blocked, "
+                     f"{F1:.1f} N on the grip face", GRIP1),
+                    (f"neck root: opening against an obstacle, {F1:.1f} N on the outer face", OPEN1),
+                    (f"neck root: yaw stall {F_YAW_Z:.1f} N along z at the tip (bottom face, Kt 2.5)", YAW)):
+    sf, lab, x, s, t = worst_in(cases, C.X_P1, C.X_P1 + 0.5)
+    add(f"{name} [{lab}]", sf, f"x {x:.1f}: sigma {s:.2f}, tau {t:.2f}", ALLOW_Z / sf, ALLOW_Z, SF_SHORT)
+g_last = GROOVES[-1]
+sf, lab, x, s, t = worst_in(GRIP1, g_last - 1.0, g_last + 1.0)
+add(f"last groove (x {g_last:.1f}, Kt {KT_GROOVE}): one jaw blocked, {F1:.1f} N on the grip face [{lab}]", sf,
+    f"x {x:.1f}: sigma {s:.2f}, tau {t:.2f}", ALLOW_Z / sf, ALLOW_Z, SF_SHORT)
+sf, lab, x, s, t = worst_in(GRIP1, g_last + 1.0, X_GRIP - 3.0)
+add(f"ungrooved tip beyond the last groove (x {g_last + 1:.1f}..{X_GRIP - 3:.1f}): one jaw blocked [{lab}]", sf,
+    f"x {x:.1f}: sigma {s:.2f}, tau {t:.2f}", ALLOW_Z / sf, ALLOW_Z, SF_SHORT)
+# information: the torsional shear on the neck's bottom face where the rack's teeth leave a 2.1 mm step. The teeth are
+# thin ribs (1.6..2.1 along y) with free faces normal to y, so they cannot carry the face's tau_xy and the step does not
+# concentrate it (Kts ~1; the bending Kt 2.5 there stays). Bound: Kts 1.5 at the face's mid-point, where sigma from the
+# grip's M_z is zero
+p0 = props(section(C.X_P1))
+Qg = (X_GRIP, 0.0, z_range(X_GRIP)[0] + 0.5)
+Mx = (Qg[1] - p0["yc"]) * 0 - (Qg[2] - p0["zc"]) * (-F1)
+tau_b = 1.5 * roark_tau(Mx, 20.0, 10.0) + 1.5 * F1 / p0["A"]
+add("info: neck root's bottom face mid-point, grip torsion with a torsional Kts 1.5 bound (see strength.md)",
+    SHEAR_Z / tau_b, f"tau {tau_b:.2f} (sigma 0 there)", tau_b, SHEAR_Z, SF_SHORT, d="Z shear", rows=INFO)
+
+
 # ---------------------------------------------------------------- rack teeth (same method as the pinion job)
 def contact_ratio(m, rp, tip_relief):
     rb = rp * math.cos(PRESSURE)
@@ -378,7 +419,7 @@ for name, W, req in ((f"rack teeth, one jaw blocked ({F1:.1f} N), HPSTC + Kf, fa
     sf = ALLOW_XY / s
     add(name, sf, f"root width {t:.2f}, Kf {K:.2f}", s, ALLOW_XY, req, d="XY")
 s, t, K = rack_tooth(Wn1, C.FACE_W, at="tip", kf=False)
-add("info: rack teeth, one jaw blocked, Lewis tip load, no Kf, face 10 (the designer's method)", ALLOW_XY / s,
+add(f"info: rack teeth, one jaw blocked, Lewis tip load, no Kf, full face {C.FACE_W:.0f}", ALLOW_XY / s,
     f"width {t:.2f}", s, ALLOW_XY, SF_SHORT, d="XY", rows=INFO)
 
 

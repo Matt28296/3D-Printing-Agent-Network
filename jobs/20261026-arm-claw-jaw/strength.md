@@ -1,83 +1,82 @@
-VERDICT: FAIL
+VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-arm-claw-jaw (round 2)
+# Strength check: 20261026-arm-claw-jaw (round 3)
 
-strength-analyst (independent review of the round-2 geometry) · 2026-10-26 ·
-`python3 jobs/20261026-arm-claw-jaw/strength_calc.py` (plain python3: reads `claw_frame.py`, this job's `model.py` and
-`tools/hobby_parts.py` with `ast`, and runs `rack_outline` from `tools/gears.py` on its own. Add `--cad` in the CAD venv
-to compare the hand sections with the build123d solid)
+strength-analyst (independent review of the round-3 geometry) · 2026-10-26 ·
+`python3 jobs/20261026-arm-claw-jaw/strength_calc.py` (plain python3, run from the project root: reads `claw_frame.py`,
+this job's `model.py` and `tools/hobby_parts.py` with `ast`, and runs `rack_outline` from `tools/gears.py` on its own;
+`--cad` in the CAD venv compares the hand sections with the build123d solid)
 
-Round 1's candidate C is in: the 10 mm rack back, the 20 × 10 neck with r 4 fillets, the 12 mm finger root, the
-full-height gusset and r 3 at every kink. The neck and the finger root now pass every case; the lowest there is 3.44, at
-the neck root.
+Round 2's failure is fixed. The grooves now stop at x 70.6, so the thin tip has none: the last groove gives 3.57 and the
+ungrooved tip 4.26. **The neck root governs at 3.52** (grip with one jaw blocked, and the same for the claw opening
+against an obstacle), exactly as the designer predicted.
 
-**The jaw now fails at the fingertip: SF 2.62**, with one jaw blocked. The critical section is the V-groove at x 72.6,
-where the finger has tapered to 6.3 mm.
+The rack teeth at face 12 with 0.35 thinning give 3.95. Every row passes; the verdict is NEEDS_TEST only because the
+allowables are placeholders.
 
-- The spec puts the 21.6 N grip 3 mm from the tip. At the grip face's bottom corner it bends the thin tip across the
-  layers and twists it.
-- The grooves' sharp roots (Kt 2.5) sit on the face in tension.
-- With no grooves past x 66, or with a 7 mm tip, the jaw gives 3.44.
+## Round-2 fixes: made?
 
-The rack teeth pass by the conservative method (3.53).
-
-## Round-1 fixes: made?
-
-| Round-1 required change (candidate C) | Round 2 | Made? |
+| Round-2 required change | Round 3 as built | Made? |
 |---|---|---|
-| RACK_BACK 6 → 10 | RACK_BACK 10 | Yes |
-| A 10 mm-tall neck on the rack's solid back; NECK_Y 14 → 20 | NECK_Z (11.25, 21.25), NECK_Y 20 | Yes |
-| Rack two teeth longer at −y (RACK_Y[0] −5π → −7π) | −8π: the rack ends in tooth gaps at both ends | Yes |
-| Finger 12 thick to x ≈ 51, tapering to 6 by x ≈ 66 | 12 thick to x 58.35, 6 by x 73.35. The claw grew, so the finger starts at x 38.35 | Yes, moved out with the finger |
-| Full-height 45° gusset; flat top at the neck's top | Full-height gusset. The top runs flat to x 53.35, then drops at 45° to the grip zone (r 3 at the kink) | Yes. The 45° drop is new (lighter, and the camera sees the tips over it); its kink is checked (Kt 1.7) and doesn't govern |
-| r ≥ 4 at the neck root; r ≥ 3 at the kinks and the gusset end | r 4 at both y edges of the neck; r 3 at the side kink, the top kink, the gusset end and the taper end | Yes |
-| Cover: keep a strip of front plate above slot A | Not made. The tie backs the strip below slot A instead | Checked in the cover report |
+| 1. Fingertip: grooves stop at x 66, or BLADE_T 7 | GROOVE_X (62.6, 71): grooves at 62.6…70.6. Not x 66, but the last groove sits where the finger is still 7.9 thick | Yes: the last groove gives 3.57 (row 10), the ungrooved tip 4.26 (row 11). The neck root governs |
+| 2. Rack teeth with the pinion's change (FACE_W 12, RACK_BACKLASH 0.7) | FACE_W 12 (x 22.6–34.6), RACK_BACKLASH 0.7, BED_CHAMFER 0.25 | Yes: 3.95 on an effective face of 12 − 0.25 − 0.25 = 11.5 (row 12) |
+| Blade 45 → 43, fingertip kept at x 83.35 | NECK_X1 40.35, taper x 60.35–75.35 | The levers from the rack face to the grip are 2 mm shorter; the neck root's moments drop by ~2 % (3.44 → 3.52) |
+
+The `--cad` cross-check matches the hand sections to 0.1 mm² from x 42 to the tip. At the neck root the solid is larger
+(268 mm² at x 34.65 against 200 mm²) because of the r 4 fillets the hand section leaves out, which is conservative.
 
 ## Load cases
 
 | # | Case | Load | Point and direction | Type, SF req |
 |---|---|---|---|---|
-| 1 | Stall, one jaw blocked (spec) | 216 N·mm / r 10 = 21.6 N | Grip face, 3 mm from the tip (x 80.35), at its bottom, middle and top; also at x 50, 60 and 70. Along y, away from the other jaw | Short-term, 3 |
-| 2 | Stall, both jaws: every full-close grip | 10.8 N per jaw. The designer's 10.8 N is right as the free-object share | As 1 | Cyclic, 4 |
-| 3 | Added: the claw opens against an obstacle | 21.6 N on the outer face | As 1, reversed | Short-term, 3 |
-| 4 | **Crash** (required): fingertips on the desk, wrist back-driven | 13 N at the tip in the arm plane (claw x-y), every 15°; SYS-11's arm push | Tip, at z −6, 0 and +6 from the axis | Short-term, 3 |
-| 5 | Yaw stall (arm review) | 7.1 N along ±z, the largest out-of-plane part of a base-yaw stall (1079 / (2 × 76)) | Tip | Short-term, 3 |
-| 6 | Handling | 5 N in any direction (every 30° in plan, five elevations) | Tip | Short-term, 3 |
-| 7 | Rack teeth | 21.6 N one jaw, 10.8 N both. The crash's 13 N along y: 130 N·mm is below the stall, so the servo holds it on one mesh | Teeth | Short-term 3 / cyclic 4 |
-| 8 | Rack ends on the guides | The couple of case 1 at the rack's ends: 27.5 N with the jaws open, 20.1 N closed | Lip or rail and the front plate | Short-term, 3 |
+| 1 | Stall, one jaw blocked (spec) | 21.6 N | Grip face at x 50, 60, 70 and 80.35 (3 mm from the tip), bottom / middle / top, along y away from the other jaw | Short-term, 3 |
+| 2 | Stall, both jaws, every full-close grip | 10.8 N per jaw | As 1 | Cyclic, 4 |
+| 3 | The claw opens against an obstacle (Architect: a design case) | 21.6 N on the outer face | As 1, reversed | Short-term, 3 |
+| 4 | Crash (required) | 13 N at the tip in the arm plane, every 15° | Tip, z −6 / 0 / +6 | Short-term, 3 |
+| 5 | Yaw stall | 7.1 N along ±z | Tip | Short-term, 3 |
+| 6 | Handling | 5 N any direction (30° steps, five elevations) | Tip | Short-term, 3 |
+| 7 | Rack teeth | 21.6 N / 10.8 N / the crash's 13 N | Teeth | Short-term 3 / cyclic 4 |
+| 8 | Rack ends on the guides | The couple of case 1: 27.0 N (open), 19.8 N (closed) | Lip / rail block and front plate | Short-term, 3 |
 
-Camera inertia and the cover tie don't load the jaw.
+The cover's round-3 fix doesn't change any load on the jaw.
 
 ## Build direction and method
 
 The jaw prints standing on the rack's back end (claw x = print Z). Every normal stress along x in the neck and the
 finger, and every shear on a plane x = const, acts across the layers: 12.5 MPa normal, 6.25 MPa shear. The rack teeth
-are drawn in the bed plane: 25 MPa.
+lie in the bed plane: 25 MPa.
 
-- **Sections:** at every 0.1 mm from the rack face to 3 mm short of the load, the section is the plan outline's y range
-  times the side outline's z range, minus the grip face's V-notch and, at each groove centre, the 0.6 mm groove. That
-  polygon gives the exact A, centroid and I_yy, I_zz and I_yz. Examples: x 32.6 (neck root) A 200, I_yy 1667, I_zz 6667;
-  x 46.35 (gusset end) A 216; x 58.35 (taper start) A 298; x 73.35 (taper end) A 118, I_zz 345; x 80 A 76, I_zz 107.
-- **Stress:** normal stress at every vertex from N, M_y and M_z (unsymmetric bending), each term times the Kt of the face
-  the vertex sits on. Shear: torsion (Roark rectangle) plus 1.5 V/A. Combined across the layers:
-  (σ/12.5)² + (τ/6.25)² = 1/SF². The "Z comb" rows show 12.5/SF as the stress.
+- **Sections.** Every 0.1 mm from the rack's front face (x 34.6) to 3 mm short of each load point. Each section is the
+  plan outline's y range times the side outline's z range, minus the V-notch and the 0.6 mm groove at each groove
+  centre. That polygon gives exact A, centroid and I_yy, I_zz, I_yz.
+- **Stress.** Normal stress at every vertex from N, M_y and M_z (unsymmetric bending), times the Kt of that vertex's
+  face. Shear is torsion (Roark rectangle) + 1.5 V/A. Combined across the layers as
+  (σ/12.5)² + (τ/6.25)² = 1/SF². σ_max and τ_max are combined even when they sit at different points, which is
+  conservative.
 - **Kt:**
-  - neck root: 1.7 on the y faces (r 4, r/h 0.2); 2.5 on its bottom face, where the rack's teeth leave a sharp 2.1 mm
-    step; 1.0 on top, flush with the rack's back;
-  - r 3 kinks: 1.5 (side kink, gusset end, taper end), 1.7 (top kink, 20 tall);
-  - V-grooves: **2.5**. They are 0.6 deep and 90°, with a sharp root that prints at about r 0.2. That is the skill's
-    sharp-corner value; Peterson's V-notch charts give 2.5–2.8 at r/d 0.04. Round 1 used 2.0.
-- **Rack teeth:** the pinion report's method. The load is at the rack's own highest point of single-tooth contact, with
-  the Dolan–Broghamer fillet factor in the root, on an effective face of 10 − 0.25 (float) − 0.3 (bed chamfer) = 9.45.
+  - neck root: 1.7 on the y faces (r 4, r/h 0.2); 2.5 on the bottom face, where the rack's teeth leave a 2.1 mm step;
+    1.0 on top, flush with the rack's back;
+  - r 3 kinks: 1.5 / 1.7;
+  - V-grooves: 2.5.
+- **The neck root, as built.** The neck (20 × 10) sits on the rack's 10 mm solid back from the rack's front face
+  (x 34.6) to the blades (x 40.35).
+  - Under the grip, the governing combination is M_z (Kt 1.7 at the fillets) with the torsion of the grip's 24.75 mm
+    offset below the neck.
+  - The torsional shear peaks at the long faces' mid-points. The bottom face is the one with the toothed step.
+  - The teeth are thin ribs (1.6–2.1 mm along y) whose faces are normal to y, so they cannot carry that face's τ_xy. The
+    step therefore doesn't concentrate the torsional shear (Kts ≈ 1), while it does concentrate bending (Kt 2.5, kept).
+  - Information row 17 bounds it: Kts 1.5 there gives 3.48.
+- **Rack teeth.** The pinion report's method: load at the rack's highest point of single-tooth contact, the
+  Dolan–Broghamer fillet factor in the root, effective face 11.5.
 
 ## Assumptions
 
-- The stall force is the same anywhere along the grip face, so the tip and the face's corners are the worst points. At
-  the corner farthest from the jaw's own rack (z −8.5 from the axis), the grip also twists the finger.
-- When the jaw is pushed sideways, the cover's strip and the pinion can prop the neck. That is ignored here, which is
+- The stall force is the same anywhere along the grip face, so the tip and the face's corners are the worst points.
+  At the corner farthest from the jaw's own rack (z −8.5), the grip also twists the finger.
+- When the jaw is pushed sideways, the cover's strip and the pinion can prop the neck. That is ignored, which is
   conservative for the neck.
 - The crash force is SYS-11's arm push, 13 N. The wrist's back-drive torque is unmeasured.
-- Service temperature 40 °C against PETG softening at about 70 °C: OK.
+- Service temperature is 40 °C against PETG softening at about 70 °C: OK.
 
 ## Allowables and sources
 
@@ -93,61 +92,61 @@ NEEDS_TEST is the best possible verdict.
 
 ## Results (copied from `python3 strength_calc.py`)
 
+"Z comb" rows combine across-layer normal stress and interlayer shear; their stress column is 12.5 / SF.
+
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Grip at stall, one jaw blocked, 21.6 N on the grip face [x 80.35 z −8.5] | x 72.6: σ 3.96, τ 1.33 | Z comb | 4.76 | 12.50 | **2.62** | 3 | **FAIL** |
-| 2 | Grip at stall, both jaws, 10.8 N each (every full-close grip, cyclic) [x 80.35 z −8.5] | x 72.6: σ 1.98, τ 0.66 | Z comb | 2.38 | 12.50 | 5.25 | 4 | OK |
-| 3 | Added: claw opening against an obstacle, 21.6 N on the outer face [x 80.35 z −8.5] | x 32.6: σ 2.63, τ 1.25 | Z comb | 3.63 | 12.50 | 3.44 | 3 | OK |
-| 4 | Crash: 13 N at the fingertip in the arm plane, any direction (wrist back-driven) [tip z −6, 285°] | x 72.6: σ 3.45, τ 0.59 | Z comb | 3.65 | 12.50 | 3.43 | 3 | OK |
-| 5 | Yaw stall: 7.1 N out of the arm plane at the fingertip, either way [tip z −6, along +z] | x 32.6: σ 2.70, τ 0.18 | Z comb | 2.73 | 12.50 | 4.59 | 3 | OK |
-| 6 | Handling: 5 N at the fingertip, any direction [tip z −6, 330° in plan, 45° elevation] | x 32.6: σ 2.17, τ 0.05 | Z comb | 2.17 | 12.50 | 5.76 | 3 | OK |
-| 7 | Rack teeth, one jaw blocked (21.6 N), HPSTC + Kf, face 9.45 | Root width 2.07, Kf 1.92 | XY | 7.09 | 25.00 | 3.53 | 3 | OK |
-| 8 | Rack teeth, both jaws (10.8 N, cyclic), HPSTC + Kf | Root width 2.07, Kf 1.92 | XY | 3.55 | 25.00 | 7.05 | 4 | OK |
-| 9 | Rack teeth, crash 13 N along y on one finger (held by the claw servo) | Root width 2.07, Kf 1.92 | XY | 4.27 | 25.00 | 5.86 | 3 | OK |
-| 10 | Rack bar bending between its end contacts, one jaw blocked (couple 1139 N·mm, stress along y: in the bed plane) | Solid back 10 × 10 | XY | 6.84 | 25.00 | 3.66 | 3 | OK |
-| 11 | Rack end on the lip / front plate, thrust 27.5 N (jaws open; 20.1 closed), compression across the layers | 3 mm × 10.0 of the end face | Z comp | 0.92 | 25.00 | 27.26 | 3 | OK |
+| 1 | grip at stall, one jaw blocked, 21.6 N on the grip face [x 80.35 z -8.5] | x 34.6: sigma 2.52, tau 1.25 | Z comb | 3.55 | 12.50 | 3.52 | 3 | OK |
+| 2 | grip at stall, both jaws, 10.8 N each (every full-close grip, cyclic) [x 80.35 z -8.5] | x 34.6: sigma 1.26, tau 0.63 | Z comb | 1.78 | 12.50 | 7.04 | 4 | OK |
+| 3 | added: claw opening against an obstacle, 21.6 N on the outer face [x 80.35 z -8.5] | x 34.6: sigma 2.52, tau 1.25 | Z comb | 3.55 | 12.50 | 3.52 | 3 | OK |
+| 4 | crash: 13 N at the fingertip in the arm plane, any direction (wrist back-driven) [tip z -6, 315 deg] | x 34.6: sigma 2.93, tau 0.49 | Z comb | 3.08 | 12.50 | 4.05 | 3 | OK |
+| 5 | yaw stall: 7.1 N out of the arm plane at the fingertip, either way [tip z -6, along +z] | x 34.6: sigma 2.60, tau 0.18 | Z comb | 2.62 | 12.50 | 4.77 | 3 | OK |
+| 6 | handling: 5 N at the fingertip, any direction [tip z -6, 330 deg in plan, 45 deg elevation] | x 34.6: sigma 2.11, tau 0.05 | Z comb | 2.11 | 12.50 | 5.93 | 3 | OK |
+| 7 | neck root (x 34.6..35.1, r 4 fillets, toothed bottom edge): one jaw blocked, 21.6 N on the grip face [x 80.35 z -8.5] | x 34.6: sigma 2.52, tau 1.25 | Z comb | 3.55 | 12.50 | 3.52 | 3 | OK |
+| 8 | neck root: opening against an obstacle, 21.6 N on the outer face [x 80.35 z -8.5] | x 34.6: sigma 2.52, tau 1.25 | Z comb | 3.55 | 12.50 | 3.52 | 3 | OK |
+| 9 | neck root: yaw stall 7.1 N along z at the tip (bottom face, Kt 2.5) [tip z -6, along +z] | x 34.6: sigma 2.60, tau 0.18 | Z comb | 2.62 | 12.50 | 4.77 | 3 | OK |
+| 10 | last groove (x 70.6, Kt 2.5): one jaw blocked, 21.6 N on the grip face [x 80.35 z -8.5] | x 70.6: sigma 3.02, tau 0.89 | Z comb | 3.50 | 12.50 | 3.57 | 3 | OK |
+| 11 | ungrooved tip beyond the last groove (x 71.6..77.3): one jaw blocked [x 80.35 z +8.5] | x 77.3: sigma 0.69, tau 1.43 | Z comb | 2.93 | 12.50 | 4.26 | 3 | OK |
+| 12 | rack teeth, one jaw blocked (21.6 N), HPSTC + Kf, face 11.50 | root width 1.88, Kf 1.89 | XY | 6.34 | 25.00 | 3.95 | 3 | OK |
+| 13 | rack teeth, both jaws (10.8 N, cyclic), HPSTC + Kf | root width 1.88, Kf 1.89 | XY | 3.17 | 25.00 | 7.89 | 4 | OK |
+| 14 | rack teeth, crash 13 N along y on one finger (held by the claw servo) | root width 1.88, Kf 1.89 | XY | 3.81 | 25.00 | 6.56 | 3 | OK |
+| 15 | rack bar bending between its end contacts, one jaw blocked (couple 1118 N.mm, stress along y: in the bed plane) | solid back 12 x 10 | XY | 5.59 | 25.00 | 4.47 | 3 | OK |
+| 16 | rack end on the lip / front plate, thrust 27.0 N (jaws open; 19.8 closed), compression across the layers | 3 mm x 10.0 of the end face | Z comp | 0.90 | 25.00 | 27.79 | 3 | OK |
+
+**Lowest SF: 3.52 (required 3), the neck root** (x 34.6). It comes from the one-jaw grip at the grip face's bottom
+corner 3 mm from the tip, and from the opening push at the same point. For reference: every Kt = 1 gives 4.30.
 
 Information rows (not in the verdict):
 
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
-| 12 | Info: rack teeth, one jaw blocked, Lewis tip load, no Kf, face 10 (the designer's method) | Width 1.59 | XY | 5.60 | 25.00 | 4.47 | 3 | OK |
+| 17 | info: neck root's bottom face mid-point, grip torsion with a torsional Kts 1.5 bound (see strength.md) | tau 1.80 (sigma 0 there) | Z shear | 1.80 | 6.25 | 3.48 | 3 | OK |
+| 18 | info: rack teeth, one jaw blocked, Lewis tip load, no Kf, full face 12 | width 1.36 | XY | 5.44 | 25.00 | 4.60 | 3 | OK |
 
-**Lowest SF: 2.62 (required 3), the groove at x 72.6 near the tip. One jaw blocked, grip at the bottom corner.**
+## What-if lines (in the script)
 
-For reference, the same grip with every Kt set to 1 gives 3.93, and the neck root alone gives 3.44.
+- Grooves stopping at x 70 or 66, r 0.3 groove roots, or a 7 mm tip: all 3.52. The neck root governs, and the
+  finger's options no longer change the result.
+- Rack teeth at face 12: rack backlash 0.5 → 4.29, **0.7 (as built) → 3.95**, 0.8 → 3.77.
 
-## Required changes (computed in the script's what-if lines)
+## Required changes
 
-1. **The fingertip:** either of these.
-   - **BLADE_T 6 → 7** in `claw_frame.py` (the tip 7 mm thick, every groove kept): **3.44**. The neck root then
-     governs. The grip face stays on y = 0, so the extra millimetre goes on the outer face, and the tip bevel keeps the
-     tip thin for small parts.
-   - **Stop the grooves at x 66** (GROOVE_X ends at 66, so only 60.6, 62.6 and 64.6 remain): **3.44**. Stopping at x 70
-     gives 3.09, with no margin.
-   - Rounding the groove roots to r 0.3 (Kt 2.0) gives 3.03, but a 0.4 mm nozzle can't print an r 0.3 root reliably.
-     Not recommended.
-2. **Rack teeth with the pinion report's change** (FACE_W 12, RACK_BACKLASH 0.7): 3.93; with 0.8: 3.76. FACE_W 12 moves
-   the rack face and the whole finger 2 mm forward together, so the jaw's own lever arms don't change.
+None. If more margin at the neck root is wanted later, the cheapest lever is the fillet: its r 4 at the y faces (Kt 1.7)
+carries the governing bending. The neck can't grow without changing the cover's slots.
 
-## Proof test
+## Proof test (spec §8)
 
-The spec's §8 test runs at the servo's own stall (1.0 ×) and hangs 2 N from a dowel. It doesn't reach 1.5 × at the
-fingertip, the neck root or the sideways cases. **Replace it with this**, valid once the changes above pass:
+It still matches:
+- 32 N pull and 32 N opening push at the far edge of the grip face, 3 mm from the tip (1.5 × the one-jaw stall and the
+  opening stall);
+- 10.7 N sideways (1.5 × the yaw stall);
+- the grip and dowel tests.
 
-> **Proof test.** Claw assembled, wrist horn in a vice, servo powered and holding, jaws at 30 mm. For each jaw in turn:
-> 1. Loop a cord round the finger 3 mm from the tip, at the edge of the grip face farthest from the jaw's own rack. Pull
->    away from the other jaw with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall), 10 s.
-> 2. At the same place, push towards the other jaw on the outer face with **32 N** (1.5 × the opening stall; 20 N,
->    1.5 × the 13 N crash, if the Architect drops that case), 10 s.
-> 3. Push the fingertip sideways (±z) with **10.7 N** (1.5 × the yaw stall), 10 s each way.
-> 4. Then the checks §8 already has: the grip test as for the pinion (centred and 8 mm off-centre, 5 full closes each),
->    and a 10 mm wooden dowel gripped at the fingertips with 200 g hanging from it for 1 min.
->
-> If the servo slips before a pull reaches 32 N, note the force: the jaw has then been proven only to that force.
->
-> Pass:
-> - no crack or whitening at the grooves nearest the tip, the taper's end, the neck's root fillets, the gusset or the
->   kinks (use a loupe; whitening runs along a layer line);
-> - the dowel doesn't slip;
-> - the jaws still slide freely and meet flat (0.2 mm feeler at most).
+At 1.5 × the neck root sits at SF 2.35 on the placeholder allowables. A real PETG part should hold; this is the test that
+replaces the placeholder.
+
+Update one wording: "the grooves nearest the tip" → **"the last groove (x 70.6) and the ungrooved tip beyond it"**. Keep
+"the neck's root fillets", and add **"the neck's bottom edge where it meets the rack's teeth"**.
+
+Run step 2 (the 32 N push towards the other jaw) on jaw B only once the cover's round-3 fix is in. On the as-built cover
+that push cracks the cover's top wall first (cover report).
