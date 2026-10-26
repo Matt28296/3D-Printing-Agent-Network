@@ -1,6 +1,17 @@
 {
  "tol_mm3": 0.5,
  "collisions": [],
+ "expected_contacts": [
+  [
+   "motorL",
+   "sprocketL"
+  ],
+  [
+   "motorR",
+   "sprocketR"
+  ]
+ ],
+ "idler_slot_and_bolts": "clear",
  "links_per_side": 34,
  "axle_dx_mm": 120.0,
  "teeth_engaged_in_notches": {

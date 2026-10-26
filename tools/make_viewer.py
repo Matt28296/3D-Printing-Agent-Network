@@ -267,7 +267,13 @@ new GLTFLoader().parse(glbBytes.buffer, '', (gltf) => {
     const center = obj.worldToLocal(box.getCenter(new THREE.Vector3()));
     parts.push({ obj, ...meta, base: obj.position.clone(), center });
   }
-  for (const j of cfg.joints || []) { const obj = model.getObjectByName(j.node); if (obj) joints.push({ ...j, obj }); }
+  for (const j of cfg.joints || []) {
+    // a joint either turns its own node about local Z, or (with "drives") moves several nodes
+    // together: {"node", "rot": deg per unit about local Z} or {"node", "move": [x, y, z] per unit}
+    const obj = model.getObjectByName(j.node);
+    const drives = (j.drives || []).map((d) => { const o = model.getObjectByName(d.node); return o ? { ...d, obj: o, base: o.position.clone() } : null; }).filter(Boolean);
+    if (obj || drives.length) joints.push({ ...j, obj, drives });
+  }
   setupPose(); applyPose();
   const box = new THREE.Box3().setFromObject(model);
   box.getCenter(modelCenter); modelRadius = box.getSize(new THREE.Vector3()).length() / 2;
@@ -308,9 +314,9 @@ function setupPose() {
       const r = document.createElement('div'); r.className = 'row';
       r.innerHTML = `<label for="${id}"></label><input type="range" id="${id}" min="${j.min}" max="${j.max}" value="${j.value}" step="1"><output></output>`;
       r.querySelector('label').textContent = j.label;
-      const out = r.querySelector('output'); out.textContent = `${j.value}°`;
+      const out = r.querySelector('output'); out.textContent = fmtJoint(j);
       r.querySelector('input').addEventListener('input', (e) => {
-        j.value = +e.target.value; out.textContent = `${j.value}°`; state.demo = false; state.anim = false; syncBtns(); applyPose();
+        j.value = +e.target.value; out.textContent = fmtJoint(j); state.demo = false; state.anim = false; syncBtns(); applyPose();
       });
       j.input = r.querySelector('input'); j.out = out;
       box.append(r);
@@ -325,13 +331,23 @@ function addBtn(text, fn, pressed = false) {
   b.addEventListener('click', () => b.setAttribute('aria-pressed', String(fn()))); $('poseBtns').append(b); btns.push([b, text]);
 }
 function syncBtns() { for (const [b] of btns) b.setAttribute('aria-pressed', 'false'); }
-function applyPose() { for (const j of joints) j.obj.rotation.z = deg(j.sign * j.value); }
+const fmtJoint = (j) => (j.unit === 'mm' ? `${j.value} mm` : `${j.value}°`);
+function applyPose() {
+  for (const j of joints) {
+    if (j.drives.length) {
+      for (const d of j.drives) {
+        if (d.rot !== undefined) d.obj.rotation.z = deg(d.rot * j.value);
+        if (d.move) d.obj.position.set(d.base.x + d.move[0] * j.value, d.base.y + d.move[1] * j.value, d.base.z + d.move[2] * j.value);
+      }
+    } else if (j.obj) j.obj.rotation.z = deg(j.sign * j.value);
+  }
+}
 
 const ease = (t) => t * t * (3 - 2 * t);
 function stepDemo(dt) {
   const k = cfg.demo; const seg = 1.7; state.demoT = (state.demoT + dt) % (seg * (k.length - 1));
   const i = Math.floor(state.demoT / seg), t = ease((state.demoT % seg) / seg);
-  joints.forEach((j, n) => { j.value = Math.round(k[i][n] + (k[i + 1][n] - k[i][n]) * t); j.input.value = j.value; j.out.textContent = `${j.value}°`; });
+  joints.forEach((j, n) => { j.value = Math.round(k[i][n] + (k[i + 1][n] - k[i][n]) * t); j.input.value = j.value; j.out.textContent = fmtJoint(j); });
   applyPose();
 }
 

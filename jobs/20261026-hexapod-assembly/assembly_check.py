@@ -92,8 +92,8 @@ def main():
     zp = z0 + H.T_TOP + top.LEDGE_H
     esp = Pos(top.USB_END_X + e.length / 2, 0, zp + e.pcb_t / 2) * Box(e.length, e.width, e.pcb_t)
     pins_len = e.length - 2 * 4.34 + 2.54
-    for sy in (-1, 1):
-        esp += Pos(top.USB_END_X + e.length / 2, sy * (e.width / 2 - 1.3), zp - 16.5 / 2) * Box(pins_len, 2.54, 16.5)
+    for sy in (-1, 1):   # female jumper housings (16.5) + 10 mm for the leads to bend (DFM round 1)
+        esp += Pos(top.USB_END_X + e.length / 2, sy * (e.width / 2 - 1.3), zp - 26.5 / 2) * Box(pins_len, 2.54, 26.5)
     pca = PCA9685_BOARD
     for sy in (-1, 1):
         esp += Pos(0, sy * top.PCA_Y, z0 + H.T_TOP + top.POST_H + pca.height / 2 + 0.01) * Box(pca.length, pca.width, pca.height)

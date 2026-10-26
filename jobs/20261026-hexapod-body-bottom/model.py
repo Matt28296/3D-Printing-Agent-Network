@@ -11,11 +11,11 @@ import math
 import sys
 from pathlib import Path
 
-from build123d import Align, BuildPart, BuildSketch, Cylinder, Location, Plane, Polygon, Pos, extrude
+from build123d import Align, BuildPart, BuildSketch, Cylinder, GeomType, Location, Plane, Polygon, Pos, extrude, fillet
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-hexapod-assembly"))
-from hex_frame import COLUMN_H, LEG_MOUNTS, SERVO, T_BODY  # noqa: E402
+from hex_frame import COLUMN_H, COLUMNS, LEG_MOUNTS, SERVO, T_BODY  # noqa: E402
 
 from hobby_parts import LIPO_2S_1000, chamfer_plane_edges, servo_mount_cutter  # noqa: E402
 
@@ -23,8 +23,8 @@ from hobby_parts import LIPO_2S_1000, chamfer_plane_edges, servo_mount_cutter  #
 HOLE_COMP = HOLE_COMP_DEFAULT
 CLR, END_CLR = 0.4, 0.2
 MARGIN = 4.0                     # plate beyond each pilot / window
-COLUMNS = [(30.0, 25.0), (30.0, -25.0), (-30.0, 25.0), (-30.0, -25.0)]
 COLUMN_D, COLUMN_PILOT, PILOT_DEPTH = 8.0, 2.6, 10.0
+COLUMN_FILLET = 1.5              # root fillet (DFM round 1: the columns got 10 mm longer)
 STRAP = (3.0, 22.0)              # velcro slot w (y) × l (x), either side of the LiPo
 BED_CHAMFER = 0.4
 
@@ -70,6 +70,11 @@ def design():
     plate = chamfer_plane_edges(bp.part, 0.0, BED_CHAMFER)
     for (x, y) in COLUMNS:
         plate += Pos(x, y, T_BODY - 0.01) * Cylinder(COLUMN_D / 2, COLUMN_H + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    roots = [e for e in plate.edges()
+             if e.geom_type == GeomType.CIRCLE and abs(e.radius - COLUMN_D / 2) < 1e-3
+             and abs(e.center().Z - T_BODY) < 0.05]
+    plate = fillet(roots, radius=COLUMN_FILLET)
+    for (x, y) in COLUMNS:
         plate -= Pos(x, y, T_BODY + COLUMN_H - PILOT_DEPTH) * Cylinder((COLUMN_PILOT + HOLE_COMP) / 2, PILOT_DEPTH + 1,
                                                                        align=(Align.CENTER, Align.CENTER, Align.MIN))
     for (mx, my, a) in LEG_MOUNTS:

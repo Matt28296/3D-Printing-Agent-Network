@@ -29,6 +29,9 @@ from hobby_parts import BATT_2X18650, ESP32_DEVKIT_38, MINI_BREADBOARD, gearmoto
 import rover_frame as F  # noqa: E402
 
 TOL = 0.5
+# deliberate contacts, not interference: the N20's D-shaft is a press fit in the sprocket's D-bore
+EXPECTED = [{"motorL", "sprocketL"}, {"motorR", "sprocketR"}]
+BOLT_L = 45.0                 # M3 x 45 axle bolts (road wheels and idlers), head outside the wheel
 JOBS = {"chassis": "20261026-rover-chassis", "lid": "20261026-rover-lid", "sprocket": "20261026-rover-sprocket",
         "idler": "20261026-rover-idler", "wheel": "20261026-rover-wheel", "link": "20261026-rover-track-link"}
 
@@ -126,9 +129,36 @@ def main():
             v = trimesh.boolean.intersection([ma, mc], engine="manifold").volume
         except Exception:
             v = 0.0
-        if v > TOL:
+        if v > TOL and {a, c} not in EXPECTED:
             hits.append((a, c, round(float(v), 2)))
     print("collisions:", hits or "none")
+
+    # idler at both ends of its tension slot, and the M3 x 45 axle bolts (nut trap on the wall's
+    # outer face at |y| = HALF_W_OUT, head beyond the wheel's outer face): chassis vs idler/bolts
+    bolt = to_mesh(Pos(0, 0, -BOLT_L / 2) * Cylinder(1.45, BOLT_L))       # along its own z
+    slot_hits = []
+    for dx in (-F.IDLER_SLOT, F.IDLER_SLOT):
+        for side, tag in ((1, "L"), (-1, "R")):
+            Pi = frame((F.AXLE_DX + dx, side * F.Y_T, F.Z_A), (1, 0, 0), (0, side, 0))
+            Pb = frame((F.AXLE_DX + dx, side * (F.HALF_W_OUT - 2.6 + BOLT_L / 2), F.Z_A), (1, 0, 0), (0, side, 0))
+            for name, mesh_, T_ in (("idler", M["idler"], Pi), ("idler bolt", bolt, Pb)):
+                v = trimesh.boolean.intersection([placed["chassis"], mesh_.copy().apply_transform(T_)],
+                                                 engine="manifold").volume
+                if v > TOL:
+                    slot_hits.append((f"{name}{tag} at slot {dx:+.0f}", "chassis", round(float(v), 2)))
+            v = trimesh.boolean.intersection([M["idler"].copy().apply_transform(Pi), bolt.copy().apply_transform(Pb)],
+                                             engine="manifold").volume
+            if v > TOL:
+                slot_hits.append((f"idler bolt{tag} at slot {dx:+.0f}", f"idler{tag}", round(float(v), 2)))
+    for side, tag in ((1, "L"), (-1, "R")):
+        for i, x in enumerate(F.ROAD_X):
+            Pb = frame((x, side * (F.HALF_W_OUT - 2.6 + BOLT_L / 2), F.Z_A), (1, 0, 0), (0, side, 0))
+            bm = bolt.copy().apply_transform(Pb)
+            for other in ("chassis", f"wheel{tag}{i}"):
+                v = trimesh.boolean.intersection([placed[other], bm], engine="manifold").volume
+                if v > TOL:
+                    slot_hits.append((f"wheel bolt{tag}{i}", other, round(float(v), 2)))
+    print("idler slot ends + axle bolts:", slot_hits or "clear")
 
     # tooth engagement: each tooth tip (world) must land inside some link's notch
     # (link frame: NOTCH_X0 <= x <= P - (KN_R), |y| <= NOTCH_HALF, |z| <= LINK_T/2)
@@ -153,7 +183,8 @@ def main():
     allm = trimesh.util.concatenate([placed[k] for k in keys])
     lo, hi = allm.bounds
     links = trimesh.util.concatenate([placed[k] for k in keys if k.startswith("link")])
-    report = {"tol_mm3": TOL, "collisions": hits, "links_per_side": F.N_LINKS, "axle_dx_mm": F.AXLE_DX,
+    report = {"tol_mm3": TOL, "collisions": hits, "expected_contacts": [sorted(e) for e in EXPECTED],
+              "idler_slot_and_bolts": slot_hits or "clear", "links_per_side": F.N_LINKS, "axle_dx_mm": F.AXLE_DX,
               "teeth_engaged_in_notches": engaged,
               "overall_mm": [round(float(v), 1) for v in hi - lo], "lowest_point_mm": round(float(lo[2]), 2),
               "track_bottom_mm": round(float(links.bounds[0][2]), 2), "ground_clearance_mm": round(F.FLOOR_Z, 2)}

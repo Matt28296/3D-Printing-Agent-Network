@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-gripper-jaw",
-  "stage": "AWAITING_APPROVAL",
+  "stage": "SUPERSEDED",
   "kind": "part",
   "iterations": {
     "DESIGN": 0,
@@ -16,5 +16,13 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T01:29:19+00:00"
+  "updated": "2026-10-26T05:16:23+00:00",
+  "superseded_by": [
+    "20261026-arm-claw-frame",
+    "20261026-arm-claw-cover",
+    "20261026-arm-claw-pinion",
+    "20261026-arm-claw-jaw",
+    "20261026-arm-camera-mount"
+  ],
+  "note": "Replaced by the rack-and-pinion parallel claw (user request 2026-10-26). Do not approve or print."
 }

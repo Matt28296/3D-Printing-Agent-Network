@@ -1,13 +1,13 @@
 {
   "job_id": "20261026-arm-claw-frame",
-  "stage": "SPEC",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
     "DESIGN": 0,
     "SLICE": 0
   },
   "gates": {
-    "SPEC": null,
+    "SPEC": "pass",
     "DESIGN": null,
     "SLICE": null,
     "APPROVAL": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T04:53:54+00:00"
+  "updated": "2026-10-26T05:16:23+00:00"
 }

@@ -18,7 +18,7 @@ Leg frames (all right-handed, built by `leg_frames` in assembly_check.py):
 from hobby_parts import MG90S, link_back_z
 
 SERVO = MG90S
-LB = link_back_z(SERVO)          # 9.7: servo tab plane -> next link's back face (horn 2 mm deep)
+LB = link_back_z(SERVO)          # 9.4: servo tab plane -> next link's back face (horn 2 mm deep)
 
 # --- leg ----------------------------------------------------------------------------------
 L_C = 32.0        # coxa axis -> femur axis (radial)
@@ -29,14 +29,16 @@ T_V = 4.5         # coxa bracket vertical plate (femur servo tab face at its +y 
 T_F = 7.0         # femur plate
 T_T = 7.0         # tibia plate
 Y_F = -13.5       # femur servo tab plane (C y): puts the femur plate's mid-plane near the coxa line
-Z_F = T_C + 8.0   # femur axis below the bracket's back face (C z, i.e. downwards): window clear of the plate
+Z_F = T_C + 12.0  # femur axis below the bracket's back face (C z, downwards): DFM round 1 raised it 4 mm so a
+                  # 5.6 mm solid band and a 45° root gusset fit between the arm and the femur servo's tabs
 
 # --- body -----------------------------------------------------------------------------------
 LEG_MOUNTS = [(60.0, 42.0, 40.0), (0.0, 52.0, 90.0), (-60.0, 42.0, 140.0),        # left: x, y, angle deg
               (60.0, -42.0, -40.0), (0.0, -52.0, -90.0), (-60.0, -42.0, -140.0)]  # right
 T_BODY = 4.0      # bottom plate (coxa servos hang below it)
-COLUMN_H = 30.0   # bottom-plate top -> top-plate underside
+COLUMN_H = 40.0   # bottom-plate top -> top-plate underside (DFM round 1: room for the ESP32 jumper leads over the LiPo)
+COLUMNS = [(40.0, 25.0), (40.0, -25.0), (-40.0, 25.0), (-40.0, -25.0)]   # both plates (DFM round 1: clear of the PCA9685 posts)
 T_TOP = 3.0
 
 # Neutral stance: femur horizontal, tibia vertical -> foot tip on the ground.
-STANCE_Z_TAB = LB + Z_F + L_T    # 92.7: height of the body-plate underside (coxa tab plane)
+STANCE_Z_TAB = LB + Z_F + L_T    # 96.4: height of the body-plate underside (coxa tab plane)

@@ -12,7 +12,7 @@ from build123d import Align, Axis, Box, Cylinder, Pos, fillet
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-hexapod-assembly"))
-from hex_frame import T_TOP  # noqa: E402
+from hex_frame import COLUMNS, T_TOP  # noqa: E402
 
 from hobby_parts import ESP32_DEVKIT_30, ESP32_DEVKIT_38, PCA9685_BOARD, PCA9685_HOLES, chamfer_plane_edges  # noqa: E402
 
@@ -20,7 +20,7 @@ from hobby_parts import ESP32_DEVKIT_30, ESP32_DEVKIT_38, PCA9685_BOARD, PCA9685
 HOLE_COMP = HOLE_COMP_DEFAULT
 SIZE = (130.0, 104.0)            # x × y
 CORNER_R = 10.0
-SCREWS = [(30.0, 25.0), (30.0, -25.0), (-30.0, 25.0), (-30.0, -25.0)]   # = bottom-plate columns
+SCREWS = COLUMNS                 # = bottom-plate columns (hex_frame.py)
 SCREW_D = 3.4
 BOARDS = (ESP32_DEVKIT_38, ESP32_DEVKIT_30)
 USB_END_X = -27.2                # boards centred on x; USB end towards the rear

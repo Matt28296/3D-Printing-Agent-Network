@@ -13,7 +13,7 @@ the vertical plate standing, its window roof pointing up.
 import sys
 from pathlib import Path
 
-from build123d import Align, Box, BuildPart, BuildSketch, Location, Plane, Polygon, Pos, extrude
+from build123d import Align, Axis, Box, BuildPart, BuildSketch, Location, Plane, Polygon, Pos, extrude, fillet
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-hexapod-assembly"))
@@ -32,8 +32,9 @@ PILOT_X = (-(SERVO.length - SERVO.shaft_from_end) + SERVO.length / 2 - SERVO.hol
 VPLATE_X = (L_C + PILOT_X[0] - 3.5, L_C + PILOT_X[1] + 3.5)    # 9.1 … 43.9
 WIN_HALF = (SERVO.width + CLR + HOLE_COMP) / 2                  # 6.4
 ROOF = (SERVO.length + END_CLR + HOLE_COMP) / 2                 # 11.45
-VPLATE_H = Z_F + WIN_HALF + ROOF + 3.0                          # 33.85
-GUSSET = 6.0                     # 45° gussets inside the bracket corner (y > Y_F face is the tab side)
+VPLATE_H = Z_F + WIN_HALF + ROOF + 3.0                          # 37.85
+GUSSET = Z_F - SERVO.width / 2 - 1.0 - T_C   # 5: 45° root gusset on the tab side, 1 mm under the femur tabs
+HUB_ARM_FILLET = 2.5             # re-entrant corner where the arm leaves the hub (DFM round 1)
 BED_CHAMFER = 0.4
 
 
@@ -46,22 +47,23 @@ def design():
     x0, x1, y0, y1 = HUB
     br = rounded_plate(x0, x1, y0, y1, T_C, r=5.0)
     br += rounded_plate(0.0, VPLATE_X[1], ARM_Y[0], ARM_Y[1], T_C, r=3.0)
+    corner = [e for e in br.edges().filter_by(Axis.Z)
+              if abs(e.center().X - x1) < 0.05 and abs(e.center().Y - ARM_Y[1]) < 0.05]
+    br = fillet(corner, radius=HUB_ARM_FILLET)
     br = chamfer_plane_edges(br, 0.0, BED_CHAMFER)
     # vertical plate (normal y) from the arm, at y in [Y_F - T_V, Y_F]
     vp = Pos(VPLATE_X[0], Y_F - T_V, T_C - 0.01) * Box(VPLATE_X[1] - VPLATE_X[0], T_V, VPLATE_H - T_C + 0.01,
                                                         align=(Align.MIN,) * 3)
     br += vp
-    # 45° fillet wedges along the plate root on the arm side (y > Y_F), outside the window's x range
-    win_x0 = L_C - (SERVO.length - SHAFT_FROM_END) - (END_CLR + HOLE_COMP) / 2
-    win_x1 = L_C + SHAFT_FROM_END + (END_CLR + HOLE_COMP) / 2
-    for xa, xb in ((VPLATE_X[0] + 3.0, win_x0 - 3.0), (win_x1 + 3.0, VPLATE_X[1] - 3.0)):   # clear of the arm's r3 corners
-        if xb - xa > 1:
-            with BuildPart() as g:
-                with BuildSketch(Plane.YZ.offset(xa)):
-                    Polygon((Y_F - 0.01, T_C - 0.01), (min(Y_F + GUSSET, ARM_Y[1]), T_C - 0.01),
-                            (Y_F - 0.01, T_C + GUSSET), align=None)
-                extrude(amount=xb - xa)
-            br += g.part
+    # 45° root gusset along the whole plate on the tab side (y > Y_F), under the femur servo's tabs
+    # (they start at z = Z_F - width/2 = 11); ends 3 mm short of the arm's r3 corners
+    xa, xb = VPLATE_X[0] + 3.0, VPLATE_X[1] - 3.0
+    assert Y_F + GUSSET <= ARM_Y[1] and T_C + GUSSET <= Z_F - SERVO.width / 2 - 0.5
+    with BuildPart() as g:
+        with BuildSketch(Plane.YZ.offset(xa)):
+            Polygon((Y_F - 0.01, T_C - 0.01), (Y_F + GUSSET, T_C - 0.01), (Y_F - 0.01, T_C + GUSSET), align=None)
+        extrude(amount=xb - xa)
+    br += g.part
     br -= horn_pocket_cutter(SERVO, link_t=T_C, hole_comp=HOLE_COMP)
     br -= femur_servo_loc() * servo_mount_cutter(SERVO, T_V, clearance=CLR, end_clearance=END_CLR, roof="-y",
                                                  through=2 * T_V + 2, hole_comp=HOLE_COMP, pilot_teardrop="-y")

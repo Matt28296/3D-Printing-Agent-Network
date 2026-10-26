@@ -441,6 +441,45 @@ def washer_parts(d: float, od: float | None = None, t: float = 0.5) -> list[trim
     return [_mat(w, "steel")]
 
 
+def trimmed_horn_parts(s: ServoSpec, trim_r: float) -> list[trimesh.Trimesh]:
+    """A double/single-arm horn with its arms cut `trim_r` from the centre (inside a pinion).
+    Same frame as horn_parts (servo frame, horn face at horn_face_z)."""
+    hz = horn_face_z(s)
+    z0 = hz - s.horn_t
+    parts = [cyl(s.horn_d / 2, z0, hz, "horn_white"), cyl(s.horn_d / 2 * 0.95, z0 - 2.0, z0, "horn_white")]  # hub + boss
+    w = s.horn_d * 0.8
+    for sgn in ((1,) if s.horn_arms == 1 else (1, -1)):
+        parts.append(box(min(0, sgn * trim_r), max(0, sgn * trim_r), -w / 2, w / 2, z0, hz, "horn_white"))
+    return merge_by_material(parts)
+
+
+def brio4k_parts(cable_len: float = 30.0) -> list[trimesh.Trimesh]:
+    """Logitech Brio 4K (clip removed). Frame: origin at the 1/4"-20 thread on the bottom face,
+    +X = lens direction, +Y = long axis, +Z = up; body x ±13.5, y ±51, z 0..27."""
+    from build123d import Axis, Box as BBox, Pos as BPos, fillet
+    body = BPos(0, 0, 13.5) * BBox(27.0, 102.0, 27.0)
+    body = fillet(body.edges().filter_by(Axis.Y), radius=6.0)
+    body = fillet(body.edges().filter_by(Axis.X) + body.edges().filter_by(Axis.Z), radius=2.0)
+    p = [_mat(shape_to_mesh(body, tol=0.05), "plastic_black")]
+    p.append(box(13.45, 13.6, -40.0, 40.0, 6.0, 21.0, "chip"))                         # glossy front panel
+    p.append(cyl(7.2, 13.5, 14.0, "black_oxide", y=0.0, axis="x").apply_translation((0, 0, 13.5)))   # lens ring
+    p.append(cyl(5.0, 13.6, 14.1, "chip", axis="x").apply_translation((0, 0, 13.5)))                # lens glass
+    for y in (-24.0, 24.0):                                                             # IR sensor windows
+        p.append(cyl(2.4, 13.55, 13.7, "led_red", axis="x").apply_translation((0, y, 13.5)))
+    p.append(cyl(0.9, 13.55, 13.75, "plastic_white", axis="x").apply_translation((0, 9.0, 13.5)))  # status LED
+    p.append(box(-3.0, 3.0, 50.9, 51.1, 11.0, 16.0, "plastic_black"))                  # USB-C socket (+Y end)
+    p.append(box(-3.5, 3.5, 51.0, 59.0, 10.0, 17.0, "plastic_black"))                  # USB-C plug
+    p.append(cyl(2.0, 59.0, 59.0 + cable_len, "wire_black", axis="y").apply_translation((0, 0, 13.5)))  # cable stub
+    return merge_by_material([q for q in p if q is not None])
+
+
+def thumb_screw_parts(d: float = 6.35, length: float = 9.5, head_d: float = 16.0, head_h: float = 5.0) -> list[trimesh.Trimesh]:
+    """Knurled thumb screw (1/4"-20 by default) along +Z from the head's top face at z = 0
+    (head below, z < 0): for screwing UP into a camera from under its seat."""
+    return merge_by_material([cyl(head_d / 2, -head_h, 0, "black_oxide", sections=36),
+                              cyl(d / 2 * 0.92, 0, length, "steel", sections=20)])
+
+
 # --- scene ----------------------------------------------------------------------------------
 class VizScene:
     """Node hierarchy + reusable geometry -> GLB, plus metadata for the viewer."""

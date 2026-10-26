@@ -11,3 +11,4 @@
 - 2026-10-26T01:28:29Z · gcode-auditor · wrote audit.md · PASS
 - 2026-10-26T01:29:19+00:00 · print-ops-lead · wrote preflight.md · ok
 - 2026-10-26T01:29:19+00:00 · head-orchestrator · stage -> AWAITING_APPROVAL (DESIGN, SLICE gates pass) · ok
+- 2026-10-26T05:16:23+00:00 · head-orchestrator (Architect acting) · SUPERSEDED by claw v2 (20261026-arm-claw-*) at the user's request · ok
