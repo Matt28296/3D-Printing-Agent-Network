@@ -29,3 +29,6 @@
 - 2026-10-26T14:22Z · strength-analyst (round 5, independent) · strength.md, strength_calc.py · FAIL (1 of 70 rows: rear end stop root 2.75; round 4's fix confirmed: drop 3.02 / 3.01, reverse stall 6.44, plates 3.29)
 - 2026-10-26T14:22Z · architect (as head-orchestrator) · merged; strength_calc re-run; DESIGN iterations 5; escalated to the user · ok
 - 2026-10-26T14:22Z · architect · user approved a sixth round: STOP_W 1.5 → 2.0; spec §8 test 1 per strength round 5 (hang at mid-slot, pull at the front end, disc measured with the idler pulled rearward, PETG round each plate spelled out) · ok
+- 2026-10-26T14:50Z · cad-engineer (round 6, user-approved) · model.py: STOP_W 1.5 → 2.0 (stops x 106–108 and 129–131); cad_checks 53/53; assembly check clean (merged e643bb5) · ok
+- 2026-10-26T14:50Z · dfm-reviewer + strength-analyst (round 6, independent) · design_review.md, strength.md, strength_calc.py · PASS / NEEDS_TEST (rear stop 4.88; lowest 3.01, strip shear in the drop)
+- 2026-10-26T14:50Z · architect (as head-orchestrator) · merged; DESIGN pass; stage SLICE (slice_plan must rise to 5 perimeters / 30 %) · ok
