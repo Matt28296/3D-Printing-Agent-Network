@@ -23,3 +23,4 @@
 - 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 1.71 at the window rails; fix: a 6 mm back-face rib on each rail and a boss under the far pilot with an M2 × 16; the MG90S strips pass, 4.75 and 5.19)
 - 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok
 - 2026-10-26T13:06Z · architect · spec §8: proof test replaced with links strength round 4's version (loads that reach the governing rows) · ok
+- 2026-10-26T14:35Z · architect · merged links round 5 (813e1e9); spec updated for it (fasteners, pads, ribs, gussets, washers, round 5 loads) · ok

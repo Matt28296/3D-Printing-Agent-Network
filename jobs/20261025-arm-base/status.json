@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 4 strength (lowest SF 1.21: 4 mm top plate round the MG996R tension-side tab boss in the yaw-stall sweep; DFM PASS); links round 5 next",
+    "DESIGN": "round 5 in review (links strength round 4's fixes)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T13:06:30+00:00"
+  "updated": "2026-10-26T14:35:38+00:00"
 }

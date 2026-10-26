@@ -26,7 +26,7 @@ Servo stall torques at 6 V: MG996R 1079 N·mm (11 kgf·cm; the part specs use 10
 
 | Case | Value | Where it acts |
 |---|---|---|
-| Shoulder, arm straight out, camera, 0 / 50 g | 553 / 683 N·mm (51 / 63 % of stall) | shoulder servo; why the arm parks upright |
+| Shoulder, arm straight out, camera, 0 / 50 g | 563 / 692 N·mm (52 / 64 % of stall; links round 5 masses) | shoulder servo; why the arm parks upright |
 | Shoulder, arm straight out, no camera, 0 / 50 g | 391 / 520 N·mm (36 / 48 %) | |
 | Elbow / wrist, worst in the travel, camera, 50 g | 314 N·mm (29 %) / 63 N·mm (29 %) | |
 | Camera's sideways moment across the pitch shafts (03 SYS-04), solid parts, camera 0 / 50 g | shoulder 239 / 278, elbow 161 / 188, wrist 108 / 124 N·mm; upright mid-plane 290 / 335 N·mm | horn clamps, link specs §4 |

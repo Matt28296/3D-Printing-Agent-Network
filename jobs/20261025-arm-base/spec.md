@@ -7,14 +7,15 @@ Open-bottom box (110 × 104 × 40 mm) that holds the base-yaw MG996R (hanging th
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 110 × 104 × 40 mm. Interfaces: MG996R window 41.1 × 20.1 mm (printed) with a lead notch 4.4 × 2.0 mm (printed) at each case end through the 4 mm top plate only (deep review 01 B1: below the plate the ribbon passes between the bosses, ≥ 3 mm off the centreline at the case end) and 4 × Ø2.6 pilots (48.5 × 10 mm pattern) through the 4 mm plate + 6 mm bosses; 3 × Ø2.6 ring pilots at r47.5 (30°, 150°, 270°); 3 × Ø2.6 cradle pilots on Ø7 bosses; DC jack Ø11.4 teardrop; USB slot 13 × 7; cable slot 14 × 8 at (−40, −36); 4 × Ø3.4 desk holes in corner pillars.
-- Fasteners used: base servo: 4 × M3 × 12 pan-head self-tapping + Ø7 washers, the grommets and eyelets left out (01 S3: 9 mm engaged in plate + boss); 3 × M3 × 6 self-tapping for the ring; 3 × M3 × 10 for the cradle (from below, heads in counterbores: 4 mm clamp + 6 mm into the boss pilots); 4 × M3 × 50 (or #4 × 2") wood screws to the desk or a board: REQUIRED, the arm tips the base over with the arm out (strength round 1; SYS-12: or a 200 × 200 mm, 0.4 kg board, or 1.2 kg of ballast inside)
+- Mating parts and their dimensions: 110 × 104 × 40 mm. Interfaces: MG996R window 41.1 × 20.1 mm (printed) with a lead notch 4.4 × 2.0 mm (printed) at each case end through the top plate and its pad (round 5) (deep review 01 B1: below the plate the ribbon passes between the bosses, ≥ 3 mm off the centreline at the case end) and 4 × Ø2.6 pilots (48.5 × 10 mm pattern) through the 4 mm plate + 6 mm bosses; 3 × Ø2.6 ring pilots at r47.5 (30°, 150°, 270°); 3 × Ø2.6 cradle pilots on Ø7 bosses; DC jack Ø11.4 teardrop; USB slot 13 × 7; cable slot 14 × 8 at (−40, −36); 4 × Ø3.4 desk holes in corner pillars.
+- Fasteners used: base servo: 4 × M3 × 12 pan-head self-tapping + Ø7 washers, the grommets and eyelets left out (01 S3: 9 mm engaged in plate + boss); 3 × M3 × 6 self-tapping + Ø7 washers for the ring (round 5); 3 × M3 × 10 for the cradle (from below, heads in counterbores: 4 mm clamp + pilots 7 mm deep since round 5, 1 mm margin); 4 × M3 × 50 (or #4 × 2") wood screws to the desk or a board: REQUIRED, the arm tips the base over with the arm out (strength round 1; SYS-12: or a 200 × 200 mm, 0.4 kg board, or 1.2 kg of ballast inside)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Servo window | 41.1 × 20.1 | +0.3/−0 | clearance 0.2/side |
-| Lead notches | 4.4 wide, 2.0 beyond each case end (printed), through the 4 mm plate | +0.2/−0 | 4 × 1.3 mm lead ribbon; 2.0 mm printed ligament to the nearest pilot |
+| Lead notches | 4.4 wide, 2.0 beyond each case end (printed), through the plate and its pad | +0.2/−0 | 4 × 1.3 mm lead ribbon; 2.0 mm printed ligament to the nearest pilot |
+| Pads under the top plate (round 5, links strength round 4) | 7.5 mm at the far tab (−X wall to 15 mm past the bosses), 5.5 mm at the near tab (stops 2 mm short of the ESP32 module) | min | yaw stall at the tension-side tab boss |
 | Servo pilot holes | Ø2.6 | ±0.1 | M3 × 12 self-tapping (ST2.9) |
 | Servo pilot pattern | 48.5 × 10.0 | ±0.2 | matches MG996R tabs |
 | DC jack hole | Ø11.4 | +0.3/−0 | panel jack Ø11 thread |
@@ -28,7 +29,7 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, M
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
 | Base-servo stall reaction | 1000 N·mm about Z | 4 tab screws into the top plate | short-term | seconds |
-| Moment of everything on the turntable (SYS-05) | 692 N·mm, arm straight out with the camera (832 with 50 g), ×2 dynamic; 245–286 N·mm of it in every pose | servo tabs → plate and bosses; ring → 3 ring screws → top plate | sustained while powered | hours |
+| Moment of everything on the turntable (SYS-05) | 706 N·mm, arm straight out with the camera (846 with 50 g; round 5 masses), ×2 dynamic; 245–286 N·mm of it in every pose | servo tabs → plate and bosses; ring → 3 ring screws → top plate | sustained while powered | hours |
 | Hand push on the arm | 20 N at the turntable rim | ring → 3 ring screws → top plate | short-term | seconds |
 | Yaw-stall ring catch | ≈52 N at the ring | ring → 3 ring screws → top plate | short-term | seconds |
 | Tipping with the arm out (SYS-12) | robot 0.70–0.75 kg, centre of mass 85–98 mm out against the 55 mm edge: 400–510 N·mm overturning vs 190 N·mm restoring | desk screws in tension (≈3 N per pair, static) | sustained | hours |

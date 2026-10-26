@@ -8,7 +8,7 @@ Ring (r 41–44, 16.1 mm tall) screwed to the base top plate under the turntable
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: Ø88 ring + 3 tabs at r47.5, 16.1 mm tall. Interfaces: 3 × Ø3.4 tab holes matching the base's ring pilots; top face 0.4 mm below the turntable underside (Z 16.5), ≈0.3 mm with the PTFE tape.
-- Fasteners used: 3 × M3 × 6 self-tapping into the base (3 mm tab + 3 mm into the 4 mm plate; a longer screw would reach the ESP32 under the plate)
+- Fasteners used: 3 × M3 × 6 self-tapping + Ø7 washers (round 5; each tab has a Ø8 relief so the washer clears the wall) into the base (3 mm tab + 3 mm into the 4 mm plate; a longer screw would reach the ESP32 under the plate)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -23,7 +23,7 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, M
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Overturning moment on the turntable (SYS-05) | up to 832 N·mm (arm straight out, camera, 50 g) → ≈19 N on the ring's top at r 44 if the ring takes all of it, ×2 dynamic | ring wall in compression, PTFE sliding contact, 3 tab screws | sustained while the arm is out | hours |
+| Overturning moment on the turntable (SYS-05) | up to 846 N·mm (arm straight out, camera, 50 g; round 5 masses) → ≈19 N on the ring's top at r 44 if the ring takes all of it, ×2 dynamic | ring wall in compression, PTFE sliding contact, 3 tab screws | sustained while the arm is out | hours |
 | Knock on the arm | 20 N at the turntable rim | compression in the ring wall, shear in tab screws | short-term | seconds |
 | Yaw-stall ring catch | ≈52 N | ring wall and tab screw heads | short-term | seconds |
 | Friction torque while yawing | μ 0.1 (PTFE) × ≈19 N × 44 mm ≈ 85 N·mm | against the yaw servo's 1000 N·mm, which carries no gravity load | cyclic | hours |

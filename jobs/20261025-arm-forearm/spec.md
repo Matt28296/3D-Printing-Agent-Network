@@ -8,7 +8,8 @@ Flat 10 mm plate on the elbow servo's double-arm horn, carrying the wrist **MG90
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 129 × 26 × 10 mm. Interfaces: MG996R horn slot with Ø3.6 CAD clamp hole at x 0 (8 mm floor); MG90S window 23.0 × 12.6 (printed; 23.2 × 12.8 CAD) at x 90 (deep review 01 S1: the MG90S body is 22.8 × 12.2), lead notch at the shaft end (+x) 4.2 × 1.5 printed beyond the case end, 2 × Ø1.5 printed slotted pilots, the lead-end one moved 1.3 mm out (x 99.7; 01 B1, `lead="notch_shift_pilot"`).
-- Fasteners used: Elbow horn: M3 × 14 + Ø9 × 0.8 washer from the front face (14 − 0.8 − 8 − 0.6 = 4.6 mm into the spline, 01 S2) + 2 × M2 × 6 self-tappers through the horn's arm holes (01 S4); wrist MG90S: 2 × M2 × 12 self-tapping (9.5 mm engaged; NOT the short bag screws: they engage only ~5 mm and pull out under the yaw-stall case, strength round 2), the lead-end tab's slit filed to 2.1 mm so its screw reaches the moved pilot
+- Round 5 (links strength round 4): a 6 mm rib on the back face along each MG90S-window rail, and a cross-rib boss under the far pilot for the M2 × 16.
+- Fasteners used: Elbow horn: M3 × 14 + Ø9 × 0.8 washer from the front face (14 − 0.8 − 8 − 0.6 = 4.6 mm into the spline, 01 S2) + 2 × M2 × 6 self-tappers through the horn's arm holes (01 S4); wrist MG90S: M2 × 12 self-tapping at the lead end and M2 × 16 at the far end, into a boss on the back face (round 5: 13.5 mm engaged; the M2 × 12 9.5 mm; NOT the short bag screws: they engage only ~5 mm and pull out under the yaw-stall case, strength round 2), the lead-end tab's slit filed to 2.1 mm so its screw reaches the moved pilot
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -16,7 +17,7 @@ Flat 10 mm plate on the elbow servo's double-arm horn, carrying the wrist **MG90
 | Elbow–wrist axis distance | 90.0 | ±0.3 | kinematics |
 | MG90S window | 23.0 × 12.6 printed | +0.3/−0 | 0.4 side / 0.2 end clearance on the 22.8 × 12.2 body |
 | Lead notch | 4.2 wide, 1.5 beyond the case end (printed) | +0.2/−0 | 3.6 × 1.2 mm lead ribbon |
-| Printed ligaments | notch → moved pilot 1.55, far pilot → window 1.65, moved pilot → window 2.95 | min | self-tappers driven snug (hobby_parts' 1.5 mm minimum) |
+| Printed ligaments | notch → moved pilot 1.55, far pilot → window 1.65, moved pilot → window 2.95 | min | kept under the 1.8 mm rule by the user's decision of 26 Oct 2026, with the §8 screw-strip check; strength round 4: 4.75 / 5.19 |
 
 Servo dimensions are nominal (tools/hobby_parts.py). The MG90S has its own spec since deep review 01: body 22.8 × 12.2 mm, case bottom 18.5 mm below the tab underside, spline top 14.0 mm above it, lead leaving the shaft end 5.1 mm above the case bottom. Measure your servos and horns first and give Claude any body-size difference over 0.1 mm, any other over 0.3 mm.
 

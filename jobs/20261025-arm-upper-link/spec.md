@@ -8,6 +8,7 @@ Flat 10 mm plate on the shoulder servo's double-arm horn, carrying the elbow MG9
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 146 × 34 × 10 mm. Interfaces: horn slot (back face, 2 deep) with Ø3.6 CAD clamp hole at x 0 (8 mm floor); elbow MG996R window at x 100 (41.1 × 20.1 printed) with a lead notch 4.4 × 2.0 (printed) at each case end (deep review 01 B1) and 4 × Ø2.6 pilots.
+- Round 5 (links strength round 4): a 6 mm rib on the back face along each elbow-window rail (the link is 16 mm deep there); the ribs clear the neighbouring parts, horns and screw heads by ≥ 10 mm over the joint windows.
 - Fasteners used: Shoulder horn: M3 × 14 + Ø9 × 0.8 washer from the front face (clamps link + horn onto the spline: 14 − 0.8 − 8 − 0.6 = 4.6 mm into it, 01 S2) + 2 × M2 × 6 self-tappers through the horn's arm holes (01 S4); elbow servo: 4 × M3 × 12 pan-head self-tapping + Ø7 washers, 9 mm engaged (01 S3), the servo going in from the front face, case bottom first, its lead through a notch
 
 ## 3. Critical dimensions and tolerances

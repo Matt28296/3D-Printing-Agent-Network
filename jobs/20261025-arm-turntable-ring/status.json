@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 4 DFM (brief only) and strength (lowest SF 2.26 against 4: the pan head on the 3 mm tab at 150 N preload, no washer); links round 5 next",
+    "DESIGN": "round 5 in review (links strength round 4's fixes)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T13:06:30+00:00"
+  "updated": "2026-10-26T14:35:38+00:00"
 }
