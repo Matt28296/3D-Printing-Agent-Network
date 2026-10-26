@@ -1,120 +1,66 @@
-"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 2. Run: python3 jobs/20261026-rover-chassis/strength_calc.py
+"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 3.
 
-Self-contained. model.py files import build123d, which plain python3 doesn't have, so this script reads the
-top-level constants of rover_frame.py, tools/hobby_parts.py, tools/cadlib.py and the rover model.py files with
-`ast`, and the part volumes from every rover geometry.json. Units: N, mm, MPa, g.
+Run from the project root with the CAD venv active (build123d, trimesh, scipy):
+    source /home/claude/.venv-cad/bin/activate
+    python3 jobs/20261026-rover-chassis/strength_calc.py
 
-Round 2 = the round-1 method applied to the round-2 design: 5 cm design drop (spec §4; E = m g h, 5 mm stopping
-distance, flat and corner landings), 2 mm steel track pins, sprocket hub running in a 6 mm wall journal, N20 in a
-cradle (no face screws), M3 x 45 axle bolts, 4.5 mm walls. Rows tagged `drop` scale linearly with the drop height;
-report() prints the height at which the first of them reaches its required SF.
+Round 3 = the round-3 geometry (model.py, rover_frame.py) with the round-1/2 method and the round-3 loads:
+- drivetrain concept C: N20 rolled 45° in a diamond pocket through the wall, housing and a 2 mm nacelle, gearbox face on
+  a 1 mm skin at |y| 45, Pololu hub on the shaft 10 mm from the track plane;
+- idler bolt in a ±4 slot held by an M3 jack screw at its head; fully threaded class-12.9 axle bolts; insert columns.
+The script builds the chassis with build123d for section properties (nacelle ring, trough cheeks) and recomputes the
+rover mass from every rover part.stl at its print_requirements minima. Rows tagged as drop rows scale linearly with
+the drop height; report() prints the height at which the first of them reaches its required SF.
 """
-import ast
+# ===================== shared rover block, round 3 (identical in all six rover strength_calc.py) =====================
 import json
 import math
 import os
+import sys
 from types import SimpleNamespace
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 JOBS = os.path.join(ROOT, "jobs")
 ASM = os.path.join(JOBS, "20261026-rover-assembly")
+for _p in (os.path.join(ROOT, "tools"), ASM):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+import hobby_parts as HP  # noqa: E402  (needs the CAD venv: build123d)
+import rover_frame as F   # noqa: E402  (the shared rover frame every rover model.py imports)
 
-# --- allowables (library/materials.csv has no measured rows) --------------------------------------------------
-ALLOW_INPLANE_MPA = 25.0   # placeholder PETG, already knocked down (strength-checks skill) -> best verdict NEEDS_TEST
-Z_RATIO = 0.5              # across-layer / in-plane (skill placeholder)
-SHEAR_RATIO = 0.5          # shear allowable = 0.5 x normal allowable (Tresca); same convention as round 1
-E_PETG_MPA = 1800.0        # skill placeholder
-SF_STATIC = 3.0            # short-term static
-SF_CYCLIC = 4.0            # cyclic or sustained (creep)
-SF_METAL = 1.5             # bought steel, on yield, short-term (round-1 assumption)
-SY_A2_70_MPA = 450.0       # A2-70 stainless M3: the spec names no grade, so the commonest hobby grade is assumed
-SY_88_MPA = 640.0          # class 8.8 steel
-SY_129_MPA = 1080.0        # class 12.9 steel
-SY_STEEL_MPA = 350.0       # conservative yield for unspecified steel rod/shaft: the 2 mm track pins (annealed silver
-                           # steel / drill rod ~400+, piano wire ~1500) and the N20 output shaft (round 1 used 450)
+# --- allowables: library/materials.csv has only its header row, so the skill's placeholders apply ---------------------
+ALLOW_INPLANE_MPA = 25.0   # PETG placeholder, already knocked down (strength-checks skill) -> best verdict NEEDS_TEST
+Z_RATIO = 0.5              # across layers / in-plane (placeholder)
+SHEAR_RATIO = 0.5          # shear allowable = 0.5 x normal allowable (Tresca; rounds 1-2 convention)
+E_PETG_MPA, NU_PETG = 1800.0, 0.35
+G_PETG_MPA = E_PETG_MPA / (2 * (1 + NU_PETG))
+SF_STATIC, SF_CYCLIC, SF_METAL, SF_PROOF = 3.0, 4.0, 1.5, 1.0   # SF_PROOF: a proof load must not damage a good part
+SY_129_MPA, SY_88_MPA, SY_A2_70_MPA = 1080.0, 640.0, 450.0
+SY_ROD_MPA = 350.0         # unspecified steel rod and the N20 shaft: conservative yield (rounds 1-2 convention)
 E_STEEL_MPA = 200000.0
-RHO_G_PER_MM3 = 1.27e-3    # PETG; solid volume x density over-estimates infilled parts -> conservative mass
-RHO_STEEL_G_PER_MM3 = 7.85e-3
-G = 9.81                   # m/s^2
+G_MS2 = 9.81
+D3_M3 = 2.387              # M3 minor diameter (fully threaded bolts bend on their thread)
 
-# --- read the real parameters ------------------------------------------------------------------------------------
-_GM_FIELDS = ["name", "gb_w", "gb_h", "gb_len", "can_d", "can_flat", "can_len", "term_len", "shaft_d", "shaft_flat",
-              "shaft_len", "boss_d", "boss_h", "face_hole_dx", "face_screw_d", "stall_torque_nmm", "mass_g"]
-_BOX_FIELDS = ["name", "length", "width", "height", "mass_g", "note"]
-_BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+# --- shared loads (round 3) -----------------------------------------------------------------------------------------
+MASS_DESIGN_G = 649.0      # spec §4 of all six jobs. Round-3 estimate 618 g at the print_requirements minima (printed
+                           # 315 g + bought 304 g; chassis strength_calc.py recomputes it); 713 g if every part were solid
+T0_N = 5.0                 # pretension per run, sustained (spec §4). Deep review S-16: the guide's 3-5 mm sag over a
+                           # 40 mm span is about 0.1 N, so 5 N is an over-tension bound, conservative for strength
+T_DESIGN_NMM = 160.0       # spec §4 design stall; above the most a gated motor gives at the sketch's 6.0 V cap (130)
+T_PROOF_NMM = 182.0        # chassis §8 gate: <= 371 g on a 50 mm arm at 100 % PWM on a fresh pack (stall proof tests)
+V_CAP, V_FULL = 6.0, 8.4   # rover_test.ino: MOTOR_V 6.0, pwmCap = 255 x 6.0 / V_pack (182/255 on a full pack)
+T_GATED_NMM = T_PROOF_NMM * V_CAP / V_FULL      # 130: a motor that passes the gate, at the sketch's cap
+S08_6V_NMM = (("Pololu 150:1 LP 6V", 108.0), ("project N20_100RPM", HP.N20_100RPM.stall_torque_nmm),
+              ("Phipps GA12-N20 6V 100 rpm", 196.0))   # deep review 04 S-08 (stall at 6 V)
+OLD_CAP = 0.8 * V_FULL / V_CAP                  # S-08's 80 % cap on a full pack, relative to 6 V
+MU_LONG = 1.0              # everyday pull, traction-limited (grousers on carpet; conservative)
+SIDE_N = 3.0               # spec side drag per track; S-15 pivot turn on carpet needs <= 1.43 N per track half
+H_DROP_MM = float(F.DROP_MM)
+DELTA_MM, DELTA_STIFF_MM = 5.0, 2.5   # stopping distance (rounds 1-2 convention, spec §4) and its sensitivity
 
-
-def _lit(node):
-    return ast.literal_eval(node)
-
-
-def _read_hobby():
-    ns = {}
-    for node in ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read()).body:
-        if not (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)):
-            continue
-        name, v = node.targets[0].id, node.value
-        fn = getattr(getattr(v, "func", None), "id", "")
-        fields = {"GearMotorSpec": _GM_FIELDS, "BoxSpec": _BOX_FIELDS, "BoardSpec": _BOARD_FIELDS}.get(fn)
-        try:
-            if fields:
-                d = dict(zip(fields, [_lit(a) for a in v.args]))
-                d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
-                ns[name] = SimpleNamespace(**d)
-            elif fn == "":
-                ns[name] = _lit(v)
-        except Exception:
-            pass
-    for node in ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read()).body:
-        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "HOLE_COMP_DEFAULT":
-            ns["HOLE_COMP_DEFAULT"] = _lit(node.value)
-    return ns
-
-
-def _eval_assigns(path, ns):
-    """Evaluate every top-level `NAME = expr` / `A, B = expr` that only needs names already in ns."""
-    for node in ast.parse(open(path).read()).body:
-        if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
-            continue
-        try:
-            val = eval(compile(ast.Expression(node.value), path, "eval"), ns)
-        except Exception:
-            continue
-        t = node.targets[0]
-        if isinstance(t, ast.Name):
-            ns[t.id] = val
-        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
-            for e, v in zip(t.elts, val):
-                ns[e.id] = v
-    return ns
-
-
-HOBBY = _read_hobby()
-FRAME = _eval_assigns(os.path.join(ASM, "rover_frame.py"), {"math": math, **HOBBY})
-
-
-def model_params(job):
-    ns = {"math": math, **HOBBY, **FRAME}
-    return SimpleNamespace(**{k: v for k, v in _eval_assigns(os.path.join(JOBS, job, "model.py"), ns).items()
-                              if not k.startswith("__")})
-
-
-def geometry(job):
-    return json.load(open(os.path.join(JOBS, job, "geometry.json")))
-
-
-def print_req(job):
-    return json.load(open(os.path.join(JOBS, job, "print_requirements.json")))
-
-
-F = SimpleNamespace(**{k: v for k, v in FRAME.items() if not k.startswith("__") and k != "math"})
-N20 = HOBBY["N20_100RPM"]
-BATT = HOBBY["BATT_2X18650"]
-
-# --- checks -------------------------------------------------------------------------------------------------------
-cases = []      # rows that set the verdict: (name, dir, stress, allowable, SF, SF required, drop?)
-advisory = []   # rows printed for information (what-ifs, bounds, fixes, bought parts); not in the verdict
+cases = []      # verdict rows: (name, dir, stress, allowable, SF, SF required, drop?)
+advisory = []   # bounds, what-ifs, fixes, proof loads, bought parts: printed, not in the verdict
 
 
 def allow_mpa(across, shear=False):
@@ -122,12 +68,12 @@ def allow_mpa(across, shear=False):
 
 
 def check(name, stress_mpa, across, sf_req, shear=False, Kt=1.0, info=False, drop=False):
-    """Printed-PETG check. across=True when the stress pulls layers apart or shears along a layer interface."""
+    """Printed PETG. across=True when the stress pulls layers apart or shears along a layer interface."""
     s = Kt * stress_mpa
     a = allow_mpa(across, shear)
     sf = a / s if s > 1e-9 else float("inf")
-    tag = ("Z" if across else "XY") + (" shear" if shear else "")
-    (advisory if info else cases).append((name, tag, s, a, sf, sf_req, drop))
+    (advisory if info else cases).append((name, ("Z" if across else "XY") + (" shear" if shear else ""), s, a, sf, sf_req,
+                                          drop))
     return sf
 
 
@@ -137,9 +83,9 @@ def check_metal(name, stress_mpa, sy_mpa, sf_req=SF_METAL, info=False, drop=Fals
     return sf
 
 
-def check_custom(name, stress_mpa, allow, tag, sf_req, info=False, drop=False):
-    sf = allow / stress_mpa if stress_mpa > 1e-9 else float("inf")
-    (advisory if info else cases).append((name, tag, stress_mpa, allow, sf, sf_req, drop))
+def check_custom(name, demand, capacity, tag, sf_req, info=False, drop=False):
+    sf = capacity / demand if demand > 1e-9 else float("inf")
+    (advisory if info else cases).append((name, tag, demand, capacity, sf, sf_req, drop))
     return sf
 
 
@@ -160,33 +106,14 @@ def tearout(Fn, ligament, t):
 
 
 def plate_boss_moment_stress(M, a, t, Kt=1.0):
-    """Wall/plate bending round a rigid boss of radius a carrying a moment M (Kirchhoff, rigid inclusion in a
-    large plate): m_r,max = M / (2 pi a)  ->  sigma = Kt * 6 m / t^2."""
-    m = M / (2.0 * math.pi * a)
-    return Kt * 6.0 * m / (t * t)
+    """Wall bending round a rigid boss of radius a carrying a moment M (rigid inclusion in a large plate):
+    m_max = M / (2 pi a), sigma = Kt 6 m / t^2 (rounds 1-2 model)."""
+    return Kt * 6.0 * (M / (2.0 * math.pi * a)) / (t * t)
 
 
 def bef_beta(k, E, I):
-    """Beam on elastic foundation: beta = (k / 4EI)^(1/4), k in N/mm per mm of length (N/mm^2)."""
+    """Beam on elastic foundation: beta = (k / 4EI)^(1/4)."""
     return (k / (4.0 * E * I)) ** 0.25
-
-
-def section_modulus(D, removed, n=360):
-    """Ø D disc minus the cells where removed(x, y) is True (grid integration). Bending stress along x (neutral
-    axis parallel to y), worst fibre on either side: returns (Z = I / c_max, area, centroid x)."""
-    h = D / n
-    xs = []
-    r2 = (D / 2) ** 2
-    for i in range(n):
-        x = -D / 2 + (i + 0.5) * h
-        for j in range(n):
-            y = -D / 2 + (j + 0.5) * h
-            if x * x + y * y <= r2 and not removed(x, y):
-                xs.append(x)
-    xc = sum(xs) / len(xs)
-    I = sum((x - xc) ** 2 for x in xs) * h * h
-    c = max(max(xs) - xc, xc - min(xs)) + h / 2
-    return I / c, len(xs) * h * h, xc
 
 
 def report(title):
@@ -196,7 +123,7 @@ def report(title):
     for i, (n, d, s, a, sf, req, _) in enumerate(cases, 1):
         print(f"| {i} | {n} | {d} | {s:.2f} | {a:.1f} | {sf:.2f} | {req:.1f} | {'OK' if sf >= req else '**FAIL**'} |")
     if advisory:
-        print("\nAdvisory (not in the verdict: bounds, what-ifs, fixes, bought parts):")
+        print("\nAdvisory (not in the verdict: bounds, what-ifs, fixes, proof loads, bought parts):")
         print("| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
         print("|---|---|---|---|---|---|---|")
         for n, d, s, a, sf, req, _ in advisory:
@@ -207,276 +134,585 @@ def report(title):
     drops = [r for r in cases if r[6]]
     if drops:
         lim = min(drops, key=lambda r: r[4] / r[5])
-        print(f"drop rows scale with the height: all of them meet their SF up to a {H_DROP_MM * lim[4] / lim[5] / 10:.1f} cm"
-              f" drop (design {H_DROP_MM / 10:.0f} cm), limited by: {lim[0]}")
+        h = H_DROP_MM * lim[4] / lim[5]
+        print(f"drop rows scale with the height: all of them meet their SF up to a {h / 10:.1f} cm drop (design"
+              f" {H_DROP_MM / 10:.0f} cm) on the {DELTA_MM:.0f} mm stopping-distance convention, limited by: {lim[0]}")
     print(f"{len(fails)} of {len(cases)} verdict rows below their required SF")
-    print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables; PASS not possible without measured data)")
+    print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables: PASS is not possible without measured data)")
     return worst, fails
 
 
-# --- shared rover loads (round 2, re-derived; identical block in every rover strength_calc.py) ----------------------
-ROVER_JOBS = {"chassis": ("20261026-rover-chassis", 1), "lid": ("20261026-rover-lid", 1),
-              "sprocket": ("20261026-rover-sprocket", 2), "idler": ("20261026-rover-idler", 2),
-              "wheel": ("20261026-rover-wheel", 4), "link": ("20261026-rover-track-link", F.N_LINKS * 2)}
-ELECTRONICS_G = 40.0   # ESP32 + breadboard + TB6612 + buck + HC-SR04 + toggle switch + wiring (brief)
-HARDWARE_G = 20.0      # assumption: 6 x M3x45 + nuts, nylocs, washers; 4 lid screws; 2 M2 set screws; zip ties
-                       # (round 1's 25 g less its 68 filament pins). The steel pins are added from PIN_D below.
-PIN_LEN_MM = 23.5      # spec §2: 2 mm steel rod cut 23.5 mm, one per link
-T_STALL_PACK_NMM = 160.0          # N20 at the 7.4 V pack (design); 6 V datasheet value read from hobby_parts
-V_FRESH, V_NOM = 8.4, 6.0         # fresh 2S pack vs rated voltage; stall torque ~ proportional to voltage
-PWM_CAP = 0.8                     # test sketch caps PWM at 80 % (assembly plan)
-T0_N = 5.0             # track pretension per run (round-1 assumption, now in spec §4); sustained
-MU_LONG = 1.0          # longitudinal traction, grousers on carpet (conservative); caps the everyday track pull
-MU_SIDE = 0.6          # skid-steer side friction (spec)
-SPEC_SIDE_N = 3.0      # spec: 3 N per track on a flange (kept: larger than re-derived)
-SPEC_DROP_FLAT_N, SPEC_DROP_CORNER_N = 14.0, 29.0   # spec §4 round 2 (from 0.58 kg), for comparison
-H_DROP_MM = float(F.DROP_MM)      # 50: design drop onto a hard floor (spec §4; rover_frame.DROP_MM)
-DELTA_STOP_MM = 5.0    # stopping distance (round-1 method). The computed elastic axle deflection is ~1 mm, so 5 mm
-                       # is generous (non-conservative); DELTA_STIFF_MM shows the sensitivity
-DELTA_STIFF_MM = 2.5   # advisory only: a stiffer landing doubles every drop load
-N_AXLES = 8            # 2 sprockets + 2 idlers + 4 road wheels all sit on the bottom run (same axle height)
-
-
 def rover_loads(verbose=True):
-    parts_g = {}
-    for k, (job, n) in ROVER_JOBS.items():
-        parts_g[k] = geometry(job)["volume_mm3"] * RHO_G_PER_MM3 * n
-    printed = sum(parts_g.values())
-    pins_g = 2 * F.N_LINKS * math.pi / 4 * F.PIN_D ** 2 * PIN_LEN_MM * RHO_STEEL_G_PER_MM3
-    m_g = printed + 2 * N20.mass_g + BATT.mass_g + ELECTRONICS_G + HARDWARE_G + pins_g
-    W = m_g * 1e-3 * G
-    T_stall_6v = N20.stall_torque_nmm
-    T_fresh = T_stall_6v * V_FRESH / V_NOM
-    T_cap = T_fresh * PWM_CAP
-    F_stall = T_STALL_PACK_NMM / F.RP             # sprocket pull at stall
-    F_trac = MU_LONG * W / 2.0                    # everyday pull, traction-limited
-    T_tight_stall = T0_N + F_stall                # conservative (ignores slack-side relief)
-    R_stall = T_tight_stall + T0_N                # sprocket radial: tight run + slack run (forward or reverse)
-    R_idler_stall = 2 * T_tight_stall             # idler in reverse: both of its runs carry the tight tension (spec §4)
-    T_tight_cyc = T0_N + F_trac
-    R_cyc = T_tight_cyc + T0_N
-    R_idler_cyc = 2 * T_tight_cyc
-    R_sus = 2 * T0_N
-    side_derived = MU_SIDE * W / 2.0
-    # skid-steer spot-turn thrust per track (uniform pressure, contact length = axle span, track gauge 2*Y_T)
-    F_turn = MU_SIDE * W * F.AXLE_DX / (4.0 * 2 * F.Y_T)
-
-    def drop(H, delta):
-        E = m_g * 1e-3 * G * H                    # N*mm
-        Ftot = 2.0 * E / delta                    # linear-spring peak
-        return SimpleNamespace(E=E, Ftot=Ftot, flat=Ftot / N_AXLES, corner=E / (2.0 * delta),  # m_eff = m/2 on 2 axles
-                               a_g=2.0 * H / delta)
-    dd, dst = drop(H_DROP_MM, DELTA_STOP_MM), drop(H_DROP_MM, DELTA_STIFF_MM)
-    L = SimpleNamespace(parts_g=parts_g, printed_g=printed, pins_g=pins_g, m_g=m_g, W=W, T_stall_6v=T_stall_6v,
-                        T_fresh=T_fresh, T_cap=T_cap, F_stall=F_stall, F_trac=F_trac, T_tight_stall=T_tight_stall,
-                        R_stall=R_stall, R_idler_stall=R_idler_stall, T_tight_cyc=T_tight_cyc, R_cyc=R_cyc,
-                        R_idler_cyc=R_idler_cyc, R_sus=R_sus, side_derived=side_derived,
-                        side=max(SPEC_SIDE_N, side_derived), F_turn=F_turn, dd=dd, dst=dst)
+    W = MASS_DESIGN_G * 1e-3 * G_MS2
+    rp = F.RP
+    L = SimpleNamespace(W=W, m_g=MASS_DESIGN_G)
+    L.F_stall = T_DESIGN_NMM / rp                 # 9.89 N
+    L.F_proof = T_PROOF_NMM / rp                  # 11.25 N
+    L.F_gated = T_GATED_NMM / rp                  # 8.03 N
+    L.T_tight_stall = T0_N + L.F_stall            # upper bound (slack-side relief ignored)
+    L.T_tight_proof = T0_N + L.F_proof
+    L.R_stall = L.T_tight_stall + T0_N            # sprocket: tight run + slack run
+    L.R_idler_stall = 2 * L.T_tight_stall         # idler in reverse: both of its runs tight (spec §4)
+    L.R_idler_proof = 2 * L.T_tight_proof
+    L.F_trac = MU_LONG * W / 2.0                  # everyday pull per track
+    L.T_tight_cyc = T0_N + L.F_trac
+    L.R_cyc = L.T_tight_cyc + T0_N
+    L.R_idler_cyc = 2 * L.T_tight_cyc
+    L.R_sus = 2 * T0_N
+    L.side = SIDE_N
+    E = W * H_DROP_MM                             # N*mm
+    L.E_drop = E
+    L.drop_total = 2 * E / DELTA_MM               # linear spring, whole rover
+    L.drop_flat_wheel = L.drop_total / 4          # flat: only the 4 road wheels touch (S-15: sprocket/idler 1.29 mm up)
+    L.drop_corner = E / (2 * DELTA_MM)            # corner: half the mass on 2 axles
+    L.drop = max(L.drop_flat_wheel, L.drop_corner)                  # 31.8 N: the per-axle drop load for every axle
+    L.drop_stiff = L.drop * DELTA_MM / DELTA_STIFF_MM
+    v = math.sqrt(2 * G_MS2 * H_DROP_MM * 1e-3)
+    k_bolt = 3 * E_STEEL_MPA * (math.pi * D3_M3 ** 4 / 64) / (F.Y_T - F.HALF_W_OUT) ** 3   # N/mm, one M3 axle
+    L.drop_elastic = v * math.sqrt(2 * k_bolt * 1e3 * MASS_DESIGN_G * 1e-3 / 2) / 2      # rigid floor, axles only
+    L.s08 = [(n, t, t / rp, t * OLD_CAP / rp) for n, t in S08_6V_NMM]
     if verbose:
-        print("== Shared rover loads (round 2, re-derived) ==")
-        print("mass: " + ", ".join(f"{k} {v:.1f} g" for k, v in parts_g.items())
-              + f"; printed {printed:.0f} g + 2 N20 {2 * N20.mass_g:.0f} g + battery {BATT.mass_g:.0f} g"
-              f" + electronics {ELECTRONICS_G:.0f} g + hardware {HARDWARE_G:.0f} g + {2 * F.N_LINKS} steel pins"
-              f" {pins_g:.0f} g = {m_g:.0f} g, W = {W:.2f} N (spec 0.58 kg / 5.7 N)")
-        print(f"stall: {T_stall_6v:.0f} N*mm at 6 V, {T_STALL_PACK_NMM:.0f} at 7.4 V (design), {T_fresh:.0f} fresh pack"
-              f" 100 % PWM, {T_cap:.0f} fresh pack at the 80 % cap -> sprocket pull {F_stall:.2f} N at RP {F.RP:.2f}")
-        print(f"pretension T0 {T0_N:.1f} N (sustained); tight run at stall {T_tight_stall:.1f} N, everyday"
-              f" {T_tight_cyc:.1f} N; radial on the sprocket: stall {R_stall:.1f}, cyclic {R_cyc:.1f}, sustained"
-              f" {R_sus:.1f} N; on the idler (reverse: both runs tight): stall {R_idler_stall:.1f}, cyclic"
-              f" {R_idler_cyc:.1f}, sustained {R_sus:.1f} N")
-        print(f"everyday pull (traction-limited, mu {MU_LONG}) {F_trac:.2f} N/track; spot-turn thrust {F_turn:.2f} N/track;"
-              f" side drag {side_derived:.2f} N/track derived, {SPEC_SIDE_N:.1f} N used")
-        for tag, d in ((f"{H_DROP_MM / 10:.0f} cm, delta {DELTA_STOP_MM:.0f} (design)", dd),
-                       (f"{H_DROP_MM / 10:.0f} cm, delta {DELTA_STIFF_MM} (sensitivity)", dst)):
-            print(f"drop {tag}: E {d.E / 1000:.3f} J, peak {d.a_g:.0f} g, total {d.Ftot:.0f} N, per axle flat"
-                  f" {d.flat:.1f} N, corner {d.corner:.1f} N (spec {SPEC_DROP_FLAT_N:.0f} / {SPEC_DROP_CORNER_N:.0f} N)")
+        print("== Shared rover loads (round 3) ==")
+        print(f"mass {MASS_DESIGN_G:.0f} g (spec §4; round-3 estimate 618 g at the print minima, 713 g if solid): W = {W:.2f} N")
+        print(f"stall: design {T_DESIGN_NMM:.0f} N*mm -> pull {L.F_stall:.2f} N at RP {rp:.2f}; proof {T_PROOF_NMM:.0f} N*mm ->"
+              f" {L.F_proof:.2f} N; gated motor at the sketch's {V_CAP:.1f} V cap {T_GATED_NMM:.0f} N*mm -> {L.F_gated:.2f} N")
+        print("S-08 motors (6 V stall -> pull at the 6.0 V cap / at the old 80 % cap on a full pack): "
+              + "; ".join(f"{n} {t:.0f} N*mm -> {a:.1f} / {b:.1f} N" for n, t, a, b in L.s08))
+        print(f"pretension T0 {T0_N:.0f} N/run (sustained); tight run at stall {L.T_tight_stall:.1f} N (proof"
+              f" {L.T_tight_proof:.1f}), everyday {L.T_tight_cyc:.1f} N; sprocket radial stall {L.R_stall:.1f} / cyclic"
+              f" {L.R_cyc:.1f} / sustained {L.R_sus:.0f} N; idler (reverse: both runs tight) stall {L.R_idler_stall:.1f}"
+              f" (proof {L.R_idler_proof:.1f}) / cyclic {L.R_idler_cyc:.1f} / sustained {L.R_sus:.0f} N; side {SIDE_N:.0f} N")
+        print(f"drop {H_DROP_MM / 10:.0f} cm: E {E / 1000:.3f} J, stopping distance {DELTA_MM:.0f} mm -> {L.drop_total:.0f} N in all;"
+              f" flat on the 4 road wheels {L.drop_flat_wheel:.1f} N each, corner {L.drop_corner:.1f} N per axle -> {L.drop:.1f} N"
+              f" per axle (any axle); {DELTA_STIFF_MM} mm -> {L.drop_stiff:.1f} N. Elastic check (rigid floor, M3 axles the"
+              f" only spring, k {k_bolt:.0f} N/mm): about {L.drop_elastic:.0f} N per axle at a corner, so the convention relies on"
+              f" floor, track, wheel and body compliance; the drop test is the evidence for the 5 cm rating")
     return L
-
+# ===================== end of the shared block ========================================================================
 
 # ==================================================================================================================
 JOB = "20261026-rover-chassis"
 L = rover_loads()
-p = model_params(JOB)
-wh = model_params("20261026-rover-wheel")
-M = N20
 
-# --- geometry from model.py / rover_frame.py ------------------------------------------------------------------------
-t_w = F.WALL                                           # 4.5
-y_mid = F.HALF_W_OUT - t_w / 2                         # wall mid-plane 35.75
-arm_w = F.Y_T - y_mid                                  # wheel load line (track centre) to the wall mid-plane 19.25
-arm_bolt = F.Y_T - F.HALF_W_OUT                        # bolt leaves the nut at the outer face: 17
-d3 = 2.387                                             # M3 minor diameter (fully threaded: the nut sits at the wall)
-a_road = p.ROAD_BOSS_R                                 # Ø20 road-wheel boss (round top, block down to the floor)
-xi1 = F.X_FRONT_OUT - t_w                              # front wall inner face 130.5
-bl = min(F.AXLE_DX + p.IDLER_BLOCK[0] / 2, xi1) - (F.AXLE_DX - p.IDLER_BLOCK[0] / 2)   # 25.5: block runs into the front wall
-bh = p.IDLER_BLOCK[1]
-a_idler = math.sqrt(bl * bh / math.pi)                 # equivalent radius; front-wall junction ignored (conservative)
-y_nut = F.HALF_W_OUT - p.NUT_DEPTH / 2                 # nut centre 36.7
-y_in = F.HALF_W_OUT - t_w - p.BOSS_IN + 0.75           # bolt bears on the inner hole edge 32.75
-nut_m = 2.4                                            # M3 nut thickness
-inner_span = 2 * (F.HALF_W_OUT - t_w)                  # floor span between the side walls 67
-# sprocket journal + N20 cradle (round 2)
-L_j = t_w + F.JOURNAL_BOSS                             # 6 mm journal
-d_j = F.HUB_D + p.JOURNAL_CLR                          # 10.5 printed
-y_j_out = F.HALF_W_OUT                                 # 38: journal outer end, where the tilting hub bears
-y_j_mid = F.HALF_W_OUT - L_j / 2                       # 35
-y_face = F.MOTOR_FACE_Y                                # 31.5
-y_can_end = y_face - M.gb_len - M.can_len              # 7.0
-k_lev = (F.Y_T - y_j_out) / (y_j_out - y_can_end)      # 0.548: can-end reaction per N of sprocket load
-cz = F.Z_A - M.gb_h / 2                                # cradle top = gearbox/can underside
-cheek_root = p.CRADLE_HALF_X - (M.gb_w / 2 + 0.3)      # 0.7: part of the 2 mm cheek that sits on the cradle
-L_cheek = (F.HALF_W_OUT - t_w - p.BOSS_IN) - y_can_end # 25: cheek length, journal boss -> can end
-h_cheek = F.Z_A + p.CHEEK_TOP - cz                     # 8: cheek height above the cradle top
-h_load = F.Z_A - cz                                    # 5: the can's widest point above the cradle top
-flat_w = 2 * math.sqrt((M.can_d / 2) ** 2 - (M.can_flat / 2) ** 2)   # can's bottom flat width 6.6
-print(f"\nchassis: wall {t_w}, boss Ø{2 * a_road:.0f} x {p.BOSS_IN} (to the floor), wheel load {arm_w:.2f} from the wall"
-      f" mid-plane, idler block {bl:.1f} x {bh:.0f} (a_eq {a_idler:.1f}), nut lever {y_nut - y_in:.2f} mm; journal Ø{d_j}"
-      f" x {L_j:.0f}; N20 can end at Y {y_can_end:.1f} -> lever k {k_lev:.3f}; cheeks {p.CHEEK_T} thick, {h_cheek:.0f} tall,"
-      f" {L_cheek:.0f} long, only {cheek_root:.1f} mm on the cradle (CRADLE_HALF_X {p.CRADLE_HALF_X} vs cheek"
-      f" x {M.gb_w / 2 + 0.3:.1f}..{M.gb_w / 2 + 0.3 + p.CHEEK_T:.1f}); floor {F.FLOOR_T} over {inner_span:.0f}")
-print("wall stresses: plate bending round a rigid boss, m = M/(2 pi a), sigma = Kt 6m/t^2; a vertical load gives a moment"
-      " about X -> vertical stress in the wall = ACROSS layers (Z); a horizontal (track) load gives a moment about Z ->"
-      " horizontal stress = in-plane (XY)")
-print(f"journal lever: hub load R at Y {F.Y_T:.0f}, fulcrum at the journal outer end Y {y_j_out:.0f}, the N20 body the"
-      f" other arm: journal {1 + k_lev:.3f} R, can end {k_lev:.3f} R (cradle floor for a drop, cheek for track pull)")
+import runpy  # noqa: E402
+
+import numpy as np  # noqa: E402
+import trimesh  # noqa: E402
+from build123d import Face, Plane, Vector  # noqa: E402
+from OCP.BRepGProp import BRepGProp  # noqa: E402
+from OCP.GProp import GProp_GProps  # noqa: E402
+from scipy import ndimage  # noqa: E402
+
+ns = runpy.run_path(os.path.join(JOBS, JOB, "model.py"), run_name="model")
+WORLD = ns["design"]()                       # round-3 chassis in the rover world frame
+p = SimpleNamespace(**{k: v for k, v in ns.items() if k.isupper()})
+M = F.MOTOR
+HC = p.HOLE_COMP
 
 
-def boss_Z(Fv, a=a_road, t=t_w, Kt=2.0, arm=arm_w):
-    return plate_boss_moment_stress(Fv * arm, a, t, Kt)
+def section(y=None, x=None, window=None):
+    """Area, centroid and second moments of the chassis cut by the plane y = const (or x = const) inside window
+    (u0, u1, v0, v1) in that plane's (x or y, z) coordinates. Returns a list of (area, centroid, I_u, I_v) per face,
+    I about the face centroid: I_u = integral v^2 dA (bending about the u axis), I_v = integral u^2 dA."""
+    if y is not None:
+        pl = Plane(origin=(0, y, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    else:
+        pl = Plane(origin=(x, 0, 0), x_dir=(0, 1, 0), z_dir=(1, 0, 0))
+    u0, u1, v0, v1 = window
+    rect = Face.make_rect(u1 - u0, v1 - v0, pl.shift_origin(pl.from_local_coords(((u0 + u1) / 2, (v0 + v1) / 2))))
+    out = []
+    for f in (WORLD & rect).faces():
+        g = GProp_GProps()
+        BRepGProp.SurfaceProperties_s(f.wrapped, g)
+        c, m = g.CentreOfMass(), g.MatrixOfInertia()
+        if y is not None:     # plane normal Y: I about X = int z^2, I about Z = int x^2
+            out.append((g.Mass(), (c.X(), c.Y(), c.Z()), m.Value(1, 1), m.Value(3, 3)))
+        else:                 # plane normal X: I about Y = int z^2, I about Z = int y^2
+            out.append((g.Mass(), (c.X(), c.Y(), c.Z()), m.Value(2, 2), m.Value(3, 3)))
+    return out
 
 
-def nut_bearing(Fv, yin=y_in):
-    """No preload (creeps out of PETG): bolt couple between the trapped nut and the inner hole edge."""
-    return Fv * (F.Y_T - yin) / (y_nut - yin) / (nut_m * p.NUT_AF)
+def solid_at(x, y, z):
+    return WORLD.is_inside(Vector(x, y, z))
 
 
-def journal_bearing(R):
-    """Hub load R on the track plane; the hub tilts about the cradle-supported N20 and bears at the journal's outer
-    end: R_j = (1 + k) R, triangular over the journal length -> peak = 2 x mean (in-plane compression)."""
-    Rj = (1 + k_lev) * R
-    return 2 * Rj / (F.HUB_D * L_j), Rj
+# ---- 0. mass check (deep review 04 S-18 method: voxel shell + infill at the print_requirements minima) ------------------
+def printed_mass_g(job, qty, pitch):
+    mesh = trimesh.load(os.path.join(JOBS, job, "part.stl"), force="mesh")
+    r = json.load(open(os.path.join(JOBS, job, "print_requirements.json")))["min"]
+    lo, hi = mesh.bounds
+    n = [int(math.ceil((hi[i] - lo[i]) / pitch)) + 2 for i in range(3)]
+    xs, ys, zs = [lo[i] - pitch + (np.arange(n[i]) + 0.5) * pitch for i in range(3)]
+    grid = np.zeros(n, dtype=bool)
+    for k, z in enumerate(zs):
+        if not lo[2] < z < hi[2]:
+            continue
+        segs = trimesh.intersections.mesh_plane(mesh, [0, 0, 1], [0, 0, z])
+        if len(segs) == 0:
+            continue
+        x1, y1, x2, y2 = segs[:, 0, 0], segs[:, 0, 1], segs[:, 1, 0], segs[:, 1, 1]
+        ylo, yhi = np.minimum(y1, y2), np.maximum(y1, y2)
+        for j, yy in enumerate(ys):
+            sel = (ylo <= yy) & (yhi > yy)
+            if not sel.any():
+                continue
+            t = (yy - y1[sel]) / (y2[sel] - y1[sel])
+            xc = np.sort(x1[sel] + t * (x2[sel] - x1[sel]))
+            for a, b in zip(xc[0::2], xc[1::2]):
+                i0, i1 = int(np.ceil((a - xs[0]) / pitch)), int(np.floor((b - xs[0]) / pitch))
+                if i1 >= i0:
+                    grid[max(i0, 0):i1 + 1, j, k] = True
+    t_xy, t_z = r["perimeters"] * 0.45, max(r["top_solid_layers"], r["bottom_solid_layers"]) * 0.2
+    d = ndimage.distance_transform_edt(np.pad(grid, 1), sampling=(pitch / t_xy, pitch / t_xy, pitch / t_z))[1:-1, 1:-1, 1:-1]
+    shell, core = grid & (d <= 1.0), grid & (d > 1.0)
+    scale = mesh.volume / (grid.sum() * pitch ** 3)
+    g = RHO_PETG * scale * (shell.sum() + r["fill_density"] / 100 * core.sum()) * pitch ** 3
+    return g * qty, mesh.volume * RHO_PETG * qty
 
 
-def cheek_as_built(Rc):
-    """Cheek as modelled: its bottom sits on the cradle over only 0.7 mm, so its real support is the front end on the
-    journal boss: a cantilever L_cheek long, h_cheek tall, CHEEK_T thick, loaded by the can end. Stress along Y = XY."""
-    return bend_rect(Rc * L_cheek, h_cheek, p.CHEEK_T)
+RHO_PETG = 1.27e-3
+printed = {"chassis": ("20261026-rover-chassis", 1, 0.4), "lid": ("20261026-rover-lid", 1, 0.4),
+           "sprocket": ("20261026-rover-sprocket", 2, 0.2), "idler": ("20261026-rover-idler", 2, 0.2),
+           "wheel": ("20261026-rover-wheel", 4, 0.2), "link": ("20261026-rover-track-link", 2 * F.N_LINKS, 0.12)}
+pm = {k: printed_mass_g(*v) for k, v in printed.items()}
+m_pin = math.pi / 4 * F.PIN_D ** 2 * 24.0 * 7.85e-3
+BOM = [  # round-3 BUILD_GUIDE §1, grams (bought-part masses: hobby_parts where given, else typical catalogue values)
+    ("2 x N20 gear motor", 2 * M.mass_g), ("2 x Pololu #1996 hub", 2 * F.HUB.mass_g), ("8 x M3x12 screw", 8 * 0.9),
+    ("4 x M3x50 + 2 x M3x40 fully threaded", 4 * 2.5 + 2 * 2.1), ("2 x M3x20 set screw", 2 * 0.85),
+    ("6 nuts, 6 nylocs, 26 washers, 2 DIN 9021", 6 * 0.25 + 6 * 0.3 + 26 * 0.12 + 2 * 0.35),
+    ("4 heat-set inserts + 4 x M3x8", 4 * 0.4 + 4 * 0.65), (f"{2 * F.N_LINKS} steel pins Ø2 x 24", 2 * F.N_LINKS * m_pin),
+    ("battery: 2 protected 18650 + holder", HP.BATT_2X18650_LONG.mass_g), ("ESP32 DevKit", 10.0),
+    ("mini breadboard + TB6612 + MP1584", HP.MINI_BREADBOARD.mass_g + 3.0 + 2.5), ("HC-SR04", HP.HCSR04.mass_g),
+    ("MTS-102 toggle + nuts", 6.0), ("wires, jumpers, capacitors, resistors, diode", 20.0),
+    ("velcro strap, zip ties, foam tape, glue", 8.0)]
+m_printed = sum(v[0] for v in pm.values())
+m_solid = sum(v[1] for v in pm.values())
+m_bought = sum(g for _, g in BOM)
+m_est = m_printed + m_bought
+print("\nmass check (round 3): printed at the print_requirements minima: "
+      + ", ".join(f"{k} {v[0]:.1f} g" for k, v in pm.items()) + f" = {m_printed:.0f} g (all solid {m_solid:.0f} g)")
+print("  bought (BUILD_GUIDE §1): " + ", ".join(f"{n} {g:.1f}" for n, g in BOM) + f" = {m_bought:.0f} g")
+print(f"  rover {m_est:.0f} g at the print minima ({m_solid + m_bought:.0f} g if every printed part were solid);"
+      f" design mass {MASS_DESIGN_G:.0f} g covers it by {100 * (MASS_DESIGN_G / m_est - 1):.0f} %")
+assert MASS_DESIGN_G >= m_est, "design mass below the estimate: raise MASS_DESIGN_G in all six rover scripts"
+
+# ---- geometry ---------------------------------------------------------------------------------------------------------
+t_w = F.WALL                                         # 4.5
+y_in_face = F.HALF_W_OUT - t_w                       # 33.5: wall inner face
+y_mid = F.HALF_W_OUT - t_w / 2                       # 35.75
+arm_w = F.Y_T - y_mid                                # 19.25: track plane to the wall mid-plane
+arm_bolt = F.Y_T - F.HALF_W_OUT                      # 17: track plane to the outer face (nut)
+y_boss = y_in_face - F.BOSS_IN                       # 28.0: boss / idler-block face
+KT_CHAMFER = 1.6       # 1.5 x 45° collar or strip (JOIN) on a 4.5 mm wall: leg 1.5 ~ r 1.1 = 0.25 t -> 1.5 (skill), +0.1
+                       # because a chamfer is a little worse than a fillet (round 2's tooth-root reasoning)
+KT_SHARP = 2.5         # sharp internal corner (skill; coordinator: >= 2 at the buttress and nacelle roots)
+nut_t = F.NUT[1]                                     # 2.4
+nut_recess = p.NUT_DEPTH - nut_t                     # 0.2: nut face below the outer face
+s_nut0, s_nut1 = nut_recess, p.NUT_DEPTH             # nut zone, measured inward from the outer face
+L_emb = F.HALF_W_OUT - y_boss                        # 10: wall + boss
+nut_flat = F.NUT[0] / math.sqrt(3)                   # 3.175: hex flat length
+print(f"\nchassis: wall {t_w}, boss/idler-block face |y| {y_boss}, road bosses Ø{2 * p.ROAD_BOSS_R:.0f} with a {p.JOIN} x 45°"
+      f" collar (Kt {KT_CHAMFER}); pocket {2 * p.POCKET_HX:.1f} x {2 * p.POCKET_HY:.1f} CAD rolled 45°, nacelle walls"
+      f" {F.NACELLE_WALL}, skin {F.SKIN} at |y| {F.MOTOR_FACE_Y}-{F.MOTOR_FACE_Y + F.SKIN}")
 
 
-def cheek_on_cradle(Rc, t, Kt=2.0):
-    """Cheek standing fully on the cradle: cantilever up from its root, load at the can's widest point (h_load),
-    spread over b_eff = 2 h_load; vertical stress = across layers; sharp root Kt 2."""
-    return Kt * bend_rect(Rc * h_load, 2 * h_load, t)
+def rigid_pin(Fn, e, zones):
+    """Rigid bolt in a Winkler foundation (bearing pressure = k x displacement): load Fn at e outboard of the outer face
+    (s = 0), embedded zones (s0, s1, width) measured inward. Returns (w0, theta) with p(s) = Fn (w0 + theta s) [MPa]."""
+    a11 = sum(b * (s1 - s0) for s0, s1, b in zones)
+    a12 = sum(b * (s1 ** 2 - s0 ** 2) / 2 for s0, s1, b in zones)
+    a22 = sum(b * (s1 ** 3 - s0 ** 3) / 3 for s0, s1, b in zones)
+    det = a11 * a22 - a12 ** 2
+    return (a22 + a12 * e) / det, (-a11 * e - a12) / det
 
 
-def floor(F_batt, slot_y=p.STRAP_Y, t=F.FLOOR_T):
-    """Battery inertia on the floor: one-way strip across the span, simply supported on the side walls, load spread
-    over the holder width; strip width = holder length. At the strap slot the strip loses STRAP_L."""
-    c = BATT.width
-    M_c = F_batt / 2 * (inner_span / 2 - c / 4)
-    s_c = bend_rect(M_c / BATT.length, 1.0, t)
-    M_s = F_batt / 2 * (inner_span / 2 - slot_y)
-    s_s = bend_rect(M_s / (BATT.length - p.STRAP_L), 1.0, t)
-    return s_c, s_s
+def pin_bearing(Fn, e, nut_w):
+    """Mean bearing on the nut flat (outer zone) and on the inner hole edge (zone of reversed pressure), and the peaks."""
+    zones = [(s_nut0, s_nut1, nut_w), (s_nut1, L_emb, 3.0)]
+    w0, th = rigid_pin(Fn, e, zones)
+    s_zero = -w0 / th
+    R_nut = Fn * nut_w * (w0 * (s_nut1 - s_nut0) + th * (s_nut1 ** 2 - s_nut0 ** 2) / 2)
+    R_in = -Fn * 3.0 * (w0 * (L_emb - s_zero) + th * (L_emb ** 2 - s_zero ** 2) / 2)
+    return (R_nut / (nut_w * (s_nut1 - s_nut0)), R_in / (3.0 * (L_emb - s_zero)), Fn * (w0 + th * s_nut0),
+            -Fn * (w0 + th * L_emb), R_nut, R_in, s_zero)
 
 
-mb = BATT.mass_g * 1e-3 * G
-dd = L.dd
-# --- A. road-wheel bolt: Ø20 boss on the 4.5 mm wall, nut trap, M3 bolt ------------------------------------------------
-check(f"road-wheel boss rim, wall bending, 5 cm flat {dd.flat:.1f} N (Kt 2 sharp step)", boss_Z(dd.flat), True, SF_STATIC,
+# ---- A. road-wheel axles: Ø26 boss + 1.5 x 45° collar, BOSS_IN 5.5, nut trap, M3 x 50 class 12.9 fully threaded ----------
+a_road = p.ROAD_BOSS_R
+wh = runpy.run_path(os.path.join(JOBS, "20261026-rover-wheel", "model.py"), run_name="wheel")
+r_flange = wh["RIM_R"] + wh["CONE_RISE"]
+check(f"A1 road-wheel boss: wall bending at the collar, 5 cm drop {L.drop:.1f} N (Kt {KT_CHAMFER})",
+      plate_boss_moment_stress(L.drop * arm_w, a_road, t_w, KT_CHAMFER), True, SF_STATIC, drop=True)
+N_wheel = 0.3 * L.W                                  # rear wheels carry 54 % (S-18): 0.27 W each; 0.3 W used
+check(f"A2 road-wheel boss: weight share {N_wheel:.1f} N sustained (Kt {KT_CHAMFER})",
+      plate_boss_moment_stress(N_wheel * arm_w, a_road, t_w, KT_CHAMFER), True, SF_CYCLIC)
+check(f"A3 road-wheel boss: side drag {L.side:.0f} N at the flange r{r_flange:.1f} (Kt {KT_CHAMFER})",
+      plate_boss_moment_stress(L.side * r_flange, a_road, t_w, KT_CHAMFER), True, SF_CYCLIC)
+nb, ib, nb_pk, ib_pk, Rn, Ri, s0 = pin_bearing(L.drop, arm_bolt, F.NUT[0])
+check(f"A4 road-wheel nut-trap bearing (rigid bolt on PETG, mean over the nut), 5 cm drop", nb, False, SF_STATIC, drop=True)
+check(f"A5 road-wheel inner hole-edge bearing (mean over the loaded {L_emb - s0:.1f} mm), 5 cm drop", ib, False, SF_STATIC,
       drop=True)
-check(f"road-wheel boss rim, wall bending, 5 cm corner {dd.corner:.1f} N (Kt 2)", boss_Z(dd.corner), True, SF_STATIC,
+check_metal(f"A6 M3 x 50 class 12.9 bending at the outer face, 5 cm drop x {arm_bolt:.0f}",
+            bend_round(L.drop * arm_bolt, D3_M3), SY_129_MPA, drop=True)
+# ---- B. idler mount: 30 x 24 block (face |y| 28), ±4 slot with hull, sliding nut, jack screw at the head ----------------
+xi1 = F.X_FRONT_OUT - t_w
+bl = min(F.AXLE_DX + p.IDLER_BLOCK[0] / 2, xi1) - (F.AXLE_DX - p.IDLER_BLOCK[0] / 2)     # 25.5 (runs into the front wall)
+a_idler = math.sqrt(bl * p.IDLER_BLOCK[1] / math.pi)
+check(f"B1 idler block: wall bending, 5 cm front corner {L.drop:.1f} N (Kt {KT_CHAMFER} top strip)",
+      plate_boss_moment_stress(L.drop * arm_w, a_idler, t_w, KT_CHAMFER), True, SF_STATIC, drop=True)
+check(f"B2 idler block: wall bending, reverse stall {L.R_idler_stall:.1f} N (Kt {KT_SHARP}: sharp rear corner)",
+      plate_boss_moment_stress(L.R_idler_stall * arm_w, a_idler, t_w, KT_SHARP), False, SF_STATIC)
+check(f"B3 idler block: wall bending, pretension {L.R_sus:.0f} N sustained (Kt {KT_SHARP})",
+      plate_boss_moment_stress(L.R_sus * arm_w, a_idler, t_w, KT_SHARP), False, SF_CYCLIC)
+# vertical loads: the sliding nut bears on the flat roof of its slot with its top flat only (3.175 long), not 5.5
+nb_i, ib_i, nb_i_pk, _, Rn_i, Ri_i, s0_i = pin_bearing(L.drop, arm_bolt, nut_flat)
+check(f"B4 idler sliding nut on its slot roof (flat {nut_flat:.2f} x {nut_t}), 5 cm front corner", nb_i, False, SF_STATIC,
       drop=True)
-check(f"road-wheel boss rim, weight share x2 sustained {L.W / 4:.1f} N", boss_Z(L.W / 4), True, SF_CYCLIC)
-check(f"road-wheel boss rim, side drag {L.side:.0f} N at flange r{wh.RIM_R + wh.CONE_RISE:.1f} (moment about X)",
-      plate_boss_moment_stress(L.side * (wh.RIM_R + wh.CONE_RISE), a_road, t_w, 2.0), True, SF_CYCLIC)
-check("nut / hole-edge bearing (wheel traps and idler slot), no preload, 5 cm flat", nut_bearing(dd.flat), False,
-      SF_STATIC, drop=True)
-check("nut / hole-edge bearing, 5 cm corner", nut_bearing(dd.corner), False, SF_STATIC, drop=True)
-check_metal(f"M3 bolt (A2-70; no grade in the spec) bending at the wall, 5 cm flat x {arm_bolt:.0f}",
-            bend_round(dd.flat * arm_bolt, d3), SY_A2_70_MPA, drop=True)
-check_metal("M3 bolt (A2-70) bending at the wall, 5 cm corner (road wheel or idler)", bend_round(dd.corner * arm_bolt, d3),
-            SY_A2_70_MPA, drop=True)
-# --- B. idler block, bolt and slot clamp --------------------------------------------------------------------------------
-check(f"idler block, reverse stall R {L.R_idler_stall:.1f} N (in-plane, Kt 2)",
-      plate_boss_moment_stress(L.R_idler_stall * arm_w, a_idler, t_w, 2.0), False, SF_STATIC)
-check(f"idler block, cyclic R {L.R_idler_cyc:.1f} N", plate_boss_moment_stress(L.R_idler_cyc * arm_w, a_idler, t_w, 2.0),
-      False, SF_CYCLIC)
-check(f"idler block, pretension sustained R {L.R_sus:.0f} N", plate_boss_moment_stress(L.R_sus * arm_w, a_idler, t_w, 2.0),
-      False, SF_CYCLIC)
-check(f"idler block, 5 cm front corner {dd.corner:.1f} N (Z, Kt 2)", boss_Z(dd.corner, a=a_idler), True, SF_STATIC,
+# horizontal loads: the slot has no x-edges, so the bolt's moment about z goes through the clamp faces. The jack screw at
+# the head (|y| 25.4) takes the force but adds to the moment: M = R (Y_T - JACK_Y). The Ø9 washer bears on the block face
+# above and below the slot (hull to Z_A + 2.55); the nut only on two strips beside the slot.
+r_s = (p.BOLT_D + HC) / 2
+z_lo, z_hi = -r_s, r_s * math.sqrt(2)
+
+
+def footprint(shape, n=600):
+    """Area and I about the bolt's z axis (integral x^2 dA) of a washer/nut footprint minus the slot band."""
+    A = Ix2 = 0.0
+    xm = 0.0
+    R = 7.0
+    h = 2 * R / n
+    for i in range(n):
+        x = -R + (i + 0.5) * h
+        for j in range(n):
+            z = -R + (j + 0.5) * h
+            if z_lo <= z <= z_hi or not shape(x, z):
+                continue
+            A += h * h
+            Ix2 += x * x * h * h
+            xm = max(xm, abs(x))
+    return A, Ix2, xm
+
+
+wd = F.WASHER_WIDE[0]
+A_w, I_w, xm_w = footprint(lambda x, z: x * x + z * z <= (wd / 2) ** 2 and x * x + z * z >= 1.6 ** 2)
+af = F.NUT[0]
+A_n, I_n, xm_n = footprint(lambda x, z: abs(z) <= af / 2 and abs(x) <= af / math.sqrt(3) - abs(z) / math.sqrt(3)
+                           and x * x + z * z >= 1.6 ** 2)
+P_creep = 100.0                                      # clamp left after PETG creep (round 2's assumption)
+arm_yaw = F.Y_T - p.JACK_Y                           # 29.6
+share_head = I_w / (I_w + I_n)
+print(f"idler clamp: Ø{wd} washer on the slotted block face A {A_w:.1f} mm², I_z {I_w:.1f} mm^4, x_max {xm_w:.2f};"
+      f" nut strips A {A_n:.1f} mm², I_z {I_n:.1f}; the head carries {share_head * 100:.0f} % of the yaw moment"
+      f" R x {arm_yaw:.1f} (jack screw at the head); opening moment at P {P_creep:.0f} N: {P_creep * I_w / (A_w * xm_w):.0f} N*mm")
+
+
+def yaw_edge(R):
+    Mh = share_head * R * arm_yaw
+    return P_creep / A_w + Mh * xm_w / I_w
+
+
+check(f"B5 idler clamp yaw: Ø{wd} washer edge on PETG, pretension {L.R_sus:.0f} N sustained (P {P_creep:.0f} N)",
+      yaw_edge(L.R_sus), False, SF_CYCLIC)
+check(f"B6 idler clamp yaw: washer edge, reverse stall {L.R_idler_stall:.1f} N", yaw_edge(L.R_idler_stall), False, SF_STATIC)
+# jack screw: self-tapped M3 in the Ø2.6 printed pilot through the 6.5 mm buttress; teardrop leaves 270° of thread
+L_jack = p.JACK_X[1] - p.JACK_X[0]
+A_strip = math.pi * 3.0 * L_jack * 0.5 * 0.75        # thread-fill 0.5 (rounds 1-2), teardrop 270°
+check(f"B7 jack-screw thread strip-out ({L_jack:.1f} mm, Ø{p.JACK_PILOT} pilot), reverse stall {L.R_idler_stall:.1f} N",
+      L.R_idler_stall / A_strip, True, SF_STATIC, shear=True)
+check(f"B8 jack-screw thread, pretension {L.R_sus:.0f} N sustained", L.R_sus / A_strip, True, SF_CYCLIC, shear=True)
+h_btr = p.JACK_TOP - (F.FLOOR_Z + F.FLOOR_T)          # 14
+lug = y_boss - p.JACK_Y                               # 2.6: jack axis to the solid block/column face
+check(f"B9 buttress lug at the block face (y {y_boss:.0f}): bending, reverse stall (Kt {KT_SHARP})",
+      bend_rect(L.R_idler_stall * lug, h_btr, L_jack), False, SF_STATIC, Kt=KT_SHARP)
+check_metal(f"B10 idler M3 x 40 class 12.9: bending at the head face (y {y_boss:.0f}), reverse stall x {F.Y_T - y_boss:.0f}",
+            bend_round(L.R_idler_stall * (F.Y_T - y_boss), D3_M3), SY_129_MPA)
+check_metal(f"B11 idler M3 x 40 class 12.9: bending at the outer face, 5 cm front corner x {arm_bolt:.0f}",
+            bend_round(L.drop * arm_bolt, D3_M3), SY_129_MPA, drop=True)
+
+# ---- C. drivetrain concept C: N20 rolled 45° in the diamond pocket; nacelle 2 mm, skin 1 mm, track plane 10 mm out ------
+hx, hy = (M.gb_w + p.GB_CLR) / 2, (M.gb_h + p.GB_CLR) / 2     # printed pocket half sizes 6.1 x 5.1 (CAD + HOLE_COMP)
+y_face = F.MOTOR_FACE_Y
+y_house = F.HALF_W_OUT + F.HOUSING_OUT                # 42: housing face = nacelle root
+y_can_end = y_face - M.gb_len - M.can_len            # 20.5
+e_c = 0.3                                            # contact line inside the gearbox face (its edge radius): assumption
+L_c = y_face - y_house - e_c                         # 2.7: nacelle wall from its root to the contact line
+t_n, t_s = F.NACELLE_WALL, F.SKIN
+y_b = y_can_end + (y_face - y_can_end) / 3           # resultant of a triangular trough reaction along the motor
+lev_v = (F.Y_T - y_b) / (y_face - y_b)               # 1.61: vertical (drop) loads, can on the open V-trough
+y_pin = y_in_face                                    # pocket inner end in the wall (spec §4 lever)
+lev_h = (F.Y_T - y_pin) / (y_face - y_pin)           # 1.87: horizontal loads (the open trough can't push sideways)
+ring = section(y=(y_house + y_face) / 2, window=(-25, 25, 8, 49))[0]
+A_ring, I_ring = ring[0], ring[2]
+c_ring = max(abs(z) for z in (F.Z_A + ns["NACELLE"][1][1], F.Z_A + ns["NACELLE"][3][1])) - F.Z_A
+w_mid = 2 * hy * math.sqrt(2)                        # pocket width at the axis height (printed)
+d_hole = p.BOSS_HOLE_D                               # Ø4.5 printed
+A_cut = (w_mid - d_hole) * t_s
+xl = (d_hole / 2 + w_mid / 2) / 2                    # ligament centre
+h_eff = (hx * math.sqrt(2) - xl) - (xl - hy * math.sqrt(2))   # skin height at the ligament centre
+b_face = min(M.gb_w, M.gb_h)                         # loaded width: the narrower gearbox face (10)
+b_walls = (2 * hx + t_n) + (2 * hy + t_n)            # both upper walls at mid-thickness
+
+
+def k_wall(Lc):
+    """Vertical stiffness of the two upper nacelle walls as cantilever plates from the housing face (bending + shear)."""
+    kb = 1.0 / (4 * Lc ** 3 / (E_PETG_MPA * t_n ** 3) + Lc / (5 / 6 * G_PETG_MPA * t_n))
+    return kb * b_walls * 0.5
+
+
+k_skin = 2 * A_cut * G_PETG_MPA / h_eff              # skin as a shear panel between its upper and lower edges
+print(f"motor pocket: lever {lev_v:.2f} R vertical (trough reaction at y {y_b:.1f}), {lev_h:.2f} R horizontal (spec);"
+      f" nacelle ring A {A_ring:.1f} mm², I {I_ring:.0f} mm^4 (build123d), c {c_ring:.2f}; skin cut {A_cut:.2f} mm²"
+      f" (width {w_mid:.2f} - hole {d_hole}), h_eff {h_eff:.2f}; k_walls {k_wall(L_c):.0f} N/mm, k_skin {k_skin:.0f} N/mm")
+# load split between the walls (plate bending to the housing) and the skin (diaphragm to the lower walls): each row
+# uses the end of the stiffness range that is worse for it (walls x 1-1.5 for fold-line restraint, skin x 0.6-1 for
+# its bending and the hole)
+sh_skin = k_skin / (k_skin + k_wall(L_c))
+sh_wall = 1.5 * k_wall(L_c) / (1.5 * k_wall(L_c) + 0.6 * k_skin)
+
+
+def skin_tau(Ft, share=None, ts=t_s):
+    s = sh_skin if share is None else share
+    return 1.5 * (s * Ft / 2) / ((w_mid - d_hole) * ts)
+
+
+def wall_sigma(Ft, share=None, Lc=L_c):
+    s = sh_wall if share is None else share
+    N = s * Ft / (2 * math.cos(math.radians(45)))
+    return bend_rect(N * Lc, b_face, t_n)
+
+
+Ft_drop = lev_v * L.drop
+check(f"C1 skin (1 mm) diaphragm shear across layers, 5 cm rear corner: nacelle reaction {Ft_drop:.1f} N, skin share"
+      f" {sh_skin * 100:.0f} %", skin_tau(Ft_drop), True, SF_STATIC, shear=True, drop=True)
+check(f"C2 nacelle wall root bending (pocket face in tension, no notch), 5 cm rear corner, wall share {sh_wall * 100:.0f} %",
+      wall_sigma(Ft_drop), False, SF_STATIC, drop=True)
+check(f"C3 nacelle root, tube bending (sharp outer corner in tension, Kt {KT_SHARP}), 5 cm rear corner",
+      Ft_drop * L_c * c_ring / I_ring, False, SF_STATIC, Kt=KT_SHARP, drop=True)
+check("C4 nacelle root, tube shear (2 V/A), 5 cm rear corner", 2 * Ft_drop / A_ring, True, SF_STATIC, shear=True, drop=True)
+check("C5 gearbox front edge bearing on the pocket faces (1 mm x face width), 5 cm rear corner",
+      Ft_drop / (2 * math.cos(math.radians(45))) / (b_face * 1.0), False, SF_STATIC, drop=True)
+for lab, R, sf in ((f"stall {L.R_stall:.1f} N", L.R_stall, SF_STATIC), (f"pretension {L.R_sus:.0f} N sustained", L.R_sus, SF_CYCLIC)):
+    check(f"C6 skin diaphragm shear, track {lab} (horizontal, {lev_h:.2f} R)", skin_tau(lev_h * R), True, sf, shear=True)
+    check(f"C7 nacelle wall root bending, track {lab}", wall_sigma(lev_h * R), False, sf)
+T_corner = T_DESIGN_NMM / M.gb_w                     # gearbox corners bear on the long faces: couple arm 12
+check(f"C8 reaction torque {T_DESIGN_NMM:.0f} N*mm: gearbox corner bearing ({T_corner:.1f} N over {M.gb_len:.0f} x 1 mm)",
+      T_corner / (M.gb_len * 1.0), False, SF_STATIC)
+
+
+def annular_plate(a, b, loads, nu=NU_PETG, n=400):
+    """Annular plate, outer edge r = a clamped, inner edge r = b free; loads = [(r0, P)] ring loads (N).
+    Returns max |M_r| at the clamped edge and max |M_theta| over the plate (N*mm/mm). D cancels."""
+    r = np.linspace(b, a, n)
+    Mr = np.zeros(n)
+    Mt = np.zeros(n)
+    for r0, P in loads:
+        c4 = P / (8 * math.pi)
+        lr0 = math.log(r0)
+        # unknowns A1 A2 A3 (b..r0), B1 B2 B3 (r0..a)
+        Am = np.zeros((6, 6))
+        rhs = np.zeros(6)
+        # M_r(b) = 0  -> 2 A2 (1 + nu) - A3 (1 - nu) / b^2 = 0
+        Am[0, 1], Am[0, 2] = 2 * (1 + nu), -(1 - nu) / b ** 2
+        # continuity of w, w', w'' at r0 (w'' with w' continuous = M_r continuous)
+        Am[1, :] = [1, r0 ** 2, lr0, -1, -r0 ** 2, -lr0]
+        rhs[1] = c4 * r0 ** 2 * lr0
+        Am[2, :] = [0, 2 * r0, 1 / r0, 0, -2 * r0, -1 / r0]
+        rhs[2] = c4 * (2 * r0 * lr0 + r0)
+        Am[3, :] = [0, 2, -1 / r0 ** 2, 0, -2, 1 / r0 ** 2]
+        rhs[3] = c4 * (2 * lr0 + 3)
+        # w(a) = 0, w'(a) = 0
+        la = math.log(a)
+        Am[4, 3:] = [1, a ** 2, la]
+        rhs[4] = -c4 * a ** 2 * la
+        Am[5, 3:] = [0, 2 * a, 1 / a]
+        rhs[5] = -c4 * (2 * a * la + a)
+        A1, A2, A3, B1, B2, B3 = np.linalg.solve(Am, rhs)
+        inner = r <= r0
+        w1 = np.where(inner, 2 * A2 * r + A3 / r, 2 * B2 * r + B3 / r + c4 * (2 * r * np.log(r) + r))
+        w2 = np.where(inner, 2 * A2 - A3 / r ** 2, 2 * B2 - B3 / r ** 2 + c4 * (2 * np.log(r) + 3))
+        Mr += -(w2 + nu * w1 / r)
+        Mt += -(w1 / r + nu * w2)
+    return abs(Mr[-1]), float(np.max(np.abs(Mt))), float(np.max(np.abs(Mr)))
+
+
+a_eq = math.sqrt(4 * hx * hy / math.pi)              # skin: area-equivalent clamped circle of the printed pocket
+b_in = d_hole / 2
+r_wash = 2.4                                         # thrust washer bears near the hole edge (stiff washer, soft skin)
+
+
+def skin_out_of_plane(P, inward, ts=t_s):
+    if inward:   # thrust washer, ring near the hole; tension at the clamped edge on the outer face (smooth)
+        mr_edge, mt, mr = annular_plate(a_eq, b_in, [(r_wash, P)])
+        return 6 * max(mr_edge, mt, mr) / ts ** 2, 1.0
+    rings = np.linspace(b_in + 0.05, a_eq - 0.05, 40)  # gearbox face: uniform pressure; tension at the edge on the
+    w = rings / rings.sum()                            # inner face, i.e. the sharp pocket corner (Kt 2.5)
+    mr_edge, mt, mr = annular_plate(a_eq, b_in, [(r0, P * wi) for r0, wi in zip(rings, w)])
+    return 6 * max(mr_edge, mt, mr) / ts ** 2, KT_SHARP
+
+
+s_in, k_in = skin_out_of_plane(L.side, True)
+s_out, k_out = skin_out_of_plane(L.side, False)
+check(f"C9 skin out of plane: side {L.side:.0f} N inward on the thrust washer (annular plate a {a_eq:.2f}, hole r {b_in})",
+      s_in, True, SF_CYCLIC, Kt=k_in)
+check(f"C10 skin out of plane: side {L.side:.0f} N outward on the gearbox face (Kt {KT_SHARP} at the pocket corner)", s_out,
+      True, SF_CYCLIC, Kt=k_out)
+Ft_house = lev_v * L.drop
+check(f"C11 wall bending round the motor housing (Ø{2 * p.HOUSING_HALF_X:.1f} equivalent, Kt {KT_CHAMFER}), 5 cm rear corner",
+      plate_boss_moment_stress(Ft_house * (y_face - e_c - y_mid), p.HOUSING_HALF_X, t_w, KT_CHAMFER), True, SF_STATIC,
       drop=True)
-check_metal(f"idler M3 bolt (A2-70) bending, reverse stall R {L.R_idler_stall:.1f} N x {arm_bolt:.0f}",
-            bend_round(L.R_idler_stall * arm_bolt, d3), SY_A2_70_MPA)
-P_after, mu_cl = 100.0, 0.2                            # clamp left after PETG creep (assumption), PETG on steel
-cap = 2 * mu_cl * P_after                              # head face + nut face
-check_custom(f"idler slot clamp friction (P {P_after:.0f} N after creep, mu {mu_cl}, 2 faces) vs reverse stall R",
-             L.R_idler_stall, cap, "friction N", SF_STATIC)
-check_custom("idler slot clamp friction vs pretension 2 T0 (sustained)", L.R_sus, cap, "friction N", SF_CYCLIC)
-# --- C. sprocket journal and N20 cradle (round 2) -----------------------------------------------------------------------
-for lab, R, sf in (("stall", L.R_stall, SF_STATIC), ("pretension sustained", L.R_sus, SF_CYCLIC)):
-    s, Rj = journal_bearing(R)
-    check(f"journal bearing, {lab} (hub {R:.1f} N -> journal {Rj:.1f} N at its outer end)", s, False, sf)
-s, Rj_dr = journal_bearing(dd.corner)
-check(f"journal bearing, 5 cm rear corner on the sprocket (journal {Rj_dr:.0f} N)", s, False, SF_STATIC, drop=True)
-a_jb = math.sqrt(2 * p.JOURNAL_BOSS_HALF * (F.Z_A + 10 - (F.FLOOR_Z + F.FLOOR_T)) / math.pi)   # 20 x 19.5 boss block
-check(f"wall round the journal, bearing {y_j_out - y_j_mid:.0f} mm off its mid-plane, 5 cm corner (Z, Kt 2)",
-      plate_boss_moment_stress(Rj_dr * (y_j_out - y_j_mid), a_jb, t_w, 2.0), True, SF_STATIC, drop=True)
-Rc_st, Rc_sus, Rc_dr = k_lev * L.R_stall, k_lev * L.R_sus, k_lev * dd.corner
-check(f"N20 cradle cheek as built (front end only), stall: can end {Rc_st:.1f} N", cheek_as_built(Rc_st), False, SF_STATIC)
-check(f"N20 cradle cheek as built, pretension sustained: can end {Rc_sus:.1f} N", cheek_as_built(Rc_sus), False, SF_CYCLIC)
-check(f"cradle top under the N20 can end, 5 cm rear corner ({Rc_dr:.1f} N, can flat {flat_w:.1f} x 3)",
-      Rc_dr / (flat_w * 3.0), False, SF_STATIC, drop=True)
-# --- D. floor under the battery -----------------------------------------------------------------------------------------
-s_c, s_s = floor(mb * dd.a_g)
-check(f"floor mid-span under battery, 5 cm ({dd.a_g:.0f} g x {BATT.mass_g:.0f} g)", s_c, False, SF_STATIC, drop=True)
-check(f"floor at strap slot Y ±{p.STRAP_Y} (Kt 2.5 square ends), 5 cm", s_s, False, SF_STATIC, Kt=2.5, drop=True)
-# --- E. handling: lifted by the lid, 2 x weight on 4 lid screws ---------------------------------------------------------
+# trough: the can's rear reaction under a horizontal (track) load rides up the 45° V face; the zip tie holds it down and
+# pulls up on the two cheek bridges over the 4 mm tunnel (fixed-fixed, span TIE_W); tie preload 30 N assumed
+F_in_h = (lev_h - 1) * L.R_stall
+F_tie = F_in_h + 30.0
+z_tun = F.Z_A - M.can_d / 2 - 0.2                   # tunnel top: the cheeks bridge it
+cheeks = section(y=p.TIE_Y, window=(-14, 14, z_tun + 0.05, F.Z_A))
+cheek = min(cheeks, key=lambda c: c[0])
+h_ch = p.TROUGH_TOP - z_tun                          # cheek depth above the tunnel
+b_ch = cheek[0] / h_ch
+check(f"C12 trough cheek bridge over the tie tunnel: tie {F_tie:.0f} N (can rear reaction {F_in_h:.1f} N + 30 N preload)",
+      bend_rect(F_tie / 2 * p.TIE_W / 8, b_ch, h_ch), False, SF_STATIC)
+
+# ---- D. floor under the battery (5 cm drop) ---------------------------------------------------------------------------
+inner_span = 2 * y_in_face
+BATT = HP.BATT_2X18650_LONG
+a_drop_g = 2 * H_DROP_MM / DELTA_MM
+F_batt = BATT.mass_g * 1e-3 * G_MS2 * a_drop_g
+c_b = BATT.width
+check(f"D1 floor mid-span under the battery, 5 cm ({a_drop_g:.0f} g x {BATT.mass_g:.0f} g)",
+      bend_rect(F_batt / 2 * (inner_span / 2 - c_b / 4) / BATT.length, 1.0, F.FLOOR_T), False, SF_STATIC, drop=True)
+check(f"D2 floor at the strap slots |y| {p.STRAP_Y} (Kt 2.5, square ends), 5 cm",
+      bend_rect(F_batt / 2 * (inner_span / 2 - p.STRAP_Y) / (BATT.length - p.STRAP_L), 1.0, F.FLOOR_T), False, SF_STATIC,
+      Kt=2.5, drop=True)
+# ---- E. lid columns with heat-set inserts: rover lifted by the lid (2 x weight on 4 screws) ----------------------------
 F_scr = 2 * L.W / 4
-L_thr = 10.0 - 3.0
-check(f"lid-screw pull-out of column pilot, handling {F_scr:.1f} N", F_scr / (math.pi * p.LID_PILOT * L_thr), False,
-      SF_STATIC, shear=True)
-A_col = math.pi / 4 * (p.COLUMN_D ** 2 - (p.LID_PILOT + p.HOLE_COMP) ** 2)
-check("lid column tension (Z), handling", F_scr / A_col, True, SF_STATIC)
+ins_len = 5.7
+check(f"E1 insert knurl shear-out of the column, lifted by the lid {F_scr:.1f} N per insert",
+      F_scr / (math.pi * p.INSERT_D * ins_len), True, SF_STATIC, shear=True)
+A_col = math.pi / 4 * (p.COLUMN_D ** 2 - p.INSERT_D ** 2)
+check("E2 column tension (Z) round the insert, lifted by the lid", F_scr / A_col, True, SF_STATIC)
 
-# --- advisory: bounds and sensitivity -------------------------------------------------------------------------------------
-check(f"BOUND: strip model, boss block to the floor ({t_w + p.BOSS_IN:.0f} x {2 * a_road:.0f}, no Kt), 5 cm corner",
-      bend_rect(dd.corner * arm_w, 2 * a_road, t_w + p.BOSS_IN), True, SF_STATIC, info=True)
-check(f"road-wheel boss rim, 5 cm corner, stiff landing delta {DELTA_STIFF_MM} ({L.dst.corner:.0f} N)", boss_Z(L.dst.corner),
-      True, SF_STATIC, info=True)
-check(f"nut / hole-edge bearing at the spec's 29 N corner", nut_bearing(SPEC_DROP_CORNER_N), False, SF_STATIC, info=True)
-check(f"cheek bottom edge as built ({cheek_root:.1f} mm on the cradle, Z, no Kt), stall", cheek_on_cradle(Rc_st, cheek_root, Kt=1.0),
-      True, SF_STATIC, info=True)
-P_need = SF_STATIC * L.R_idler_stall / (2 * mu_cl)
-print(f"idler clamp: SF {SF_STATIC:.0f} on slip at the reverse stall needs {P_need:.0f} N of clamp left after creep"
-      f" (head/nut bearing {P_need / (math.pi / 4 * (7.0 ** 2 - 3.6 ** 2)):.0f} MPa on a Ø7 washer: creeps away)")
-# --- FIX rows: the smallest changes that pass (all advisory) ---------------------------------------------------------------
-for a_f, kt_f, lab in ((10.0, 1.5, "Ø20 + r1.5 fillet only (DFM round-2 fix 3 alone)"),
-                       (13.0, 1.5, "Ø26 + r1.5 fillet (or 2 x 45° chamfer) round the rim"), (15.0, 2.0, "Ø30, sharp rim")):
-    check(f"FIX road-wheel boss {lab}: 5 cm corner", boss_Z(dd.corner, a=a_f, Kt=kt_f), True, SF_STATIC, info=True)
-boss_fix = 5.5                                         # boss face at |y| 28.0; head moves in -> M3 x 50
-y_in_fix = F.HALF_W_OUT - t_w - boss_fix + 0.75
-check(f"FIX BOSS_IN {p.BOSS_IN} -> {boss_fix} at the wheel bosses and idler block: nut bearing, 5 cm corner",
-      nut_bearing(dd.corner, yin=y_in_fix), False, SF_STATIC, info=True)
-s_c26, s_s26 = floor(mb * dd.a_g, slot_y=26.0)
-check("FIX strap slots Y ±27.5 -> ±26 (clear the thicker bosses): floor at slot, 5 cm", s_s26, False, SF_STATIC, Kt=2.5,
+# ---- advisory: bounds, sensitivities, the spec's lever, proof loads, fixes ----------------------------------------------
+check(f"A4/A5 Winkler peaks: nut edge {nb_pk:.1f}, inner hole edge (peak), 5 cm drop", ib_pk, False, SF_STATIC, info=True)
+check("A4 round-2 lever model (inner contact 1.5 mm at the boss face), nut bearing, 5 cm drop",
+      L.drop * (F.Y_T - (y_boss + 0.75)) / ((F.HALF_W_OUT - p.NUT_DEPTH / 2) - (y_boss + 0.75)) / (nut_t * F.NUT[0]), False,
+      SF_STATIC, info=True)
+F_prf = 5.0 * G_MS2
+check(f"proof 5 kg ({F_prf:.0f} N) at the wheel rim centre: boss collar", plate_boss_moment_stress(F_prf * arm_w, a_road, t_w,
+      KT_CHAMFER), True, SF_PROOF, info=True)
+check("proof 5 kg at the wheel rim centre: nut-trap bearing", pin_bearing(F_prf, arm_bolt, F.NUT[0])[0], False, SF_PROOF,
       info=True)
-for sy, lab in ((SY_88_MPA, "8.8"), (SY_129_MPA, "12.9")):
-    check_metal(f"FIX M3 class {lab} bolt, 5 cm corner {dd.corner:.1f} N x {arm_bolt:.0f}", bend_round(dd.corner * arm_bolt, d3),
-                sy, info=True)
-check_metal(f"FIX M3 class 8.8 idler bolt, reverse stall {L.R_idler_stall:.1f} N", bend_round(L.R_idler_stall * arm_bolt, d3),
-            SY_88_MPA, info=True)
-L_tens = (F.AXLE_DX - F.IDLER_SLOT) - (F.AXLE_DX - p.IDLER_BLOCK[0] / 2)   # 11: idler block behind the slot
-check(f"FIX M3 tensioner screw along X through the idler block ({L_tens:.0f} mm thread, Ø2.6 pilot), reverse stall"
-      " (thread shear, Z)", L.R_idler_stall / (math.pi * 3.0 * L_tens * 0.5), True, SF_STATIC, shear=True, info=True)
-for t_f in (2.0, 3.0, 4.0):   # 2.0 = DFM round-2 fix 2 alone (CRADLE_HALF_X 8.3, cheek unchanged)
-    check(f"FIX cheek {t_f:.0f} mm standing fully on the cradle (CRADLE_HALF_X >= {M.gb_w / 2 + 0.3 + t_f:.1f}), stall"
-          " (Z, Kt 2)", cheek_on_cradle(Rc_st, t_f), True, SF_STATIC, info=True)
-check("FIX cheek 4 mm on the cradle, pretension sustained", cheek_on_cradle(Rc_sus, 4.0), True, SF_CYCLIC, info=True)
-# proof loads on the fixed geometry (should not break a good part: SF >= 1 on the knocked-down allowable)
-F_proof = 5.0 * G
-check(f"proof 5 kg ({F_proof:.0f} N) on the wheel rim: boss Ø26 r1.5", boss_Z(F_proof, a=13.0, Kt=1.5), True, 1.0, info=True)
-check(f"proof 5 kg on the wheel rim: nut bearing, BOSS_IN {boss_fix}", nut_bearing(F_proof, yin=y_in_fix), False, 1.0,
+check_metal(f"proof 5 kg at the rim centre: M3 class 12.9 at the outer face", bend_round(F_prf * arm_bolt, D3_M3), SY_129_MPA,
+            SF_PROOF, info=True)
+check_metal(f"if A2-70 (fully threaded stainless) bolts are fitted instead: 5 cm drop", bend_round(L.drop * arm_bolt, D3_M3),
+            SY_A2_70_MPA, info=True)
+check_metal(f"if A2-70 bolts are fitted: proof 5 kg at the rim centre", bend_round(F_prf * arm_bolt, D3_M3), SY_A2_70_MPA,
+            SF_PROOF, info=True)
+check(f"proof 5 kg on the idler bolt (chassis §8 test 1): sliding nut on its slot roof", pin_bearing(F_prf, arm_bolt,
+      nut_flat)[0], False, SF_PROOF, info=True)
+check(f"idler clamp yaw at the reverse-stall proof ({L.R_idler_proof:.1f} N, 100 % PWM fresh pack)",
+      yaw_edge(L.R_idler_proof), False, SF_PROOF, info=True)
+check(f"idler clamp yaw if the preload held 350 N (joint just closed at T0): washer edge, pretension sustained",
+      350.0 / A_w + share_head * L.R_sus * arm_yaw * xm_w / I_w, False, SF_CYCLIC, info=True)
+check(f"idler sliding nut on its slot bottom under {P_creep:.0f} N clamp ({A_n:.1f} mm² beside the slot): creeps",
+      P_creep / A_n, False, SF_CYCLIC, info=True)
+check(f"jack-screw thread, reverse-stall proof {L.R_idler_proof:.1f} N", L.R_idler_proof / A_strip, True, SF_PROOF, shear=True,
       info=True)
+L_btr = p.JACK_X[1] - p.JACK_X[0]
+check(f"BOUND buttress as a column off the floor only ({L_btr:.1f} x {p.HALF_W_OUT - t_w - p.JACK_Y_IN:.1f}, Kt {KT_SHARP}),"
+      f" reverse stall", bend_rect(L.R_idler_stall * (F.Z_A - (F.FLOOR_Z + F.FLOOR_T)), y_in_face - p.JACK_Y_IN, L_btr), True,
+      SF_STATIC, Kt=KT_SHARP, info=True)
+check("C1 BOUND skin carries all (rigid diaphragm), 5 cm rear corner", skin_tau(Ft_drop, 1.0), True, SF_STATIC, shear=True,
+      info=True)
+check("C2 central split (walls x1, skin x1), 5 cm rear corner", wall_sigma(Ft_drop, 1 - sh_skin), False, SF_STATIC, info=True)
+check("C2 BOUND walls carry all (no skin), 5 cm rear corner", wall_sigma(Ft_drop, 1.0), False, SF_STATIC, info=True)
+check(f"C1 at the spec's lever {lev_h:.2f} R (rear reaction at the pocket's inner end), 5 cm rear corner",
+      skin_tau(lev_h * L.drop), True, SF_STATIC, shear=True, info=True)
+check(f"C2 at the spec's lever {lev_h:.2f} R, 5 cm rear corner", wall_sigma(lev_h * L.drop), False, SF_STATIC, info=True)
+mu_drop = 0.3
+s_in_d, _ = skin_out_of_plane(mu_drop * L.drop, True)
+check(f"C9 skin, sideways friction in a corner drop (mu {mu_drop} x {L.drop:.1f} N) on the thrust washer", s_in_d, True,
+      SF_STATIC, info=True)
+check(f"C8 reaction torque at the proof {T_PROOF_NMM:.0f} N*mm", T_PROOF_NMM / M.gb_w / (M.gb_len * 1.0), False, SF_PROOF,
+      info=True)
+# S-08 sensitivity: an ungated 2 kg*cm motor (Phipps 196 N*mm) at the sketch's 6.0 V cap
+F_s08 = S08_6V_NMM[-1][1] / F.RP
+R_i08 = 2 * (T0_N + F_s08)
+check(f"S-08 ungated 196 N*mm motor: jack-screw thread, reverse stall {R_i08:.1f} N", R_i08 / A_strip, True, SF_STATIC,
+      shear=True, info=True)
+check(f"S-08 ungated 196 N*mm motor: idler clamp yaw, reverse stall", yaw_edge(R_i08), False, SF_STATIC, info=True)
+check(f"S-08 ungated 196 N*mm motor: skin shear, track stall ({lev_h:.2f} x {T0_N * 2 + F_s08:.1f} N)",
+      skin_tau(lev_h * (2 * T0_N + F_s08)), True, SF_STATIC, shear=True, info=True)
+# N20 shaft (bought): D-section Ø3, flat 2.5 from the far side; minimum section modulus over every bending direction
+gs = 600
+hh = M.shaft_d / gs
+pts = [(-M.shaft_d / 2 + (i + 0.5) * hh, -M.shaft_d / 2 + (j + 0.5) * hh) for i in range(gs) for j in range(gs)]
+pts = np.array([q for q in pts if q[0] ** 2 + q[1] ** 2 <= (M.shaft_d / 2) ** 2 and q[1] <= M.shaft_flat - M.shaft_d / 2])
+cx, cy = pts.mean(axis=0)
+Zmin = 1e9
+for ang in np.linspace(0, math.pi, 181):
+    u = (pts[:, 0] - cx) * math.cos(ang) + (pts[:, 1] - cy) * math.sin(ang)
+    Zmin = min(Zmin, (u ** 2).sum() * hh * hh / (np.abs(u).max() + hh / 2))
+for lab, R in ((f"stall {L.R_stall:.1f} N", L.R_stall), (f"5 cm corner {L.drop:.1f} N", L.drop)):
+    check_metal(f"N20 shaft (bought), arm {F.SHAFT_ARM:.0f}, Z_min {Zmin:.3f} mm³: {lab}", R * F.SHAFT_ARM / Zmin, SY_ROD_MPA,
+                info=True)
+# FIX rows
+for ts in (1.5, 2.0):
+    Lc2 = L_c - (ts - t_s)
+    kw2 = k_wall(Lc2)
+    ks2 = k_skin * ts / t_s
+    sh_s = ks2 / (ks2 + kw2)
+    sh_w = 1.5 * kw2 / (1.5 * kw2 + 0.6 * ks2)
+    arm2 = F.SHAFT_ARM + (ts - t_s)
+    check(f"FIX SKIN {t_s:.0f} -> {ts} (gearbox face |y| {y_face - (ts - t_s):.1f}, shaft arm {arm2:.1f}): skin shear, 5 cm corner",
+          skin_tau(Ft_drop, sh_s, ts), True, SF_STATIC, shear=True, info=True)
+    check(f"FIX SKIN {t_s:.0f} -> {ts}: rigid-diaphragm bound", skin_tau(Ft_drop, 1.0, ts), True, SF_STATIC, shear=True, info=True)
+    check(f"FIX SKIN {t_s:.0f} -> {ts}: nacelle wall root, 5 cm corner (L {Lc2:.1f})", wall_sigma(Ft_drop, sh_w, Lc2), False,
+          SF_STATIC, info=True)
+    check_metal(f"FIX SKIN {t_s:.0f} -> {ts}: N20 shaft at the 5 cm corner (arm {arm2:.1f})", L.drop * arm2 / Zmin, SY_ROD_MPA,
+                info=True)
+    check_metal(f"FIX SKIN {t_s:.0f} -> {ts}: N20 shaft at stall (arm {arm2:.1f}; Architect's criterion SF >= 2)",
+                L.R_stall * arm2 / Zmin, SY_ROD_MPA, 2.0, info=True)
+def plate_fix(Lp, Hp, band=None):
+    """Steel plate (Lp x Hp) bearing on PETG, the bolt-slot band cut out: A, I about the bolt's z axis, x_max."""
+    bnd = (z_hi - z_lo) if band is None else band
+    return Lp * (Hp - bnd), (Hp - bnd) * Lp ** 3 / 12, Lp / 2
+
+
+# the yaw moment needs a stiff footprint on BOTH clamp faces: the head side resists it, the nut side must carry the clamp
+# and prying tension. Package that passes: inner plate 21 x 10 x 2 (x 108-129, clear of the buttress and front strip),
+# outer nut plate 14 x 8 x 2 in a nut slot opened to 9 mm tall and 2 mm deeper, both slotted 3.4 x 12
+A1, I1, x1 = plate_fix(21.0, 10.0)
+A2, I2, x2 = plate_fix(14.0, 8.0)
+sh1 = I1 / (I1 + I2)
+W_need_rev = SF_STATIC * 0 + share_head * L.R_idler_stall * arm_yaw / (ALLOW_INPLANE_MPA / SF_STATIC - P_creep / A1)
+print(f"idler clamp fix: inner plate A {A1:.0f} mm², I/x {I1 / x1:.0f} mm³; nut plate A {A2:.0f} mm², I/x {I2 / x2:.0f} mm³;"
+      f" needed on the head side for SF 3 at the reverse stall: I/x >= {W_need_rev:.0f} mm³ (Ø9 washer: {I_w / xm_w:.0f})")
+for R, sf, tag in ((L.R_idler_stall, SF_STATIC, "reverse stall"), (L.R_sus, SF_CYCLIC, "pretension sustained")):
+    Mz = R * arm_yaw
+    check(f"FIX idler clamp, inner steel plate 21 x 10 x 2: PETG edge pressure, {tag}", P_creep / A1 + sh1 * Mz * x1 / I1, False,
+          sf, info=True)
+    # bolt tension = clamp left after creep + prying once the head-side moment exceeds the inner plate's opening moment
+    T_bolt = P_creep + max(0.0, sh1 * Mz - P_creep * I1 / (A1 * x1)) / x1
+    check(f"FIX idler clamp, outer nut plate 14 x 8 x 2 (nut slot 9 tall): PETG edge pressure, {tag} (bolt {T_bolt:.0f} N)",
+          T_bolt / A2 + (1 - sh1) * Mz * x2 / I2, False, sf, info=True)
+w0p, thp = rigid_pin(L.drop, arm_bolt, [(s_nut0, s_nut1, nut_flat), (s_nut1, s_nut1 + 2.0, 14.0), (s_nut1 + 2.0, L_emb, 3.0)])
+R_pl = L.drop * 14.0 * (w0p * 2.0 + thp * ((s_nut1 + 2.0) ** 2 - s_nut1 ** 2) / 2)
+check("FIX idler nut plate's top edge (14 x 2) on the slot roof, 5 cm front corner", R_pl / (14.0 * 2.0), False, SF_STATIC,
+      info=True)
+check("FIX idler sliding nut alone: DIN 557 square nut 5.5 x 2.4 (full 5.5 top face), 5 cm front corner",
+      pin_bearing(L.drop, arm_bolt, F.NUT[0])[0], False, SF_STATIC, info=True)
+check("NOT ENOUGH: DIN 9021 M4 Ø12 washer under the head, reverse stall", P_creep / footprint(lambda x, z: 1.6 ** 2 <= x * x + z * z
+      <= 36.0)[0] + L.R_idler_stall * arm_yaw * 6.0 / footprint(lambda x, z: 1.6 ** 2 <= x * x + z * z <= 36.0)[1], False,
+      SF_STATIC, info=True)
+# assembly: axle-bolt tightening into PETG (the design relies on no preload; over-tightening crushes the nut trap)
+A_trap = 3 * math.sqrt(3) / 2 * (F.NUT[0] / math.sqrt(3)) ** 2 - math.pi / 4 * (p.BOLT_D) ** 2
+for T_nm in (0.15, 0.5):
+    P_t = T_nm * 1000 / (0.2 * 3.0)
+    check(f"assembly: road-wheel bolt tightened to {T_nm} N*m (P {P_t:.0f} N): nut on the trap bottom ({A_trap:.1f} mm²)",
+          P_t / A_trap, False, SF_STATIC, info=True)
+print(f"inserts: Ø{p.INSERT_D} holes have no HOLE_COMP and print about Ø{p.INSERT_D - HC:.1f}: an M3 x {ins_len} insert"
+      f" (knurl ~Ø4.6) then displaces {math.pi / 4 * (4.6 ** 2 - (p.INSERT_D - HC) ** 2) * ins_len:.0f} mm³ instead of"
+      f" {math.pi / 4 * (4.6 ** 2 - p.INSERT_D ** 2) * ins_len:.0f}: more melt rises round the insert (scrape it flush), the"
+      f" grip is not reduced, and the column wall left is {(p.COLUMN_D - 4.6) / 2:.1f} mm")
 
 report(f"{JOB} strength checks")

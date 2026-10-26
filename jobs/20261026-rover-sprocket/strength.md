@@ -1,154 +1,127 @@
-VERDICT: FAIL
+VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-rover-sprocket (round 2)
+# Strength check: 20261026-rover-sprocket (round 3)
 
-strength-analyst · 2026-10-26 · `python3 jobs/20261026-rover-sprocket/strength_calc.py` · round-1 method, round-2 design and loads
+strength-analyst (independent) · 2026-10-26 · run with the CAD venv: `source /home/claude/.venv-cad/bin/activate`, then `python3 jobs/20261026-rover-sprocket/strength_calc.py`
 
-**Result: FAIL**, with 7 of 18 rows below their required SF. The lowest SF is **1.06**: the M2 set-screw hole in the hub at the 5 cm corner drop. Two problems remain:
-- **The torque still goes through a printed D-flat.** SF 1.24 at stall, 3.84 everyday (4 required). No printed bore can pass: SF 3 at 160 N·mm needs 23 mm of flat, and the N20 shaft is 10 mm long.
-- **The journal turns the PETG hub into a lever that bends across its layers.**
-  - At the set-screw hole: SF 1.69 at stall, 2.56 cyclic, 3.37 sustained, 1.06 at the 5 cm corner.
-  - Just outboard of the shaft end: SF 2.83 at the 5 cm corner.
+**Result: NEEDS_TEST.** The allowables are placeholders, so PASS is not possible. All 10 verdict rows pass.
 
-What passes:
-- the chamfered teeth: SF 3.15 at stall;
-- the hub bearing in the journal: SF 15 or more;
-- the disc rim: SF 19.8.
+- **Lowest SF: 3.11**, at the tooth root (chamfer top) under the 160 N·mm design stall: 9.89 N on one tooth at the pitch circle, Kt 1.8.
+- **Drop:** the rows hold their SF up to a 6.2 cm drop, limited by the 1.9 mm ligament between the centre hole and a slot.
+- **Concept C works for this part.** The torque now reaches the disc through metal. Slot bearing is SF 36 or more, the shaft end in the centre hole 5.9, and the rim 19.8.
+- **One condition.** The tooth margin depends on the chassis §8 motor gate. An ungated 2 kg·cm motor (S-08) puts the tooth at SF 2.54, so the gate has to happen before the disc is fitted (see proof tests).
 
-## Round 1 findings addressed
+## Round-2 required changes: what round 3 did
 
-| Round 1 finding | Round 2 response | Round 2 result |
+| Round 2 change | Round 3 | Result |
 |---|---|---|
-| D-flat torque at stall, SF 0.85 | 9.5 mm engagement (was 6.5), press fit, M2 set screw | **1.24 ✗**. A metal hub is still required. |
-| Bore rocking under the overhung load (1.85; 0.21 at 30 cm) | The Ø10 hub runs in a 6 mm wall journal | The rocking is gone: the hub bears on the journal at SF 15 or more ✓. The hub itself is now the lever arm: **2.83 ✗ at the shaft end, 1.06 ✗ at the set-screw hole**. |
-| Sharp tooth root, SF 1.88 | 0.5 × 45° root chamfers | **3.15 ✓** (Kt 1.8). It would be 2.84 if the chamfer behaved like a sharp corner. |
-| N20 shaft at the drop (advisory, 1.30 at 8 cm) | Journal | The shaft moment falls from 23.5 R to 13.4 R: SF 1.64 at the 5 cm corner on σy 350. That holds only if the motor can pivot in its cradle. A zip tie pulled tight enough to clamp the motor stops the journal engaging: SF 0.94. |
-| M1.6 heads against the hub (DFM) | Face screws removed | ✓. New interference: the hub end sits 0.5 mm from the gearbox face, but the N20 bearing boss (Ø4) stands 0.8 mm proud, an **overlap of 0.3 mm**. The assembly check skips the motor/sprocket pair, so it can't see this. |
+| 1. Metal N20 hub, clear of the bearing boss | Pololu #1996 aluminium hub, its own M3 set screw on the D-flat. The disc bolts to it with 4 × M3 × 12 through radial slots (r 5.5–6.85). The hub sits outside the 1 mm chassis skin, and the boss passes through the skin's Ø4.5 hole. | ✓ The D-flat rows are gone (round 2: SF 1.24). Slot bearing H1 is 36 at stall. |
+| 2. No radial hole in any printed hub section | No printed hub; the part is a 7 mm disc | ✓ The set-screw-hole rows are gone (round 2: SF 1.06–3.37) |
+| 3. Any printed tube Ø ≥ 10.5 | No tube | ✓ Redundant |
+| DFM round 2 (hub-end counterbore, set screw onto the flat) | The metal hub carries the set screw and doesn't touch the boss | ✓ Moot |
 
-## Load cases: round 2, re-derived and shared by all six rover jobs
+## Load cases
 
-The same block runs at the top of every rover `strength_calc.py`. It reads `rover_frame.py` (`DROP_MM` 50, `PIN_D` 2.0, `HUB_D` 10, `WALL` 4.5), `tools/hobby_parts.py` and the six current `geometry.json` files.
+Shared rover block; the chassis `strength.md` has the full table.
 
-| Load | Spec §4 (round 2) | Re-derived | Duration |
+| Load | Value | Note | Duration |
 |---|---|---|---|
-| Rover mass | ≈ 0.58 kg (5.7 N) | **649 g (6.36 N)**, from solid volumes × 1.27 g/cm³: chassis 146, lid 41, 2 sprockets 14, 2 idlers 12, 4 wheels 92, 68 links 89 (394 g printed). Add 2 × N20 (20 g), the battery (135 g), electronics (40 g), hardware (20 g, assumed) and **68 steel pins (39 g)**. Counting the wheels as solid overstates their 20 % infill by about 40 g, so the mass errs on the heavy side. | — |
-| N20 stall torque | ≈ 160 N·mm | 160 N·mm design value (7.4 V). A fresh 8.4 V pack gives 182 at 100 % PWM and 146 at the sketch's 80 % cap. | short-term |
-| Sprocket pull at stall | ≈ 10 N | 9.89 N (160 / RP 16.18) | short-term |
-| Track pretension T0 | 5 N, sustained | 5 N per run (round-1 assumption) | sustained (creep) |
-| Tight run | 14.9 N stall, 7.9 N everyday | 14.9 N at stall (T0 + stall pull, no slack-side relief). 8.2 N everyday: T0 plus the 3.18 N traction-limited pull (μ 1.0 × W/2). | short-term / cyclic |
-| Sprocket radial | 19.9 / 12.9 / 10 N | 19.9 N stall, 13.2 N cyclic, 10 N sustained (tight run + slack run) | as stated |
-| Idler radial | 2 × 14.9 N | **29.8 N at a reverse stall**: driving in reverse makes both idler runs the tight run. 16.4 N cyclic, 10 N sustained. | as stated |
-| Skid-steer side drag | 3 N per track | 1.9 N derived (0.6 × W/2); the spec's 3 N is kept | cyclic |
-| **5 cm drop onto a hard floor** | ≈ 14 N per axle flat, ≈ 29 N corner | Round-1 method: E = m·g·h = 0.318 J, stopping distance δ = 5 mm. That gives a 20 g peak and 127 N in total: **15.9 N per axle on a flat landing** (8 axles on the bottom run) and **31.8 N per axle on a corner** (half the mass on 2 axles). The spec's figures come from 0.58 kg. Sensitivity: δ = 2.5 mm doubles every drop load (31.8 / 63.6 N). | short-term |
+| Stall pull at the pitch circle (RP 16.18) | **9.89 N** (160 N·mm design). Proof 11.25 N (182 N·mm). | Deep review S-08 brackets 6.6–13.6 N per side at the *old* 80 % cap. Round 3 changed two things: the sketch caps the motor at 6.0 V average, and chassis §8 gates the motor at ≤ 182 N·mm on a fresh pack at 100 % PWM. A gated motor therefore gives ≤ 130 N·mm (8.0 N) in service; 160 covers it. The ungated S-08 motor (196 N·mm: 12.1 N at the 6 V cap, 13.6 N at the old cap) is in the advisory rows. | short-term |
+| Everyday pull | 3.18 N (μ 1.0 × W/2) | Rounds 1–2 | cyclic |
+| Sprocket radial | 19.9 N stall / 13.2 cyclic / 10 sustained (pretension 5 N per run) | | as stated |
+| 5 cm drop | 31.8 N on the rear axle, corner landing | Mass 649 g; 5 mm stopping distance (spec §4). An elastic estimate gives several times this; the drop test is the evidence. | short-term |
+| Side drag | 3 N per track | Spec. S-15's pivot turn needs ≤ 1.43 N per track half. | cyclic |
 
-Every drop row scales linearly with the height, so the script also prints the drop height at which the first drop row reaches its required SF.
+**Tooth case.** The engaged teeth together carry the tight run minus the slack run, which is the stall pull. Rounds 1–2 put all of it on one tooth at the pitch circle, and that convention is kept. A tooth tip loaded on a slack track is advisory; the jack screw limits the slack.
 
-**Loads the spec still misses:**
-- **The journal turns the sprocket and N20 into a lever.** The track or ground load acts 17 mm outboard of the journal, so the hub tilts about the cradle-supported motor:
-  - the journal outer end carries 1.55 × the hub load;
-  - the N20 can end carries 0.55 × that load: on the cradle floor in a drop, on a cradle cheek under track pull;
-  - the N20 shaft still carries 13.4 × R N·mm at the gearbox face (it was 23.5 × R in round 1).
-- **The idler clamp holds the reverse-stall load (29.8 N) along its slot by friction alone.**
-- **Pressing the steel pins into the Ø2.0 outer knuckles** puts an assembly hoop stress across the layers.
+## Assumptions
 
-## Part-specific load path and assumptions
+- **Tooth section.** Cut from the build123d solid at the top of the root chamfer (r 12.39): 2.70 × 7.00, A 18.81 mm², Z 8.40 mm³ (the hand formula gives 8.51).
+- **Tooth Kt 1.8**, the rounds 1–2 value for a 0.5 × 45° chamfer on a small step (D/d 1.37). A sharp corner (Kt 2.0) gives 2.80 (advisory).
+- **Screws.** No clamp friction is credited, because the PETG under the screw washers creeps. The torque goes into the slot sides in bearing.
+- **Slot tolerance.** Only 2 of the 4 screws are assumed to bear at first, at the smallest slot radius (5.5).
+- **Radial loads.** The slots sit at 45° to any vertical load. The disc can shift about 0.2 mm before the shaft end bears in the Ø3.4 centre hole. A 9 mm shaft engages 2.5 mm of the disc (a 10 mm shaft, 3.5 mm), so 2.5 is used.
+- **Direction.** The disc prints flat, so tooth bending, slot bearing and ligament shear are all in the layer plane.
+- **The N20 shaft is bought and checked as advisory.**
+  - Minimum section modulus over every bending direction: 1.911 mm³ (designer: 1.931).
+  - Arm 10 mm. SF 3.36 at stall, 3.15 on a fresh pack and 2.10 at the 5 cm corner, against the designer's 3.40, 3.18 and 2.13.
+  - If the chassis skin grows to 2 mm (chassis change 2), the arm is 11 mm: 3.06 and 1.91, still inside the Architect's 2 and 1.5.
 
-- **Torque.** The press-fit D-bore is Ø3.2 in CAD and prints at about Ø3.0, with the flat line-to-line. Friction is not credited (round-1 method), so all the torque goes through the flat.
-  - Model: rigid rotation against the flat, pressure rising from zero at its centre to p_max at one edge, T = p_max·L·b²/3. The table reports the mean over the loaded half.
-  - The bore is vertical in print, so this bearing is in-plane.
-- **The set screw cannot bite the flat.** A CAD probe shows the set-screw hole along +X and the D-flat facing +Y: the screw lands **90° from the flat**, on the round of the shaft. It holds by friction only, which is enough for the 3 N axial retention (SF 4.0). Spec §8's "set screw bites the flat" cannot be met.
-- **Hub as a lever.** The track or ground load R acts on the track plane (Y 55). The hub bears on the journal's outer end (Y 38), and the N20 body reacts at its can end on the cradle. Journal load = 1.55 R; N20 shaft moment at the face = 13.4 R.
-  - Outboard of the shaft end (Y 41.5) only PETG carries R: M = 13.5 R. The ring there is Ø10 with the Ø3.2 bore, Z = 97.1 mm³.
-  - At the set-screw hole (Y 40.5): M = 14.5 R. The radial Ø1.8 hole leaves Z = 78.2 mm³ on the net section, with Kt 2 for a hole in a tough material. The shaft ends 1 mm further out, so it is given no share of the moment.
-  - The hub is printed upright, so this bending stress is **across the layers**.
-  - The hub turns under a fixed load, so every fibre sees **rotating bending, once per revolution**.
-- **Teeth.** The critical section is the top of the 0.5 × 45° chamfer: 2.7 × 7 mm at r 12.39.
-  - Load: the stall pull (9.89 N) on one tooth at the pitch radius, the round-1 convention.
-  - Kt 1.8: c/h is 0.19, which lies between the skill's 2.5 for a sharp corner and 1.5 for r ≥ 0.25 h. A chamfer is a little worse than a fillet of the same size.
-- **Spec §4's tooth case (14.9 N on one tooth tip) cannot occur.** The engaged teeth together carry the tight-run tension minus the slack-run tension, 9.9 N. The case is kept as advisory (SF 1.44).
-  - Ask the Architect to change §4 to 9.9 N at the pitch radius.
-  - The physical tip case is a link riding over a tooth on a slack track: 9.9 N at the tip, SF 2.17. A positive idler stop (chassis fix 4) prevents it.
-- **Journal friction (performance, not strength).** With PETG on PETG at μ 0.3, the journal takes about 23 N·mm per side under the pretension alone. That is roughly the N20's rated torque, and 45 % of the everyday drive torque. Grease the journal (PTFE or silicone) and keep the pretension light.
+## Allowables and sources
 
-## Allowables and sources (all jobs)
+**No measured data:**
+- `library/materials.csv` has only its header row, so the skill's placeholders apply: PETG 25 MPa in-plane, 12.5 MPa across layers. Shear allowable is 0.5 × normal.
+- **NEEDS_TEST is the best verdict possible.**
 
-- **No measured data:** `library/materials.csv` has only its header row, so the skill's placeholders apply. PETG in-plane 25 MPa, across layers 12.5 MPa, E 1.8 GPa. Shear is 0.5 × normal (Tresca), as in round 1. **The best verdict possible is NEEDS_TEST.**
-- **Direction:** compressive bearing on layer faces and on 45° teardrop flanks uses the in-plane value. Anything that pulls layers apart, or shears along a layer interface, uses the across-layer value.
-- **Required SF:** 3 for short-term static loads; 4 for cyclic or sustained loads. Bought steel needs 1.5 on yield.
-- **Steel yields:**
-  - M3 bolts: A2-70 (450 MPa) is assumed, because the spec gives no grade. 8.8 is 640 MPa and 12.9 is 1080 MPa.
-  - Track pins and the N20 shaft: **350 MPa**. This is a conservative yield for unspecified rod. Annealed silver steel or drill rod is about 400 MPa or more, and piano wire about 1500 MPa. Round 1 used 450 for the N20 shaft.
-- **Temperature:** service is 40 °C against a PETG softening point of about 70 °C, so it is more than 20 °C away.
+**Required SF:**
+
+| Load type | Required SF |
+|---|---|
+| Short-term | 3 |
+| Cyclic or sustained | 4 |
+| Bought steel, on yield | 1.5 |
+| Proof loads | 1.0 |
+
+**Steel and temperature:**
+- The N20 shaft is taken at 350 MPa.
+- At 40 °C service against a PETG softening point of about 70 °C, temperature is not limiting.
 
 ## Results (`strength_calc.py` output)
 
 | # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|
-| 1 | tooth root (chamfer top), stall pull 9.9 N on 1 tooth at RP (Kt 1.8) | XY | 7.94 | 25.0 | 3.15 | 3.0 | OK |
-| 2 | tooth root, everyday pull 3.2 N (Kt 1.8) | XY | 2.55 | 25.0 | 9.79 | 4.0 | OK |
-| 3 | tooth root shear, stall | XY shear | 0.78 | 12.5 | 15.93 | 3.0 | OK |
-| 4 | D-flat bearing, stall 160 N*mm, 9.5 mm engaged (mean, loaded half) | XY | 20.21 | 25.0 | 1.24 | 3.0 | **FAIL** |
-| 5 | D-flat bearing, everyday 51 N*mm | XY | 6.50 | 25.0 | 3.84 | 4.0 | **FAIL** |
-| 6 | hub on the journal, stall (journal 30.8 N at its outer end) | XY | 1.03 | 25.0 | 24.35 | 3.0 | OK |
-| 7 | hub on the journal, pretension sustained (journal 15.5 N at its outer end) | XY | 0.52 | 25.0 | 48.44 | 4.0 | OK |
-| 8 | hub bending at the shaft end (axial = Z), stall R 19.9 N x 13.5 | Z | 2.76 | 12.5 | 4.52 | 3.0 | OK |
-| 9 | hub bending at the shaft end (axial = Z), cyclic (rotating bending) R 13.2 N x 13.5 | Z | 1.83 | 12.5 | 6.82 | 4.0 | OK |
-| 10 | hub bending at the shaft end (axial = Z), pretension sustained R 10.0 N x 13.5 | Z | 1.39 | 12.5 | 8.99 | 4.0 | OK |
-| 11 | hub at the M2 set-screw hole (Z, Kt 2 net), stall R 19.9 N x 14.5 | Z | 7.38 | 12.5 | 1.69 | 3.0 | **FAIL** |
-| 12 | hub at the M2 set-screw hole (Z, Kt 2 net), cyclic (rotating bending) R 13.2 N x 14.5 | Z | 4.89 | 12.5 | 2.56 | 4.0 | **FAIL** |
-| 13 | hub at the M2 set-screw hole (Z, Kt 2 net), pretension sustained R 10.0 N x 14.5 | Z | 3.71 | 12.5 | 3.37 | 4.0 | **FAIL** |
-| 14 | hub bending at the shaft end, 5 cm rear corner 31.8 N | Z | 4.42 | 12.5 | 2.83 | 3.0 | **FAIL** |
-| 15 | hub at the set-screw hole, 5 cm rear corner | Z | 11.80 | 12.5 | 1.06 | 3.0 | **FAIL** |
-| 16 | hub on the journal, 5 cm rear corner (journal 49 N) | XY | 1.64 | 25.0 | 15.22 | 3.0 | OK |
-| 17 | disc rim bearing under a link, 5 cm rear corner | XY | 1.26 | 25.0 | 19.80 | 3.0 | OK |
-| 18 | axial retention (set-screw friction 2 x mu N >= side 3 N) | friction N | 3.00 | 12.0 | 4.00 | 4.0 | OK |
+| 1 | T1 tooth root (chamfer top), stall pull 9.89 N on one tooth at RP (Kt 1.8) | XY | 8.03 | 25.0 | 3.11 | 3.0 | OK |
+| 2 | T2 tooth root, everyday pull 3.18 N (Kt 1.8) | XY | 2.59 | 25.0 | 9.67 | 4.0 | OK |
+| 3 | T3 tooth root shear, stall | XY shear | 0.79 | 12.5 | 15.85 | 3.0 | OK |
+| 4 | H1 hub-screw bearing on the slot side, stall 160 N*mm (2 of 4 screws at r 5.5) | XY | 0.69 | 25.0 | 36.09 | 3.0 | OK |
+| 5 | H2 hub-screw bearing, everyday 52 N*mm | XY | 0.22 | 25.0 | 112.12 | 4.0 | OK |
+| 6 | H3 hub-screw bearing, 5 cm rear corner 31.8 N (slots at 45° to the load, 2 bearing) | XY | 1.07 | 25.0 | 23.32 | 3.0 | OK |
+| 7 | H4 shaft end bearing in the centre hole, 5 cm rear corner (9 mm shaft: 2.5 mm engaged) | XY | 4.24 | 25.0 | 5.89 | 3.0 | OK |
+| 8 | H5 centre-hole-to-slot ligament (1.90 mm) shear-out, 5 cm rear corner toward a slot | XY shear | 3.35 | 12.5 | 3.73 | 3.0 | OK |
+| 9 | R1 disc rim bearing under a link, 5 cm rear corner | XY | 1.26 | 25.0 | 19.79 | 3.0 | OK |
+| 10 | S1 side drag 3 N on the screw washers (4 x 23.4 mm² beside the slots) | XY | 0.03 | 25.0 | 781.52 | 4.0 | OK |
 
-Advisory (not in the verdict: bounds, what-ifs, fixes, bought parts):
+Advisory (not in the verdict: bounds, what-ifs, fixes, proof loads, bought parts):
+
 | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|
-| spec §4 tooth case: 14.9 N on one tooth TIP (not reachable: the teeth share T_tight - T_slack = 9.9 N) | XY | 17.33 | 25.0 | 1.44 | 3.0 | no |
-| tooth root, stall pull 9.9 N at the TIP (link riding over a tooth on a slack track) | XY | 11.51 | 25.0 | 2.17 | 3.0 | no |
-| tooth root, fresh pack 100 % PWM 182 N*mm | XY | 9.03 | 25.0 | 2.77 | 3.0 | no |
-| tooth root, stall, if the chamfer behaves like a sharp corner (Kt 2.0) | XY | 8.82 | 25.0 | 2.84 | 3.0 | no |
-| D-flat bearing, fresh pack 100 % PWM 182 N*mm | XY | 22.99 | 25.0 | 1.09 | 3.0 | no |
-| D-flat bearing, fresh pack at the 80 % PWM cap 146 N*mm | XY | 18.39 | 25.0 | 1.36 | 3.0 | no |
-| D-flat bearing, stall, with the DFM hub-end counterbore (8.2 mm engaged) | XY | 23.41 | 25.0 | 1.07 | 3.0 | no |
-| hub bending at the shaft end, 5 cm corner, stiff landing delta 2.5 (64 N) | Z | 8.85 | 12.5 | 1.41 | 3.0 | no |
-| N20 shaft (D) at the gearbox face, lever model (journal + cradle), stall 19.9 N | steel σy 350 | 133.63 | 350.0 | 2.62 | 1.5 | OK |
-| N20 shaft (D) at the gearbox face, bound: motor clamped, journal not reached, stall | steel σy 350 | 233.74 | 350.0 | 1.50 | 1.5 | no |
-| N20 shaft (D) at the gearbox face, lever model (journal + cradle), 5 cm corner 31.8 N | steel σy 350 | 213.80 | 350.0 | 1.64 | 1.5 | OK |
-| N20 shaft (D) at the gearbox face, bound: motor clamped, journal not reached, 5 cm corner | steel σy 350 | 373.97 | 350.0 | 0.94 | 1.5 | no |
-| FIX metal N20 hub: M3 bolt bearing in the 7 mm disc (4 on r6), stall | XY | 0.32 | 25.0 | 78.75 | 3.0 | OK |
-| FIX metal N20 hub: bolt bearing, 5 cm corner (radial shared by 4) | XY | 0.38 | 25.0 | 66.00 | 3.0 | OK |
-| set screw turned onto the flat (DFM round-2 fix 2): hub at the hole (Kt 2 net), stall | Z | 7.37 | 12.5 | 1.70 | 3.0 | no |
-| FIX HUB_D 10 -> 10.5 (journal follows), no set-screw hole: hub at the shaft end, 5 cm corner | Z | 3.81 | 12.5 | 3.28 | 3.0 | OK |
-| FIX HUB_D 10 -> 11.0 (journal follows), no set-screw hole: hub at the shaft end, 5 cm corner | Z | 3.31 | 12.5 | 3.77 | 3.0 | OK |
+| proof (§8 test 1): stall 182 N*mm, tooth root (11.25 N) | XY | 9.14 | 25.0 | 2.74 | 1.0 | OK |
+| proof (§8 test 2): 2 kg (19.6 N) on one tooth at RP | XY | 15.94 | 25.0 | 1.57 | 1.0 | OK |
+| proof: stall 182 N*mm, hub-screw bearing | XY | 0.79 | 25.0 | 31.73 | 1.0 | OK |
+| S-08 ungated motor Phipps GA12-N20 6V 100 rpm: tooth root at the 6.0 V cap (12.1 N) | XY | 9.84 | 25.0 | 2.54 | 3.0 | no |
+| S-08 Phipps GA12-N20 6V 100 rpm: tooth root at the old 80 % cap (13.6 N) | XY | 11.02 | 25.0 | 2.27 | 3.0 | no |
+| tooth root, stall, if the chamfer acts like a sharp corner (Kt 2.0) | XY | 8.93 | 25.0 | 2.80 | 3.0 | no |
+| tooth root, stall pull at the TIP (a link riding over a tooth on a slack track) | XY | 11.65 | 25.0 | 2.15 | 3.0 | no |
+| H3/H4, 5 cm corner, stiff landing (stopping distance 2.5 mm, 64 N): shaft end bearing | XY | 8.49 | 25.0 | 2.95 | 3.0 | no |
+| assembly: M3 x 12 into the hub at 0.3 N*m (P 500 N): washer on the disc (23.4 mm² beside the slot) | XY | 21.33 | 25.0 | 1.17 | 3.0 | no |
+| assembly: M3 x 12 into the hub at 0.8 N*m (P 1333 N): washer on the disc (23.4 mm² beside the slot) | XY | 56.87 | 25.0 | 0.44 | 3.0 | no |
+| N20 shaft (bought), arm 10, Z_min 1.911: stall 19.9 N | steel σy 350 | 104.07 | 350.0 | 3.36 | 1.5 | OK |
+| N20 shaft (bought), arm 10, Z_min 1.911: fresh pack 100 % PWM 21.2 N | steel σy 350 | 111.19 | 350.0 | 3.15 | 1.5 | OK |
+| N20 shaft (bought), arm 10, Z_min 1.911: 5 cm corner 31.8 N | steel σy 350 | 166.58 | 350.0 | 2.10 | 1.5 | OK |
 
-- lowest SF 1.06 (required 3.0) at: hub at the set-screw hole, 5 cm rear corner
-- drop rows scale with the height: all of them meet their SF up to a 1.8 cm drop (design 5 cm), limited by: hub at the set-screw hole, 5 cm rear corner
-- 7 of 18 verdict rows below their required SF
+- Lowest SF: 3.11 (required 3.0), at T1, the tooth root.
+- Drop rows meet their SF up to 6.2 cm, limited by H5.
+- 0 of 10 verdict rows are below their required SF.
 
-## Required changes
+## Proof tests
 
-1. **BOM: metal N20 hub.** No printed geometry can carry the torque, so the round-1 recommendation stands. Use a brass or aluminium hub with a 3 mm D bore and its own set screw on the flat.
-   - Bolt the printed disc to it with 4 × M3 on r 6: bolt bearing SF 79 at stall and 66 at the 5 cm corner.
-   - Its OD can run in the journal.
-   - It must also clear the N20's Ø4 × 0.8 bearing boss. The current hub end overlaps that boss by 0.3 mm.
-2. **No radial hole in any printed hub section.** Delete the M2 set-screw hole: SF 1.06 to 3.37 at all four load levels. The metal hub carries the set screw.
-3. **Any printed tube between the metal hub and the disc must be Ø ≥ 10.5 with no hole: `HUB_D` 10 → 10.5.** It is shared in `rover_frame.py`, and the chassis journal follows it. Shaft-end section at the 5 cm corner: SF 2.83 → **3.28**. Ø11 gives 3.77.
+Spec §8 matches the NEEDS_TEST verdict; keep both tests.
 
-Without the set-screw hole, the drop limit rises from 1.8 cm to 4.7 cm with Ø10, and to 5.5 cm with Ø10.5.
+1. **Torque.**
+   - Hold the track still and stall the motor at 100 % PWM on a freshly charged pack, 1 s at a time, 5 times. That applies about 182 N·mm: 1.14 × the design value and 1.4 × a gated motor at the sketch's cap. Tooth SF at that torque: 2.74 on the placeholder.
+   - Pass: no slip of the hub on the shaft or of the disc on the hub (pen marks); no cracked or sheared tooth; the sprocket still runs true.
+   - The sketch caps the motors at 6.0 V average, so this test needs the cap lifted for the test only.
+2. **Tooth.**
+   - Hang **2 kg (19.6 N, 2 × the stall pull)** for 1 min from one link seated on one horizontal tooth.
+   - Pass: no crack at the tooth root and no permanent set. SF 1.57 on the placeholder.
 
-The DFM round-2 fixes don't change this verdict:
-- The Ø4.7 × 1.3 hub-end counterbore clears the bushing but cuts the engagement to 8.2 mm: D-flat SF 1.07.
-- Turning the set screw onto the flat leaves the hub at the hole at SF 1.70 at stall.
+**Condition (from S-08):**
+- Measure each motor's stall torque (chassis §8 test 2: ≤ 371 g on a 50 mm arm) **with only the hub fitted, before the disc goes on and before the first drive**.
+- If a motor reads higher, it isn't the specified type and must not drive these teeth. At 196 N·mm the tooth is at SF 2.54.
 
-Both are moot once the metal hub carries the torque and the set screw. The metal hub must still clear the bushing.
+## Notes
 
-## Proof test (after the changes; replaces spec §8)
-
-1. **Torque.** Hold the track still and stall the motor for 3 s, 5 times, **at 100 % PWM on a freshly charged pack** (about 182 N·mm, 1.14 × design and the most the N20 gives; 80 % PWM gives only 146 N·mm). Pass:
-   - no slip of the hub on the shaft or of the disc on the hub (pen marks);
-   - no cracked or sheared tooth;
-   - the hub still turns freely in the journal.
-2. **Tooth.** Mount the sprocket on its hub on a spare N20, or on a 3 mm D shaft in a vise. Hang **2 kg (19.6 N, 2 × the 9.9 N stall pull)** for 1 min from one link seated on one horizontal tooth. Pass: no crack at the tooth root, no permanent set.
+- **Hub screws.** BUILD_GUIDE step 6 says "tighten the screws evenly (2.5 mm key)". A firm 0.8 N·m into the aluminium hub puts about 1.3 kN on each washer, and the washer bridges the slot onto 23 mm² of PETG: 57 MPa. That crushes the disc and lets it wobble. The design takes no credit for the clamp (H1 is in bearing), so say "snug, about 0.3 N·m, and re-check after the first run".
+- **Advisory below 3, all outside the verdict cases:**
+  - the stiff-landing shaft-end bearing (2.95);
+  - the tooth-tip case (2.15), which the jack screw prevents.
