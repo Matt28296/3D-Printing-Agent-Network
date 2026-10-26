@@ -1,6 +1,6 @@
 {
  "tol_mm3": 0.5,
- "bodies": 158,
+ "bodies": 160,
  "collisions": [],
  "exempt_pairs": [],
  "idler_and_jack_at_slot_ends": "clear",
@@ -62,19 +62,21 @@
  ],
  "motor_with_11mm_gearbox": "clear",
  "shaft_variants": {
-  "9 mm shaft": {
-   "shaft_end_y": 53.0,
+  "9.6 mm shaft (minimum)": {
+   "shaft_end_y": 53.6,
    "engaged_in_hub_mm": 5.0,
    "set_screw_y": 49.0,
-   "shaft_past_set_screw_mm": 2.5,
-   "in_sprocket_centre_hole_mm": 1.5
+   "shaft_past_set_screw_mm": 3.1,
+   "in_sprocket_centre_hole_mm": 2.1,
+   "ends_inside_the_disc": true
   },
-  "10 mm shaft": {
+  "10 mm shaft (specified)": {
    "shaft_end_y": 54.0,
    "engaged_in_hub_mm": 5.0,
    "set_screw_y": 49.0,
    "shaft_past_set_screw_mm": 3.5,
-   "in_sprocket_centre_hole_mm": 2.5
+   "in_sprocket_centre_hole_mm": 2.5,
+   "ends_inside_the_disc": true
   }
  },
  "axle_bolt_stacks": [
@@ -85,6 +87,12 @@
     35.4,
     37.8
    ],
+   "running_washer_y": [
+    38.0,
+    38.5
+   ],
+   "part_inner_face_y": 38.5,
+   "part_seats_on_running_washer": true,
    "part_outer_face_y": 71.0,
    "nyloc_y": [
     71.5,
@@ -101,9 +109,15 @@
    "bolt": "idler M3 x 40",
    "head_underside_y": 27.2,
    "wall_nut_y": [
-    35.4,
-    37.8
+    40.8,
+    43.2
    ],
+   "running_washer_y": [
+    43.2,
+    43.7
+   ],
+   "part_inner_face_y": 43.7,
+   "part_seats_on_running_washer": true,
    "part_outer_face_y": 58.5,
    "nyloc_y": [
     59.0,
@@ -114,7 +128,43 @@
    "ok_past_nyloc": true,
    "fully_threaded_engages_wall_nut": true,
    "iso4762_partly_threaded_thread_starts_y": 49.2,
-   "iso4762_would_engage_wall_nut": false
+   "iso4762_would_engage_wall_nut": false,
+   "idler_stack_y": {
+    "head_washer_d9": [
+     27.2,
+     28.0
+    ],
+    "head_plate": [
+     28.0,
+     30.0
+    ],
+    "petg": [
+     30.0,
+     38.0
+    ],
+    "nut_plate": [
+     38.0,
+     40.0
+    ],
+    "washer_d9": [
+     40.0,
+     40.8
+    ],
+    "wall_nut": [
+     40.8,
+     43.2
+    ],
+    "running_washer": [
+     43.2,
+     43.7
+    ],
+    "idler_hub_from": 43.7,
+    "idler": [
+     43.7,
+     58.5
+    ],
+    "idler_bore_length_mm": 14.8
+   }
   }
  ],
  "hub_screws": {
@@ -127,81 +177,177 @@
  },
  "tool_paths": "clear",
  "idler_clamp_plates": {
+  "round": 5,
   "plate_t_mm": 2.0,
-  "head_plate_mm": [
-   20.6,
-   10.0,
-   2.0
-  ],
-  "head_plate_x": [
-   108.2,
-   128.8
-  ],
-  "head_plate_y": [
-   28.0,
-   30.0
-  ],
-  "head_recess_x": [
-   108.0,
-   129.0
-  ],
-  "head_recess_clearance_x_mm_cad": 0.4,
-  "nut_plate_mm": [
-   14.0,
-   8.0,
-   2.0
-  ],
-  "nut_plate_x": [
-   113.0,
-   127.0
-  ],
-  "nut_plate_y": [
-   33.4,
-   35.4
-  ],
-  "nut_slot_x": [
-   112.5,
-   127.5
-  ],
-  "nut_slot_h": 9.0,
-  "nut_plate_top_edge_to_slot_roof_mm": 0.5,
-  "slots_mm": [
-   3.4,
-   12.0
-  ],
-  "bolt_travel_x_in_both_plate_slots": [
-   115.5,
-   124.5
-  ],
+  "plates_identical": true,
+  "head": {
+   "plate": "head plate (inside, in the idler-block recess, under the \u00d89 head washer)",
+   "size_mm": [
+    20.6,
+    10.0,
+    2.0
+   ],
+   "slot_mm": [
+    3.4,
+    12.0
+   ],
+   "slot_from_rear_end_mm": [
+    6.0,
+    18.0
+   ],
+   "locator": "2 mm recess, floor at Z_A - 5.2",
+   "locator_x": [
+    108.0,
+    129.0
+   ],
+   "play_x_mm_cad": 0.4,
+   "x_nominal": [
+    108.2,
+    128.8
+   ],
+   "y": [
+    28.0,
+    30.0
+   ],
+   "z_resting_rel_axle": [
+    -5.2,
+    4.8
+   ],
+   "bolt_centre_range_in_its_slot_x": {
+    "plate_at_rear": [
+     115.5,
+     124.5
+    ],
+    "plate_at_front": [
+     115.9,
+     124.9
+    ]
+   },
+   "covers_slot_travel": true,
+   "slot_band_z_rel_axle": [
+    -1.9,
+    1.5
+   ],
+   "washer_d9_on_plate_margin_x": [
+    {
+     "idler_dx": -4.0,
+     "nominal_mm": 3.3,
+     "plate_at_either_end_of_its_play_mm": 3.1
+    },
+    {
+     "idler_dx": 0.0,
+     "nominal_mm": 4.3,
+     "plate_at_either_end_of_its_play_mm": 4.1
+    },
+    {
+     "idler_dx": 4.0,
+     "nominal_mm": 0.3,
+     "plate_at_either_end_of_its_play_mm": 0.1
+    }
+   ]
+  },
+  "nut": {
+   "plate": "nut plate (outside, flat on the wall's outer face, under the \u00d89 washer and the wall nut)",
+   "size_mm": [
+    20.6,
+    10.0,
+    2.0
+   ],
+   "slot_mm": [
+    3.4,
+    12.0
+   ],
+   "slot_from_rear_end_mm": [
+    6.0,
+    18.0
+   ],
+   "locator": "lip (top Z_A - 5.2, 1.0 proud) and end stops, nothing cut into the wall",
+   "locator_x": [
+    108.0,
+    129.0
+   ],
+   "play_x_mm_cad": 0.4,
+   "x_nominal": [
+    108.2,
+    128.8
+   ],
+   "y": [
+    38.0,
+    40.0
+   ],
+   "z_resting_rel_axle": [
+    -5.2,
+    4.8
+   ],
+   "bolt_centre_range_in_its_slot_x": {
+    "plate_at_rear": [
+     115.5,
+     124.5
+    ],
+    "plate_at_front": [
+     115.9,
+     124.9
+    ]
+   },
+   "covers_slot_travel": true,
+   "slot_band_z_rel_axle": [
+    -1.9,
+    1.5
+   ],
+   "washer_d9_on_plate_margin_x": [
+    {
+     "idler_dx": -4.0,
+     "nominal_mm": 3.3,
+     "plate_at_either_end_of_its_play_mm": 3.1
+    },
+    {
+     "idler_dx": 0.0,
+     "nominal_mm": 4.3,
+     "plate_at_either_end_of_its_play_mm": 4.1
+    },
+    {
+     "idler_dx": 4.0,
+     "nominal_mm": 0.3,
+     "plate_at_either_end_of_its_play_mm": 0.1
+    }
+   ]
+  },
   "bolt_travel_x_needed": [
    116.0,
    124.0
   ],
+  "petg_between_the_plates_mm": 8.0,
+  "nut_slot_in_wall": false,
+  "outside_stack_y": {
+   "nut_plate": [
+    38.0,
+    40.0
+   ],
+   "washer_d9": [
+    40.0,
+    40.8
+   ],
+   "wall_nut": [
+    40.8,
+    43.2
+   ],
+   "running_washer": [
+    43.2,
+    43.7
+   ],
+   "idler_hub_from": 43.7
+  },
+  "nut_plate_and_seat_inboard_of_links_mm": 3.0,
   "head_stack_unchanged": {
    "head_underside_y": 27.2,
    "washer_y": [
     27.2,
     28.0
    ],
-   "jack_axis_y": 25.4
+   "jack_axis_y": 25.4,
+   "jack_clears_head_washer_mm": 0.3,
+   "jack_bears_on_head_mm": 2.7
   },
-  "at_slot_positions": [
-   {
-    "idler_dx": -4.0,
-    "washer_on_head_plate_margin_mm": 3.3,
-    "nut_flats_on_nut_plate_margin_mm": 0.25
-   },
-   {
-    "idler_dx": 0.0,
-    "washer_on_head_plate_margin_mm": 4.3,
-    "nut_flats_on_nut_plate_margin_mm": 4.25
-   },
-   {
-    "idler_dx": 4.0,
-    "washer_on_head_plate_margin_mm": 0.3,
-    "nut_flats_on_nut_plate_margin_mm": 0.25
-   }
-  ],
   "ok": true
  },
  "skin_mm": 2.0,
@@ -214,9 +360,9 @@
   "L": {
    "chassis_to_links_min_mm": 1.0,
    "at": [
-    -9.1,
+    -8.6,
     42.0,
-    10.0
+    32.0
    ],
    "nacelle_to_links_min_mm": 1.5,
    "nacelle_at": [
@@ -228,9 +374,9 @@
   "R": {
    "chassis_to_links_min_mm": 1.0,
    "at": [
-    -10.4,
+    -9.7,
     -42.0,
-    28.4
+    31.5
    ],
    "nacelle_to_links_min_mm": 1.5,
    "nacelle_at": [

@@ -45,6 +45,7 @@ Printed targets for the whole rover: see the chassis brief.
 - **Fit and collisions.** The rails sit on the deck's top face, inside the outline. Their outer edges are 14.15 mm and the tie slots 10.85 mm inside the chassis walls' inner faces (|y| 33.5), so the ties under the deck stay over the tub. They clear the toggle hole (10.2 mm in x), the cable slots (rails end at x 69.0, slots start at 70.9) and the screw holes (|y| 32.5). The assembly check finds 0 collisions.
 - Volume 31 377 → 32 289 mm³ (about 1.2 g). cad_checks: 14 checks (rail width, height and extent; tie-slot positions; clearance to the walls, toggle, cable slots and screws).
 - Proof test 1a now presses on the rail top at mid-window (strength round 3).
+- **Perimeters (2026-10-26, chassis round 5's design lead):** `print_requirements.json` min perimeters 3 → 5. Strength row L1 takes each 4.5 mm rail as a solid section; 3 perimeters filled the old 2.5 mm rail but leave 20 % gyroid inside a 4.5 mm one, and the slice (audit.md) already used 5 so the rails print solid. The requirement now says so, so a re-plan can't drop back. No geometry change.
 
 ## Parameters exposed by model.py
 HOLE_COMP, T, CORNER_R, SCREWS, SCREW_D, BOARDS, USB_END_X, LEDGE_H, CLR, RAIL_W, HALF, ROW_KEEP, END_LEDGE, TIE_SLOT, TIE_FROM_END, BB_X0, CABLE_X, CABLE_Y, CABLE_R, SWITCH, SWITCH_D, BED_CHAMFER. `cad_checks.py` proves them on the geometry.

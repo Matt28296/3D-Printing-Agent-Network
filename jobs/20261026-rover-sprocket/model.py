@@ -8,10 +8,12 @@ printed hub section may have a radial hole). The disc's inner face seats directl
 outer face (world Y 51.5): the motor sits 45° rolled in a nacelle that reaches into the track's
 wrap, so the hub is already at the disc and no printed tube is needed. The four M3 holes are
 short radial slots, because the hub's hole circle is not confirmed (drawing value r 6.35): they
-take any circle from r 5.5 to 6.85. The shaft end (world Y 54 or 55 for a 9 or 10 mm shaft) runs
-free in a Ø3.4 printed (Ø3.6 CAD) centre hole. No set screw and no D-bore in the print.
+take any circle from r 5.5 to 6.85. The shaft end (world |y| 54 for the specified 10 mm shaft, at
+least 53.6 for the 9.6 mm minimum, measured from the gearbox face at |y| 44) runs free 2.5 (at least
+2.1) mm deep in a Ø3.4 printed (Ø3.6 CAD) centre hole. No set screw and no D-bore in the print.
 The idler (20261026-rover-idler) runs this model with BORE = "round": the same disc and teeth on a
-Ø10 hub with a round running bore on its M3 bolt.
+Ø10 hub with a round running bore on its M3 bolt. Round 5: the idler's hub starts at |y| 43.7
+(rover_frame.IDLER_HUB_Y0), 5.2 mm shorter, outside the chassis's nut plate, washer and wall nut.
 Teeth sit at k·36° (mid-way between pins when pins sit at 18° + k·36°), with 45° root chamfers that
 start on the disc circle. Printed outer disc face down (the idler's hub up).
 """
@@ -23,8 +25,7 @@ from build123d import Align, BuildPart, BuildSketch, Cylinder, Plane, Polygon, P
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-rover-assembly"))
-from rover_frame import (CHORD_IN, DISC_HALF, HALF_W_OUT, HUB, HUB_D, HUB_GAP, HUB_Y1, LINK_T, N_TEETH,  # noqa: E402
-                         Y_T)
+from rover_frame import (CHORD_IN, DISC_HALF, HUB, HUB_D, HUB_Y1, IDLER_HUB_Y0, LINK_T, N_TEETH, Y_T)  # noqa: E402
 
 from hobby_parts import chamfer_plane_edges  # noqa: E402
 
@@ -43,9 +44,11 @@ assert abs(HUB_FACE_Z + DISC_HALF) < 1e-9
 HUB_SCREW_D = 3.4                     # M3 clearance (printed)
 SLOT_R = HUB.bolt_circle_r_range      # (5.5, 6.85): radial slots take any hole circle in this range
 SLOT_ANGLE0 = 45.0                    # slot angles 45° + k·90°
-SHAFT_CLEAR_D = HUB.bore + 0.4        # Ø3.4 printed centre hole: the shaft end (Y 51.0) runs free
+SHAFT_CLEAR_D = HUB.bore + 0.4        # Ø3.4 printed centre hole: the 10 mm shaft's end (|y| 54; at least 53.6 for the
+#                                       9.6 mm minimum) runs free in it, 2.5 (at least 2.1) mm past the hub face (51.5)
 # idler (BORE = "round")
-HUB_Z0_ROUND = -(Y_T - (HALF_W_OUT + HUB_GAP))  # -16.5: hub end at the washer outside the wall (idler)
+HUB_Z0_ROUND = IDLER_HUB_Y0 - Y_T     # -11.3: idler hub's inner end at |y| 43.7, on the running washer on the wall nut
+#                                       (round 5: nut plate, Ø9 washer and nut outside the wall; it was -16.5)
 ROUND_BORE = 3.5                      # printed running bore for the idler bolt (0.5 mm running clearance)
 BED_CHAMFER = 0.3
 

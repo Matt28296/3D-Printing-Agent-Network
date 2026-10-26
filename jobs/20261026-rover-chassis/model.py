@@ -23,17 +23,24 @@ Round 3 (DFM + strength round 2, Architect's round-3 decisions, deep reviews 01 
   that bears on the bolt head and holds the track tension without friction.
 - Lid columns Ø10 with M3 heat-set inserts, moved to |y| 32.5 so the jack screw's line is clear.
 - Strap slots at |y| 26; the toggle switch moved to the lid (the lever no longer sticks out).
-Axle bolts: M3 socket head cap screws, class 12.9, FULLY threaded (they must engage the nut
-trapped in the wall's outer face): M3 × 50 for the road wheels, M3 × 40 for the idlers.
+Axle bolts: M3 socket head cap screws, class 12.9, FULLY threaded (each must engage its wall nut,
+which sits 10 mm or more from the head): M3 × 50 for the road wheels, M3 × 40 for the idlers.
 
 Round 4 (strength round 3, changes 1 and 2, approved by the user; nothing else changed):
 - Skin 1.0 -> 2.0 (rover_frame.SKIN): the skin grows inward, so the gearbox face moves to y 44 and the
   pocket and trough follow it 1 mm inward; the nacelle, hub and track plane stay put.
 - Idler clamp: a 2 mm steel head plate (rover_frame.IDLER_PLATE) let into a PLATE_T deep recess in each
   idler-block face between the buttress (x 108) and the front strip (x 129), under the Ø9 washer, so the
-  head, JACK_Y and the buttress keep their places; and a 2 mm steel nut plate (rover_frame.NUT_PLATE) on
-  the bottom of the idler nut slot, now 9 mm tall and PLATE_T deeper. Both have 45° roofs where they open
-  (no flat ceiling to bridge), except the flat strip over the nut plate, which its top edge bears on.
+  head, JACK_Y and the buttress keep their places. The recess has a 45° roof (no flat ceiling to bridge).
+
+Round 5 (strength round 4's fix, approved by the user; nothing else changed): round 4's 9 × 15 × 4.6 idler
+nut slot is deleted. It left a 3.4 mm PETG web between the plates that the yaw and tilt couples cracked
+(SF 0.61). Now the PETG between the head-plate recess and the wall's outer face is the full 8.0 mm
+(|y| 30-38), with only the bolt slot through it. The steel nut plate, now the head plate's 20.6 × 10 twin
+(rover_frame.NUT_PLATE), lies flat on the outer face at the head plate's x and z. A printed lip under its
+bottom edge (45° underside) and an end stop at each end locate it, so nothing is cut into the wall and
+nothing relies on friction to keep it in place. A Ø9 washer goes under the wall nut, outside, and the
+idler's hub starts 5.2 mm further out (rover_frame.IDLER_HUB_Y0, |y| 43.7).
 """
 import sys
 from pathlib import Path
@@ -101,9 +108,17 @@ PLATE_RECESS_Z = IDLER_PLATE[1] / 2 + 0.2                 # 5.2: recess bottom Z
 #                               a vertical size, so no HOLE_COMP), then a 45° roof up to the block face
 PLATE_RECESS_D = PLATE_T                                  # 2.0: recess depth = plate thickness (|y| 28-30): the plate sits
 #                               flush, so the head, its washer, JACK_Y and the buttress stay where they are
-NUT_SLOT_H = 9.0              # idler nut slot height, Z_A ± 4.5 (strength round 3: 6.0 -> 9; 8 mm nut plate + 1)
-NUT_SLOT_L = NUT_PLATE[0] + 1.0                           # 15.0: x 112.5-127.5 (14 mm plate + 0.5 a side CAD, ~0.4 printed)
-NUT_SLOT_D = NUT_DEPTH + PLATE_T                          # 4.6: PLATE_T deeper (|y| 33.4-38): nut plate on the bottom, nut on it
+# idler nut plate (round 5, strength round 4's fix: the 9 × 15 × 4.6 nut slot is deleted). The head plate's twin lies flat
+# on the wall's outer face (|y| 38-40), so the PETG between the plates is the full 8.0 mm (|y| 30-38) round the bolt slot
+NUT_PLATE_X = PLATE_RECESS_X  # (108.0, 129.0): the end stops' inner faces = the recess's ends, so the nut plate has the head
+#                               plate's fit (0.4 CAD, about 0.2 printed) and sits at its x 108.2-128.8 (strength round 4 FIX)
+LIP_DZ = PLATE_RECESS_Z       # 5.2: lip top face at Z_A - 5.2, level with the recess floor, so both plates rest at the same
+#                               height and their slots line up on the bolt (print z 6.8, on a layer line)
+LIP_OUT = 1.0                 # lip and stops stand 1.0 proud of the outer face (|y| 38-39, half the plate's 2 mm): the Ø9
+#                               washer (|y| 40-40.8) clears them, and they stay 4 mm inboard of the links (|y| 43)
+LIP_FACE = 1.0                # lip: 1.0 vertical front face below its top, then a 45° underside back into the wall
+STOP_W = 1.5                  # end stops along x (x 106.5-108 and 129-130.5), from the lip up to Z_A + 5.2
+assert NUT_PLATE[0] <= NUT_PLATE_X[1] - NUT_PLATE_X[0] - 0.4, "the nut plate must drop in between its end stops"
 BATT_X0 = 22.0                # battery holder from x 22 (77 mm standard, up to 80 for protected cells)
 BATT_LEN = BATT_2X18650_LONG.length
 STRAP_W, STRAP_L, STRAP_Y = 3.0, 22.0, 26.0   # velcro strap slots beside the holder (strength round 2: 26)
@@ -151,7 +166,8 @@ def _strip_z(x, y, sx, sy, z0, z1, t=JOIN):
 
 def _nut_trap(x, side):
     """Road-wheel hex nut trap (vertices along ±X, flats top/bottom: the roof is a short flat bridge
-    between 60° faces) from the outer face inward. The idler's nut has its own slot (_idler_nut_slot)."""
+    between 60° faces) from the outer face inward. The idler's nut sits outside the wall, on a Ø9 washer
+    on its nut plate (round 5)."""
     af = NUT_AF + NUT_CLR + HOLE_COMP
     y_out = side * HALF_W_OUT
     return Pos(x, y_out + side * 0.01, Z_A) * Rot(90 * side, 0, 0) * hex_nut_pocket(af, NUT_DEPTH + 0.01, clearance=0)
@@ -168,17 +184,19 @@ def _plate_recess(side):
     return c if side > 0 else c.mirror(Plane.XZ)
 
 
-def _idler_nut_slot(side):
-    """Idler nut slot from the outer face (round 4): NUT_SLOT_D deep and NUT_SLOT_H tall, the steel nut plate
-    on its bottom and the sliding nut on the plate. The roof is flat over the plate (its top edge bears there
-    in a drop, strength B4), then rises at 45° to the outer face, so the nut zone has no flat ceiling."""
-    y0 = HALF_W_OUT - NUT_SLOT_D                           # 33.4: slot bottom
-    yp = y0 + PLATE_T                                      # 35.4: plate's outer face = nut seat
-    yo = HALF_W_OUT + 0.1
-    zb, zt = Z_A - NUT_SLOT_H / 2, Z_A + NUT_SLOT_H / 2
-    pts = [(y0, zb), (yo, zb), (yo, zt + yo - yp), (yp, zt), (y0, zt)]
-    c = _x_prism(pts, AXLE_DX - NUT_SLOT_L / 2, NUT_SLOT_L)
-    return c if side > 0 else c.mirror(Plane.XZ)
+def _nut_plate_seat(side):
+    """Seat for the idler's steel nut plate on the wall's outer face (round 5): a lip under the plate's bottom edge (top at
+    Z_A - LIP_DZ, LIP_OUT proud, a LIP_FACE vertical face, then a 45° underside back into the wall, so it prints without
+    support) and an end stop at each end (inner faces at NUT_PLATE_X) up to the plate's top edge. Nothing is cut into the
+    wall. The seat starts 1 mm inside the outer face, so it joins the wall there and on the front corner's r6 fillet (which
+    starts at x 129, under the front stop)."""
+    yi, yo = HALF_W_OUT - 1.0, HALF_W_OUT + LIP_OUT       # 37 (inside the wall) .. 39
+    zt = Z_A - LIP_DZ
+    x0, x1 = NUT_PLATE_X[0] - STOP_W, NUT_PLATE_X[1] + STOP_W
+    seat = _x_prism([(yi, zt), (yo, zt), (yo, zt - LIP_FACE), (yi, zt - LIP_FACE - (yo - yi))], x0, x1 - x0)
+    for xa, xb in ((x0, NUT_PLATE_X[0]), (NUT_PLATE_X[1], x1)):
+        seat += _box(xa, xb, yi, yo, zt - LIP_FACE / 2, Z_A + LIP_DZ)
+    return seat if side > 0 else seat.mirror(Plane.XZ)
 
 
 def _housing(side):
@@ -270,6 +288,8 @@ def design():
         tub += _y_prism([(xi1 + 0.01, top - 0.01), (xi1 - JOIN, top - 0.01), (xi1 + 0.01, top + JOIN)],
                         min(s * yb, s * (yi + 0.01)), yi + 0.01 - yb)
         tub += _box(JACK_X[0], JACK_X[1], s * JACK_Y_IN, s * (yi + 0.01), floor_top - 0.01, JACK_TOP)
+        # seat for the idler's nut plate on the wall's outer face (round 5): lip and end stops
+        tub += _nut_plate_seat(side)
 
     # ---- lid columns (joined to the walls) with heat-set insert holes -------------------------
     for (x, y) in COLUMNS:
@@ -296,15 +316,14 @@ def design():
         for x in ROAD_X:
             tub -= teardrop_cutter(BOLT_D + HOLE_COMP, span, axis="Y", center=(x, y_mid, Z_A))
             tub -= _nut_trap(x, side)
-        # idler bolt slot: teardrop ends + a hull up to the teardrop tips (8 mm bridge) + nut slot
+        # idler bolt slot through the block and the wall: teardrop ends + a hull up to the teardrop tips (8 mm bridge)
         r = (BOLT_D + HOLE_COMP) / 2
         for dx in (-IDLER_SLOT, IDLER_SLOT):
             tub -= teardrop_cutter(BOLT_D + HOLE_COMP, span, axis="Y", center=(AXLE_DX + dx, y_mid, Z_A))
         tub -= _box(AXLE_DX - IDLER_SLOT, AXLE_DX + IDLER_SLOT, s * (yb - 1), s * (HALF_W_OUT + 1),
                     Z_A - r, Z_A + r * 2 ** 0.5)
-        # steel clamp plates (round 4): head-plate recess in the block face, nut slot 9 tall and PLATE_T deeper
+        # steel head plate (round 4): recess in the block face. The nut plate lies on the outer face (round 5: no slot)
         tub -= _plate_recess(side)
-        tub -= _idler_nut_slot(side)
         # jack-screw pilot along X through the buttress, teardrop pointing up
         tub -= teardrop_cutter(JACK_PILOT + HOLE_COMP, JACK_X[1] - JACK_X[0] + 6, axis="X",
                                center=((JACK_X[0] + JACK_X[1]) / 2, s * JACK_Y, Z_A))
