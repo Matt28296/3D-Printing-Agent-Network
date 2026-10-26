@@ -17,8 +17,9 @@
 //   r              rest: park upright, where the shoulder holds about 0 N.mm. The arm also parks by itself
 //                  after IDLE_PARK_S seconds without a command; i <s> changes that (i 0 = never), i shows it
 //   t              show the joint trims; t <b|s|e|w> <deg> sets one; t save keeps them (BUILD_GUIDE §5)
-//   c              every servo to its centre (90°) and the claw closed: the horn-fitting pose of BUILD_GUIDE §4
-//   f              claw servo to its closed angle (fitting the pinion); k <deg> trims that angle (kept)
+//   c              every servo to its centre (90°) and the claw closed: the pose BUILD_GUIDE §4 fits the arm's horns
+//                  in. The pinion goes on last, pushed in through the cover with the claw fully open (g 44)
+//   f              claw servo to its closed angle, like g 0; k <deg> trims that angle (kept)
 //   u <j> <us>     end-stop test, before the horns go on: one servo (b s e w g) to a raw pulse, moved slowly.
 //                  It ignores the joint limits and the guard
 //   p              print the joint angles (moves nothing)
@@ -39,8 +40,8 @@
 #include <Preferences.h>
 #include <cmath>
 
-// ---- Claw: rack and pinion, pitch radius 9 mm: 3.18° of servo per mm of jaw gap, 0-44 mm in 140° -------------
-const float DEG_PER_MM = 3.183;
+// ---- Claw: rack and pinion, 20 teeth, pitch radius 10 mm: 2.865° of servo per mm of jaw gap, 0-44 mm in 126° ---
+const float DEG_PER_MM = 2.865;
 const float GRIP_MAX_MM = 44.0;
 int GRIP_OPEN_DIR = +1;          // +1: a bigger angle opens the claw. If "g 5" squeezes instead of opening, set -1
 float GRIP_CLOSED_DEG = 20.0;    // with GRIP_OPEN_DIR -1 use about 160. k trims it at run time and keeps the trim
@@ -93,7 +94,8 @@ const int STEP_MS = 20;          // one step per 50 Hz servo frame
 const float LOOK_DEG = 0.5;      // the guard's look-ahead checks the path every LOOK_DEG of the longest way
 const int BOOT_GAP_MS = 400;     // between attaching one servo and the next
 
-// ---- Rest (SYS-02): upright. Deep review 03's mass model gives the shoulder about 1 N.mm there ----------------
+// ---- Rest (SYS-02): upright. torque_budget.py's masses give the shoulder about 2 N.mm there (51-56 % of stall
+// straight out with the camera) -----------------------------------------------------------------------------------
 const float PARK_SHOULDER = 90, PARK_ELBOW = 0, PARK_WRIST = 0;   // the base and the claw stay as they are
 const unsigned long IDLE_PARK_S = 60;    // park after this many seconds without a command; 0 = never.
                                          // i <s> changes it at run time and keeps it in flash
@@ -115,18 +117,20 @@ const float BASE_HX = 55.0, BASE_HY = 52.0, DRUM_R = 48.0, DRUM_TOP = 24.5;
 
 struct Part { int link; float x0, x1, y0, y1, Y0, Y1; int kind; };
 // link 1 = upper link (from the shoulder axis), 2 = forearm (elbow axis), 3 = claw (wrist axis)
-// kind 0 = fixed, 1 = the Brio (left out without it), 2/3/4 = racks / necks / finger blades, whose y grows with
-// the claw's opening g: racks ±max(28.27 − g/2, 15.71 + g/2), necks ±(14 + g/2), blades ±(6 + g/2) (claw_frame.py)
+// kind 0 = fixed, 1 = the Brio (left out without it), 2-5 = the jaws, whose y grows with the claw's opening g
+// (claw_frame.py): racks ±max(31.42 − g/2, 25.13 + g/2) (RACK_Y), necks with their r 4 root fillets ±(24 + g/2),
+// finger roots and tapers ±(12 + g/2) (BLADE_T_ROOT), fingertips ±(6 + g/2) (BLADE_T)
 const Part PARTS[] = {
   {1, -25.0,  121.0,  -17.0, 17.0,   -7.5,   35.4,  0},   // upper link and the elbow MG996R
   {2, -25.0,  104.0,  -13.0, 13.0,   34.0,   44.0,  0},   // forearm
   {2,  68.4,  100.6,   -6.1,  6.1,   25.5,   58.0,  0},   // wrist MG90S
-  {3,  -8.5,   33.85, -32.0, 32.0,   56.6,   98.6,  0},   // claw frame, cover, pinion and claw MG90S
-  {3, -26.55,  14.0,  -28.0, 22.0,   98.6,  122.7,  0},   // camera mount
-  {3, -21.69,  15.19, -51.0, 51.0,  102.35, 139.23, 1},   // Brio 4K
-  {3,  22.6,   30.6,    0.0,  0.0,   62.85,  95.35, 2},   // racks
-  {3,  30.6,   42.35,   0.0,  0.0,   62.85,  95.35, 3},   // necks
-  {3,  42.35,  79.35,   0.0,  0.0,   62.85,  95.35, 4},   // finger blades, out to the fingertips
+  {3,  -8.5,   37.85, -32.0, 32.0,   52.6,  108.1,  0},   // claw frame, cover, pinion and claw MG90S
+  {3, -26.32,  14.0,  -28.0, 22.0,  108.1,  140.49, 0},   // camera mount
+  {3, -24.33,  17.79, -51.0, 51.0,  113.07, 154.93, 1},   // Brio 4K with its right-angle plug and thumb screw
+  {3,  22.6,   32.6,    0.0,  0.0,   62.6,  105.1,  2},   // racks
+  {3,  32.6,   49.35,   0.0,  0.0,   62.6,  105.1,  3},   // necks, down to the finger roots
+  {3,  49.35,  76.35,   0.0,  0.0,   62.6,  105.1,  4},   // finger roots and their tapers
+  {3,  76.35,  83.35,   0.0,  0.0,   62.6,  105.1,  5},   // fingertips
 };
 const int NPARTS = sizeof(PARTS) / sizeof(PARTS[0]);
 const float RAD = 0.017453293f;
@@ -190,9 +194,10 @@ void guardMargins(float yaw, float sh, float el, float wr, float gapMm, float &d
     const Part &P = PARTS[p];
     if (P.kind == 1 && !CAMERA_FITTED) continue;
     float y0 = P.y0, y1 = P.y1;
-    if (P.kind == 2) y1 = max(28.27f - d, 15.71f + d);
-    else if (P.kind == 3) y1 = 14.0f + d;
-    else if (P.kind == 4) y1 = 6.0f + d;
+    if (P.kind == 2) y1 = max(31.42f - d, 25.13f + d);
+    else if (P.kind == 3) y1 = 24.0f + d;
+    else if (P.kind == 4) y1 = 12.0f + d;
+    else if (P.kind == 5) y1 = 6.0f + d;
     if (P.kind >= 2) y0 = -y1;
     const int L = P.link;
     const float s = sinf(ang[L] * RAD), c = cosf(ang[L] * RAD);
@@ -568,7 +573,6 @@ void loop() {
     if (!found) { Serial.println("unknown command: b s e w g h r i t c f k u p m ? x"); return; }
   }
   printResult(runMove(guarded));
-  if (cmd == 'f') squeezing = false;                                     // hold the exact angle for fitting
   if (cmd == 'k') Serial.printf("GRIP_CLOSED_DEG = %.1f (kept on the ESP32)\n", GRIP_CLOSED_DEG);
   if (uj >= 0) Serial.printf("%s at %d us (servo %.1f deg; raw: no limits, no guard)\n", joints[uj].name, pulseUs(uj, joints[uj].cur), joints[uj].cur);
   printPos("angles b s e w | claw mm:");
