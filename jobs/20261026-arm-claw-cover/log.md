@@ -13,3 +13,4 @@
 - 2026-10-26T12:56Z · architect · spec §8: proof test replaced with claw strength round 2's version (1.5 × the design loads); decision: the claw opening against an obstacle stays a design case (nothing limits the opening stall force) · ok
 - 2026-10-26T15:16Z · design-lead + cad-engineer (claw round 3) · model.py, design_brief.md, cad_checks.py · ok; architect merged it with links round 5 · ok
 - 2026-10-26T15:16Z · architect · spec §1: round 3 values recorded · ok
+- 2026-10-26T15:43Z · dfm-reviewer (claw round 3, independent) · design_review.md · FAIL

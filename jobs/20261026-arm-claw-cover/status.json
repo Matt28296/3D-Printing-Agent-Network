@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 2,
+    "DESIGN": 3,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 merged; DFM and strength reviews next (third attempt)",
+    "DESIGN": "FAIL round 3 DFM: support pillar B (1.0 mm) leaves 4.24 mm\u00b2 of a piece's first layer in mid-air; third failure, escalated to the user: SUP_B \u2192 (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
-  "updated": "2026-10-26T15:16:36+00:00"
+  "open_questions": [
+    "Cover failed a third time (pillar B too thin). Fix: SUP_B (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8). Fourth round? (asked of the user)"
+  ],
+  "updated": "2026-10-26T15:43:26+00:00"
 }
