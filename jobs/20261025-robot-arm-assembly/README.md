@@ -4,11 +4,11 @@ Robot 1 of 3. **Don't approve or print anything yet (26 Oct 2026).** Round 3 ans
 
 | Part | Job | Size (mm, as printed) | PETG, solid (g) | Status |
 |---|---|---|---|---|
-| Base | `20261025-arm-base` | 110 × 104 × 40 | 114 | DESIGN round 3 (lead notches) |
-| Turntable support ring | `20261025-arm-turntable-ring` | 91 × 96 × 16 | 17 | DESIGN round 3 (0.4 mm gap) |
-| Turntable + shoulder upright | `20261025-arm-turntable` | 96 × 96 × 81 | 113 | DESIGN round 3 (lead notches, disc horn) |
-| Upper link | `20261025-arm-upper-link` | 146 × 34 × 10 | 50 | DESIGN round 3 (lead notches) |
-| Forearm | `20261025-arm-forearm` | 129 × 26 × 10 | 37 | DESIGN round 3 (MG90S window, lead notch) |
+| Base | `20261025-arm-base` | 110 × 104 × 40 | 120 | DESIGN round 5 (pads round the servo tabs, deeper cradle pilots) |
+| Turntable support ring | `20261025-arm-turntable-ring` | 91 × 96 × 16 | 17 | DESIGN round 5 (washer reliefs; Ø7 tab washers) |
+| Turntable + shoulder upright | `20261025-arm-turntable` | 96 × 96 × 81 | 115 | DESIGN round 5 (90 mm gussets, 4 × M2 × 8 disc-horn screws, 6 mm solid disk bottom) |
+| Upper link | `20261025-arm-upper-link` | 146 × 34 × 16 | 56 | DESIGN round 5 (6 mm rail ribs) |
+| Forearm | `20261025-arm-forearm` | 129 × 26 × 16 | 42 | DESIGN round 5 (6 mm rail ribs, M2 × 16 cross-rib pilot) |
 | Claw frame | `20261026-arm-claw-frame` | 41 × 64 × 48 | 44 | DESIGN round 2 |
 | Claw cover | `20261026-arm-claw-cover` | 38 × 56 × 64 | 29 | DESIGN round 2 |
 | Claw pinion (20 teeth) | `20261026-arm-claw-pinion` | 22 × 22 × 10 | 3.5 | DESIGN round 2 |

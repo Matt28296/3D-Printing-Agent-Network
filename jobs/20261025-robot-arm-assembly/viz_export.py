@@ -98,8 +98,10 @@ def main(out_dir: Path):
     import math
     ring = mods["ring"]
     for a in ring.TAB_ANG:
-        S.add("m3x6", V.screw_parts(3, 6, "pan"), root,
-              matrix=V.T(ring.TAB_R * math.cos(math.radians(a)), ring.TAB_R * math.sin(math.radians(a)), ring.TAB_T),
+        rx, ry = ring.TAB_R * math.cos(math.radians(a)), ring.TAB_R * math.sin(math.radians(a))
+        S.add("washer3s", V.washer_parts(3, ring.WASHER_D, 0.5), root, matrix=V.T(rx, ry, ring.TAB_T),
+              label="M3 washer Ø7 × 0.5 (ring)", category="hardware")      # links round 5
+        S.add("m3x6", V.screw_parts(3, 6, "pan"), root, matrix=V.T(rx, ry, ring.TAB_T + 0.5),
               label="M3 × 6 self-tapping (ring)", category="hardware")
     for (x, y) in cradle_m.SCREWS:
         S.add("m3x10", V.screw_parts(3, 10, "pan"), root, matrix=V.T(x, y, cradle_m.BOT + cradle_m.CBORE_DEPTH) @ V.Rx(180),

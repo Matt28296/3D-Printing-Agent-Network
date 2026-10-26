@@ -5,6 +5,12 @@ bearing under the arm's overturning moment instead of only after a knock.
 
 Design frame = assembly frame; the ring sits on the base top plate (Z = 0).
 Printed as modelled (tabs on the bed).
+
+Round 5 (links strength round 4: the M3 × 6 pan head creeps into the 3 mm tab, SF 2.26 against
+4 sustained): a Ø7 × 0.5 washer goes under each tab screw's head (SF 4.72). Centred on the
+screw at r 47.5 it would reach r 44.0, the wall's outer face, so the wall gets a Ø8 relief round
+each screw, from the tab's top up: 0.5 mm of clearance to the washer, the wall 2.5 mm thick
+over 3.7 mm of its length there.
 """
 import math
 
@@ -22,6 +28,8 @@ RUN_GAP = 0.4                 # running gap to the turntable (deep review 03 SYS
 H = TURNTABLE_Z - RUN_GAP     # 16.1
 TAB_R, TAB_ANG = 47.5, (30.0, 150.0, 270.0)   # must match the base's ring pilots
 TAB_D, TAB_T, TAB_HOLE = 9.0, 3.0, 3.4        # tab Ø9 reaches r 52.0 = base edge; M3 clearance (printed)
+WASHER_D, WASHER_CLR = 7.0, 0.5   # Ø7 × 0.5 washer under each M3 × 6 pan head (links strength round 4: SF 2.26 -> 4.72);
+                                  # the relief round it reaches r 43.5, so the wall is 2.5 there (DFM: >= 1.8)
 
 
 def design():
@@ -37,6 +45,8 @@ def design():
                                                                        align=(Align.CENTER, Align.CENTER, Align.MIN))
         ring -= Pos(x, y, -1) * Cylinder((TAB_HOLE + HOLE_COMP) / 2, TAB_T + 2,
                                          align=(Align.CENTER, Align.CENTER, Align.MIN))
+        # washer relief: a vertical Ø8 cut round the screw axis from the tab's top face up through the wall
+        ring -= Pos(x, y, TAB_T) * Cylinder(WASHER_D / 2 + WASHER_CLR, H, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return ring
 
 
