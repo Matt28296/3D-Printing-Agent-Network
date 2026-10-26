@@ -1,4 +1,97 @@
-VERDICT: FAIL
+VERDICT: PASS
+
+# DFM recheck (round 7, CAD engineer's self-check): 20261026-arm-claw-cover
+
+cad-engineer · 2026-10-26 · round 7: the round 6 independent review's required fix (fasteners, §4) and its note 2 (slot
+A's front edge), user-approved. **This is the designer's own recheck, not an independent review; an independent review
+follows.** The round 6 independent review is kept below as history.
+
+**Strength (self-check): NEEDS_TEST** (strength.md). Every verdict row passes; the sustained screw rows are now 4.80 (top
+heads on the Ø7 washers), 5.42 (front heads on the Ø6 washers), 4.15 (anchor pull-out). Lowest verdict row 3.03 (rows
+30 / 87, the plate strips at the ties' webs, unchanged).
+
+**Change.**
+- claw_frame.py: new `TOP_WASHER` (7.0, 0.5) and `FRONT_WASHER` (6.0, 0.5); new `FRONT_SCREW_Z` **2.5**, and
+  `FRONT_SCREWS` z 3 → 2.5.
+- model.py:
+  - new `SLOT_EDGE_CHAMFER` **0.3**: 45° on the front-face edge of slot A's lower side (z 38.25, y −33…−6.5) and of slot
+    B's upper side (z 16.25, y 6.5…33), the sides nearer the axis. Both are prisms along G y, so they are vertical in
+    print. Slot B has the same 0.148 as slot A (jaw B is jaw A turned about the axis), so both slots get the chamfer, as
+    the review suggested.
+  - The two M2.5 teardrops follow `FRONT_SCREWS` to z 2.5.
+  - Nothing else moves: the top Ø3.6 holes, the seat, the ridge and the anchor are as in round 6.
+- Hardware (BUILD_GUIDE §1, §4 step 9):
+  - top, no camera: **M3 × 14 pan head + Ø7 × 0.5 washer (ISO 7089)**, snug only (was a bare M3 × 10);
+  - front: **M2.5 × 16 pan head + DIN 125 Ø6 × 0.5 washer**, snug only;
+  - with the camera mount: 2 × M3 × 18 button heads, unchanged (see item 7b).
+
+**Run here:**
+- `tools/cad_build.py`, `render.py` and `mesh_check.py`.
+- `cad_checks.py`: 28/28, exit 0. Two new checks: the M2.5 holes at z 2.5 with the washer's seat whole, and the two
+  chamfers.
+- Exact-solid clearances (scratch scripts, `claw_sequence_check` placements), gaps 0–44 every 1 mm.
+- `claw_sequence_check.py`: `ok`, with the Ø6 washers modelled under the M2.5 heads.
+- `strength_calc.py`.
+- **Not re-sliced.** The change adds no horizontal face and moves no printed height (the chamfers are vertical in print;
+  the holes only move 0.5), so the round 6 review's slice facts still hold.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| 1 | Bed fit, one watertight solid, min Z 0 | PASS | 39.85 × 57.5 × 64.0, 1 solid as printed and as fitted, `fits_bed`; 32 888.2 mm³ (round 6: 32 890.4, the two chamfers) |
+| 2 | Orientation, load paths vs layers | PASS | Unchanged: standing on its −y end (G +y up) |
+| 3 | Overhangs ≤ 45°, bridges | PASS | mesh_check: overhang 0.26 %, bed contact 703.6 mm², widest bridge 2.0 mm (unchanged). The chamfers are vertical prisms in print. Slot A's reaches the bed and takes the 0.3 bed chamfer with it |
+| 4 | Thin walls | PASS (note) | One thin-wall hit, 0.14, at the ridge's 0.2 × 0.2 bump behind the post (unchanged; the round 6 review read back from the G-code that it does not print) |
+| 5 | Holes and edge distances | PASS | 2 × M2.5 Ø3.0 teardrops (+y) at y ±24, **z 2.5**: 1.75 to slot B's lower edge (z 5.75), 7.0 to the plate's bottom (z −6). The Ø6 washer's seat (r 3, z −0.5…5.5) lies whole on the front face of the strip under slot B (cad_checks probes at r 2.95). Top holes Ø3.6 and the anchor hole unchanged |
+| 6 | Fits (§3): the V-seat | PASS | Unchanged since round 6 (cad_checks: flanks 0 mm³ / distance 0, flats 0.30, tip 0.15, top wall 0.05; as printed 0.156 / 0.306 / 0.206) |
+| 7 | **Fasteners per fdm-design-rules §4** | **PASS** | Every cover screw now has a washer. At the snug preloads (sustained, req 4): top M3 × 14 on the Ø7 washer **4.80** (row 119), front M2.5 on the Ø6 washer **5.42** (row 120), anchor 4.80 (row 116). Under the one-jaw stall the M2.5 at z 2.5 takes 130 N: **4.17** on the washer (row 108, req 3). Pull-out (frame strength.md): top M3 × 14 **4.02** with the worst standing left at the screw (4.12 pulled down), front M2.5 5.15 on its preload, 3.96 under the stall (req 3). Top screw tip at z 38.0, 3.55 above the 14 mm pilot's floor (34.45); the bulkhead is solid round the pilot over its whole depth (scratch probe: x 3.5–10, y ±3.25, nothing but the pilot) |
+| 7b | **Camera case (M3 × 18 through the camera mount)** | NOTE, for the Architect | Same rule, same failure, on the camera mount (not this part): its 2 × M3 × 18 **bare** button heads (dk 5.7) on the mount's 3.5 mm PETG pad, Ø3.4 printed teardrop, 15.8 mm², 150 N: **SF 2.64** (info row 167, req 4). Their pull-out passes (frame row 43, 4.41). **Proposed minimum change, hardware only:** the same Ø7 × 0.5 washer under each M3 × 18 button head. Bearing 4.80 (info row 168), pull-out 4.22 with the worst standing (frame info row 69), tip z 37.5 (pilot floor 34.45). Exact solids: the washer is 0.258 from the seat's front face (x 3.0) and the head 0.93; no change to the mount's model. Not applied: it needs the camera mount's spec §2 and strength rows |
+| 8 | Named parameters (§3) | PASS | `TOP_WASHER`, `FRONT_SCREW_Z`, `FRONT_WASHER` (claw_frame.py), `SLOT_EDGE_CHAMFER` (model.py) |
+| 9 | **Rack and jaw clearance over the stroke (≥ 0.2)** | PASS (one pre-existing note) | Exact solids, gaps 0–44 every 1 mm. **Slot A's front edge 0.211** (was 0.148; jaw A, gap 0, at the chamfer's back edge x 39.55), **slot B's 0.211** (jaw B). Second post + ridge + foot 0.240 (jaw A) / 0.312 (jaw B); lip 0.240 / 0.312; first tie 0.240 / 1.150; frame rail block 0.250 (jaw B). Note, not round 7: the r 2 corner fillet (front plate / top wall, y ≥ 9) is **0.187** from rack A's 45° edge chamfer, at the fillet's tangent line on rack A's guide plane (z 48.5): (2.0 − 1.75)/√2 = 0.177 analytic, the 0.25 gap along the guide seen across the two 45° faces. Unchanged since round 3 (`RACK_EDGE_CHAMFER` 2.0, `CORNER_FILLET` 2.0); not in the round 6 review's table |
+| 10 | **Washer and head clearance** | PASS | Front Ø6 × 0.5 washers: **0.500** under jaw B's neck (z 6 over the washer's top at 5.5), 0.26 with the worst standing (the cover 0.239 above CAD at the +y end after the anchor); the pan heads 1.000. Top Ø7 washers + M3 × 14 heads: 12.77 / 13.58 to jaw A. Anchor washer unchanged: 3.162 to the jaws |
+| 11 | Ridge and groove line up | PASS | Unchanged (cad_checks) |
+| 12 | Assembly sequence | PASS | `claw_sequence_check.py`: `ok`. 0 mm³ on every insertion path, the swept pinion, the stroke 0–44 every 1 mm and one tooth pitch in 0.1 mm steps. The front screws are modelled as the Ø6 × 0.5 washer plus the Ø5 × 1.75 head (contact plane x 39.85, the washer on the plate) |
+| 13 | BUILD_GUIDE §4 step 9 | PASS | The review's two wording fixes are in: press straight down over the inner post (over the third hole), and a feeler blade at least 10 mm wide, slid in flat across the whole bulkhead top and the rib beside it. The frame review's anchor-thread pre-check is added before the cover goes on |
+
+## Spec text that needs to change (Architect)
+
+The round 6 review's text, with the round 7 values.
+
+**§2, interfaces, last bullet:** "2 × Ø3.0 teardrop front holes at (y ±24, z 3)" becomes:
+
+> 2 × Ø3.0 teardrop front holes at (y ±24, z 2.5); a 0.3 mm 45° chamfer on the front-face edge of slot A's lower side
+> and of slot B's upper side (the sides nearer the axis)
+
+**§2, "Fasteners used",** replaced with:
+
+> 2 × M3 × 14 pan head + Ø7 × 0.5 washers (ISO 7089) down into the frame's bulkhead, snug only (2 × M3 × 18 button heads
+> through the camera mount when it is fitted); 2 × M2.5 × 16 pan head (head ≤ Ø5) + DIN 125 Ø6 × 0.5 washers back into
+> the wrist plate's front edge at z 2.5, snug only; 1 × M3 × 45 socket head + Ø7 × 0.5 washer (the anchor)
+
+**§3, the top wall's row:** the tolerance "±0.15 on the part; assembled, 0 to +0.3 over the printed bulkhead (48.4) at the
++y end" becomes "±0.15 on the part; assembled, 0 to +0.35 (0.06–0.10 nominal after the anchor)", and the fit type "rack
+A's back rides on it; the cover rests on its ridge, and rack A's 0.7 backlash absorbs the float" becomes "rack A's back
+rides on it; the cover rests on its ridge; a higher guide only increases rack A's backlash (0.33–0.49 nominal to RSS)".
+
+**§3, the two slot rows:** add to each fit type "; 0.3 × 45° chamfer on the front edge of the side nearer the axis: ≥ 0.2
+to the jaw's r 3 kink fillet over the stroke (0.21)".
+
+**§8, the Pass list's second bullet:** replace "the second post's ridge still seated in the frame's groove (a 0.3 mm
+feeler does not enter between the top wall and the bulkhead at the end where the lower slot is open)," with:
+
+> the second post's ridge still seated (a 0.3 mm feeler, blade at least 10 mm wide, does not enter between the top wall
+> and the bulkhead at the end where the lower slot is open), and no new whitening at the lip's back corner under the top
+> wall (compare with its state after assembly),
+
+**§8, a new acceptance line before the proof test:**
+
+> - [ ] **Seat check (BUILD_GUIDE §4 step 9).** Before any cover screw, with the top wall pressed straight down over the
+>   inner post, a 0.03 mm feeler (blade ≥ 10 mm wide) enters between the top wall and the bulkhead at the end where the
+>   lower slot is open. After the anchor and every cover screw, a 0.3 mm feeler does not. The strength verdict assumes a
+>   build that passes the first check.
+
+---
+
+# Round 6 independent review (kept as history; its verdict: FAIL)
 
 # DFM review (round 6, independent): 20261026-arm-claw-cover
 

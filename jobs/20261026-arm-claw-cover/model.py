@@ -9,6 +9,13 @@ between the frame's lower rail and this front plate. Each jaw's neck passes thro
 the front plate: slot A (upper) is open at the -y end, slot B (lower) at the +y end, so the jaws
 slide in from the ends after the cover is screwed on.
 
+Round 7 (cover round 6 independent review: at the snug preload, a sustained load, the bare M3 x 10 pan heads on the
+top wall gave SF 2.49 and the bare M2.5 pan heads on the front plate 3.26): every cover screw gets a washer. Top (no
+camera): M3 x 14 pan head + Ø7 x 0.5 washer (TOP_WASHER, claw_frame.py); the holes do not change. Front: M2.5 x 16 pan
+head + DIN 125 Ø6 x 0.5 washer (FRONT_WASHER); FRONT_SCREWS z 3 -> 2.5 so the washer stands 0.5 under jaw B's neck, and
+the Ø3.0 teardrops follow (1.75 to slot B's lower edge). The review's note 2: a 0.3 x 45° chamfer (SLOT_EDGE_CHAMFER) on
+the front edge of each slot's side nearer the axis, so the jaws' r 3 kink fillets keep 0.21 (was 0.148) over the stroke.
+
 Round 6 (cover round 5 independent review: as printed, the ridge's flanks, the foot's flats on the rail block and the
 ridge's tip on the groove's closed first layer all stopped the cover at once, so the ridge's x play was set by print
 tolerances, 0.08 mm RSS / 0.13 worst case, against 0.04 allowed): ridge-first contact. VSEAT_CLR 0 (claw_frame.py):
@@ -101,6 +108,10 @@ TIE2_FOOT_Z = ZS - RAIL_IN + FOOT_CLR   # 18.05: the post's foot flats (y 24..32
 # first layer) will not print open in the frame, so a full-height ridge would bottom there and hold the cover up.
 RIDGE_APEX_Z = ZS - RAIL_IN - VSEAT_D + VSEAT_CLR   # 16.95: virtual apex (= the groove's bottom with VSEAT_CLR 0)
 RIDGE_TIP_Z = 17.35            # absolute (round 6): flat tip 0.8 wide, 0.15 over the groove's closed first layer (17.2)
+SLOT_EDGE_CHAMFER = 0.3        # 45° on the front-face edge of each slot's side nearer the axis (slot A at z 38.25, slot B
+                               # at z 16.25), round 7 (cover round 6 review, note 2): the jaw's r 3 kink fillet (neck ->
+                               # finger) starts 1.24 behind NECK_X1, inside the slot, and came 0.148 from that edge over
+                               # the whole stroke; with the chamfer it keeps >= 0.2 (claw_sequence_check placements)
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -238,6 +249,12 @@ def design():
                 Circle(R_PASS)
         extrude(amount=X_F1 - X_F0 + 1.01)
     cut += bp.part
+    # round 7: SLOT_EDGE_CHAMFER on the front edge of each slot's side nearer the axis (prisms along y: vertical in print)
+    ce, xf = SLOT_EDGE_CHAMFER, X_F1
+    cut += _xz_prism([(xf - ce - 0.01, ZA0 + 0.01), (xf + 0.01, ZA0 + 0.01), (xf + 0.01, ZA0 - ce - 0.01)],
+                     -HALF_Y - 1, -CRESCENT_Y + 0.5)                 # slot A: y -33..-6.5 (the crescent cut beyond)
+    cut += _xz_prism([(xf - ce - 0.01, ZB1 - 0.01), (xf + 0.01, ZB1 - 0.01), (xf + 0.01, ZB1 + ce + 0.01)],
+                     CRESCENT_Y - 0.5, HALF_Y + 1)                   # slot B: y 6.5..33
     c -= cut
     # bed chamfer on the -y end (done in print orientation, then turned back)
     c = TO_PRINT.inverse() * chamfer_plane_edges(TO_PRINT * c, -HALF_Y, BED_CHAMFER)

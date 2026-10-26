@@ -1,4 +1,15 @@
-"""Strength check, round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-cover
+"""Strength check, round 7 CAD ENGINEER'S SELF-CHECK on the round 6 INDEPENDENT REVIEW's script: jobs/20261026-arm-claw-cover
+
+Round 7 (cad-engineer's self-check, not an independent review): the round 6 review's fix, user-approved. Every cover screw
+now has a washer under its head: top (no camera) M3 x 14 pan head + ISO 7089 Ø7 x 0.5 (claw_frame.TOP_WASHER; it was a
+bare M3 x 10), front M2.5 x 16 pan head + DIN 125 Ø6 x 0.5 (claw_frame.FRONT_WASHER) with FRONT_SCREWS z 3 -> 2.5 so the
+washer clears jaw B's neck, and a 0.3 x 45° chamfer on each slot's front edge nearer the axis (no strength effect). In
+this script: the top-screw head rows bear on the Ø7 washer (A_M3_TOP), the M2.5 head rows on the Ø6 washer (A_BRG), the
+M2.5 engagement is 16 - 5 - 0.5 = 10.5 (L_M25), the stall's screw force follows z 2.5 (130 N), the forced-closure info rows
+take the washer's OD into b_eff; the round 6 bare-head rows and the camera case (M3 x 18 bare button heads on the camera
+mount's pad) are kept as information rows. Everything else is the reviewer's script, unchanged.
+
+Round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-cover
 (front plate in two pieces + two ties, top wall, 8 mm lip, the second tie's 8 mm post located on the frame's rail block by
 a 90° V-ridge in a V-groove and anchored there by one vertical M3 x 45 with a Ø7 x 0.5 washer under its head).
 
@@ -62,7 +73,7 @@ The pinion pass-through and the two open-ended slots cut the front plate into tw
                plate down to y ~8); since round 4 the post is 8 thick and stands on the frame's rail block, anchored
                there by one vertical M3 x 45;
   lower piece  the strip under slot B plus the -y region up to slot A: screwed to the wrist plate's front edge
-               (2 x M2.5 x 16 at y +-24, z 3) and tied to the lip by the first tie (post 8 x 8 + web, y -32..-24).
+               (2 x M2.5 x 16 + Ø6 washers at y +-24, z 2.5) and tied to the lip by the first tie (post 8 x 8 + web, y -32..-24).
 Each rack reacts its finger's moment as a couple of x-forces at its two ends. A grip puts rack A's forward contact on
 the upper piece near the top wall and rack B's on the lower piece; anything that pushes a finger TOWARDS closing (a desk
 crash on the lower finger, a hand, the claw opening against an obstacle) reverses the couple: rack A then pushes the
@@ -222,7 +233,7 @@ wall(f"stall, one jaw blocked: rack A's +y end on the upper piece near slot A's 
 # 2b / 3. Reversed couples: rack B pushes the upper piece's bottom strip forward (z 17.2, at y 24..32), or rack A pushes
 # the lower piece's top strip forward (z 37.3, at y -32..-24). The push has to leave the cover for the frame, and the
 # cover meets the frame at two places only: the top wall on the bulkhead top (2 x M3, x 3.5..10, z 48.5, full width) and
-# the lower piece on the wrist plate's front edge (2 x M2.5 x 16 at z 3; pushed forward, only the screw holds it). So
+# the lower piece on the wrist plate's front edge (2 x M2.5 x 16 at z 2.5 since round 7; pushed forward, only the screw holds it). So
 # the cover is solved as a frame in the x-z plane (stresses along x/z: along the layers) in two y-zones:
 #   zone + (y 0..32): the upper piece's plate leg (z 35.25..48.5), the second tie (web rigid, 4 mm post, 8 mm lip) and
 #            the top wall in front of the lip;
@@ -424,11 +435,18 @@ B_POST1 = TIE_W                                           # first post's width a
 KT_LIP_BACK = KT_SHARP                                    # lip back face / top wall underside corner (what-if)
 B_NET_SCREW = B_TW_BACK - (C.M3_CLEAR + P.HOLE_COMP)      # 28.4 per zone: the top wall through an M3 hole
 z_ra = ((C.ZS + C.RACK_TIP) + ZA0) / 2                   # rack A's teeth on the lower piece's top strip, ~37.3
-Z_SCREW = C.FRONT_SCREWS[0][1]                            # 3
-L_M25 = FRAME_P["FRONT_PILOT_DEPTH"] - 3.0                 # M2.5 x 16 through the 5 mm plate: 11 engaged
+Z_SCREW = C.FRONT_SCREWS[0][1]                            # 2.5 (round 7: 3 -> 2.5)
+M25_WASHER = getattr(C, "FRONT_WASHER", (0.0, 0.0))       # round 7: DIN 125 Ø6 x 0.5 under each front M2.5 head
+L_M25 = min(FRAME_P["FRONT_PILOT_DEPTH"], 16.0 - C.FRONT_T - M25_WASHER[1])   # M2.5 x 16 through the 5 mm plate and the
+                                                           # 0.5 washer: 10.5 engaged (11 without the washer)
 HEAD_D = 5.0                                               # M2.5 pan head (spec: head <= Ø5)
 HOLE_PR = C.M25_CLEAR                                      # 2.8 printed (3.0 CAD teardrop)
 A_HEAD = math.pi / 4 * (HEAD_D ** 2 - HOLE_PR ** 2) - (HOLE_PR / 2) ** 2 * (1 - math.pi / 4)   # minus the teardrop
+# what bears on the front plate (round 7): the washer's OD, or the bare head's if there is no washer
+BRG_D = max(HEAD_D, M25_WASHER[0])
+A_BRG = math.pi / 4 * (BRG_D ** 2 - HOLE_PR ** 2) - (HOLE_PR / 2) ** 2 * (1 - math.pi / 4)   # 21.7 mm2 on the Ø6 washer
+BRG_TXT = (f"Ø{M25_WASHER[0]:g} x {M25_WASHER[1]:g} washer under the Ø{HEAD_D:.0f} pan head" if M25_WASHER[0] else
+           f"Ø{HEAD_D:.0f} pan head")
 
 
 def frame2d(nodes, members, supports, loads, ties=()):
@@ -579,6 +597,12 @@ X_SCREW_TOP = C.TOP_SCREWS[0][0]                            # 6.75
 LEV_F, LEV_R = C.X_B - X_SCREW_TOP, X_SCREW_TOP - (C.X_B - C.BULK_T)   # 3.25 to the front edge, 3.25 to the rear edge
 M3_PAN_DK = 5.6                                             # ISO 7049 ST2.9 / ISO 7045 M3 pan head
 A_M3_PAN = math.pi / 4 * (M3_PAN_DK ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)
+# round 7: the top screws are M3 x 14 pan heads on an ISO 7089 Ø7 x 0.5 washer (no camera); what bears on the top wall
+TOP_WASHER = getattr(C, "TOP_WASHER", (0.0, 0.0))
+TOP_BRG_D = max(M3_PAN_DK, TOP_WASHER[0])
+A_M3_TOP = math.pi / 4 * (TOP_BRG_D ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)   # 28.8 mm2
+TOP_TXT = (f"M3 x 14 pan head on the Ø{TOP_WASHER[0]:g} x {TOP_WASHER[1]:g} washer" if TOP_WASHER[0] else
+           f"Ø{M3_PAN_DK} pan head")
 
 
 def top_screw_T(res):
@@ -608,9 +632,9 @@ def cover_sections(res, v, upper):
         s_scr, ALLOW_XY, "XY", f"{B_NET_SCREW:.1f} net per zone x {T_TW_BACK:.1f}, Kt 2 (hole)")
     # review: the top M3s' tension from the joint (service load only; the snug preload is its own sustained row)
     Tp, Tm = top_screw_T(res)
-    out["top M3 pan head on the top wall, the joint's own tension (no preload)"] = (
-        max(Tp, Tm) / A_M3_PAN, BEARING, "XY comp", f"T {max(Tp, Tm):.0f} N (y 14: {Tp:.0f}, y -23: {Tm:.0f}) on the "
-        f"Ø{M3_PAN_DK} pan head, {A_M3_PAN:.1f} mm2")
+    out["top M3 head on the top wall, the joint's own tension (no preload)"] = (
+        max(Tp, Tm) / A_M3_TOP, BEARING, "XY comp", f"T {max(Tp, Tm):.0f} N (y 14: {Tp:.0f}, y -23: {Tm:.0f}) on the "
+        f"{TOP_TXT}, {A_M3_TOP:.1f} mm2")
     if upper:
         N, Mi, Mj, L = res["plate leg"]                      # FF2 (z 35.25) -> PLT (z 48.5)
         M_apex = Mi + (Mj - Mi) * (z_apex - Z_WEB1) / L
@@ -701,11 +725,11 @@ def cover_sections(res, v, upper):
         max(sig(N, Mi, B_LOWER, T5, KT_SHARP), 2.0 * sig(N, Mj, B_LOWER - (HOLE_PR + 0.2), T5, 1.0)), ALLOW_XY, "XY",
         f"b {B_LOWER:.0f} x {T5:.0f}")
     S = abs(res["screw"][0])
-    out[f"M2.5 x 16 at z 3: pull-out from the frame ({L_M25:.0f} engaged)"] = (
+    out[f"M2.5 x 16 at z {Z_SCREW:g}: pull-out from the frame ({L_M25:.1f} engaged)"] = (
         S / (math.pi * 2.5 * L_M25), SHEAR_Z, "Z shear", f"screw force {S:.0f} N")
-    out["same M2.5: pan head on the cover's front plate"] = (S / A_HEAD, BEARING, "XY comp",
-                                                             f"Ø{HEAD_D:.0f} head on the Ø{HOLE_PR} teardrop, "
-                                                             f"{A_HEAD:.1f} mm2; screw force {S:.0f} N")
+    out["same M2.5: its head on the cover's front plate"] = (S / A_BRG, BEARING, "XY comp",
+                                                             f"{BRG_TXT} on the Ø{HOLE_PR} teardrop, "
+                                                             f"{A_BRG:.1f} mm2; screw force {S:.0f} N")
     return out
 
 
@@ -813,13 +837,14 @@ INFO.extend(r for r in _bound if "first tie's post" in r[0] or "lip root at the 
 z_rbg = (C.T_W + (C.ZS - C.RACK_TIP)) / 2                 # 12.05: mid-height of rack B's front face
 T_g = R_go * z_rbg / C.FRONT_SCREWS[0][1]
 row(f"stall, one jaw blocked, jaws 44 open: rack B's -y end pushes the lower piece forward ({R_go:.1f} N at z "
-    f"{z_rbg:.1f}): one M2.5 holds it, {T_g:.0f} N", f"pan head Ø{HEAD_D:.0f} on the Ø{HOLE_PR} teardrop, {A_HEAD:.1f} mm2",
-    "XY comp", T_g / A_HEAD, BEARING, SF_SHORT)
-# the plate between that screw (z 3) and the first tie's web (z 19.25), loaded at z 12 at the cover's -y edge
+    f"{z_rbg:.1f}): one M2.5 at z {Z_SCREW:g} holds it, {T_g:.0f} N", f"{BRG_TXT} on the Ø{HOLE_PR} teardrop, "
+    f"{A_BRG:.1f} mm2", "XY comp", T_g / A_BRG, BEARING, SF_SHORT)
+# the plate between that screw (z 2.5) and the first tie's web (z 19.25), loaded at z 12 at the cover's -y edge
 a_, b_ = z_rbg - C.FRONT_SCREWS[0][1], Z_WEB0 - z_rbg
 M_pl = R_go * a_ * b_ / (a_ + b_)
 b_pl = PATCH + min(a_, b_)
-row(f"stall, one jaw blocked: the same push on the lower piece's plate between the screw (z 3) and the web (z 19.25)",
+row(f"stall, one jaw blocked: the same push on the lower piece's plate between the screw (z {Z_SCREW:g}) and the web "
+    f"(z 19.25)",
     f"simply supported, b_eff {b_pl:.1f} x {T5:.0f} (one-sided spread at the edge)", "XY", 6 * M_pl / (b_pl * T5 ** 2),
     ALLOW_XY, SF_SHORT)
 
@@ -943,11 +968,28 @@ if ANCHOR2 and VSEAT:
 # load, SF 4. M3 snug 150 N (the anchor's figure), M2 / M2.5 snug 100 N (the frame's tab screws' figure).
 P_M25 = 100.0
 A_M25_W6 = math.pi / 4 * (6.0 ** 2 - HOLE_PR ** 2) - (HOLE_PR / 2) ** 2 * (1 - math.pi / 4)
-row(f"top M3 x 10 pan heads (BOM: no washer) driven snug, {P_M3:.0f} N preload (sustained): bearing on the top wall",
+# round 7 (the round 6 review's fix): M3 x 14 pan heads + Ø7 x 0.5 washers on top, Ø6 x 0.5 washers under the M2.5s
+row(f"top screws (no camera), {TOP_TXT}, driven snug, {P_M3:.0f} N preload (sustained): bearing on the top wall",
+    f"{A_M3_TOP:.1f} mm2 round the Ø{C.M3_CLEAR} teardrop (washer OD; BUILD_GUIDE §1)", "XY comp", P_M3 / A_M3_TOP,
+    BEARING, SF_CYCLIC)
+row(f"front M2.5 x 16 pan heads, {BRG_TXT}, driven snug, {P_M25:.0f} N preload (sustained): bearing on the front plate",
+    f"{A_BRG:.1f} mm2 round the Ø{HOLE_PR} teardrop", "XY comp", P_M25 / A_BRG, BEARING, SF_CYCLIC)
+# information: the round-6 BOM (bare heads), and the camera case (M3 x 18 button heads on the camera mount's 3.5 pad,
+# Ø3.6 CAD teardrop holes, Ø3.4 printed: the same seat as here; BUILD_GUIDE lists no washer there)
+row(f"info: round 6 BOM, top M3 x 10 bare pan heads driven snug, {P_M3:.0f} N (sustained): bearing on the top wall",
     f"Ø{M3_PAN_DK} pan head on the Ø{C.M3_CLEAR} teardrop, {A_M3_PAN:.1f} mm2", "XY comp", P_M3 / A_M3_PAN, BEARING,
-    SF_CYCLIC)
-row(f"front M2.5 x 16 pan heads driven snug, {P_M25:.0f} N preload (sustained): bearing on the front plate",
-    f"Ø{HEAD_D:.0f} pan head on the Ø{HOLE_PR} teardrop, {A_HEAD:.1f} mm2", "XY comp", P_M25 / A_HEAD, BEARING, SF_CYCLIC)
+    SF_CYCLIC, INFO)
+row(f"info: round 6 BOM, front M2.5 bare pan heads driven snug, {P_M25:.0f} N (sustained): bearing on the front plate",
+    f"Ø{HEAD_D:.0f} pan head on the Ø{HOLE_PR} teardrop, {A_HEAD:.1f} mm2", "XY comp", P_M25 / A_HEAD, BEARING, SF_CYCLIC,
+    INFO)
+BTN_DK = 5.7                                               # ISO 7380 M3 button head
+A_BTN = math.pi / 4 * (BTN_DK ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)
+row(f"info: camera case, M3 x 18 bare button heads (BOM) driven snug, {P_M3:.0f} N (sustained): bearing on the camera "
+    f"mount's pad (not this part; the same Ø3.4 printed teardrop)", f"Ø{BTN_DK} button head, {A_BTN:.1f} mm2", "XY comp",
+    P_M3 / A_BTN, BEARING, SF_CYCLIC, INFO)
+row(f"info: camera case with the proposed fix, M3 x 18 button heads on Ø7 x 0.5 washers, {P_M3:.0f} N (sustained): "
+    f"bearing on the camera mount's pad", f"{A_M3_TOP:.1f} mm2 (washer OD)", "XY comp", P_M3 / A_M3_TOP, BEARING,
+    SF_CYCLIC, INFO)
 
 # ================================================================ 6c. the proud top wall pulled down by the top M3s (review)
 # After the anchor seats the ridge (least crush, 80 MPa) the top wall still stands G_AFTER over the printed bulkhead at
@@ -957,7 +999,7 @@ row(f"front M2.5 x 16 pan heads driven snug, {P_M25:.0f} N preload (sustained): 
 # and tilting the whole cover (crushing the ridge's corners further, 3 corners at 80 MPa, through the lever ratio). The
 # bending takes k_tilt / (k_bend + k_tilt) of it. Displacement-controlled: it relaxes with creep. Information rows.
 L_TW = C.LIP_X0 - X_SCREW_TOP                              # 7.6
-B_TW_EFF = 2 * L_TW + M3_PAN_DK                            # 20.8
+B_TW_EFF = 2 * L_TW + TOP_BRG_D                            # 22.2 on the Ø7 washer (round 7; 20.8 on the bare pan head)
 K_BEND = 3 * E_MPA * (B_TW_EFF * C.TOP_T ** 3 / 12) / L_TW ** 3
 Y_RIDGE_C = (C.TIE2_Y[0] + (P.TIE2_FOOT_Z - P.RIDGE_TIP_Z) + C.TIE2_Y[1]) / 2   # 28.35
 K_TILT = 2 * 80.0 * 3 * L_V * ((Y_RIDGE_C + C.HALF_Y) / (C.TOP_SCREWS[1][1] + C.HALF_Y)) ** 2
@@ -1204,7 +1246,8 @@ print(f"  front M2.5 pan head Ø5, {P_M25:.0f} N: SF {BEARING / (P_M25 / A_HEAD)
 for z_s in (3.0, 2.5):
     T_s = R_go * z_rbg / z_s
     print(f"  M2.5 at z {z_s}: the stall's {T_s:.0f} N on one screw: bare head SF {BEARING / (T_s / A_HEAD):.2f}, on the "
-          f"Ø6 washer {BEARING / (T_s / A_M25_W6):.2f}, pull-out (11 engaged) {SHEAR_Z / (T_s / (math.pi * 2.5 * L_M25)):.2f}")
+          f"Ø6 washer {BEARING / (T_s / A_M25_W6):.2f}, pull-out ({L_M25:.1f} engaged) "
+          f"{SHEAR_Z / (T_s / (math.pi * 2.5 * L_M25)):.2f}")
 print("What-if, strip under slot B (yaw stall, the worse of closed / open):")
 for d in (STRIP_D - 2.0, STRIP_D - 1.0, STRIP_D, STRIP_D + 2.0):
     w = max(strip_sf(d, F_YAW_Z, 0.0, C.NECK_Y), strip_sf(d, F_YAW_Z, C.STROKE, C.STROKE + C.NECK_Y))

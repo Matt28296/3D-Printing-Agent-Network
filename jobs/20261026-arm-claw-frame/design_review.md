@@ -1,5 +1,73 @@
 VERDICT: PASS
 
+# DFM recheck (round 7, CAD engineer's self-check): 20261026-arm-claw-frame
+
+cad-engineer · 2026-10-26 · round 7: the round 6 independent reviews' fix (the cover's screws), user-approved. **This is
+the designer's own recheck, not an independent review; an independent review follows.** The round 6 independent review
+is kept below as history.
+
+**Strength (self-check): NEEDS_TEST** (strength.md). Every verdict row passes. The lowest against its requirement is row
+42: the cover's top M3 × 14 + washer pulling out of the bulkhead at its snug preload, **4.02** with the worst standing
+left at the screw (4.12 with the wall pulled down; round 6's bare M3 × 10: 2.73).
+
+**Change.**
+- claw_frame.py: `FRONT_SCREWS` z 3 → **2.5** (`FRONT_SCREW_Z`), so the cover's new Ø6 × 0.5 washers under the M2.5
+  heads clear jaw B's neck. `TOP_WASHER` and `FRONT_WASHER` are new (hardware only).
+- model.py: no edit to the geometry code. The two flat-topped Ø2.2 front pilots follow `FRONT_SCREWS` to z 2.5. Their
+  flat top is now at z 3.6: **2.4** to rack B's track (z 6; it was 1.9) and **1.4** to the back face (z 0). They are still
+  14 deep (x 20.85–34.85). The top M3 pilots are unchanged: Ø2.7 CAD, 14 deep, floor 34.45. Comments updated.
+- Hardware: the cover's top screws are M3 × 14 pan head + Ø7 × 0.5 washer (was a bare M3 × 10). The front screws are
+  M2.5 × 16 + Ø6 × 0.5 washer, 10.5 engaged (was 11).
+
+**Run here:**
+- `tools/cad_build.py`: 46 365.18 mm³, the same as round 6 (the pilots only moved).
+- `render.py`, `mesh_check.py`: overhang 1.4 %, widest bridge 7.9 mm, the front pilots' flat tops now bridge 0.91 at z
+  3.6, no thin walls.
+- `cad_checks.py`: 24/24, exit 0. New: the front pilots at z 2.5 with their skins and depth. The anchor-pilot probe now
+  also covers the space between it and the +y front pilot.
+- A scratch probe of the bulkhead round each top pilot (x 3.5–10, y ±3.25), over the screw's path (z 38.0–48.45) and the
+  whole pilot (34.45–48.45): the frame volume equals the box less the Ø2.7 pilot exactly, so nothing else is in the
+  screw's path. Under the floor (z 33.45–34.4) it is solid.
+- `claw_sequence_check.py`: `ok`. Exact-solid clearances, gaps 0–44 every 1 mm. `strength_calc.py`.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| 1 | Bed fit, one watertight solid, min Z 0 | PASS | 42.85 × 64.0 × 48.45, 1 solid, `fits_bed` |
+| 2 | Orientation | PASS | Back face on the bed, unchanged |
+| 3 | Overhangs, bridges | PASS | mesh_check: 1.4 %, widest bridge 7.9 mm (the window roof); the front pilots' flat tops 0.91 wide at z 3.6 (were at 4.1) |
+| 4 | Mating datum off the slice planes | PASS | Bulkhead top 48.45, unchanged (cad_checks: 0.05 to the nearest plane) |
+| 5 | Front M2.5 pilots: walls and edges | PASS | z 2.5, Ø2.2 flat-topped at 3.6: 2.4 skin under rack B's track (frame strength row 22, SF 32), 1.4 to the back face, which is clear of the 0.4 bed chamfer. Clear of the anchor pilot: the front pilot reaches z 3.6 and x ≥ 20.85, the anchor pilot starts at z 3.75 and reaches x ≤ 19.7 |
+| 6 | Top M3 pilots for the M3 × 14 | PASS | 14.0 deep below BULK_TOP (floor 34.45; printed 14.0 deep, floor 34.4, per the round 6 slice). The M3 × 14 + 0.5 washer under a 3 mm top wall ends at z 38.0: 3.55 above the floor. 10.45 engaged in CAD, 10.5 below the printed bulkhead. Nothing but the pilot in the screw's path (probe above) |
+| 7 | Fasteners per §4 | PASS | The pilots take the screws they are sized for. Snug-preload pull-out: M3 × 14 4.02 (worst standing) / 4.12 (pulled down), M2.5 5.15; under the stall the M2.5 at z 2.5 takes 130 N: 3.96 (req 3). Camera case (M3 × 18): 4.41 bare; 4.22 if the proposed Ø7 washer goes under its button heads (see the cover's review, item 7b) |
+| 8 | Named parameters | PASS | `FRONT_SCREW_Z`, `FRONT_SCREWS`, `TOP_WASHER`, `FRONT_WASHER` (claw_frame.py); `TOP_PILOT_DEPTH`, `FRONT_PILOT_DEPTH` (model.py) |
+| 9 | Rack clearance (rail block) | PASS | Exact solids, gaps 0–44: the rail block is 0.250 from jaw B (unchanged) |
+| 10 | Assembly sequence | PASS | `claw_sequence_check.py`: `ok` |
+
+## Spec text that needs to change (Architect)
+
+**§2, interfaces:** "2 × Ø2.2 flat-topped teardrop M2.5 pilots 10 deep in the wrist plate's front edge at (y ±24, z 3)"
+becomes:
+
+> 2 × Ø2.2 flat-topped teardrop M2.5 pilots 14 deep in the wrist plate's front edge at (y ±24, z 2.5) (flat top z 3.6:
+> 2.4 below rack B's track)
+
+**§2, "Fasteners used":** replace "cover: 2 × M3 × 10 (or 2 × M3 × 18 button heads through the camera mount) into the top
+pilots, 2 × M2.5 × 12 pan head (head ≤ Ø5) into the front pilots." with:
+
+> cover: 2 × M3 × 14 pan head + Ø7 × 0.5 washers, snug only (or 2 × M3 × 18 button heads through the camera mount) into
+> the top pilots, 2 × M2.5 × 16 pan head (head ≤ Ø5) + DIN 125 Ø6 × 0.5 washers, snug only, into the front pilots
+> (10.5 mm engaged).
+
+**§8, the first Pass bullet (the anchor ligament, from the round 6 review):** after "the V-groove's flanks and the anchor
+pilot's mouth on the block top", add:
+
+> (checked once before the cover is fitted, after the M3 × 45 has been driven into the pilot and backed out to form its
+> thread: no split or bulge between the pilot and the groove)
+
+---
+
+# Round 6 independent review (kept as history; its verdict: PASS)
+
 # DFM review (round 6, independent): 20261026-arm-claw-frame
 
 dfm-reviewer + strength-analyst (independent; did not design the part) · 2026-10-26 · round 6 (bulkhead top off the

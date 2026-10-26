@@ -49,6 +49,23 @@ check("lip x 14.35..22.35 (GUIDE_T 8), z 36.75..48.5", solid(14.4, 0, 45) and no
 check("slot A z 38.25..48.5, open at -y", not solid(37, -20, 43) and not solid(37, -31.9, 38.3) and solid(37, -20, 38.1))
 check("slot B z 5.75..16.25, open at +y", not solid(37, 20, 11) and solid(37, 20, 5.6) and solid(37, 20, 16.4)
       and not solid(37, 31.9, 6.0))
+zf_ = ns["FRONT_SCREWS"][0][1]
+check("front M2.5 holes Ø3.0 (teardrop +y) at y +-24, z 2.5 (round 7: 3 -> 2.5, FRONT_SCREWS); the Ø6 washer's seat "
+      "(r 3) whole on the front face; 1.75 to slot B's lower edge (z 5.75)",
+      abs(zf_ - 2.5) < 1e-9 and all(not solid(37, y, 2.5) and not solid(37, y, 1.05) and solid(37, y, 0.95)
+                                    and not solid(37, y - 1.45, 2.5) and solid(37, y - 1.55, 2.5)
+                                    and not solid(37, y + 2.05, 2.5) and solid(37, y + 2.2, 2.5)
+                                    and all(solid(39.8, y + dy, 2.5 + dz) for dy, dz in ((2.95, 0), (-2.95, 0), (0, 2.95),
+                                                                                         (0, -2.95), (2.1, 2.1),
+                                                                                         (-2.1, -2.1)))
+                                    and solid(37, y, 5.7) for y in (-24.0, 24.0)),
+      f"z {zf_}")
+ce = ns["SLOT_EDGE_CHAMFER"]
+check("0.3 x 45° chamfer on the front edge of slot A's lower side (z 38.25) and slot B's upper side (z 16.25) (round 7)",
+      abs(ce - 0.3) < 1e-9
+      and all(not solid(39.8, y, 38.2) and solid(39.45, y, 38.2) and solid(39.8, y, 37.9) for y in (-31.5, -25.0, -10.0))
+      and all(not solid(39.8, y, 16.3) and solid(39.45, y, 16.3) and solid(39.8, y, 16.6) for y in (10.0, 25.0, 31.5)),
+      "probed at x 39.8 / 39.45, 0.05 into the slot side, and 0.35 off it on the front face")
 check("pass-through r 11.4 on the pinion axis (y 0, z 27.25)", not solid(37, -8.0, 19.25) and solid(37, -8.2, 19.05)
       and not solid(37, 11.2, 27.25))
 check("first tie: post x 14.35..22.35 + web, y -32..-24, |z - 27.25| <= 8", solid(14.5, -28, 30) and solid(30, -28, 27)

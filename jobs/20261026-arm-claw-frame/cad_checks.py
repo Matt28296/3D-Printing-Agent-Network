@@ -49,8 +49,18 @@ check("rail block keeps 2.65 round the anchor pilot (front face x 22.35, +y end 
       solid(18.35 + 1.4, 28, 12) and solid(22.3, 28, 12) and not solid(22.4, 28, 12)
       and solid(18.35, 29.4, 12) and solid(18.35, 31.9, 12) and not solid(18.35, 32.1, 12)
       and solid(14.6, 28, 12) and solid(18.35, 26.6, 12), "x 19.7..22.35, y 29.35..32 at z 12")
-check("anchor pilot clear of the +y front M2.5 pilot (x >= 20.85, y 22.9..25.1)",
-      solid(20.9, 25.6, 3.0) and solid(19.7, 26.0, 3.9), "solid between them")
+check("anchor pilot clear of the +y front M2.5 pilot (x >= 20.85, y 22.9..25.1, z 1.4..3.6 since round 7)",
+      solid(20.9, 25.6, 3.0) and solid(19.7, 26.0, 3.9) and solid(20.3, 25.0, 3.0) and solid(20.3, 26.7, 3.7),
+      "solid between them")
+zf_ = ns["FRONT_SCREWS"][0][1]
+check("front M2.5 pilots Ø2.2 CAD at y +-24, z 2.5 (round 7: 3 -> 2.5), 14 deep from x 34.85 (to x 20.85), flat top at "
+      "z 3.6: 2.4 skin to rack B's track (z 6), 1.4 to the back face (z 0)",
+      abs(zf_ - 2.5) < 1e-9 and all(not solid(x, y, 2.5) and not solid(x, y, 3.55) and solid(x, y, 3.65)
+                                    and not solid(x, y, 1.45) and solid(x, y, 1.35)
+                                    and not solid(x, y + 1.05, 2.5) and solid(x, y + 1.15, 2.5)
+                                    for y in (-24.0, 24.0) for x in (21.0, 28.0, 34.8))
+      and all(solid(20.75, y, 2.5) and solid(28.0, y, 5.95) and solid(28.0, y, 0.05) for y in (-24.0, 24.0)),
+      f"z {zf_}")
 xc, zb = ns["VSEAT_XC"], 17.75 - ns["VSEAT_D"]
 check("V-groove (round 5) in the rail block's top: 90°, 0.8 deep (bottom z 16.95) on x 15.25, x 14.45..16.05 at z 17.75, "
       "y 23.5..32 open at +y", abs(xc - 15.25) < 1e-9 and abs(zb - 16.95) < 1e-9
