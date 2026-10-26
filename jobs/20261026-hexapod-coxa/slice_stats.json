@@ -1,0 +1,15 @@
+{
+  "print_time_s": 15763,
+  "print_time_h": 4.38,
+  "filament_g": 59.12,
+  "filament_mm": 19354.75,
+  "layers": 205,
+  "max_z_mm": 90.0,
+  "filament_type": "PETG",
+  "nozzle_temp_c": 250.0,
+  "bed_temp_c": 90.0,
+  "layer_height": 0.2,
+  "perimeters": 4.0,
+  "fill_density": 100.0,
+  "fill_pattern": "rectilinear"
+}

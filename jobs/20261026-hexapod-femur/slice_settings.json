@@ -12,7 +12,7 @@
     "--load",
     "jobs/20261026-hexapod-femur/slice_overrides.ini",
     "--duplicate",
-    "6",
+    "3",
     "jobs/20261026-hexapod-femur/part.stl",
     "--output",
     "jobs/20261026-hexapod-femur/part.gcode"
@@ -29,8 +29,10 @@
     "fill_density": "50%",
     "fill_pattern": "gyroid",
     "layer_height": 0.2,
-    "elefant_foot_compensation": 0.2
+    "elefant_foot_compensation": 0.2,
+    "seam_position": "aligned",
+    "brim_width": 0
   },
-  "copies": 6,
+  "copies": 3,
   "warnings": []
 }
