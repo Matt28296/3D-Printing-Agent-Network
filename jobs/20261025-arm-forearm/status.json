@@ -1,20 +1,22 @@
 {
   "job_id": "20261025-arm-forearm",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
-    "SLICE": 0
+    "SLICE": 1
   },
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 6 recheck): DFM PASS, strength NEEDS_TEST, lowest SF 3.12; \u00a78 proof (2) 2.07 \u00b7 measure the servo tab-hole spacing before printing",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 2.55 h, 28.58 g, 5 perimeters, 40 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Measure the MG996R tab-hole spacing before printing (round pilots leave no slack)"
+  ],
   "updated": "2026-10-26T15:44:29+00:00"
 }

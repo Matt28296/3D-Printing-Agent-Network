@@ -1,15 +1,15 @@
 {
   "job_id": "20261025-arm-upper-link",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
-    "SLICE": 0
+    "SLICE": 1
   },
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 6 recheck): DFM PASS, strength NEEDS_TEST, lowest SF 3.39; \u00a78 proof (2) 2.01",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 3.45 h, 38.64 g, 5 perimeters, 40 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
