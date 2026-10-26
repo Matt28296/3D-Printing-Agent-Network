@@ -34,9 +34,9 @@ LABELS = {"chassis": "Chassis (tub)", "lid": "Lid / electronics deck", "sprocket
 QTY = {"chassis": 1, "lid": 1, "sprocket": 2, "idler": 2, "wheel": 4, "link": 70}   # 68 links + 2 spares
 PLATES = {"link": 2, "wheel": 2}   # 35 links per plate; 2 wheels per plate (the slices of 26 Oct 2026)
 PETG = "petg_olive"
-STAMPS = [{"text": "5 of 6 parts: awaiting approval", "kind": "pass"}, {"text": "Chassis strength review running", "kind": "warn"},
+STAMPS = [{"text": "4 of 6 parts: awaiting approval", "kind": "pass"}, {"text": "Chassis round 5 + idler: redesign", "kind": "warn"},
           {"text": "Assembly check clean", "kind": "pass"}]
-RESLICE = ("chassis",)   # its slice_stats.json is from round 2: drop it once its round 4 slice is merged
+RESLICE = ("chassis", "idler")   # chassis round 5 (and the idler's shorter hub): drop each once its new slice is merged
 BUCK_X0 = 85.0                  # buck under the lid, x 85-107 (as in assembly_check.py)
 JACK_L = 20.0                   # M3 × 20 set screw (idler jack screw)
 
