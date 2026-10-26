@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 3,
+    "DESIGN": 4,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 in progress (user-approved): support pillar B thicker; second tie post 8 mm onto the frame's rail block with an M3 \u00d7 45 anchor",
+    "DESIGN": "round 4 FAIL (fourth failed iteration): DFM FAIL + strength FAIL 1.37 \u2014 the M3 \u00d7 45 anchor holds the post only by preload friction (fdm-design-rules \u00a74). Escalated to the user: V-groove + ridge + \u00d87 washer",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Fifth attempt: V-groove/ridge positive lock + \u00d87 washer under the anchor head?"
+  ],
   "updated": "2026-10-26T16:09:12+00:00"
 }

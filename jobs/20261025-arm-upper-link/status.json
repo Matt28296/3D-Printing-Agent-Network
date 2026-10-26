@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-upper-link",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 in progress (user-approved fourth round): RIB_TAPER 6 \u2192 12",
+    "DESIGN": "pass (round 6 recheck): DFM PASS, strength NEEDS_TEST, lowest SF 3.39; \u00a78 proof (2) 2.01",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

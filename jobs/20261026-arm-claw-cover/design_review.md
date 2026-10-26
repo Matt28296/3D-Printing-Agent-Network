@@ -1,24 +1,42 @@
 VERDICT: FAIL
 
-# DFM review: 20261026-arm-claw-cover (round 3)
+# DFM review (round 4): 20261026-arm-claw-cover
 
-Reviewer: dfm-reviewer (independent) · 2026-10-26 · DESIGN gate, round 3 (rounds 1 and 2: FAIL). This is the third design attempt.
+Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · fourth design attempt, user-approved
 
-**Inputs:**
-- this job: spec.md (§1 holds the round-3 values), design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, print_requirements.json, log.md (the 15:16Z lines), and the round-2 design_review.md and strength.md;
-- renders/*.png, regenerated with `tools/render.py`; all 5 viewed;
-- `../20261025-robot-arm-assembly/`: claw_frame.py, claw_sequence_check.py (re-run), assembly_check.json, BUILD_GUIDE §4 step 9;
-- library/: no lessons and no material rows, so the skill defaults apply.
+**Why it reopened.**
+- Round 3 failed twice:
+  - **DFM:** support pillar B carried only half of piece (b)'s first layer. 4.24 mm² lay up to 1.13 mm from it.
+  - **Strength:** 1.23, from the reversed rack-B push leaving through the 3 mm top wall.
+- The user approved both fixes (log.md 16:09). Round 4 (fa56765, model.py) makes three changes:
+  - `SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)` (model.py:71). The pillar is 1.6 thick, z 16.45–18.05, from y −8.
+  - The second tie's post is 8 thick (`TIE2_POST_T` 8, x 14.35–22.35) and stands on the frame's rail block
+    (`TIE2_FOOT_Z` 17.75) (model.py:75–76, 148–151).
+  - A Ø3.6 teardrop hole at `ANCHOR_XY` (18.35, 28) runs through the top wall, the lip and the post for one M3 × 45 into
+    the frame's pilot (model.py:210–212).
 
-**The outputs are current.**
-- `build()` (the cover plus its pillars) rebuilt in memory gives 31 791.09 mm³ and 15 639.02 mm², the same as geometry.json.
-- `tools/mesh_check.py` re-run: overhang 0.27 %, bed contact 703.6 mm², thin walls 0.
-- `cad_checks.py` exits 0, with 14/14 PASS.
+**Inputs**
+- This job: spec.md (§1 round-4 line, §8), design_brief.md (round 4), model.py, cad_checks.py, geometry.json,
+  mesh_check.json, log.md, and the round-3 design_review.md and strength.md.
+- Shared: claw_frame.py; claw_sequence_check.json (round 4); BUILD_GUIDE §1 and §4 step 9.
+- Renders: all 5, regenerated and viewed.
+- Skills: fdm-design-rules (§2 and §4), material-selection. library/ has no lessons and no material rows.
 
-**Extra evidence:**
-- **Layer check** of part.stl: 0.2 mm layers on a 0.04 mm raster, each layer compared with the one below grown 0.3 mm.
-- **Pillar coverage:** the same check run a second way, with support taken as the union of the 3 layers below. This counts each pillar's top across its gap and measures how much of each piece's first layer it carries.
-- **Thin-feature test:** a per-layer 0.9 mm morphological opening.
+**Extra evidence (mine)**
+- **Layer check of part.stl.** 0.2 mm layers on a 0.04 mm raster, in both slicing phases (layer tops at 0.2k, and offset
+  0.1).
+  - Each layer is compared with the layer below **grown by 0.5 mm**. New islands are counted.
+  - A second pass takes support as the union of the 3 layers below. That counts each pillar's top across its 0.25 gap.
+- **Clearances on exact solids** with `claw_sequence_check`'s placements: the post, the M3 × 45 (Ø3 shank, Ø5.5 × 3 head)
+  and a 2.5 mm hex key against the jaws at gaps 0–44 (every 2 mm), the pinion, the claw servo with its lead, the camera
+  mount and the Brio (`assembly_check.brio_with_plug`, as placed).
+- **Sections of `design()`** at the post and round the anchor hole.
+
+**Outputs are current.**
+- `design()` gives 32 795.6 mm³; as printed with the pillars, 32 943.56 mm³ (geometry.json): 1 solid, 39.85 × 57.5 × 64.
+- measure_holes: 3 × Ø3.6 (2 top + the anchor), 2 × Ø3.0, Ø22.8.
+- `tools/mesh_check.py` re-run gives exactly the committed mesh_check.json.
+- `cad_checks.py` re-run: 20/20 PASS, including pillar B's extent and its coverage of piece (b) within 0.3 in z.
 
 Print frame: (X, Y, Z) = claw G (x, −z, y + 32), so G +y is up.
 
@@ -27,67 +45,91 @@ Print frame: (X, Y, Z) = claw G (x, −z, y + 32), so G +y is up.
 | # | Item | Result | Evidence |
 |---|---|---|---|
 | 1 | Fits the bed with a 5 mm margin | PASS | 39.85 × 57.5 × 64.0 mm, `fits_bed: true` |
-| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1` as printed and as fitted (cad_checks), watertight, `min_z_mm: 0.0` |
-| 3 | Orientation matches the brief | PASS | Standing on its −y end, `TO_PRINT = Rot(90, 0, 0)`. bottom.png shows the side profile with both ties' feet on the bed. right.png shows:<br>• slot A rising from the bed to its 45° roof;<br>• the pass-through with its 45° top;<br>• slot B open at the top;<br>• the two pillars as thin posts inside the pass-through. |
-| 4 | Load paths vs layers | PASS | **Round-2 fix 2 is done.** The brief now says "The round-2 brief said 'all bending runs along the layers'. That was wrong." Its table names paths (a), (b) and (c) as bending along y, across the layers:<br>• (a) the strip under slot B, z −6…5.75, from slot B's closed end to the +y M2.5;<br>• (b) the top wall between the two top screws;<br>• (c) the lower half of the plate, out to the first tie and the −y M2.5.<br>The upper piece hanging from the top wall, the 8 mm lip and both ties are loaded in the side profile, along the layers. The text matches the geometry, and strength checks (a)–(c) at 12.5 MPa |
-| 5 | Bed contact | PASS | 703.6 mm² on a 64 mm-tall part, with `min.brim_width` 5 in print_requirements.json |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | **FAIL** | **The brief's justification holds.** The pass-through is r 11.4 CAD, so its top (z 38.65) passes slot A's edge (38.25) and its bottom (15.85) passes slot B's (16.25). The slots open at opposite ends. So the two pieces beside the pass-through can't be re-laid to grow from material below them. Modelled supports, with `support_material` 0 required, are the right answer, and BUILD_GUIDE §4 step 9 lists their removal.<br><br>**Pillar A (piece (a), slot-A side) carries its piece:**<br>• 1.3 thick, z 36.8…38.1, from y −8;<br>• the piece's first slice (print z 38.5, G y 6.5) spans z 36.62…38.25, so 0.18 / 0.15 mm overhangs the pillar;<br>• pillar coverage check: only the 0.5 mm x-inset strips at the two plate faces, 0.73 mm² in all, ≤ 0.54 mm from the pillar.<br><br>**Pillar B (piece (b), slot-B side) does not:**<br>• 1.0 thick, z 16.35…17.35, from y −6;<br>• the piece's first printed layer (print z 39.0–39.2, G y 7.1) spans **z 16.25…18.33**;<br>• the pillar carries only the lower half;<br>• pillar coverage check at z 39.1: **4.24 mm² of the 10.4 mm² first layer is more than 0.3 mm from the pillar, up to 1.13 mm away**: a 0.9–1.0 mm strip along the pass-through edge (G z 17.35…18.33) over the full 5 mm plate thickness.<br>That strip starts in mid-air over a 0.2 mm gap. It is neither supported nor justified: the brief's pillar table says "under piece (b)" without noting the uncovered half.<br><br>**Everything else passes:**<br>• slot A's apex (z 42.9–43.1, ≤ 0.56 mm);<br>• the pass-through apex (z 47.5, 0.76 mm);<br>• the end of the corner fillet (z 41.1, 0.2 mm²): all three are r 1.5 / r 2 roundings, accepted in round 2;<br>• the second tie: its post underside is exactly 45° and its web undersides ≈35° from vertical. The layer check finds no patch.<br>overhang_pct 0.27 |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS (note) | Front plate 5, top wall 3, lip 8; posts 8 × 8 (first tie) and 4 × 8 (second tie); strip under slot B 11.75 deep. `thin_wall_warnings` is empty. The 0.9 mm opening flags only 0.33–0.45 mm² at print z 46.5–46.7, G (x 28–29.4, y 14.6, z 34.6–35.2). There the second tie's two 45° growth fronts (from the post and from the plate) meet at the web's top edge. It is the meeting tip of two supported wedges in one layer, not a wall, and has material under it. Note as in round 2: 1.25 mm between the +y front-screw hole and slot B's lower edge, under the screw head |
-| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | Pass-through Ø22.8 = ACCESS_D 22.6 + HOLE_COMP, teardrop top. Top holes Ø3.6 and front holes Ø3.0, all teardrops pointing up in print. measure_holes: 3.0, 3.0, 3.6, 3.6, 22.8 (270° arcs) |
-| 9 | Bottom edges chamfered | PASS | 0.3 mm bed chamfer (model.py l.192), with the openings cut before it, so slot A's mouth is chamfered (bottom.png). The pillars don't reach the bed |
-| 10 | Internal corners on load paths filleted | PASS | **Filleted (cad_checks):**<br>• slot B's closed end, r 2;<br>• slot A's roof into the top wall, r 2;<br>• the front plate / top wall corner over y 9–32, r 2.<br>**Sharp, in strength's Kt 2.5 rows:**<br>• the lip's rack-side root (a channel corner; SF 5.30 predicted);<br>• the webs' corners on the front plate (low stress) |
-| 11 | Fasteners per §4 | PASS | M3 × 10 (or × 18 through the camera mount) through Ø3.6 into the frame's 14 mm pilots. M2.5 × 16 pan heads (≤ Ø5) through Ø3.0 into the frame's 14 mm front pilots: 11 engaged. `front_screws` is 0 mm³ on every path and over the stroke |
-| 12 | Spec §3 dims are named parameters | PASS | X_F0 / X_F1 34.85 / 39.85, FRONT_Z0 −6, Z_TOP0 48.5, LIP_X0 / RAIL_X1 14.35 / 22.35, ZA0/ZA1 38.25/48.5, ZB0/ZB1 5.75/16.25, R_PASS 11.4, TIE2_Y, SUP_A / SUP_B / SUP_GAP. All are named with comments, and spec §1 records the round-3 values |
-| 13 | Service temperature | PASS | 40 °C against PETG at ≈70 °C |
+| 2 | Single watertight solid, min Z = 0 | PASS | 1 solid as printed and as fitted (cad_checks), watertight, `min_z_mm: 0.0` |
+| 3 | Orientation matches the brief | PASS | Standing on its −y end (`TO_PRINT`). **front.png** looks at the top wall's outer face: two top holes and the new anchor hole near the top, each a teardrop pointing up. **right.png** shows the two pillars inside the pass-through. **iso.png** shows the post as the thick column at the top-right end |
+| 4 | Load paths vs layers | PASS | The post, lip and webs are loaded in the side profile, along the layers. The anchor's seat and clamp run along G z, which is horizontal in print: compression of the post (2.79 MPa round the hole) and of the top wall under the head. The anchor's x hold is item 11 |
+| 5 | Bed contact | PASS | 703.6 mm² on a 64 mm-tall part, with `min.brim_width` 5 (print_requirements.json) |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | **Round-3 fix 1 is done: no piece's first layer starts unsupported beyond 0.5 mm.** The 0.5 mm layer check over the whole part finds only two new islands, pieces (a) and (b) on their pillars. Nothing else starts in mid-air: the 8 mm post grows from the lip at exactly 45°, and the anchor teardrop and the post's foot add no patch.<br>**Piece (b) on pillar B** (z 39.0–39.2, G y 7.0–7.2): its first layer spans G z 16.28…18.32 over the pillar's 16.45…18.05, so the edges are 0.17 below and 0.27 above. Along x the pillar is 0.5 in from each plate face (x 35.35–39.35 under 34.85–39.85). Every edge is ≤ 0.5 from the pillar. Only the four outer corners reach 0.54–0.57 diagonally: ≤ 0.14 mm² per layer, which is a raster artefact plus the corner of two in-limit edges. Round 3 had 4.24 mm² up to 1.13 mm. The offset slicing phase (39.0) gives the same: ≤ 0.56.<br>**Piece (a) on pillar A**, unchanged: 0.18 / 0.15 in z, 0.5 in x, corners ≤ 0.54 (0.57 in the offset phase, round 3's R1).<br>**Other patches** are r 1.5 / r 2 roundings closing over two-sided spans: slot A's apex at z 43.1 (0.60 mm², ≤ 0.56), the pass-through apex at z 47.5 (2.6 mm², ≤ 0.76, a 1.5 mm two-sided bridge), and the end of the corner fillet at z 41.1 (0.02 mm²). mesh_check: 0.26 % overhang, widest bridge 2.0 mm |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | **Post:** 8 thick; 2.20 from the anchor hole to either x face (probed at z 25, 40 and 50). The teardrop's point is 1.50 from the +y end (probed; the brief says 1.45). That side carries no load (it faces the cover's free end, and the shank bears towards −x), and it is ≥ 0.9. **Post below the web:** 8 × 9.26 at z 19, 63.1 mm² net of the hole. **Pillar B:** 1.6 × 4, breakaway by design. Front plate 5, top wall 3, lip 8, strip under slot B 11.75. `thin_wall_warnings: []` |
+| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | Anchor: `M3_CLEAR + HOLE_COMP` = Ø3.6 (model.py:211), a teardrop pointing +y (up in print), like the top holes. measure_holes lists it at a 270° arc |
+| 9 | Bottom edges chamfered | PASS | 0.3 mm bed chamfer on the −y end, the openings cut before it. The pillars don't reach the bed |
+| 10 | Internal corners on load paths | PASS | The post meets the web and the lip in sharp corners. Strength takes Kt 2.5 at the post's root under the lip and at its foot under the web |
+| 11 | Fasteners follow fdm-design-rules §4 | **FAIL** | §4: *"Plastic creeps under clamping load. Use washers or wide heads, and do not count on bolt preload lasting in PLA or PETG."* The anchor breaks both parts of this:<br>• **It holds the post's foot in x only by the preload's friction.** The shank sits in a Ø3.4 printed hole (Ø3.6 CAD), with 0.2 mm radial clearance (up to 0.4 with position error). Without friction the foot slides 3.6–5.0 µm per N of push (strength.md), so the shank would only bear at 40–56 N. That is beyond the 27 N opening stall and the 34 N proof push. To hold the stall, the seat needs ≥ 94 N of clamp left at μ 0.3, or ≥ 136 N at μ 0.2, out of a "snug only" 150 N. Once the preload creeps, the cover is back on round 3's load path: SF 1.37 (strength.md).<br>• **The socket head (dk 5.5) bears straight on the PETG top wall:** 10.7 MPa at 150 N, sustained SF 2.34. BUILD_GUIDE §1 lists no washer for it, though it puts one under every other clamped M3 head in the arm (the tab screws, the ring tabs) for exactly this creep |
+| 12 | Spec §3 dims are named parameters | PASS | `SUP_B`, `TIE2_POST_T` 8, `TIE2_FOOT_Z` 17.75 (model.py:71, 75–76), and `ANCHOR_XY` from claw_frame.py:135, each with its source. Spec §1 records round 4 |
+| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
 | 14 | lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | No inputs/ |
 
-**Can the pillars come off without damage?** Yes for both, as BUILD_GUIDE §4 step 9 describes: pliers at the foot, then trim the nub flush.
-- **Pillar A's foot** is on the cut-back's end face (y −7). That face lies at r ≥ 11.84 from the axis, outside the r 11.4 pass-through, so a nub there can't reach the pinion.
-- **Pillar B's foot** is partly on the pass-through surface (z 17.0…17.35 at y −5…−5.65). The trim-flush instruction matters there: 0.45 mm printed radial clearance to the pinion. The fix keeps this, over z 17.0…18.05.
+**The post against the racks over the stroke** (exact solids, gaps 0–44 every 2 mm):
+- **Post to jaw A and jaw B:** ≥ **0.24 mm**. My post solid includes the 0.01 overlap into the web at x 22.36, so the
+  real gap is 0.25: the x gap between the post's front face (22.35) and both racks' backs (22.6). The claim of 0.25 holds.
+- **Post to the pinion:** 0.25 likewise.
+- **Post to the claw servo and its lead:** ≥ 1.77 mm. Its 45° underside is 2.5 over the case at y 5.9.
+- **The anchor:**
+  - shank to the jaws: ≥ 2.75;
+  - head to jaw A: ≥ 3.47;
+  - head to the camera mount: 4.66;
+  - shank to the claw servo: 16.9.
+- **Overlaps:** the shank overlaps the cover by 0.000 mm³, the post overlaps the frame by 0.000 mm³, and the shank
+  overlaps the frame by 15.11 mm³, which is exactly the thread annulus over 11.25 mm.
+- claw_sequence_check.json (round 4) is `ok`, with 0 mm³ on every path and over the stroke.
 
-**Assembly:** `claw_sequence_check.py` re-run (it uses `design()`, without the pillars):
-- the cover's descent is 0 mm³ (57 positions), and so are both jaw slide-ins and the swept pinion;
-- the stroke 0–44 is 0 mm³;
-- `ok: true`.
-
-assembly_check.json has no collisions.
+**The anchor screw can be reached.**
+- A straight 2.5 mm key stays clear of the camera mount (5.96 mm) at any height. It clears the Brio for the first 20 mm
+  above the head (4.15 mm), but meets it higher up.
+- An L-key works with the Brio fitted: short leg in the socket, long leg turned towards +x or +y at z 69.5. It clears
+  the Brio by 6.5 / 5.3 mm and the mount by 15.8.
+- BUILD_GUIDE §4 step 9 (drive it before the camera, from directly above) is right, and servicing it with the camera on
+  is possible with an L-key.
 
 ## Required fixes
 
-1. **Make pillar B carry the whole first layer of piece (b) (item 6).**
-   - **Change:** in model.py l.66, `SUP_B = (-6.0, CRESCENT_Y, ZB1 + 0.1, ZB1 + 1.1)` → `SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)`. The pillar is then G y −8 → 6.75, z 16.45…18.05 (1.6 thick), x 35.35…39.35 as before.
-   - **Why the start moves to y −8:** there the plate is solid up to the pass-through at z 19.13, so the whole 1.6 mm foot grows out of the lower piece. At y −6 it is solid only to z 17.56, and that is why the pillar was held to 1.0 mm.
-   - **Result:** piece (b)'s first layer (print z 39.0–39.2, z 16.25…18.33) overhangs the pillar by only 0.20 mm and 0.28 mm, within the 0.3 mm allowance. Piece (a) is already within it at 0.18 / 0.15.
-   - **What stays the same:**
-     - SUP_GAP 0.25: the realised gap is exactly one 0.2 mm layer, 38.8–39.0;
-     - the clearance to slot B (the void below z 16.25);
-     - the 1.6 × 4 mm section, which still snaps with pliers;
-     - BUILD_GUIDE §4 step 9 as written.
+1. **Hold the post's foot in x by geometry, not by preload friction, and put a washer under the anchor's head (item 11).**
+   - **Change (cover, model.py):**
+     - Add a 90° V-ridge along y under the post's foot: centre x 15.25, flanks at 45°, the virtual apex at z 16.95, the
+       tip truncated 0.15 (tip at z 17.10).
+     - It runs y 24 → 32, with a 45° lead-in over y 24–24.8 that continues the post's underside.
+     - Raise the foot's flats 0.1: `TIE2_FOOT_Z` 17.75 → 17.85. The flanks then seat and the flats don't.
+     - The ridge is a prism standing vertically in print, so it needs no support. Its base is x 14.35–16.15, within the
+       post. The anchor hole (Ø3.6, edge at x 16.55) is unchanged.
+   - **Change (frame, model.py):**
+     - Add a matching 90° V-groove along y in the rail block's top: x 14.45–16.05 at z 17.75, 0.8 deep (bottom z 16.95),
+       y 23.5 → 32, open at the +y end.
+     - It opens upward in print. It leaves 0.95 mm of block to the anchor pilot at the top, widening downward.
+     - The pilot and the M3 × 45 don't change.
+   - **Change (hardware, BUILD_GUIDE §1 and §4 step 9):** an M3 washer Ø7 × 0.5 (ISO 7089, as on the tab screws) under
+     the anchor's head. The seat check becomes "the ridge sits in the groove with the top wall on the bulkhead: a 0.1
+     feeler must not enter at the top wall".
+   - **What it gives** (strength.md what-if):
+     - The +x push rides up a 45° flank, and the screw holds that in tension. That hold is positive, with no friction or
+       preload needed.
+     - Every cover row ≥ 4.64. Flank bearing 4.5. Ridge root 3.7. The frame's block in front of the groove 6.4.
+     - M3 pull-out: 4.22 on the preload (10.75 engaged), 3.41 with the wedge's lift.
+     - Head on the washer: 4.80.
+   - **Why not a smaller change:**
+     - A tighter hole at the foot needs ≤ 0.04 mm radial clearance (0.05 gives 2.82), which a printed hole can't promise.
+     - A thread formed in the post's foot would take the hoop stress across the layers: about 2.2 at installation.
+     - A washer alone leaves the hold on friction.
+   - **Rule:** fdm-design-rules §4.
+   - **Evidence:** item 11; strength.md rows 29, 8 and 107; spec §8 proof row 110 (1.08).
    - **Then:**
-     - update the brief's pillar table and cad_checks.py's pillar probe (z 16.45…18.05, from y −8);
-     - rebuild, re-run mesh_check, and re-render;
-     - re-run the layer check with the pillar tops counted as support (union of the 3 layers below). No patch of either piece's first layer may lie more than 0.3 mm beyond its pillar, apart from the 0.5 mm x-inset at the two plate faces.
-     - `design()` doesn't change, so claw_sequence_check stays valid.
-   - **Rule:** fdm-design-rules §2 (overhangs ≤ 45° unless supported); checklist item 6 ("supported and justified").
-   - **Evidence:** item 6, the pillar coverage check at print z 39.1: 4.24 mm², up to 1.13 mm from the pillar. In right.png, the right-hand pillar is a 1 mm post against slot B's edge, under only part of the piece above it.
+     - update cad_checks (the ridge, the groove, the raised flats);
+     - re-run claw_sequence_check (the post now drops 0.8 lower in its last 0.8 of travel, inside the groove);
+     - re-run my 0.5 mm layer check (the ridge's lead-in);
+     - re-review both parts.
 
-## Round-2 required fixes
+## Notes (not blocking)
 
-| Round-2 fix | Status | Evidence |
+1. **The 1.25 mm ligament** between the +y front-screw hole and slot B (round 3 R2) is unchanged. It stays in strength's
+   slot-B strip check.
+2. **Re-slice.** The slice files in this folder are older than round 2.
+
+## Round 3 → round 4
+
+| Round-3 item | Status | Evidence |
 |---|---|---|
-| 1. Give both hanging regions a supported start | **Partly done** | Route (a), modelled breakaway pillars, justified in the brief; slicer supports off; removal in BUILD_GUIDE step 9. Pillar A is adequate; pillar B covers only half its piece (fix 1) |
-| 2. Name the across-layer load paths | Done | Brief table (a)–(c) (item 4) |
-
-**Round-2 strength changes, as built (cad_checks):**
-- the 8 mm lip (x 14.35…22.35), with the first tie's post grown to match;
-- the second tie at y 24…32: post x 18.35…22.35 from the lip at y 6.5, web with 45° and steeper undersides, clear of the pinion's r 11.4;
-- FRONT_Z0 −6 (strip 11.75 deep);
-- FACE_W 12 (plate x 34.85…39.85);
-- M2.5 × 16.
-
-## Recommendations (not blocking)
-
-- **R1. Pillar A's gap.** Piece (a)'s underside (G y 6.5, print z 38.5) lies exactly on the mid-plane of the 38.4–38.6 layer, so the slicer may start the piece there or one layer later. If it starts at 38.6–38.8, the piece spans z 36.47…38.45, 0.33 / 0.35 mm beyond the pillar, over a 0.4 mm gap. Setting SUP_A's z to `ZA0 - 1.6, ZA0 - 0.1` (z 36.65…38.15) covers both cases within 0.3. The base at y −8 stays inside the plate, which is solid there from z 35.37. This is cheap to do with fix 1. Either way, look at the slicer preview at print z 38.2–39.2 when slicing.
-- **R2. The 1.25 mm ligament** between the +y front-screw hole and slot B (item 7): keep it in strength's slot-B strip check, as in round 2.
-- **R3. Process.** The slice files in this folder are from before round 1. Re-slice after the DESIGN gate passes.
+| DFM fix 1: pillar B under piece (b)'s whole first layer | **Done** | Item 6: 0.17 / 0.27 in z, 0.5 in x; corners ≤ 0.57 (round 3: up to 1.13 mm, 4.24 mm²) |
+| R1: pillar A's gap | Unchanged; still within 0.5 (corners 0.57) | Item 6, both slicing phases |
+| Strength round 3: 1.23 (top wall behind the lip) | Anchor built as asked, **but held only by preload friction** | Item 11; strength.md |
+| Post clear of the racks over the stroke | 0.25 mm | Above |
+| Anchor reachable | Yes | Above |

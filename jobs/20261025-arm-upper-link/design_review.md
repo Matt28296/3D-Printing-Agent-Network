@@ -1,30 +1,29 @@
 VERDICT: PASS
 
-# DFM review (round 5): 20261025-arm-upper-link
+# DFM review (round 6): 20261025-arm-upper-link
 
-Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · third design attempt
+Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · fourth design attempt, user-approved
 
-**Why it reopened.** Links strength round 4 failed the two 6.85 × 10 elbow-window rails in out-of-plane bending: yaw stall 1.49 (log.md 13:06). Design round 5 adds a 6 mm rib on the back face along each rail (`rail_ribs()`, model.py:36–53, 59) and cuts the window, notches and pilots 16 deep (:61).
+**Why it reopened.** Links strength round 5 failed the ribs' run-out: SF 1.89 under the yaw stall, 1.07 at spec §8's
+bench test (log.md 15:43). The user approved the analyst's fix (log.md 15:44), and the cad-engineer made it (16:34,
+merged fa56765):
+- `RIB_TAPER` goes 6 → 12 (model.py:42). Nothing else moves.
+- The ribs still reach full depth at x 64.2. Their run-out now slopes at 27° and meets the back face at x 52.2 (was 58.2, 45°).
 
 **Inputs**
-- This job: spec.md, design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, slice_plan.json, log.md and the round-4 review.
+- This job: spec.md, design_brief.md (round 6 section), model.py, cad_checks.py, geometry.json, mesh_check.json, log.md,
+  and the round-5 design_review.md.
 - Renders: all 5, regenerated with `tools/render.py` and viewed.
-- Clearance: an independent mesh sweep of mine (method below), using the turntable model and `hobby_parts.servo_dummy` / `link_back_z`.
-- Skills: fdm-design-rules, material-selection, build123d-cad. library/lessons.md has no entries.
+- Clearance: an independent sweep of mine. The rib solid goes in the shoulder frame of `assembly_check.chain()`, and
+  `distance_to` is measured to the turntable and to `servo_dummy(MG996R, with_horn=True)`, shoulder 0–180° in 5° steps.
+- Skills: fdm-design-rules, material-selection. library/lessons.md has no entries.
 
 **Outputs are current.**
-- `build()` run in memory gives 44066.16 mm³, a 146 × 34 × 16 bbox from (−25, −17, 0) and 1 solid. That matches geometry.json.
-- part.stl is watertight.
-- `tools/mesh_check.py` re-run gives the committed mesh_check.json.
-- The volume is +4569.7 mm³ on round 4 (39496.47). That is the two ribs: 2 × 6.85 × 6 × 52.8 plus the 45° run-outs, minus the r 8 corner at the elbow end. Nothing else moved.
-- `cad_checks.py` re-run: 14/14 PASS.
-
-**Method**
-- **Print frame:** front face on the bed, so the plate is at z 0–10 and the ribs at z 10–16. Point-in-solid line scans of part.stl at 0.005 mm steps.
-- **Clearance sweep:**
-  - The rib solid goes in the shoulder frame (`frame((XS, UP_Y + link_back_z, ZS))`, as in assembly_check.py), swept over shoulder 0–180° in 5° steps.
-  - The other bodies are the turntable, the shoulder MG996R with its double-arm horn, and the four upright tab-screw heads (M3 pan head Ø5.5 × 2.4 on a Ø7 × 0.5 washer, on top of the 2.5 mm tab).
-  - Distance is mesh-to-mesh closest points, sampled both ways.
+- `design()` in memory gives 44312.4 mm³. geometry.json has 44312.35 mm³, a 146 × 34 × 16 bbox and 1 solid.
+- `tools/mesh_check.py` re-run gives exactly the committed mesh_check.json.
+- `cad_checks.py` re-run: 14/14 PASS. The new probe gives rib depth 3 at x 58.2, 1 at x 54.2 and 0 at x 52.2.
+- The volume is +246 mm³ on round 5 (44066.2), which is the run-out's extra wedge (2 × 6.85 × ½ × 6 × 6 = 247). Nothing
+  else moved.
 
 ## Checklist
 
@@ -32,27 +31,25 @@ Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · t
 |---|---|---|---|
 | 1 | Bed fit, 5 mm margin | PASS | 146 × 34 × 16 mm; `fits_bed: true` |
 | 2 | One watertight solid, min Z 0 | PASS | `solids: 1`, `watertight: true`, bbox min z 0.0 |
-| 3 | Orientation matches the brief | PASS | **The front face prints down; the ribs, on the back face, print on top** (`Rot(180, 0, 0)`, model.py:68). iso.png and front.png show the ribs rising 6 mm off the top face, with a 45° run-out towards the shoulder and a square end at x 117. bottom.png (bed face) is unchanged |
-| 4 | Load paths | PASS | The ribs deepen the rails to 16 mm for out-of-plane bending. Their fibres run along x in the layers, so the bending stays along the layers |
-| 5 | Bed contact | PASS | 3881.1 mm², the same as round 4. The ribs are at print z 10–16 |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | `overhang_pct` 0.0, `bridges: []`. Each rib stands on the plate. Its run-out rises at exactly 45° from x 58.2 to 64.2 and faces up. Its sides are vertical and flush with the window wall and the plate edge, and its top is flat at z 16 |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS | **Rib width** at z 13: 6.84 at x 90 (y 10.155–16.995) and 6.26 at x 116 (in the r 8 corner); cad_checks gives 5.8 at the x 117 end. **Pilots:** the four sit at y ±5, between the ribs (rib inner face y ±10.15). The x scan at y 13, z 13 is solid 61.2–117 with no hole, so the ribs touch no hole. Notch → pilot strip 1.835 CAD (round 4: 1.839). Window rails 6.85. `thin_wall_warnings: []` |
-| 8 | HOLE_COMP; horizontal holes | PASS | `HOLE_COMP` goes into `horn_pocket_cutter` and `servo_mount_cutter` (model.py:60–63). Window 41.3 × 20.3 CAD, now through 16 mm, so its side walls continue up the ribs' inner faces. Notches 4.6 × 2.1; pilots Ø2.8. No horizontal holes |
-| 9 | Bottom edges chamfered | PASS (note) | `chamfer_plane_edges(link, T, 0.4)` (model.py:58) on the bed face. The hole mouths rely on `elefant_foot_compensation` 0.2 |
-| 10 | Internal corners on load paths | PASS (advisory) | Towards the shoulder the rib meets the plate through a 45° run-out, with no step (cad_checks: depth 3 at x 61.2, 0 at x 58.2). At x 117 it ends in a square 6 mm step. That is 2.9 mm past the near pilot row, where the rail moment has fallen to the cantilever end. The notch corners are as in round 4 |
-| 11 | Fasteners per §4 | PASS | **Elbow tab screws:** M3 × 12 + Ø7 washer, 9 mm into the 10 mm plate. The pilots are through-holes (16 mm cut), so the screws can't bottom out. **Shoulder clamp:** M3 × 14 + Ø9 washer through the 8 mm floor, unchanged. **Horn anti-rotation:** note 1 |
-| 12 | Spec §3 dims are named parameters | PASS | `RIB_H` 6, `RIB_PAST` 5, `RIB_X0` 64.2, `RIB_TAPER` 6, `RIB_X1` 117 (model.py:37–42), sourced to strength round 4. They match the brief's new "Rail ribs" row. `L` 100, `T` 10, `CLR` and `HOLE_COMP` are unchanged. The brief now carries the notch row with +0.2/−0, which closes round 4 note 3 |
-| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at ≈ 70 °C. `materials_on_hand` is empty: check the spool |
+| 3 | Orientation matches the brief | PASS | The front face prints down and the ribs print on top (`Rot(180, 0, 0)`, model.py:71). **front.png** shows the longer, shallower ramp rising from about x 52 to full height at 64, then flat to the square end at 117. **iso.png** shows both rails' ramps. bottom.png (the bed face) is unchanged |
+| 4 | Load paths | PASS | The ramp feeds the ribs' force into the plate over 12 mm instead of 6. The ribs' bending fibres still run along x, in the layers. The across-layer shear at the run-out is strength's rib-root row (3.74, strength.md) |
+| 5 | Bed contact | PASS | 3881.1 mm², unchanged. The ribs are at print z 10–16 |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | `overhang_pct` 0.0, `bridges: []`. The run-out is a 27° ramp facing up, so each 0.2 mm layer steps 0.39 mm along x onto the layer below. The rib sides are vertical, flush with the window wall and the plate edge |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | **Rib width:** 6.85, the same over the run-out (it is the same prism, cut by the ramp). The first 2 mm of ramp is under 1 mm tall, about 1–4 layers on a 6.85 mm-wide strip, so it is not a thin wall. **Unchanged:** notch → pilot strip 1.835 CAD; window rails 6.85. `thin_wall_warnings: []` |
+| 8 | HOLE_COMP; horizontal holes | PASS | Unchanged: `HOLE_COMP` in both cutters (model.py:63–66). measure_holes gives Ø3.6 clamp and 4 × Ø2.8 pilots. No horizontal holes |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(link, T, 0.4)` on the bed face (model.py:61) |
+| 10 | Internal corners on load paths | PASS | The rib meets the back face at x 52.2 at a 153° corner (was 135°), with no step. Strength keeps Kt 2.0 there. The plate at the foot gives 4.36 |
+| 11 | Fasteners per §4 | PASS | Unchanged: M3 × 12 + Ø7 washer tab screws with 9 mm engaged; the shoulder clamp is an M3 × 14 + Ø9 washer |
+| 12 | Spec §3 dims are named parameters | PASS | `RIB_TAPER = 12.0` (model.py:42), with its source: links strength round 5, 6 → 12. The brief's "Rail ribs" row says "27° run-out (`RIB_TAPER` 12) to x 52.2". Spec §2 asks for ≥ 10 mm rib clearance; see below |
+| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at about 70 °C. `materials_on_hand` is empty, so check the spool |
 | 14 | Lessons in library/lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | No inputs/ folder |
 
-**The ribs against the parts around them** (my sweep, shoulder 0–180°):
-- **Turntable:** ≥ **11.89 mm**, closest at shoulder 130°. The brief says ≥ 11.9.
-- **Shoulder MG996R with its horn:** ≥ 23.9 mm.
-- **Upright tab-screw heads:** ≥ 23.5 mm.
-- **Elbow servo:** its case already stands 17 mm out of the back face, between the ribs. The ribs continue the window's side walls, so the case slides along a 16 mm-deep window.
-- **Elbow servo lead:** it leaves the case end 11 mm below the back face, on the centre line. That is below the ribs (6 mm) and between them.
-- **Elbow horn and forearm:** on the link's front side. The forearm's ribs come no nearer than 10.17 mm to this link (forearm review).
+**The ribs against the parts round them** (my sweep, shoulder 0–180°, the whole rib solid including the run-out):
+- **Turntable:** ≥ **11.33 mm**, closest at shoulder 130° (round 5: 11.89). It is the run-out that comes nearest.
+- **Shoulder MG996R with its double-arm horn:** ≥ **19.04 mm**, at 155° (round 5: 23.9).
+- Both clear spec §2's 10 mm. `assembly_check.json` (round 6) has no collisions in any pose or sweep.
+- The elbow end is unchanged.
 
 ## Required fixes
 
@@ -60,14 +57,16 @@ None.
 
 ## Notes (not blocking)
 
-1. **Shoulder horn anti-rotation** (round 4 note 2, still open). The 2 × M2 × 6 are drilled into the pocket floor at assembly. They bite the floor's 1.0 mm of top skin, then 40 % gyroid. A local solid-infill modifier under the pocket would give them solid plastic, as the turntable's 30 bottom layers do for the disc horn. That is the slicing-lead's call.
-2. **Notch corners** (round 4 note 1, optional): an r 0.5 on each notch's far corners.
+1. **Shoulder horn anti-rotation** (open since round 4). The 2 × M2 × 6 bite 1.0 mm of pocket-floor skin, then infill. A
+   solid-infill modifier under the pocket is the slicing-lead's call.
+2. **Notch corners** (optional, open since round 4): an r 0.5 on each notch's far corners.
+3. **Re-slice.** The slice files in this folder are older than round 5. Re-slice once the DESIGN gate passes.
 
-## Round 4 → round 5
+## Round 5 → round 6
 
 | Item | Status | How I checked |
 |---|---|---|
-| Strength round 4: window rails (1.49) | Ribs added, printable | #3, #6, #7: on the top face, 45° run-out, ≥ 5.8 wide; clearance ≥ 11.89 |
-| Round 4 note 3: notch tolerance in the brief | Closed | Brief table row |
-| Round 4 notes 1–2 | Open, optional / slicing | Notes 1–2 |
-| Round 4's passing items | Still pass | The volume change is the ribs |
+| Strength round 5: rib run-out SF 1.89 | `RIB_TAPER` 12 as asked | cad_checks probes; front.png; strength.md re-runs it at 3.74 |
+| Printability of the longer ramp | PASS | #6, #7 |
+| Clearance of the ribs, now from x 52.2 | ≥ 11.33 / ≥ 19.04 mm | My sweep (above) |
+| Round 5's passing items | Still pass | The volume change is the ramp alone |

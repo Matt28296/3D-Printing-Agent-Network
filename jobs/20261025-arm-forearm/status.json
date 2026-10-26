@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-forearm",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 in progress (user-approved fourth round): round \u00d81.7 tab pilots; \u00a78 test (2) 17 N at 60\u00b0",
+    "DESIGN": "pass (round 6 recheck): DFM PASS, strength NEEDS_TEST, lowest SF 3.12; \u00a78 proof (2) 2.07 \u00b7 measure the servo tab-hole spacing before printing",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

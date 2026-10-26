@@ -1,4 +1,12 @@
-"""Strength check, round 3: jobs/20261026-arm-claw-frame (wrist plate + servo bulkhead + rail block + ribs).
+"""Strength check, round 4: jobs/20261026-arm-claw-frame (wrist plate + servo bulkhead + rail block + ribs + the cover's
+anchor pilot: Ø2.7 CAD x 14 at ANCHOR_XY (18.35, 28) in the rail block's top, for the cover's M3 x 45).
+
+Round 4 (independent re-check of the as-built anchor pilot): the rail-block rows whose spread reaches y 28 now take the
+pilot out of their section (it crosses the root plane z 6: the pilot runs z 3.75..17.75); new rows for the anchor: M3
+pull-out on the preload and with the cover's lift, thread-forming and preload hoop stress in the 2.65 mm walls, the
+shank bearing and tear-out towards the block's front face, the block bent by the anchor's pull. The cover's reversed
+push is no longer expected through the top joint, but its rows stay as the bound for an anchor whose preload has crept
+away (cover strength round 4).
 
 Run from the project root:  python3 jobs/20261026-arm-claw-frame/strength_calc.py
 Plain python3: parameters come from claw_frame.py, this job's model.py, tools/hobby_parts.py (ast module) and the
@@ -105,7 +113,12 @@ F_CRASH = 13.0                        # N at a fingertip or at the camera (SYS-1
 F_TUG = 10.0                          # N USB cable tug at the camera (spec), any direction
 EE_SOLID_G = TB["configs"]["camera, solid"]["end_effector_g"]            # 253.9 g (round 3)
 OVER = TB["overhung_moment_nmm"]
-M_OVERHUNG = {0: OVER["camera, payload 0 g"]["wrist"], 50: OVER["camera, payload 50 g"]["wrist"]}   # 116 / 133
+# round 4: torque_budget.json is from claw round 3; the cover has since grown 1153 mm3 (the 8 mm anchored post) and the
+# frame lost 80 mm3 (the pilot): +1.36 g at the claw, so the wrist moments are scaled by the end-effector mass ratio
+EE_GROWTH_G = ((json.loads((ROOT / "jobs" / "20261026-arm-claw-cover" / "geometry.json").read_text())["volume_mm3"] - 31791.09)
+               + (json.loads((HERE / "geometry.json").read_text())["volume_mm3"] - 46477.2)) * 1.27e-3
+EE_SCALE = (TB["configs"]["camera, solid"]["end_effector_g"] + EE_GROWTH_G) / TB["configs"]["camera, solid"]["end_effector_g"]
+M_OVERHUNG = {0: OVER["camera, payload 0 g"]["wrist"] * EE_SCALE, 50: OVER["camera, payload 50 g"]["wrist"] * EE_SCALE}
 MOVING = TB["moving_factor"] if isinstance(TB.get("moving_factor"), (int, float)) else 1.3
 CAM_G = BRIO.mass_g + 5.0 + 13.3 + 5.0     # Brio, thumb screw, mount (solid), cable allowance on the claw
 PRELOAD_M2 = 100.0                    # N, M2 x 12 wrist clamp snug (assumption, as the pinion clamp and the arm jobs)
@@ -194,13 +207,34 @@ H_R = RAIL_H / 2                      # thrust resultant at mid-height of the co
 PATCH = 2.0                           # contact patch along y at the cocked rack's end
 
 
+ANCHOR_D = C.M3_PILOT + P.HOLE_COMP if hasattr(C, "ANCHOR_XY") else 0.0      # 2.7 CAD (round 4)
+ANCHOR_X = C.ANCHOR_XY[0] if hasattr(C, "ANCHOR_XY") else 0.0                 # 18.35
+ANCHOR_Y = C.ANCHOR_XY[1] if hasattr(C, "ANCHOR_XY") else 0.0                 # 28
+
+
 def rail_rows(case, R, e_edge, req, t=RAIL_D, kt=KT_SHARP, allow=ALLOW_Z, rows=ROWS, label="rail block root, rack side",
-              b_less=0.0):
+              b_less=0.0, pilot=False):
     """The block as a cantilever from the wrist plate (conservative: its merge with the bulkhead is ignored), t deep along
-    x, R at H_R above its root, e_edge from the block's free end (45-degree spread)."""
+    x, R at H_R above its root, e_edge from the block's free end (45-degree spread). pilot=True (round 4): the anchor's
+    Ø2.7 pilot crosses the root plane inside the spread, so the section loses a d x d strip at x 18.35; the stress is the
+    worse of the rack-side face (Kt of the sharp root) and the pilot's edge (Kt 2, hole)."""
     b = PATCH + H_R + min(H_R, e_edge) - b_less
-    s = kt * 6 * R * H_R / (b * t * t)
-    return row(case, f"{label} (sharp, Kt {kt}): b_eff {b:.1f}, depth {t:.2f}, lever {H_R:.1f}", "Z", s, allow, req, rows)
+    M = R * H_R
+    if not pilot:
+        s = kt * 6 * M / (b * t * t)
+        return row(case, f"{label} (sharp, Kt {kt}): b_eff {b:.1f}, depth {t:.2f}, lever {H_R:.1f}", "Z", s, allow, req, rows)
+    def _sec(bb, x0, x1):
+        return bb * (x1 - x0), (x0 + x1) / 2, bb * (x1 - x0) ** 3 / 12
+    A_s, xc_s, I_s = _sec(b, C.RAIL_X0, C.RAIL_X0 + t)
+    A_h, xc_h, I_h = _sec(ANCHOR_D, ANCHOR_X - ANCHOR_D / 2, ANCHOR_X + ANCHOR_D / 2)
+    A_n = A_s - A_h
+    xc_n = (A_s * xc_s - A_h * xc_h) / A_n
+    I_n = I_s + A_s * (xc_s - xc_n) ** 2 - (I_h + A_h * (xc_h - xc_n) ** 2)
+    s_face = kt * M * (C.RAIL_X0 + t - xc_n) / I_n
+    s_hole = 2.0 * M * (ANCHOR_X + ANCHOR_D / 2 - xc_n) / I_n
+    return row(case, f"{label} with the anchor's Ø{ANCHOR_D:.1f} pilot in it (round 4): b_eff {b:.1f}, depth {t:.2f}, lever "
+               f"{H_R:.1f}; I {I_n:.0f}; face Kt {kt} {s_face:.2f} / pilot edge Kt 2 {s_hole:.2f} MPa", "Z",
+               max(s_face, s_hole), allow, req, rows)
 
 
 span_closed = C.RACK_Y[1] - C.RACK_Y[0]                   # 56.5: rack ends on the guides
@@ -209,12 +243,13 @@ couple = lambda F, x: F * (x - X_MESH)
 R_grip_open = couple(F1, X_GRIP) / span_open
 R_grip_closed = couple(F1, X_GRIP) / span_closed
 e_closed = C.HALF_Y - (-C.RACK_Y[0])
+PIL = ANCHOR_D > 0                                         # round 4: the spread at the +y end reaches the pilot (y 28)
 rail_rows(f"stall, one jaw blocked, jaws 44 open: rack B's +y end at the block's end, R {R_grip_open:.1f} N",
-          R_grip_open, 0.0, SF_SHORT)
+          R_grip_open, 0.0, SF_SHORT, pilot=PIL)
 rail_rows(f"stall, one jaw blocked, jaws closed: rack B's +y end at y {-C.RACK_Y[0]:.1f}, R {R_grip_closed:.1f} N",
-          R_grip_closed, e_closed, SF_SHORT)
+          R_grip_closed, e_closed, SF_SHORT, pilot=PIL)
 rail_rows(f"stall, both jaws (cyclic), jaws 44 open: R {R_grip_open / 2:.1f} N at the block's end", R_grip_open / 2, 0.0,
-          SF_CYCLIC)
+          SF_CYCLIC, pilot=PIL)
 R_crash_c = couple(F_CRASH, C.X_TIP) / span_closed
 rail_rows(f"crash {F_CRASH:.0f} N pushes jaw B shut: rack B's -y end on the block at y {-C.RACK_Y[1]:.1f}, R "
           f"{R_crash_c:.1f} N", R_crash_c, C.HALF_Y - C.RACK_Y[1], SF_SHORT)
@@ -230,7 +265,7 @@ y_pilot, d_pilot = C.FRONT_SCREWS[1][0], C.M25_PILOT + P.HOLE_COMP
 overlap = max(0.0, (y_pilot + d_pilot / 2) - (C.HALF_Y - (PATCH + H_R)))
 rail_rows(f"new path: the same (jaws 44 open, R {R_grip_open:.1f} N) where the 14 mm front pilot passes 1.9 under the root "
           f"(x 20.85..22.35, y {y_pilot:.0f})", R_grip_open, 0.0, SF_SHORT, b_less=overlap,
-          label=f"rail block root less the pilot's {overlap:.1f} mm overlap")
+          label=f"rail block root less the pilot's {overlap:.1f} mm overlap", pilot=PIL)
 # skin over a front pilot under rack B's track: separating force + the finger's pitching couple, all on the skin
 F_sep = F1 * math.tan(math.radians(20))
 pitch = F1 * ((C.ZS) - (C.T_W + C.RACK_BACK / 2)) / span_open
@@ -417,8 +452,9 @@ M_cov = R_grip_open * ((C.Z_TOP0 + C.Z_TOP1) / 2 - z_rb)
 T_cov = M_cov / (C.BULK_T / 2) / 2
 for lab, L_ in (("M3 x 10, no camera", L_M3_BARE), ("M3 x 18 with the camera mount", L_M3_CAM)):
     row(f"new path: opening stall on jaw B, jaws open ({R_grip_open:.1f} N on the cover's upper piece): the cover's "
-        f"overturning moment {M_cov:.0f} N.mm on its top screws, {T_cov:.0f} N each ({lab}; the cover's anchored-post fix "
-        f"removes it)", f"M3, {L_:.1f} engaged", "Z shear", T_cov / (math.pi * 3.0 * L_), SHEAR_Z, SF_SHORT)
+        f"overturning moment {M_cov:.0f} N.mm on its top screws, {T_cov:.0f} N each ({lab}; bound for an anchor whose "
+        f"preload has crept away, round 4)", f"M3, {L_:.1f} engaged", "Z shear", T_cov / (math.pi * 3.0 * L_), SHEAR_Z,
+        SF_SHORT)
 # front M2.5 x 16 into 14 mm pilots: 11 engaged (round 3)
 L_M25 = P.FRONT_PILOT_DEPTH - 3.0
 z_rbg = (C.T_W + (C.ZS - C.RACK_TIP)) / 2               # 12.05: rack B's front face resultant
@@ -426,6 +462,56 @@ T_m25 = R_grip_open * z_rbg / C.FRONT_SCREWS[0][1]
 row(f"stall, one jaw blocked: rack B pushes the cover's lower piece forward ({R_grip_open:.1f} N at z {z_rbg:.1f}): "
     f"M2.5 pull-out {T_m25:.0f} N (one screw)", f"M2.5 x 16, {L_M25:.0f} engaged (14 mm pilot), 1.9 mm skins", "Z shear",
     T_m25 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_SHORT)
+
+# ================================================================ 6. the cover's anchor in the rail block (round 4)
+# One M3 x 45 socket head through the cover (top wall, lip, second post: 33.75 mm) into a Ø2.7 CAD (2.5 printed) x 14
+# pilot in the block's top at (18.35, 28): 11.25 engaged. Walls round the pilot (probed on the round 4 solid at z 6, 12,
+# 17): 2.65 to the block's front face (x 22.35) and to its +y end (y 32), 7.5 behind it, 6.65 towards -y; floor 3.75.
+# Forces from the cover's frame model (cover strength_calc.py, round 4, worst of 64 variants):
+#   preload friction holding the post's foot: Fx 25.8 N (opening stall), 32.6 N (spec §8 proof push), lift <= 10.1 N;
+#   preload crept away: the foot slides, Fx 0 until the 0.2 mm hole clearance closes (it does not, below 40 N), and the
+#   lift on the screw rises to 120.8 N (opening stall) as the cover rocks on its top joint.
+# The x force on the pilot is bounded here by the whole push on the cover: R_grip_open (27.0 N), 34.2 N at the proof push.
+if ANCHOR_D > 0:
+    P_M3 = 150.0                                           # N, "snug only" (<= 0.09 N.m), as the cover's analysis
+    L_AN = 45.0 - (C.Z_TOP1 - Z_BLOCK)                     # 11.25 engaged
+    A_TH = math.pi * 3.0 * L_AN
+    LIFT_HELD, LIFT_SLIP, LIFT_SLIP_PROOF = 10.1, 120.8, 153.1   # cover strength_calc.py round 4 output (N)
+    R_PROOF = 34.2                                         # spec §8 proof push on jaw B, jaws 30 open (cover analysis)
+    row(f"cover anchor M3 x 45 driven snug, {P_M3:.0f} N preload (sustained): pull-out from the block",
+        f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", P_M3 / A_TH, SHEAR_Z, SF_CYCLIC)
+    row(f"cover anchor: preload + the cover's lift {LIFT_HELD} N under the opening stall (foot held by friction)",
+        f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", (P_M3 + LIFT_HELD) / A_TH, SHEAR_Z, SF_SHORT)
+    row(f"cover anchor, preload crept away: the cover's lift {LIFT_SLIP} N under the opening stall (foot sliding)",
+        f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", LIFT_SLIP / A_TH, SHEAR_Z, SF_SHORT)
+    row(f"cover anchor, spec §8 proof push {R_PROOF} N: preload + lift 12.7 N (foot held) / lift {LIFT_SLIP_PROOF} N "
+        f"(preload gone), the worse", f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear",
+        max(P_M3 + 12.7, LIFT_SLIP_PROOF) / A_TH, SHEAR_Z, SF_SHORT / 1.5)
+    # hoop stress in the 2.65 mm walls: the pilot is vertical in a flat print, so the hoop runs along the layers (25 MPa).
+    # Thread forming (at installation, short-term) as the frame's MG90S rows: p_form = 2 T / (mu pi d^2 L), the same
+    # flank pressure as the M2's 40 N.mm over 5.5 mm (the same 0.25 radial interference); preload p = S tan30 / (pi d L)
+    r_i = C.M3_PILOT / 2                                   # 1.25 printed
+    w_pr = (C.RAIL_X1 - ANCHOR_X) - ANCHOR_D / 2 + P.HOLE_COMP / 2      # 2.75 printed (2.65 CAD)
+    lame_a = ((r_i + w_pr) ** 2 + r_i ** 2) / ((r_i + w_pr) ** 2 - r_i ** 2)
+    p_cl = P_M3 * math.tan(math.radians(30)) / (math.pi * 3.0 * L_AN)
+    row(f"cover anchor driven: thread forming ({p_form:.1f} MPa, as the M2 rows) + preload ({p_cl:.2f} MPa), short-term",
+        f"2.65 CAD / {w_pr:.2f} printed walls to the front face and the +y end; Lame peak x{lame_a:.2f}, along the layers",
+        "XY", (p_form + p_cl) * lame_a, ALLOW_XY, SF_SHORT)
+    row(f"cover anchor: preload alone (sustained; the forming pressure relaxes)", f"as above", "XY", p_cl * lame_a, ALLOW_XY,
+        SF_CYCLIC)
+    # the shank bearing on the pilot towards the front face, if the cover's foot ever drags it +x (bound: the whole push)
+    L_B = 2 * 3.0
+    for lab, F_, req in ((f"opening stall, whole push {R_grip_open:.1f} N", R_grip_open, SF_SHORT),
+                         (f"spec §8 proof push, {R_PROOF} N", R_PROOF, SF_SHORT / 1.5)):
+        row(f"cover anchor dragged +x ({lab}): shank bearing in the pilot", f"Ø3 x {L_B:.0f}", "bearing",
+            F_ / (3.0 * L_B), BEARING, req)
+        row(f"cover anchor dragged +x ({lab}): tear-out of the 2.65 wall to the block's front face",
+            f"2 x 2.65 x {L_B:.0f}, vertical planes (along the layers)", "XY shear", F_ / (2 * 2.65 * L_B), SHEAR_XY, req)
+        # the block bent +x by the pull at its top (z 17.75), 45-degree spread from the shank, clipped at the +y end
+        b_an = min(C.HALF_Y, ANCHOR_Y + 1.5 + RAIL_H) - (ANCHOR_Y - 1.5 - RAIL_H) - ANCHOR_D
+        row(f"cover anchor dragged +x ({lab}): rail block root bent the other way (pull at the top, lever {RAIL_H})",
+            f"b_eff {b_an:.1f} (less the pilot), depth {RAIL_D:.2f}, Kt {KT_SHARP}", "Z",
+            KT_SHARP * 6 * F_ * RAIL_H / (b_an * RAIL_D ** 2), ALLOW_Z, req)
 
 
 # ---------------------------------------------------------------- report
@@ -438,6 +524,7 @@ def table(rows, start=1):
 print(f"frame: plate {C.T_W} + pad {C.PAD_T} (floor {FLOOR:.1f}), bulkhead {C.BULK_T}, rail block x {C.RAIL_X0}..{C.RAIL_X1} "
       f"z {C.T_W}..{Z_BLOCK}; ribs {P.RIB_W} x {P.RIB_D}; window y {y_w0:.2f}..{y_w1:.2f}, z {Z_WIN0:.2f}..{C.ZS + HW_WIN:.2f}; "
       f"pilots y {pilot_far:.2f} / {pilot_lead:.2f}")
+print(f"round 4: claw +{EE_GROWTH_G:.2f} g since torque_budget.json (cover post, frame pilot): wrist moments x{EE_SCALE:.4f}")
 print(f"camera: plug exit G (x {PLUG[0]:.1f}, z {PLUG[1]:.1f}), end-face centre z {CAM_END[1]:.1f}; package {CAM_G:.0f} g; "
       f"end effector {EE_SOLID_G} g solid; overhung wrist moment {M_OVERHUNG[0]:.0f} / {M_OVERHUNG[50]:.0f} N.mm")
 print(f"joint moments: tug {M_tug:.0f}, camera crash {M_camcrash:.0f}, finger crash {M_fingercrash:.0f}, yaw stall "
@@ -468,21 +555,6 @@ for od, fl in ((6.0, FLOOR), (8.0, FLOOR), (8.0, 7.0), (10.0, 7.0)):
 print("What-if, rail block depth (rack B's +y end at the block's end, one jaw blocked):")
 for t in (4.0, 8.0, RAIL_D):
     print(f"  depth {t:5.2f}: SF {rail_rows('w', R_grip_open, 0.0, SF_SHORT, t=t, rows=[]):.2f}")
-# the cover's required fix (cover strength.md, round 3) adds an M3 x 45 into a Ø2.7 x 14 pilot in this block's top at
-# (x 18.35, y 28): the block's rack-side root with that hole in its b_eff (rack B's +y end at the block's end, jaws open)
-d_h = C.M3_PILOT + P.HOLE_COMP
-x_h = 18.35
-b_e = PATCH + H_R
-rects = [(b_e, C.RAIL_X0, C.RAIL_X1)]
-A_s, xc_s, I_s = section(rects)
-A_h, xc_h, I_h = section([(d_h, x_h - d_h / 2, x_h + d_h / 2)])
-A_n = A_s - A_h
-xc_n = (A_s * xc_s - A_h * xc_h) / A_n
-I_n = I_s + A_s * (xc_s - xc_n) ** 2 - (I_h + A_h * (xc_h - xc_n) ** 2)
-s_h = KT_SHARP * R_grip_open * H_R * (C.RAIL_X1 - xc_n) / I_n
-print(f"What-if, the cover fix's M3 pilot (Ø{d_h:.1f} at x {x_h}, y 28) in the rail block: block root SF "
-      f"{ALLOW_Z / s_h:.2f} (as built {rail_rows('w', R_grip_open, 0.0, SF_SHORT, rows=[]):.2f}); the frame's top-screw "
-      f"rows under the cover's reversed push then fall away (the anchor takes ~25 of the 27 N into this block)")
 print("What-if, window strips with ribs (worst of the port at -45 / +45):")
 for name, rib in (("no ribs", (0.0, 0.0)), ("6 x 8 ribs", (6.0, 8.0)), ("6 x 10 ribs (as built)", RIB), ("8 x 10", (8.0, 10.0))):
     rr = rib if rib[0] else None

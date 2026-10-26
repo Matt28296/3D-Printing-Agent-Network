@@ -8,13 +8,15 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 change (user-approved with the cover anchor): one \u00d82.7 \u00d7 14 M3 pilot in the rail block; recheck after",
+    "DESIGN": "round 4 recheck: DFM PASS, strength NEEDS_TEST 3.03 \u00b7 held: the cover fix proposes a V-groove in this rail block (user decision)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Approve the V-groove in the rail block top (cover anchor fix)?"
+  ],
   "updated": "2026-10-26T16:09:12+00:00"
 }
