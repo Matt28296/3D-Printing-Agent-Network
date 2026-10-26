@@ -11,9 +11,9 @@ Round 3 (DFM + strength round 2, Architect's round-3 decisions, deep reviews 01 
   from inside the tub along an open V-trough into a diamond pocket. The pocket runs through the
   wall, a housing on the wall's outer face (y 38-42, beside the links) and a nacelle that reaches
   into the track's wrap (y 42-46, r <= 10.9, inside the links' r >= 12.39), until the gearbox face
-  stops on the nacelle's 1 mm skin at y 45. The rolled section makes every pocket face a 45° face,
-  so the pocket prints without a gable. An aluminium hub on the shaft outside the skin carries the
-  sprocket (sprocket job): shaft overhang 10 mm. The pocket sets the motor's height and takes its
+  stops on the nacelle's skin (2 mm since round 4, y 44-46). The rolled section makes every pocket
+  face a 45° face, so the pocket prints without a gable. An aluminium hub on the shaft outside the
+  skin carries the sprocket (sprocket job): shaft overhang 11 mm. The pocket sets the motor's height and takes its
   torque; the V-trough under the can (walls >= 4 mm, ±12.1) steadies it, and its zip tie holds it
   down. No rear stop: the motor is located by its gearbox face, so 9 and 11 mm gearboxes both fit.
 - Road-wheel bosses Ø26 with an r1.5 rim fillet; BOSS_IN 5.5 at the road-wheel bosses and the
@@ -25,6 +25,15 @@ Round 3 (DFM + strength round 2, Architect's round-3 decisions, deep reviews 01 
 - Strap slots at |y| 26; the toggle switch moved to the lid (the lever no longer sticks out).
 Axle bolts: M3 socket head cap screws, class 12.9, FULLY threaded (they must engage the nut
 trapped in the wall's outer face): M3 × 50 for the road wheels, M3 × 40 for the idlers.
+
+Round 4 (strength round 3, changes 1 and 2, approved by the user; nothing else changed):
+- Skin 1.0 -> 2.0 (rover_frame.SKIN): the skin grows inward, so the gearbox face moves to y 44 and the
+  pocket and trough follow it 1 mm inward; the nacelle, hub and track plane stay put.
+- Idler clamp: a 2 mm steel head plate (rover_frame.IDLER_PLATE) let into a PLATE_T deep recess in each
+  idler-block face between the buttress (x 108) and the front strip (x 129), under the Ø9 washer, so the
+  head, JACK_Y and the buttress keep their places; and a 2 mm steel nut plate (rover_frame.NUT_PLATE) on
+  the bottom of the idler nut slot, now 9 mm tall and PLATE_T deeper. Both have 45° roofs where they open
+  (no flat ceiling to bridge), except the flat strip over the nut plate, which its top edge bears on.
 """
 import sys
 from pathlib import Path
@@ -35,8 +44,9 @@ from cadlib import HOLE_COMP_DEFAULT, hex_nut_pocket, teardrop_cutter, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-rover-assembly"))
 from rover_frame import (AXLE_DX, BOSS_IN, CHORD_IN, FLOOR_T, FLOOR_Z, HALF_W_OUT, HOUSING_OUT,  # noqa: E402
-                         IDLER_SLOT, LID_SCREWS, LINK_WALL_GAP, MOTOR, MOTOR_FACE_Y, NACELLE_WALL, ROAD_X, SKIN,
-                         TOP_Z, WALL, WASHER_WIDE, X_FRONT_OUT, X_REAR_OUT, Z_A, motor_diamond)
+                         IDLER_PLATE, IDLER_SLOT, LID_SCREWS, LINK_WALL_GAP, MOTOR, MOTOR_FACE_Y, NACELLE_WALL,
+                         NUT_PLATE, PLATE_T, ROAD_X, SKIN, TOP_Z, WALL, WASHER_WIDE, X_FRONT_OUT, X_REAR_OUT, Z_A,
+                         motor_diamond)
 
 from hobby_parts import BATT_2X18650_LONG, HCSR04_TX_D, HCSR04_TX_DX, chamfer_plane_edges  # noqa: E402
 
@@ -50,7 +60,7 @@ ROAD_BOSS_R = 13.0            # Ø26 road-wheel bosses (strength round 2, change
 BOSS_RIM_R = 1.5              # fillet round the road-wheel boss rim (strength round 2, change 2: Kt 1.5)
 JOIN = 1.5                    # 1.5 × 45° strips where bosses, idler block, cradle and housing meet a wall (DFM r2 fix 3)
 IDLER_BLOCK = (30.0, 24.0)    # x length, height above the floor (strength round 1)
-# motor pocket, housing, nacelle and skin (rover_frame: MOTOR_FACE_Y 45.0, SKIN 1.0, HOUSING_OUT 4.0)
+# motor pocket, housing, nacelle and skin (rover_frame: MOTOR_FACE_Y 44.0, SKIN 2.0, HOUSING_OUT 4.0)
 GB_CLR = 0.2                  # gearbox in its pocket: total clearance on each section dimension (+ HOLE_COMP)
 POCKET_HX = (MOTOR.gb_w + GB_CLR + HOLE_COMP) / 2        # 6.2: along the motor's x (12 mm side)
 POCKET_HY = (MOTOR.gb_h + GB_CLR + HOLE_COMP) / 2        # 5.2: along the motor's y (10 mm side)
@@ -68,7 +78,7 @@ BOSS_HOLE_D = MOTOR.boss_d + 0.5                         # skin hole round the N
 CHEEK_T = 4.0
 CRADLE_HALF_X = round(max(abs(x) for x, _ in POCKET) + CHEEK_T, 1)                       # 12.1
 TROUGH_TOP = Z_A + min(z for x, z in POCKET if abs(x) > POCKET_R * 0.9)                  # Z_A - 0.71: lower side vertex
-CRADLE_Y0 = MOTOR_FACE_Y - 11.0 - MOTOR.can_len - 1.0    # 17.5: rear end, takes a motor with an 11 mm gearbox
+CRADLE_Y0 = MOTOR_FACE_Y - 11.0 - MOTOR.can_len - 1.0    # 16.5: rear end, takes a motor with an 11 mm gearbox
 TIE_W = 4.0                   # zip-tie tunnel through the trough walls, under the can (ties up to 3.6 wide)
 TIE_Y = 24.0                  # tunnel centre |y|: under the can for 9 and 11 mm gearboxes, clear of the rear columns
 # lid columns with M3 heat-set inserts (deep review 04 S-09, DFM round 2 R1)
@@ -77,12 +87,23 @@ INSERT_D, INSERT_DEPTH = 4.0, 6.5    # M3 × 5.7 brass insert: maker's hole size
 COLUMNS = LID_SCREWS          # (-13, ±32.5), (102, ±32.5): the front pair overlaps the idler block by 2 mm
 #                               (no tangent face) and leaves the jack screw's line (|y| 25.4) clear
 # idler positive stop: M3 × 20 set screw along +X bearing on the idler-bolt head (Architect round 3)
-IDLER_HEAD_Y1 = HALF_W_OUT - WALL - BOSS_IN - WASHER_WIDE[1]   # 27.2: idler-bolt head underside (on its Ø9 washer)
+IDLER_HEAD_Y1 = HALF_W_OUT - WALL - BOSS_IN - WASHER_WIDE[1]   # 27.2: idler-bolt head underside, on its Ø9 washer on the
+#                               head plate (the plate is flush with the block face in its recess, so this is unchanged)
 JACK_Y = IDLER_HEAD_Y1 - 1.5 - 0.3     # 25.4: jack axis; the screw clears the Ø9 washer by 0.3 and bears on 2.7 mm of head
 JACK_PILOT = 2.6              # printed pilot for the self-tapped M3 set screw
 JACK_X = (101.5, 108.0)       # buttress: the screw's socket stays outside it at every idler position
 JACK_Y_IN = 22.0              # buttress inner face |y|: 1.5 mm from the battery holder (|y| 20.5)
 JACK_TOP = Z_A + 4.5
+# idler clamp plates (round 4, strength round 3 change 1; plate sizes and PLATE_T in rover_frame)
+PLATE_RECESS_X = (JACK_X[1], X_FRONT_OUT - WALL - JOIN)   # (108.0, 129.0): head-plate recess from the buttress's front
+#                               face to the start of the front 45° strip, cutting neither (21.0 CAD, about 20.8 printed)
+PLATE_RECESS_Z = IDLER_PLATE[1] / 2 + 0.2                 # 5.2: recess bottom Z_A ± 5.2 (10 mm plate + 0.2 a side;
+#                               a vertical size, so no HOLE_COMP), then a 45° roof up to the block face
+PLATE_RECESS_D = PLATE_T                                  # 2.0: recess depth = plate thickness (|y| 28-30): the plate sits
+#                               flush, so the head, its washer, JACK_Y and the buttress stay where they are
+NUT_SLOT_H = 9.0              # idler nut slot height, Z_A ± 4.5 (strength round 3: 6.0 -> 9; 8 mm nut plate + 1)
+NUT_SLOT_L = NUT_PLATE[0] + 1.0                           # 15.0: x 112.5-127.5 (14 mm plate + 0.5 a side CAD, ~0.4 printed)
+NUT_SLOT_D = NUT_DEPTH + PLATE_T                          # 4.6: PLATE_T deeper (|y| 33.4-38): nut plate on the bottom, nut on it
 BATT_X0 = 22.0                # battery holder from x 22 (77 mm standard, up to 80 for protected cells)
 BATT_LEN = BATT_2X18650_LONG.length
 STRAP_W, STRAP_L, STRAP_Y = 3.0, 22.0, 26.0   # velcro strap slots beside the holder (strength round 2: 26)
@@ -128,25 +149,42 @@ def _strip_z(x, y, sx, sy, z0, z1, t=JOIN):
     return _z_prism([(x, y), (x + sx * t, y), (x, y + sy * t)], z0, z1 - z0)
 
 
-def _nut_trap(x, side, slot=0.0):
-    """Hex nut trap (vertices along ±X, flats top/bottom: the roof is a short flat bridge between
-    60° faces) from the outer face inward; stretched into a slot of length `slot` along X for the
-    idler's sliding nut."""
+def _nut_trap(x, side):
+    """Road-wheel hex nut trap (vertices along ±X, flats top/bottom: the roof is a short flat bridge
+    between 60° faces) from the outer face inward. The idler's nut has its own slot (_idler_nut_slot)."""
     af = NUT_AF + NUT_CLR + HOLE_COMP
     y_out = side * HALF_W_OUT
-    trap = None
-    for dx in ((-slot / 2, slot / 2) if slot else (0.0,)):
-        h = Pos(x + dx, y_out + side * 0.01, Z_A) * Rot(90 * side, 0, 0) * hex_nut_pocket(af, NUT_DEPTH + 0.01, clearance=0)
-        trap = h if trap is None else trap + h
-    if slot:
-        trap += _box(x - slot / 2, x + slot / 2, y_out + side * 0.01, y_out - side * NUT_DEPTH, Z_A - af / 2, Z_A + af / 2)
-    return trap
+    return Pos(x, y_out + side * 0.01, Z_A) * Rot(90 * side, 0, 0) * hex_nut_pocket(af, NUT_DEPTH + 0.01, clearance=0)
+
+
+def _plate_recess(side):
+    """Recess for the idler's steel head plate in the idler-block face (round 4): PLATE_RECESS_D deep, from the
+    buttress's front face to the start of the front 45° strip, its bottom Z_A ± PLATE_RECESS_Z, and a 45° roof
+    from the back of the recess up to the block face, so nothing over it needs bridging."""
+    yb = HALF_W_OUT - WALL - BOSS_IN                       # 28: block face
+    d, zb, zt = PLATE_RECESS_D, Z_A - PLATE_RECESS_Z, Z_A + PLATE_RECESS_Z
+    pts = [(yb - 0.1, zb), (yb + d, zb), (yb + d, zt), (yb, zt + d), (yb - 0.1, zt + d)]
+    c = _x_prism(pts, PLATE_RECESS_X[0], PLATE_RECESS_X[1] - PLATE_RECESS_X[0])
+    return c if side > 0 else c.mirror(Plane.XZ)
+
+
+def _idler_nut_slot(side):
+    """Idler nut slot from the outer face (round 4): NUT_SLOT_D deep and NUT_SLOT_H tall, the steel nut plate
+    on its bottom and the sliding nut on the plate. The roof is flat over the plate (its top edge bears there
+    in a drop, strength B4), then rises at 45° to the outer face, so the nut zone has no flat ceiling."""
+    y0 = HALF_W_OUT - NUT_SLOT_D                           # 33.4: slot bottom
+    yp = y0 + PLATE_T                                      # 35.4: plate's outer face = nut seat
+    yo = HALF_W_OUT + 0.1
+    zb, zt = Z_A - NUT_SLOT_H / 2, Z_A + NUT_SLOT_H / 2
+    pts = [(y0, zb), (yo, zb), (yo, zt + yo - yp), (yp, zt), (y0, zt)]
+    c = _x_prism(pts, AXLE_DX - NUT_SLOT_L / 2, NUT_SLOT_L)
+    return c if side > 0 else c.mirror(Plane.XZ)
 
 
 def _housing(side):
     """Motor housing on the wall's outer face (y 38 .. 42, beside the links), floor to Z_A + 12.5, with
     rounded outer edges and 45° strips to the wall, plus the diamond nacelle (y 42 .. 46) that reaches
-    into the track's wrap and ends in the 1 mm skin the gearbox face stops on."""
+    into the track's wrap and ends in the 2 mm skin the gearbox face stops on."""
     y0, y1 = HALF_W_OUT - 0.01, HALF_W_OUT + HOUSING_OUT
     h = _box(-HOUSING_HALF_X, HOUSING_HALF_X, y0, y1, FLOOR_Z, HOUSING_TOP)
     top_edge = h.edges().filter_by_position(Axis.Y, y1 - 0.01, y1 + 0.01).filter_by_position(Axis.Z, HOUSING_TOP - 0.01,
@@ -264,7 +302,9 @@ def design():
             tub -= teardrop_cutter(BOLT_D + HOLE_COMP, span, axis="Y", center=(AXLE_DX + dx, y_mid, Z_A))
         tub -= _box(AXLE_DX - IDLER_SLOT, AXLE_DX + IDLER_SLOT, s * (yb - 1), s * (HALF_W_OUT + 1),
                     Z_A - r, Z_A + r * 2 ** 0.5)
-        tub -= _nut_trap(AXLE_DX, side, slot=2 * IDLER_SLOT)
+        # steel clamp plates (round 4): head-plate recess in the block face, nut slot 9 tall and PLATE_T deeper
+        tub -= _plate_recess(side)
+        tub -= _idler_nut_slot(side)
         # jack-screw pilot along X through the buttress, teardrop pointing up
         tub -= teardrop_cutter(JACK_PILOT + HOLE_COMP, JACK_X[1] - JACK_X[0] + 6, axis="X",
                                center=((JACK_X[0] + JACK_X[1]) / 2, s * JACK_Y, Z_A))

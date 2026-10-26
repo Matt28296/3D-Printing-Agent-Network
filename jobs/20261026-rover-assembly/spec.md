@@ -1,6 +1,6 @@
 # System spec: Tracked rover (assembly of 6 printed jobs)
 
-Job: 20261026-rover-assembly · Written by: Architect · Date: 2026-10-26 (round 3) · Plan: [assembly_plan.md](assembly_plan.md) · Build: [BUILD_GUIDE.md](BUILD_GUIDE.md)
+Job: 20261026-rover-assembly · Written by: Architect · Date: 2026-10-26 (round 3; round 4 by design-lead: 2 mm motor skin and idler clamp plates in the chassis, wider lid rails) · Plan: [assembly_plan.md](assembly_plan.md) · Build: [BUILD_GUIDE.md](BUILD_GUIDE.md)
 
 ## 1. Function
 A small skid-steer tracked rover, robot 2 of 3, for driving and simple autonomy tests indoors (tile, wood, carpet).
@@ -22,7 +22,7 @@ A small skid-steer tracked rover, robot 2 of 3, for driving and simple autonomy 
 | Sprocket to idler | 120 (idler slot ±4) | — | 34 links × 10 mm close exactly at 120. One link removed puts the idler back to 119 |
 | Track planes | Y ±55 | ±0.3 | sprocket, idler and wheel flanges coplanar |
 | Links to chassis | ≥ 1.0 | min | measured 1.0 beside the housing, 1.5 to the nacelle |
-| N20 shaft overhang | 10.0 | max | gearbox face (\|y\| 45) to the track plane |
+| N20 shaft overhang | 11.0 | max | gearbox face (\|y\| 44, on the 2 mm skin) to the track plane |
 | Bolt thread past each nyloc | ≥ 1.5 | min | 2.0 (road wheels), 4.2 (idlers) |
 | Teeth in link notches | 7 per sprocket and idler | — | assembly check |
 
@@ -31,7 +31,7 @@ A small skid-steer tracked rover, robot 2 of 3, for driving and simple autonomy 
 |---|---|---|
 | Motor stall | 160 N·mm design per motor; 182 N·mm at 100 % PWM on a fresh pack. **Measure each motor first** (chassis spec §8) | sprocket pull 9.9 N; tight run 14.9 N with 5 N pretension; idler 29.8 N at a reverse stall, on the jack screw |
 | Everyday driving | tight run 8.2 N; skid-steer drag 3 N per track | tracks, wheels, bolts |
-| Drop, 5 cm onto a hard floor | 20 g peak: 15.9 N per axle flat, 31.8 N per axle on a corner | every axle; the N20 shaft (SF 2.13) |
+| Drop, 5 cm onto a hard floor | 20 g peak: 15.9 N per axle flat, 31.8 N per axle on a corner | every axle; the N20 shaft (SF 1.91 at the 11 mm arm) |
 | Lifted by the lid | 2 × weight on 4 screws: 3.2 N each | inserts |
 
 Part-level load cases and proof tests are in each part's `spec.md` §4 and §8.

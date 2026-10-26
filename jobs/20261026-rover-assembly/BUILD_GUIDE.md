@@ -28,7 +28,8 @@ Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 | 6 | M3 nuts (DIN 934) | One in each wall nut trap |
 | 6 | M3 nyloc nuts (DIN 985) | Outside each wheel and idler |
 | 26 | M3 washers (ISO 7089, Ø7 × 0.5) | 12 for the running faces (one each side of every wheel and idler), 4 under the road-wheel bolt heads, 8 under the hub screws, 2 as thrust washers on the motor shafts |
-| 2 | M3 penny washers (DIN 9021, Ø9 × 0.8) | Under the idler bolt heads |
+| 2 | M3 penny washers (DIN 9021, Ø9 × 0.8) | Under the idler bolt heads, on the head plates |
+| 2 + 2 | Idler clamp plates, **2 mm steel**, made (see below): 2 head plates 20.6 × 10 mm and 2 nut plates 14 × 8 mm, each with a 3.4 × 12 mm slot | Cut from 14-gauge steel (1.9 mm) flat bar or sheet, sold as 14 ga at hardware stores like Princess Auto and Home Depot. Metric 2 mm flat bar or strip (10 × 2) also works. Don't use 1/8 in (3.2 mm) stock unless the recesses are deepened to match. Each idler bolt is clamped between a head plate (inside, in a recess in the idler block) and a nut plate (outside, in the nut slot) |
 | 4 + 4 | M3 heat-set inserts (M3 × 5.7, for a Ø4.0 hole) + M3 × 8 screws | Lid columns. The lid comes off for every charge |
 | 68 (+2 spare) | Ø2 × 24 mm steel dowel pins (ISO 2338 / 8734), or 2 mm silver-steel rod cut to 23.5 mm and deburred | Track pins: gripped by each link's outer knuckles, running free in the next link's centre knuckle |
 | 1 | TB6612FNG motor-driver carrier (Pololu-size, with headers) | |
@@ -44,6 +45,12 @@ Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 | 1 | 100 µF electrolytic capacitor, 16 V or more | Across the TB6612's VM and GND |
 | — | Zip ties: 2 at most 3.6 mm wide (motors), 2 at most 2.5 mm wide (ESP32), 1 for the lid's tie bar. 1 velcro strap (20 mm), jumper wires, 22 AWG wire, heat-shrink, double-sided foam tape, hot glue, medium threadlocker | |
 
+### Making the idler plates
+1. **Mark out** two head plates, 20.6 × 10 mm, and two nut plates, 14 × 8 mm, on the 2 mm (or 14-gauge) steel. On 10 mm wide bar the head plates are just cut to length; trim the nut plates to 8 mm wide.
+2. **Slots**, 3.4 mm wide and 12 mm long, on each plate's centre line: on a head plate from 6 mm to 18 mm along it; on a nut plate in the middle, leaving 1 mm of steel at each end. Centre-punch the two ends of each slot 8.6 mm apart, drill both 3.4 mm (3.5 mm is fine), then saw or file out the steel between them. Drill and file the slots before you cut the plates off the bar: the nut plates' 1 mm ends survive better that way.
+3. **Deburr** every edge and both faces with a file, so each plate lies flat on the printed faces.
+4. **Check** each plate in the printed chassis: a head plate drops into the recess on the inside face of an idler block, flush with the face (file its ends if it's tight); a nut plate drops into the nut slot in the outside of the wall, to its bottom; an M3 bolt slides the full length of every slot.
+
 ### Tools
 - 1.5 mm hex key, ball end, long arm: jack screws and hub set screws
 - 2.5 mm hex key
@@ -51,6 +58,7 @@ Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 - Small vice or parallel pliers: track pins
 - Multimeter: setting the buck
 - Kitchen scale and a 50 mm arm: motor stall torque
+- Hacksaw, centre punch, drill with a 3.4 mm (or 3.5 mm) bit, flat and needle files: the idler plates
 
 ### Bought: battery monitor and power protection
 | Qty | Item | Notes |
@@ -104,12 +112,13 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
    - Leave each loop open (one pin out) for step 8.
 2. **Inserts.** Set an M3 heat-set insert in each of the four lid columns with the soldering iron (about 230 °C for PETG). Press it in square and flush with the column top, and let it cool.
 3. **Axle bolts.** Fit these first: later, a road-wheel bolt needs the battery out and an idler bolt needs the sensor out.
-   - Press an M3 nut into each of the 4 road-wheel nut traps and the 2 idler slots in the outer face of the walls, flats up.
+   - Press an M3 nut into each of the 4 road-wheel nut traps in the outer face of the walls, flats up.
+   - **Idler plates.** Push a nut plate (14 × 8) into each idler nut slot in the outer face of the wall, flat against the bottom of the slot, and put an M3 nut on it. Inside the tub, press a head plate (20.6 × 10) into the recess in each idler block's face, the end with 6 mm of steel beyond the slot towards the rear (towards the jack-screw buttress).
    - From inside the tub, push each bolt through the wall and screw it through its nut until the head sits on its washer on the boss face:
      - road wheels: M3 × 50, with an M3 washer under the head;
-     - idlers: M3 × 40, with the Ø9 penny washer under the head.
+     - idlers: M3 × 40, with the Ø9 penny washer under the head, through the head plate, the wall, the nut plate and the nut. The idler nut sits in a tall slot that doesn't hold its flats, so hold it with a fingertip or flat-nose pliers while you turn the bolt.
    - The part inside the tub is the bolt's **head**; the nut is outside.
-   - Tighten the road-wheel bolts (2.5 mm key). Leave the idler bolts finger-tight, at the rear end of their slots.
+   - Tighten the road-wheel bolts (2.5 mm key). Push each idler bolt to the rear end of its slot and snug it there, still holding its nut: just enough to keep the bolt square. From now on the jack screw slides the snug bolt (step 8); don't turn the idler heads again, because the nut would turn with them.
 4. **Jack screws.** From behind, screw an M3 × 20 set screw into the hole in each idler buttress: the block behind the idler slot, inside the tub. Turn it with the 1.5 mm key until its tip touches the idler bolt head. It cuts its own thread in the first few turns.
 5. **Motors.**
    - Solder leads at least 150 mm long to each N20 and heat-shrink the joints.
@@ -121,14 +130,15 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
    - On each shaft: an M3 washer (the thrust washer), then the aluminium hub.
    - Push the motor outward, so the gearbox face is against the skin, and slide the hub in until it just touches the washer. The washer must still turn.
    - Turn the shaft so its flat faces the hub's set screw. Put a drop of medium threadlocker on the set screw and tighten it on the flat (1.5 mm key).
+   - **Measure the motor's stall torque now, with the hub on and the disc off** (chassis `spec.md` §8, test 2): screw the 50 mm arm to the hub and connect the motor's leads straight to the freshly charged pack for 1 s (that is 100 % PWM), with the arm pressing down on the kitchen scale. It must read ≤ 371 g. If it reads more, the motor isn't the specified type: don't fit the sprocket disc to it.
    - Bolt the sprocket disc to the hub through the slots: 4 × M3 × 12, each with a washer. The shaft end centres the disc in its middle hole.
    - Tighten the screws evenly (2.5 mm key) and spin the sprocket: it should run true.
 7. **Wheels and idlers.** On each road-wheel bolt: washer, road wheel (hub towards the wall), washer, nyloc. Tighten the nyloc until the wheel has about 0.3 mm of end play and still spins freely. Fit each idler on its bolt the same way.
 8. **Tracks.**
-   - Back each jack screw off a few turns and push the idler to the rear of its slot.
+   - The idler bolts are snug at the rear of their slots (step 3), so the idlers are as far back as they go. If a jack screw's tip is pressing on its bolt head, back it off a turn.
    - Wrap each 34-link loop round its sprocket, road wheels and idler, grousers out. Close it with the last pin at the front of the idler, where nothing is in the way. Back up the inner outer knuckle with a small block while you press.
-   - Tension each track with its jack screw. Turn it in until the top run sags 3–5 mm midway between the sprocket and the first road wheel; the top run rests on the road wheels, so read the sag in that 40 mm span. Don't go tighter, because tension costs drive torque.
-   - Snug each idler bolt head (2.5 mm key, from inside the tub), just enough to keep the bolt square. The jack screw holds the tension.
+   - Tension each track with its jack screw. Turn it in: it slides the snug idler bolt forward along its plates. Stop when the top run sags 3–5 mm midway between the sprocket and the first road wheel; the top run rests on the road wheels, so read the sag in that 40 mm span. Don't go tighter, because tension costs drive torque.
+   - Leave the idler bolt heads alone: their nuts would turn with them. The jack screw holds the tension.
    - Draw a pen line across each slot nut and the edge of its slot.
 9. **Sensor.**
    - Bend the HC-SR04's four pins 90° towards the rear.
@@ -142,7 +152,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
     - Fold the ESP32's wires flat towards the cable slots, one layer deep. There are 5 mm between the jumper housings and the battery holder, and 3.5 mm over the strap.
     - Bring the motor, battery and sensor leads up through the two cable slots and zip-tie the bundle to the bar between them. Leave at least 150 mm of slack below, so the lid can lie beside the rover.
     - Wire per section 2, then screw the lid on: 4 × M3 × 8 into the inserts.
-12. **Proof tests.** Measure each motor's stall torque first (chassis `spec.md` §8, test 2). Then do each part's `spec.md` §8 proof tests, then the system tests in this job's `spec.md` §8.
+12. **Proof tests.** You measured each motor's stall torque in step 6, before its sprocket disc went on (chassis `spec.md` §8, test 2). Now do each part's `spec.md` §8 proof tests, then the system tests in this job's `spec.md` §8.
 
 **Service**
 - **Charging.** Undo the 4 lid screws and lift the lid aside on its leads. Take the cells out and charge them in the two-bay charger.
@@ -159,7 +169,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
   2. Take off the sprocket disc (4 screws). Loosen the hub's set screw and pull off the hub and the thrust washer.
   3. Cut the zip tie and unplug the leads at the breadboard.
   4. Slide the motor inward along its trough until the gearbox leaves the pocket, then lift it out.
-- **Replacing an axle bolt.** A road-wheel bolt needs the battery out, and an idler bolt needs the sensor out.
+- **Replacing an axle bolt.** A road-wheel bolt needs the battery out, and an idler bolt needs the sensor out. Refit an idler bolt as in step 3: plates in place, nut held while you snug it.
 
 ## 4. First drive
 

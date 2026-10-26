@@ -1,6 +1,6 @@
 # Part spec: Rover lid / electronics deck
 
-Job: 20261026-rover-lid · Written by: Architect · Date: 2026-10-26 (round 3) · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
+Job: 20261026-rover-lid · Written by: Architect · Date: 2026-10-26 (round 3; round 4 by design-lead: strength round 3's rail change) · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
 A 3 mm deck screwed to the chassis's four insert columns. It carries:
@@ -20,8 +20,8 @@ The MP1584 buck hangs under the deck, stuck on with foam tape. Changed in round 
 - Mating parts and their dimensions:
   - **Overall:** 154 × 76 × 7.1 mm. The deck underside sits on the chassis wall tops (world Z 48.68).
   - **Screw holes:** 4 × Ø3.4 printed (Ø3.6 CAD) at (−13, ±32.5) and (102, ±32.5), over the chassis's Ø10 columns. Each column carries an M3 heat-set insert.
-  - **ESP32 seat:** 55.6 × 29.7, with ledges 2 mm above the deck. The USB end is at x 14 (rear).
-  - **Tie slots:** 6 × 3.2 × 1.8 at the board ends.
+  - **ESP32 seat:** 55.6 × 29.7, with ledges 2 mm above the deck. The USB end is at x 14 (rear). Side rails 4.5 wide (|y| 14.85–19.35, round 4) and 4.1 tall on the deck, x 13.4–69.0.
+  - **Tie slots:** 6 × 3.2 × 1.8 at the board ends, 1.5 outside the rails (|y| 20.85–22.65).
   - **Breadboard area:** 47 × 35 from x 84.
   - **Cable slots:** two 10 × 10.5 slots at x 71–81, |y| 1.5–12, either side of a 3 mm tie bar.
   - **Toggle hole:** Ø6.2 printed (Ø6.4 CAD) at (0, −23).
@@ -37,6 +37,7 @@ The MP1584 buck hangs under the deck, stuck on with foam tape. Changed in round 
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | ESP32 pocket width | 29.7 | +0.3/−0 | 0.6 clearance |
+| Side rails | 4.5 wide (`RAIL_W`) | ±0.2 | edge beams beside the window (strength round 3: 4.0 minimum) |
 | Screw holes | Ø3.4 printed | +0.2/−0 | M3 clearance, on the insert columns |
 | Toggle hole | Ø6.2 printed | +0.2/−0 | M6 × 0.75 bushing |
 | Cable slots | 10 × 10.5 each | ±0.3 | 15–17 Dupont housings in two groups, each housing needs a 3.6 mm diagonal |
@@ -78,15 +79,15 @@ Design loads, as re-derived by strength round 2 (see strength.md):
 - [ ] ESP32 (38- or 30-pin) seats on both ledges with jumpers on every pin
 - [ ] The four M3 × 8 screws line up with the inserts and pull the lid down flat on the wall tops
 - [ ] The toggle's outer nut is fully on its thread, and the lever clears the ESP32's USB plug
-- [ ] **Proof tests** (strength round 2), with the lid screwed on:
-  1. **Deck press.** Press **4 kg (≈ 40 N, 2 × service)** for 1 min at (a) the deck beside the ESP32 window, at mid-length, and (b) the centre of the breadboard area.
+- [ ] **Proof tests** (strength rounds 2 and 3), with the lid screwed on:
+  1. **Deck press.** Press **4 kg (≈ 40 N, 2 × service)** for 1 min at (a) **the rail top beside the ESP32 window, at mid-window (x ≈ 41)**, with the ESP32 removed, through a 10 mm rubber pad, then on the other rail, and (b) the centre of the breadboard area.
   2. **Sideways push.** Push the seated ESP32 sideways with **2 kg (≈ 20 N)** at mid-length, for 10 s each way.
   3. **USB.** Plug and unplug the USB cable 10 times.
   4. **Toggle.** Flick the toggle 20 times.
   5. **Lid refit.** Take the lid off and refit it 5 times: the 4 screws into the inserts.
   - Pass:
     - no crack or whitening at the window corners, rails, ledges, screw holes, toggle hole or tie bar;
-    - no permanent set over 0.2 mm (straight-edge across the deck);
+    - no permanent set over 0.2 mm (straight-edge along each rail and across the deck);
     - the board stays on both ledges;
     - no insert turns or pulls up.
 

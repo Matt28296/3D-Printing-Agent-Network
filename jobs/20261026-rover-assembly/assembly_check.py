@@ -1,9 +1,12 @@
-"""Assembly check for the tracked rover (round 3).
+"""Assembly check for the tracked rover (round 4).
 
 Builds both 34-link track loops pin by pin (13 pins on the bottom run, 5 round the idler, 12 on the
 top run, 4 round the sprocket) and places every printed part with the bought parts that meet it:
 - each N20 as the detailed dummy (gearbox, can, end cap, solder tabs, the Ø4 × 0.8 bearing boss and
-  the D-shaft), rolled 45° about its shaft, gearbox face on its skin at |y| 45;
+  the D-shaft), rolled 45° about its shaft, gearbox face on its skin at |y| 44 (round 4: 2 mm skin);
+- the idler clamp's 2 mm steel plates (round 4): a head plate in each idler-block recess under the
+  Ø9 washer, and a nut plate on the bottom of each 9 mm tall nut slot, under the wall nut. They stay
+  put while the idler hardware is moved to both slot ends;
 - the Pololu #1996 hub on the shaft (|y| 46.5-51.5), its thrust washer, and the 4 × M3 × 12 sprocket
   screws with their washers;
 - the axle bolts as fitted: M3 socket-head screws (class 12.9, fully threaded), head on its washer on
@@ -123,6 +126,16 @@ def rod_x(x0, x1, y, z, d):
     return Pos((x0 + x1) / 2, y, z) * Rot(0, 90, 0) * Cylinder(d / 2, abs(x1 - x0))
 
 
+def plate_dummy(length, height, slot_dx=0.0):
+    """Idler clamp plate (round 4): length (x) × PLATE_T (y) × height (z), centred on its origin, with the
+    PLATE_SLOT slot (width along z, overall length along x) centred at x = slot_dx."""
+    w, sl = F.PLATE_SLOT
+    cut = Pos(slot_dx, 0, 0) * Box(sl - w, F.PLATE_T + 2, w)
+    for sx in (-1, 1):
+        cut += Pos(slot_dx + sx * (sl - w) / 2, 0, 0) * Rot(90, 0, 0) * Cylinder(w / 2, F.PLATE_T + 2)
+    return Box(length, F.PLATE_T, height) - cut
+
+
 def hcsr04_dummy(hx, sz):
     """HC-SR04 behind the front wall: PCB x hx-13.3..hx-11.7, transducers to the wall, crystal can,
     and its 4 header pins bent 90° rearward with the leads soldered on and heat-shrunk (about 10 mm
@@ -167,6 +180,13 @@ def main():
     M["nyloc"] = to_mesh(nut_dummy(*F.NYLOC), tol=0.02)
     M["insert"] = to_mesh(Cylinder(1.95, 5.7, align=(C, C, MIN)) - Pos(0, 0, -1) * Cylinder(1.5, 8, align=(C, C, MIN)), tol=0.02)
     M["lid_screw"] = to_mesh(screw_dummy(8.0), tol=0.02)
+    # idler clamp plates (round 4): head plate centred in its recess (slot on the bolt's mid-travel x), nut plate
+    # centred in its slot; both are fixed to the chassis while the bolt slides
+    x_head_plate = sum(ch.PLATE_RECESS_X) / 2                     # 118.5
+    y_head_plate = F.HALF_W_OUT - F.WALL - F.BOSS_IN + F.PLATE_T / 2            # 29.0: recess |y| 28-30
+    y_nut_plate = F.HALF_W_OUT - ch.NUT_SLOT_D + F.PLATE_T / 2                 # 34.4: slot bottom |y| 33.4-35.4
+    M["plate_head"] = to_mesh(plate_dummy(*F.IDLER_PLATE, slot_dx=F.AXLE_DX - x_head_plate), tol=0.02)
+    M["plate_nut"] = to_mesh(plate_dummy(*F.NUT_PLATE), tol=0.02)
 
     floor_top = F.FLOOR_Z + F.FLOOR_T
     b = BATT_2X18650_LONG
@@ -253,6 +273,8 @@ def main():
             P[f"washer_hs{tag}{k}"] = P[f"sprocket{tag}"] @ loc
             P[f"hub_screw{tag}{k}"] = P[f"sprocket{tag}"] @ loc @ tr(0, 0, F.WASHER[1])
         P.update(axle_group(f"{tag}i", "idler", F.AXLE_DX, s))
+        P[f"plate_head{tag}"] = tr(x_head_plate, s * y_head_plate, F.Z_A)
+        P[f"plate_nut{tag}"] = tr(F.AXLE_DX, s * y_nut_plate, F.Z_A)
         for i, x in enumerate(F.ROAD_X):
             P.update(axle_group(f"{tag}{i}", "wheel", x, s))
         jack_meshes[f"jack{tag}"], _ = jack(F.AXLE_DX, s)
@@ -265,9 +287,9 @@ def main():
             P[f"link{tag}{i:02d}"] = frame((px, s * F.Y_T, pz), xd, zd)
 
     def kind(k):
-        for p in ("washer_wide_head", "washer_head", "washer_in", "washer_out", "washer_hs", "thrust_washer", "hub_screw",
-                  "road_bolt", "idler_bolt", "lid_screw", "insert", "nyloc", "nut", "motor", "hub", "sprocket", "idler",
-                  "wheel", "link", "jack"):
+        for p in ("plate_head", "plate_nut", "washer_wide_head", "washer_head", "washer_in", "washer_out", "washer_hs",
+                  "thrust_washer", "hub_screw", "road_bolt", "idler_bolt", "lid_screw", "insert", "nyloc", "nut", "motor",
+                  "hub", "sprocket", "idler", "wheel", "link", "jack"):
             if k.startswith(p):
                 return {"washer_wide_head": "washer_wide", "washer_head": "washer", "washer_in": "washer",
                         "washer_out": "washer", "washer_hs": "washer"}.get(p, p)
@@ -319,6 +341,38 @@ def main():
                               "socket_outside_buttress": bool(x_rear <= ch.JACK_X[0] + 1e-6)})
     print("idler + jack screw at both slot ends:", slot_hits or "clear", flush=True)
 
+    # ---- idler clamp plates (round 4): what the head washer and the wall nut bear on, at every slot position ----------
+    w_sl, l_sl = F.PLATE_SLOT
+    hp0, hp1 = x_head_plate - F.IDLER_PLATE[0] / 2, x_head_plate + F.IDLER_PLATE[0] / 2
+    np0, np1 = F.AXLE_DX - F.NUT_PLATE[0] / 2, F.AXLE_DX + F.NUT_PLATE[0] / 2
+    travel = [round(F.AXLE_DX - (l_sl - 3.0) / 2, 2), round(F.AXLE_DX + (l_sl - 3.0) / 2, 2)]   # Ø3 bolt in the slots
+    plates = {
+        "plate_t_mm": F.PLATE_T, "head_plate_mm": [F.IDLER_PLATE[0], F.IDLER_PLATE[1], F.PLATE_T],
+        "head_plate_x": [round(hp0, 2), round(hp1, 2)], "head_plate_y": [round(y_head_plate - F.PLATE_T / 2, 2),
+                                                                       round(y_head_plate + F.PLATE_T / 2, 2)],
+        "head_recess_x": list(ch.PLATE_RECESS_X), "head_recess_clearance_x_mm_cad": round(
+            ch.PLATE_RECESS_X[1] - ch.PLATE_RECESS_X[0] - F.IDLER_PLATE[0], 2),
+        "nut_plate_mm": [F.NUT_PLATE[0], F.NUT_PLATE[1], F.PLATE_T], "nut_plate_x": [np0, np1],
+        "nut_plate_y": [round(y_nut_plate - F.PLATE_T / 2, 2), round(y_nut_plate + F.PLATE_T / 2, 2)],
+        "nut_slot_x": [F.AXLE_DX - ch.NUT_SLOT_L / 2, F.AXLE_DX + ch.NUT_SLOT_L / 2], "nut_slot_h": ch.NUT_SLOT_H,
+        "nut_plate_top_edge_to_slot_roof_mm": round((ch.NUT_SLOT_H - F.NUT_PLATE[1]) / 2, 2),
+        "slots_mm": [w_sl, l_sl], "bolt_travel_x_in_both_plate_slots": travel,
+        "bolt_travel_x_needed": [F.AXLE_DX - F.IDLER_SLOT, F.AXLE_DX + F.IDLER_SLOT],
+        "head_stack_unchanged": {"head_underside_y": ch.IDLER_HEAD_Y1, "washer_y": [ch.IDLER_HEAD_Y1, y_head_plate - F.PLATE_T / 2],
+                                 "jack_axis_y": ch.JACK_Y},
+        "at_slot_positions": [],
+    }
+    for dx in (-F.IDLER_SLOT, 0.0, F.IDLER_SLOT):
+        xb = F.AXLE_DX + dx
+        wr, nr = F.WASHER_WIDE[0] / 2, F.NUT[0] / 2            # washer radius; nut's inscribed radius (its flats)
+        plates["at_slot_positions"].append({
+            "idler_dx": dx, "washer_on_head_plate_margin_mm": round(min(xb - wr - hp0, hp1 - (xb + wr)), 2),
+            "nut_flats_on_nut_plate_margin_mm": round(min(xb - nr - np0, np1 - (xb + nr)), 2)})
+    plates["ok"] = bool(travel[0] <= F.AXLE_DX - F.IDLER_SLOT and travel[1] >= F.AXLE_DX + F.IDLER_SLOT
+                        and all(r["washer_on_head_plate_margin_mm"] > 0 and r["nut_flats_on_nut_plate_margin_mm"] >= 0
+                                for r in plates["at_slot_positions"]))
+    print("idler clamp plates:", json.dumps(plates), flush=True)
+
     # ---- an 11 mm gearbox, and a 9 mm shaft --------------------------------------------------------------
     long_gb = to_mesh(gearmotor_dummy(replace(F.MOTOR, gb_len=11.0), detailed=True), tol=0.02)
     var_hits = []
@@ -330,7 +384,8 @@ def main():
         end = F.MOTOR_FACE_Y + L
         set_y = F.HUB_Y0 + F.HUB.t / 2
         shaft[f"{L:.0f} mm shaft"] = {"shaft_end_y": end, "engaged_in_hub_mm": round(min(end, F.HUB_Y1) - F.HUB_Y0, 2),
-                                      "set_screw_y": set_y, "shaft_past_set_screw_mm": round(end - (set_y + F.HUB.set_screw / 2), 2)}
+                                      "set_screw_y": set_y, "shaft_past_set_screw_mm": round(end - (set_y + F.HUB.set_screw / 2), 2),
+                                      "in_sprocket_centre_hole_mm": round(max(0.0, end - F.HUB_Y1), 2)}
     print("11 mm gearbox:", var_hits or "clear", "| shafts:", shaft, flush=True)
 
     # ---- fastener stacks -----------------------------------------------------------------------------------
@@ -422,6 +477,7 @@ def main():
         "idler_and_jack_at_slot_ends": slot_hits or "clear", "jack_screw": jack_rows,
         "motor_with_11mm_gearbox": var_hits or "clear", "shaft_variants": shaft,
         "axle_bolt_stacks": stacks, "hub_screws": hub_screw, "tool_paths": tool_hits or "clear",
+        "idler_clamp_plates": plates, "skin_mm": F.SKIN, "gearbox_face_y": F.MOTOR_FACE_Y,
         "shaft_overhang_gearbox_face_to_track_plane_mm": F.SHAFT_ARM,
         "links_inner_edge_y": link_in, "housing_outer_face_y": F.HALF_W_OUT + F.HOUSING_OUT,
         "link_to_housing_gap_mm": round(link_in - (F.HALF_W_OUT + F.HOUSING_OUT), 2),
@@ -435,7 +491,7 @@ def main():
         "ground_clearance_mm": round(F.FLOOR_Z, 2), "battery_holder_mm": [b.length, b.width, b.height],
     }
     (HERE / "assembly_check.json").write_text(json.dumps(report, indent=1))
-    print(json.dumps({k: report[k] for k in ("collisions", "idler_and_jack_at_slot_ends", "motor_with_11mm_gearbox",
+    print(json.dumps({k: report[k] for k in ("bodies", "collisions", "idler_and_jack_at_slot_ends", "motor_with_11mm_gearbox",
                                              "tool_paths", "teeth_engaged_in_notches", "overall_mm")}))
     _render(placed, HERE / "assembly_rover.png")
 
@@ -450,8 +506,8 @@ def _render(placed, out):
     for axx, (vname, (elev, azim)) in zip(axes, (("iso", R.VIEWS["iso"]), ("left side", R.VIEWS["front"]))):
         img, _ = R.render_view(m, elev, azim, with_bed=False)
         axx.imshow(img, interpolation="antialiased"); axx.set_axis_off(); axx.set_title(vname)
-    fig.suptitle("tracked rover round 3 · parts, motors on metal hubs, axle hardware, battery/ESP32/sensor/switch dummies",
-                 fontsize=12)
+    fig.suptitle("tracked rover round 4 · parts, motors on metal hubs, axle hardware and idler plates, "
+                 "battery/ESP32/sensor/switch dummies", fontsize=12)
     fig.tight_layout(); fig.savefig(out); plt.close(fig)
 
 

@@ -4,10 +4,10 @@ viewer config (track path, spinners, parts list, page text).
 Run from the project root:  .venv/bin/python jobs/20261026-rover-assembly/viz_export.py <out_dir>
 Writes <out_dir>/robot.glb and <out_dir>/robot.json. Track links are direct children of the
 root; the viewer moves them along the pitch path (tracks config) and spins the wheels.
-Bought parts sit where assembly_check.py puts them (round 3): N20s rolled 45° with their gearbox
-faces on the skins at |y| 45, Pololu hubs with the sprocket screws, fully threaded axle bolts with
-their head washers, wall nuts and nylocs, the idler jack screws, the toggle on the lid and the buck
-under it.
+Bought parts sit where assembly_check.py puts them (round 4): N20s rolled 45° with their gearbox
+faces on the 2 mm skins at |y| 44, Pololu hubs with the sprocket screws, fully threaded axle bolts with
+their head washers, wall nuts and nylocs, the idler jack screws, the idlers' steel head and nut plates,
+the toggle on the lid and the buck under it.
 """
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT / "tools"), str(HERE)]
 import assembly_viz as V  # noqa: E402
+from build123d import Box, Cylinder, Pos, Rot  # noqa: E402
 from hobby_parts import BATT_2X18650_LONG, ESP32_DEVKIT_38, MINI_BREADBOARD, mounting_hub_dummy  # noqa: E402
 import rover_frame as F  # noqa: E402
 
@@ -33,7 +34,7 @@ LABELS = {"chassis": "Chassis (tub)", "lid": "Lid / electronics deck", "sprocket
 QTY = {"chassis": 1, "lid": 1, "sprocket": 2, "idler": 2, "wheel": 4, "link": 70}   # 68 links + 2 spares
 PLATES = {"link": 2}            # 34 links per plate (+ the 2 spares on one of them)
 PETG = "petg_olive"
-STAMPS = [{"text": "Round 3 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
+STAMPS = [{"text": "Round 4 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
           {"text": "Not sliced yet", "kind": "note"}]
 BUCK_X0 = 85.0                  # buck under the lid, x 85-107 (as in assembly_check.py)
 JACK_L = 20.0                   # M3 × 20 set screw (idler jack screw)
@@ -56,6 +57,16 @@ def frame(origin, x_dir, z_dir):
 
 def printed(mod):
     return [V._mat(V.shape_to_mesh(mod.design()), PETG)]
+
+
+def plate_parts(length, height, slot_dx=0.0):
+    """Idler clamp plate (round 4): length (x) × PLATE_T (y) × height (z), centred, with its slot at x = slot_dx
+    (same shape as assembly_check.py's plate_dummy)."""
+    w, sl = F.PLATE_SLOT
+    cut = Pos(slot_dx, 0, 0) * Box(sl - w, F.PLATE_T + 2, w)
+    for sx in (-1, 1):
+        cut += Pos(slot_dx + sx * (sl - w) / 2, 0, 0) * Rot(90, 0, 0) * Cylinder(w / 2, F.PLATE_T + 2)
+    return [V._mat(V.shape_to_mesh(Box(length, F.PLATE_T, height) - cut), "steel")]
 
 
 def stats(job):
@@ -107,6 +118,12 @@ def main(out_dir: Path):
     y_trap = F.HALF_W_OUT - ch.NUT_DEPTH                                  # wall nut pulled to the trap bottom
     axle = {"wheel": (F.HALF_W_OUT - F.WALL - F.BOSS_IN - F.WASHER[1], F.ROAD_BOLT_L, F.WASHER, F.Y_T + wheel_h),
             "idler": (ch.IDLER_HEAD_Y1, F.IDLER_BOLT_L, F.WASHER_WIDE, F.Y_T + spm.DISC_HALF)}
+    # idler clamp plates (round 4), fixed to the chassis: head plate in its block-face recess, nut plate in the nut slot
+    x_head_plate = sum(ch.PLATE_RECESS_X) / 2
+    y_head_plate = F.HALF_W_OUT - F.WALL - F.BOSS_IN + F.PLATE_T / 2
+    y_nut_plate = F.HALF_W_OUT - ch.NUT_SLOT_D + F.PLATE_T / 2
+    head_plate = plate_parts(*F.IDLER_PLATE, slot_dx=F.AXLE_DX - x_head_plate)
+    nut_plate = plate_parts(*F.NUT_PLATE)
     for side, tag in ((1, "L"), (-1, "R")):
         out = V.Rx(-90 * side)                        # local +Z -> outward (washers, nuts)
         S.add("n20", V.n20_parts(F.MOTOR), root,
@@ -152,6 +169,12 @@ def main(out_dir: Path):
                 S.add("jack", [V.cyl(1.5, 0.0, JACK_L, "black_oxide", axis="x")], root,
                       matrix=V.T(x_tip - JACK_L, side * ch.JACK_Y, F.Z_A), label="M3 × 20 jack screw (idler stop)",
                       category="hardware")
+                S.add("plate_head", head_plate, root, matrix=V.T(x_head_plate, side * y_head_plate, F.Z_A),
+                      label=f"Idler head plate, 2 mm steel {F.IDLER_PLATE[0]:g} × {F.IDLER_PLATE[1]:g} (under the Ø9 washer)",
+                      category="hardware")
+                S.add("plate_nut", nut_plate, root, matrix=V.T(F.AXLE_DX, side * y_nut_plate, F.Z_A),
+                      label=f"Idler nut plate, 2 mm steel {F.NUT_PLATE[0]:g} × {F.NUT_PLATE[1]:g} (under the wall nut)",
+                      category="hardware")
 
     # --- tracks: 34 links per side with their steel pins (placed by the viewer) ----------------
     link_mesh = printed(mods["link"])
@@ -188,8 +211,9 @@ def main(out_dir: Path):
             "pose_title": "Drive",
             "lede": ("A skid-steer tracked rover printed in PETG. Two N20 gear motors, each rolled 45° into a nacelle inside "
                      "its track, drive a 10-tooth sprocket bolted to an aluminium hub on the motor shaft, so the torque path "
-                     "is metal and the shaft overhang is 10 mm. Each track is 34 printed links on 2 mm steel pins, held "
-                     "tight by an M3 jack screw at the idler. An ESP32, a TB6612FNG driver and the power switch ride on the "
+                     "is metal and the shaft overhang is 11 mm. Each track is 34 printed links on 2 mm steel pins, held "
+                     "tight by an M3 jack screw at the idler, whose bolt is clamped between two steel plates. An ESP32, a "
+                     "TB6612FNG driver and the power switch ride on the "
                      "lid, two 18650 cells sit in the tub, and an HC-SR04 looks out of the front."),
             "meta": [["Printed parts", str(sum(QTY.values()))],
                      ["Print time", f"{sum((p['hours'] or 0) * p['plates'] for p in parts):.1f} h"],

@@ -8,10 +8,12 @@ Round 3 drivetrain (see 20261026-rover-sprocket/design_brief.md): each N20 is ro
 its shaft, so its 12 × 10 gearbox section becomes a diamond whose faces are all at 45°. It slides
 from inside the tub along a V-trough into a diamond pocket that runs through the side wall, a
 housing on the wall's outer face and a nacelle that reaches into the track's wrap (inside the
-links, r <= 10.9 against the links' inner faces at r >= 12.39). Its face stops on a 1 mm skin at
-the nacelle's end. A Pololu #1996 aluminium hub on the shaft, outside the skin, carries the
-sprocket disc on 4 × M3. The torque path is metal from the shaft to the sprocket, and the shaft
-overhang (gearbox face to the track plane) is 10 mm with the track plane unchanged.
+links, r <= 10.9 against the links' inner faces at r >= 12.39). Its face stops on a 2 mm skin at
+the nacelle's end (round 4: strength round 3, change 2, SKIN 1.0 -> 2.0; the skin grows inward, so the
+gearbox face moves from |y| 45 to 44 while the nacelle, thrust washer, hub and track plane stay put).
+A Pololu #1996 aluminium hub on the shaft, outside the skin, carries the sprocket disc on 4 × M3.
+The torque path is metal from the shaft to the sprocket, and the shaft overhang (gearbox face to
+the track plane) is 11 mm with the track plane unchanged.
 """
 import math
 
@@ -57,12 +59,13 @@ MOTOR_ROLL = 45.0             # motor rolled about its shaft: gearbox x-axis at 
 HUB = POLOLU_HUB_1996         # aluminium hub on the N20 shaft: the sprocket disc bolts to it
 DISC_HALF = 3.5               # sprocket/idler disc and teeth: Y_T ± 3.5 (the link notch is ± 4)
 LINK_WALL_GAP = 1.0           # links to the chassis (>= 1 mm, Architect round 3)
-SKIN = 1.0                    # printed skin in front of the gearbox face: the motor's outward stop
+SKIN = 2.0                    # printed skin in front of the gearbox face: the motor's outward stop
+#                               (round 4, strength round 3 change 2: 1.0 -> 2.0 for the drop's diaphragm shear)
 THRUST_WASHER_T = 0.5         # M3 washer (ISO 7089, 0.5 mm) on the shaft between the skin and the hub
 HUB_Y1 = Y_T - DISC_HALF                                      # 51.5: hub outer face = sprocket disc's inner face
 HUB_Y0 = HUB_Y1 - HUB.t                                       # 46.5: hub inner face
-MOTOR_FACE_Y = HUB_Y0 - THRUST_WASHER_T - SKIN                # 45.0: gearbox face (skin inner face)
-SHAFT_ARM = Y_T - MOTOR_FACE_Y                                # 10.0: shaft overhang, gearbox face to track plane
+MOTOR_FACE_Y = HUB_Y0 - THRUST_WASHER_T - SKIN                # 44.0: gearbox face (skin inner face; skin 44-46)
+SHAFT_ARM = Y_T - MOTOR_FACE_Y                                # 11.0: shaft overhang, gearbox face to track plane
 HOUSING_OUT = Y_T - TRACK_W / 2 - LINK_WALL_GAP - HALF_W_OUT   # 4.0: housing on the wall's outer face (y 38-42),
 #                                                               beside the links: 1 mm from their inner edge (43)
 NACELLE_WALL = 2.0            # nacelle walls round the diamond pocket, beyond the housing (y 42-46, inside the wrap)
@@ -71,13 +74,22 @@ NACELLE_WALL = 2.0            # nacelle walls round the diamond pocket, beyond t
 # because each one must engage the nut trapped in the wall's outer face) -------------------------------
 SCREW_HEAD = (5.5, 3.0)       # DIN 912 / ISO 4762 M3 head: diameter, height
 WASHER = (7.0, 0.5)           # ISO 7089 M3 washer: outside diameter, thickness
-WASHER_WIDE = (9.0, 0.8)      # DIN 9021 M3 washer (under each idler-bolt head)
+WASHER_WIDE = (9.0, 0.8)      # DIN 9021 M3 washer (under each idler-bolt head, on its steel head plate)
 NUT = (5.5, 2.4)              # DIN 934 M3 nut: across flats, height (wall trap)
 NYLOC = (5.5, 4.0)            # DIN 985 M3 nyloc nut
 THREAD_PAST_NYLOC = 1.5       # minimum bolt thread standing out of each nyloc
 ROAD_BOLT_L = 50.0            # road wheels: head on a washer on the boss face (y 27.5) .. tip y 77.5
-IDLER_BOLT_L = 40.0           # idlers: head on a DIN 9021 washer (y 27.2) .. tip y 67.2
+IDLER_BOLT_L = 40.0           # idlers: head on a DIN 9021 washer on the head plate (y 27.2) .. tip y 67.2
 HUB_SCREW_L = 12.0            # sprocket to hub: through the 7 mm disc under a washer, 4.5 mm into the hub
+
+# --- idler clamp plates (round 4, strength round 3 change 1): made from 2 mm steel (14-gauge 1.9 mm, or metric 2 mm,
+# flat bar or strip), so the yaw moment on each idler bolt bears on steel footprints instead of a Ø9 washer edge ----
+PLATE_T = 2.0                 # plate thickness = depth of the head-plate recess = extra depth of the idler nut slot
+IDLER_PLATE = (20.6, 10.0)    # head plate (x, z), let into the idler-block face under the DIN 9021 washer: strength's
+#                               21 × 10 fills x 108-129 between the jack buttress and the front 45° strip, so it is cut
+#                               0.4 short to drop into its recess (21.0 CAD between them, about 20.8 printed)
+NUT_PLATE = (14.0, 8.0)       # nut plate (x, z) under the idler's wall nut, in the 9 mm tall nut slot
+PLATE_SLOT = (3.4, 12.0)      # slot in both plates: width (z) × overall length (x); the bolt travels ±4.5 in it
 
 
 def mirror_y(y: float, side: int) -> float:

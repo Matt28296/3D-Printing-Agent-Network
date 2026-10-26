@@ -1,12 +1,12 @@
 # Design brief: Rover lid / electronics deck
 
-Job: 20261026-rover-lid · design-lead (round 3) · 2026-10-26
+Job: 20261026-rover-lid · design-lead (round 3; round 4: strength round 3's rail change) · 2026-10-26
 
 ## Material
 PETG for every rover part: tough against knocks, wears acceptably on steel pins, prints on an open-frame MK3S, softening point ~70 °C, well above the 40 °C service. No library data yet, so strength uses the placeholder allowables (25 MPa in-plane, ×0.5 across layers).
 
 ## Orientation
-Flat, underside on the bed; seat ledges and rails rise from the top face. Deck bending is in the layer plane. The rail roots are the only across-layer section (strength round 2, lowest SF 3.27).
+Flat, underside on the bed; seat ledges and rails rise from the top face. Deck bending is in the layer plane. The rail roots are the only across-layer section (strength round 3: SF 10.6 with the 4.5 mm rails, 3.27 at 2.5).
 
 ## Concept
 A 3 mm deck screwed to the chassis's four insert columns. It carries:
@@ -32,11 +32,19 @@ Round 3 (deep review 04):
 | Feature | Nominal (mm) | Tolerance | Fit | Compensation | Source |
 |---|---|---|---|---|---|
 | ESP32 pocket width | 29.7 | +0.3/−0 | 0.6 clearance | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
+| Side rails | 4.5 wide (\|y\| 14.85–19.35), 4.1 tall on the deck | ±0.2 | edge beams beside the window | — | strength round 3 (RAIL_W 2.5 → 4.5; 4.0 minimum) |
 | Screw holes | Ø3.4 printed (Ø3.6 CAD) | +0.2/−0 | M3 clearance | HOLE_COMP +0.2 | default |
 | Toggle hole | Ø6.2 printed (Ø6.4 CAD) | +0.2/−0 | M6 × 0.75 bushing | HOLE_COMP +0.2 | default |
 | Cable slots | 10 × 10.5 | ±0.3 | Dupont housings, 3.6 mm diagonal each | +0.1 per edge | deep review 04 S-10 |
 
 Printed targets for the whole rover: see the chassis brief.
+
+## Round 4 (strength round 3's required change; nothing else changed)
+- **Rails 2.5 → 4.5 mm (`RAIL_W`), widened outward.** The lid only rests on the wall tops between its four screws, so a press at the window edge travels along the rail as an edge beam (strength round 3, L1: SF 2.49 → 3.29). The window, the pocket (29.7) and the ledges stay where they are; the rails now span |y| 14.85–19.35, x 13.4–69.0, 4.1 tall on the deck.
+- **Tie slots** move out with the rails (their position includes `RAIL_W`): |y| 20.85–22.65 at x 15.2, 64.3 and 67.2, still 1.5 outside the rail; the strip between the window edge and a tie slot grows from 4.0 to 6.0.
+- **Fit and collisions.** The rails sit on the deck's top face, inside the outline. Their outer edges are 14.15 mm and the tie slots 10.85 mm inside the chassis walls' inner faces (|y| 33.5), so the ties under the deck stay over the tub. They clear the toggle hole (10.2 mm in x), the cable slots (rails end at x 69.0, slots start at 70.9) and the screw holes (|y| 32.5). The assembly check finds 0 collisions.
+- Volume 31 377 → 32 289 mm³ (about 1.2 g). cad_checks: 14 checks (rail width, height and extent; tie-slot positions; clearance to the walls, toggle, cable slots and screws).
+- Proof test 1a now presses on the rail top at mid-window (strength round 3).
 
 ## Parameters exposed by model.py
 HOLE_COMP, T, CORNER_R, SCREWS, SCREW_D, BOARDS, USB_END_X, LEDGE_H, CLR, RAIL_W, HALF, ROW_KEEP, END_LEDGE, TIE_SLOT, TIE_FROM_END, BB_X0, CABLE_X, CABLE_Y, CABLE_R, SWITCH, SWITCH_D, BED_CHAMFER. `cad_checks.py` proves them on the geometry.
