@@ -30,6 +30,7 @@ Five independent reviewers each took one slice of all three robot test builds: t
 |---|---|
 | 26 Oct, ~10:15 | Hexapod coxa bracket and bottom plate: a fourth design round after their third failure. Both passed it (printability PASS; strength NEEDS_TEST, lowest SF 4.22 and 3.09) |
 | 26 Oct, 10:27 | Rover chassis: a fourth design round (steel plates under the idler bolt head and nut, 2 mm skin). In review |
+| 26 Oct, 13:00 | Rover chassis: a fifth design round after its fourth failure (the nut plate moves onto the wall's outer face; the idler's hub gets 5.2 mm shorter) |
 | 26 Oct, 11:40 | MG90S closed windows (arm forearm and claw frame, hexapod coxa bracket and femur, 14 servos): keep the 1.34–1.65 mm strips between each window and its screw holes, under the 1.8 mm rule, and check them on the first print instead. Each affected spec §8 and both build guides carry the check; if a strip whitens or cracks, that part's screw holes move out |
 
 ## How the fixes flow
@@ -44,8 +45,8 @@ Five independent reviewers each took one slice of all three robot test builds: t
 
 | Robot | Round | Covers |
 |---|---|---|
-| Arm, mechanical | Links round 4 (base, turntable, upper link pass printability; ring brief to fix; forearm under the strip decision), claw round 2 (reviews running) | 01-B1/B2/S2–S8, 03 (SYS-01 to SYS-05, SYS-08 to SYS-10, SYS-12, SYS-16 to SYS-18), claw DFM and strength round 1 |
+| Arm, mechanical | Links round 5 and claw round 3, in design: the round 4 / round 2 strength reviews failed every link part and four claw parts at servo stall (the camera mount passes) | 01-B1/B2/S2–S8, 03 (SYS-01 to SYS-05, SYS-08 to SYS-10, SYS-12, SYS-16 to SYS-18), claw DFM and strength round 1 |
 | Arm, firmware | Firmware round 3 (done and merged: guard boxes from the round 3 CAD, 52,022 poses with none within 8 mm of the desk) | 03 SYS-02/03 (elbow window), SYS-06 (motion profiles), SYS-07 (trims and calibration), SYS-11, SYS-13 |
-| Rover | Round 4 for the chassis and lid (reviews running); sprocket, idler, wheel and track link passed round 3 (the sprocket's shaft-end rows are being re-checked) | DFM and strength round 2, 01-S9 to S13, 04 |
-| Hexapod | Design complete: all five parts pass. Slicing, audits and preflight checklists running | Coxa redesign, 01-B1/B2/S14/S15, 05 |
+| Rover | Lid, sprocket, road wheel and track link: awaiting your approval. Chassis round 5 (approved by you) and the idler's shorter hub: in design | DFM and strength round 2, 01-S9 to S13, 04 |
+| Hexapod | All five parts awaiting your approval (sliced, validated, audited) | Coxa redesign, 01-B1/B2/S14/S15, 05 |
 | All | Firmware round 1 | 02 (done and merged) |
