@@ -14,6 +14,8 @@ Round 5 (links strength round 4, SF 1.49): each 6.85 mm window rail gets a 6 mm 
 face, so the rails are 6.85 × 16 from 5 mm before the window to past the near tab row. The ribs
 continue the window's side walls (the elbow servo's case already stands 17 mm out of the back
 face there) and run out at 45° towards the shoulder.
+Round 6 (links strength round 5, rib root SF 1.89): RIB_TAPER 6 -> 12, so the run-out slopes at 27° and
+meets the back face at x 52.2.
 """
 from build123d import Align, Box, BuildPart, BuildSketch, Plane, Polygon, Pos, Rot, extrude
 from cadlib import HOLE_COMP_DEFAULT, to_bed
@@ -37,7 +39,8 @@ WIN_X1 = L + SERVO.shaft_from_end + (CLR + HOLE_COMP) / 2                     # 
 RIB_H = 6.0             # rib depth below the back face (strength: 4 mm gives only 2.93)
 RIB_PAST = 5.0          # full depth from >= 5 mm before the window's far end (strength: onto the full plate)
 RIB_X0 = WIN_X0 - RIB_PAST     # 64.2: full depth from here ...
-RIB_TAPER = RIB_H              # ... with a 45° run-out to the back face at x 58.2 (no step on the loaded plate)
+RIB_TAPER = 12.0               # ... with a 27° run-out to the back face at x 52.2 (links strength round 5: 6 -> 12;
+                               # the 45° run-out fed the rib force across the layers at SF 1.89, 12 gives 3.78)
 RIB_X1 = 117.0          # elbow end: 6.5 mm past the window, 2.9 mm past the near pilot row (x 114.1), where the
                         # plate's r 8 corner still leaves the rib 5.8 wide (it would thin to a sliver at x 121)
 

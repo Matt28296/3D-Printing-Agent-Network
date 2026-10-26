@@ -18,7 +18,8 @@ Flat 10 mm plate on the elbow servo's double-arm horn, carrying the wrist MG90S 
 | MG90S window | 23.0 × 12.6 printed (23.2 × 12.8 CAD) | +0.3/−0 | 0.4 side / 0.2 end clearance on the 22.8 × 12.2 body | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules; body from deep review 01 S1 |
 | Lead notch | 4.2 wide, 1.5 beyond the case end (printed) | +0.2/−0 | 3.6 × 1.2 mm lead ribbon | HOLE_COMP +0.2 on holes/pockets | deep review 01 B1 (`MG90S.lead_notch_w/reach`) |
 | Screw strips (pilot → window / notch) | lead end 1.34, far end 1.45 CAD (≈ 1.55 / 1.65 printed) | as built | M2 self-tappers driven snug; under the 1.8 mm rule, **kept by the user's decision of 26 Oct 2026**, first-print screw-strip check in spec §8 | HOLE_COMP +0.2 on holes/pockets | user decision; strength round 4 strip table (SF ≥ 4.75) |
-| Far tab pilot (round 5) | Ø1.5 printed, slotted 0.4 outward, 16 deep (10 plate + 6 cross-rib) | ≥ 14 deep | M2 × 16, 13.5 mm engaged | HOLE_COMP +0.2 on holes/pockets | links strength round 4 FIX (≥ 14 deep) |
+| Far tab pilot (round 5) | Ø1.5 printed, **round** (Ø1.7 CAD, no slot since round 6), x 70.6, 16 deep (10 plate + 6 cross-rib) | ≥ 14 deep | M2 × 16, 13.5 mm engaged, full thread circle | HOLE_COMP +0.2 on holes/pockets | links strength round 4 FIX (≥ 14 deep); round: links strength round 5 FIX |
+| Lead-end tab pilot (round 6) | Ø1.5 printed, **round** (Ø1.7 CAD, no slot), x 99.7 (moved 1.3 mm out, round 3), 10 deep; 3.45 CAD to the plate end | as built | M2 × 12, 9.5 mm engaged, full thread circle | HOLE_COMP +0.2 on holes/pockets | links strength round 5 FIX |
 | Rail ribs + cross-rib (round 5) | 6 deep on the back face; ribs as wide as the rails (6.6), x 66.9–101.1; cross-rib full width x 66.9–72.9; 45° run-out to x 60.9 | +0.3/−0 | strength: rails 6.6 × 16 | none | links strength round 4 FIX (6 mm; 4 mm gives 3.30) |
 
 The round-2 SG90 rows (window 22.7 × 12.4, pilot-to-window wall 1.8 printed) no longer apply: the wrist servo is the MG90S since round 3.
@@ -26,12 +27,12 @@ The round-2 SG90 rows (window 22.7 × 12.4, pilot-to-window wall 1.8 printed) no
 Printed targets: servo windows +0.4 total (SG90 window ends +0.2), horn pockets +0.5 total, M3 clearance Ø3.4, M2 clearance Ø2.4, self-tap pilots Ø2.6 (MG996R tab screws) and Ø1.5 (SG90 tab screws). Every hole and pocket also gets **HOLE_COMP = +0.2 mm** in CAD (fdm-design-rules default; no library row yet), applied in tools/hobby_parts.py cutters and each model.py. Horn joints: the horn's centre screw is replaced by a longer one + washer through the link, clamping link and horn onto the spline (strength round 1).
 
 ## Parameters exposed by model.py
-HORN_SERVO, WRIST, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, END_CLR, BED_CHAMFER, WIN_HW, WIN_X0, WIN_X1, FAR_PILOT_X, RIB_H, RIB_PAST, RIB_X1, BOSS_X0, FAR_SCREW_L, TAPER
+HORN_SERVO, WRIST, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, END_CLR, BED_CHAMFER, WIN_HW, WIN_X0, WIN_X1, FAR_PILOT_X, PILOT_SHIFT, LEAD_PILOT_X, PILOT_D, RIB_H, RIB_PAST, RIB_X1, BOSS_X0, FAR_SCREW_L, TAPER
 
 ## Risks
 - SG90 pilot-to-window wall 1.55 mm (DFM round 1) → Ø1.5 printed pilot + 0.2 end clearance → 1.8 mm printed (round 2; superseded by the MG90S strips, kept by the user's decision with a first-print check)
 - Sideways loads (strength round 1) → T 5→10, slot removed, centre-screw clamp
-- Wrist tab screws pull out (strength round 2) → M2×12 self-tapping, 9.5 mm engaged; round 5: M2 × 16 at the far tab, 13.5 mm engaged in the cross-rib
+- Wrist tab screws pull out (strength round 2) → M2×12 self-tapping, 9.5 mm engaged; round 5: M2 × 16 at the far tab, 13.5 mm engaged in the cross-rib; round 6: both pilots round, so the whole thread circle engages
 - The window rails carry the wrist servo's sideways moment past the window, because each MG90S tab screw acts as a pin (links strength round 4, SF 1.71) → 6 mm back-face ribs (round 5)
 - Back-face ribs could meet the upper link, the elbow servo and its horn, or the screw heads on the upper link's front face when the elbow folds → they start 61 mm out from the elbow axis; measured clearance ≥ 10.2 mm over the elbow's −150…+30°
 
@@ -41,7 +42,7 @@ HORN_SERVO, WRIST, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, END_CLR, BED_
 - **Fasteners:** elbow clamp M3 × 14 + Ø9 × 0.8 washer (4.6 mm into the spline, S2); 2 × M2 × 6 through the horn arms (S4).
 - **Fitting pose (SYS-03):** at the elbow servo's centre the forearm goes on 60° below the upper link's line, towards +X: the elbow's window is −150 … +30°, all of it free of self-collision (`assembly_check.json` elbow_window_deg).
 - **Loads (SYS-04):** 161 N·mm (188 with 50 g) across the elbow shaft and 108 / 124 N·mm across the wrist shaft in every pose, from the camera and the round-3 claw (spec §4).
-- measure_holes: Ø3.6 clamp hole (the MG90S pilots are slots).
+- measure_holes: Ø3.6 clamp hole (the MG90S pilots are slots; since round 6 they are round and measure Ø1.7).
 
 ## Round 5 (2026-10-26: links strength round 4, SF 1.71 rails and 2.40 far tab screw; DFM round 4). Third design attempt
 - **What failed.**
@@ -82,3 +83,16 @@ HORN_SERVO, WRIST, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, END_CLR, BED_
   - the moved lead-end pilot, and the far pilot open through 16 mm;
   - the cross-rib (extent and the 2.45 wall), the ribs (depth, 6.60 wide, end at 101.1), the open lead end and the run-out.
 - **Mass.** +3.60 cm³: 32.8 cm³, 42 g solid (was 37).
+
+## Round 6 (2026-10-26: links strength round 5, MG90S tab screw pull-out 2.42 / 2.62). Fourth design attempt, user-approved fix
+- **What failed.** `servo_mount_cutter` slots every micro-servo pilot 0.4 mm outward, so the printed pilot reached 1.15 mm from the screw axis against the M2 thread's 1.0: only 0.77 of the thread circle engaged. Yaw-stall pull-out: lead-end M2 × 12 **2.42**, far M2 × 16 **2.62** (round 5's 3.15 / 3.41 had assumed round pilots).
+- **Change: both MG90S tab pilots round, Ø1.7 CAD** (`PILOT_D` = 1.5 printed + HOLE_COMP), exactly as the analyst's required change 1.
+  - **Positions unchanged:** far pilot x 70.6 (`FAR_PILOT_X`), into the M2 × 16 cross-rib; lead-end pilot x 99.7 (`LEAD_PILOT_X`, moved 1.3 mm out, `PILOT_SHIFT`).
+  - **How:** `wrist_cutter()` takes `servo_mount_cutter`'s window and lead notch, masks out its two slotted pilots and cuts round ones through the full 16 mm. `tools/hobby_parts.py` is unchanged.
+  - **Analyst's what-if:** yaw-stall pull-out far M2 × 16 **3.41**, lead-end M2 × 12 **3.15**.
+- **The user-accepted strips do not get smaller** (the slots ran away from them). Measured by `cad_checks.py`: lead end (notch → moved pilot) **1.340**, far end (far pilot → window) **1.445** in the plate and **1.445** in the cross-rib, as in round 5.
+- **What grows.** The cross-rib wall beyond the far pilot: 2.45 → **2.85** (x 66.9–69.75). The plate end past the lead-end pilot: 3.05 → **3.45** CAD.
+- **Printing.** Vertical holes, front face on the bed: mesh_check 0.0 % overhang, no bridges, no thin walls, bed contact 2875 mm².
+- **Spec §8 (2).** The analyst's required change 2 (17 N at 83 mm, bar at 60°) is a spec change, not CAD; it is not made here.
+- **Checks.** `cad_checks.py` (17 checks, exit 0): both pilots measure Ø1.7 round at x 70.6 / 99.7 (`measure_holes`), solid from each pilot's edge outward (no slot), the lead-end pilot 3.45 from the plate end, the far pilot open through 16 mm, the 2.85 cross-rib wall, and the strips as above.
+- **Mass.** +0.02 cm³: 32.85 cm³.

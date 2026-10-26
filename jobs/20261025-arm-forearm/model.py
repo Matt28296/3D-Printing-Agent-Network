@@ -20,8 +20,13 @@ Round 5 (links strength round 4: window rails SF 1.71, far tab screw pull-out 2.
   an M2 × 16 with 13.5 mm engaged (the lead-end screw stays M2 × 12: its lead leaves the case end
   between the ribs, 3.4 mm below the back face);
 - the cross-rib and ribs run out at 45° towards the elbow.
+
+Round 6 (links strength round 5: MG90S tab screw pull-out 2.42 lead end / 2.62 far): both MG90S tab
+pilots are cut ROUND, Ø1.5 printed (Ø1.7 CAD), at the same centres. servo_mount_cutter slots every
+micro-servo pilot 0.4 mm outward, which left only 0.77 of the M2 thread engaged; so wrist_cutter()
+keeps the cutter's window and lead notch, masks out its two slotted pilots and cuts round ones.
 """
-from build123d import Align, Box, BuildPart, BuildSketch, Plane, Polygon, Pos, Rot, extrude
+from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Plane, Polygon, Pos, Rot, extrude
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 from hobby_parts import MG90S, MG996R, chamfer_plane_edges, horn_pocket_cutter, rounded_plate, servo_mount_cutter
 
@@ -42,12 +47,17 @@ WIN_HW = (WRIST.width + CLR + HOLE_COMP) / 2                                    
 WIN_X0 = L - (WRIST.length - WRIST.shaft_from_end) - (END_CLR + HOLE_COMP) / 2    # 72.9
 WIN_X1 = L + WRIST.shaft_from_end + (END_CLR + HOLE_COMP) / 2                     # 96.1
 FAR_PILOT_X = L - (WRIST.length - WRIST.shaft_from_end) + WRIST.length / 2 - WRIST.hole_dx / 2   # 70.6
+PILOT_SHIFT = 1.3       # lead-end pilot moved 1.3 mm out (servo_mount_cutter lead="notch_shift_pilot", round 3)
+LEAD_PILOT_X = FAR_PILOT_X + WRIST.hole_dx + PILOT_SHIFT                                          # 99.7
+PILOT_D = WRIST.screw_pilot_d + HOLE_COMP   # 1.7 CAD (1.5 printed), ROUND, no outward slot (links strength round 5:
+                                            # M2 thread engaged 0.77 -> 1.0, pull-out SF 2.62/2.42 -> 3.41/3.15)
 # back-face ribs and far-pilot boss (links strength round 4 -> design round 5)
 RIB_H = 6.0             # rails 6.6 x 10 -> 6.6 x 16: yaw-stall SF 1.71 -> 4.29 (4 mm gives 3.30)
 RIB_PAST = 5.0          # ribs run >= 5 mm past each window end onto the full plate (strength)
 RIB_X1 = WIN_X1 + RIB_PAST          # 101.1, where the r 7 corner still leaves the rib 5.3 wide
-BOSS_X0 = FAR_PILOT_X - 0.4 - (WRIST.screw_pilot_d + HOLE_COMP) / 2 - 2.45   # 66.9: 2.45 wall beyond the far
-                                    # pilot's outward slot (x 69.35); the cross-rib runs from here to the window
+BOSS_X0 = FAR_PILOT_X - 0.4 - (WRIST.screw_pilot_d + HOLE_COMP) / 2 - 2.45   # 66.9: 2.45 wall beyond round 5's
+                                    # outward slot (x 69.35; 2.85 to the round pilot since round 6); the cross-rib
+                                    # runs from here to the window
                                     # (x 72.9) across the full width: far pilot 10 + 6 = 16 deep (M2 x 16, 13.5
                                     # engaged: pull-out SF 2.40 -> 3.41; strength asks >= 14)
 FAR_SCREW_L = 16.0      # M2 x 16 at the far tab (BUILD_GUIDE §1); the lead-end tab keeps its M2 x 12
@@ -66,14 +76,26 @@ def back_ribs():
                                                           align=(Align.MIN,) * 3)
 
 
+def wrist_cutter():
+    """MG90S window + lead notch from servo_mount_cutter, with its two slotted pilots replaced by round ones."""
+    through = (T + RIB_H) * 2 + 2
+    cut = Pos(L, 0, T) * servo_mount_cutter(WRIST, T + RIB_H, clearance=CLR, end_clearance=END_CLR,
+                                            through=through, hole_comp=HOLE_COMP,
+                                            lead="notch_shift_pilot", pilot_shift=PILOT_SHIFT)
+    r, m = PILOT_D / 2, 0.2             # mask: each slotted pilot + 0.2, clear of the window (x 72.9) and notch (x 97.51)
+    for x0, x1 in ((FAR_PILOT_X - 0.4 - r - m, FAR_PILOT_X + r + m), (LEAD_PILOT_X - r - m, LEAD_PILOT_X + 0.4 + r + m)):
+        cut -= Pos(x0, -r - m, T - through - 1) * Box(x1 - x0, 2 * (r + m), through + 2, align=(Align.MIN,) * 3)
+    for x in (FAR_PILOT_X, LEAD_PILOT_X):
+        cut += Pos(x, 0, T - through / 2) * Cylinder(r, through)
+    return cut
+
+
 def design():
     arm = rounded_plate(X0, X1, -HALF_W, HALF_W, T, r=CORNER_R)
     arm = chamfer_plane_edges(arm, T, BED_CHAMFER)
     arm += back_ribs()
     arm -= horn_pocket_cutter(HORN_SERVO, link_t=T, hole_comp=HOLE_COMP)
-    arm -= Pos(L, 0, T) * servo_mount_cutter(WRIST, T + RIB_H, clearance=CLR, end_clearance=END_CLR,
-                                             through=(T + RIB_H) * 2 + 2, hole_comp=HOLE_COMP,
-                                             lead="notch_shift_pilot")
+    arm -= wrist_cutter()                    # window, lead notch, round tab pilots (round 6)
     return arm
 
 

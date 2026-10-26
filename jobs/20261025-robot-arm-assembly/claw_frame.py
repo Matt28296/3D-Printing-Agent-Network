@@ -129,6 +129,11 @@ TIE_X0 = LIP_X0                # 14.35: post's rear face, in line with the lip's
 # at the top of the print (the cover stands on its -y end), so its undersides are 45° slopes: the post grows from
 # the lip (full depth from y TIE2_Y[0]), the web from the post and from the front plate beside the pass-through.
 TIE2_Y = (HALF_Y - 8.0, HALF_Y)
+# Anchor (claw round 4, cover strength round 3: the reversed rack-B push left the cover through the 3 mm top wall,
+# SF 1.23): the second tie's post is 8 thick (x 14.35..22.35) and stands on the frame's rail block (z ZS - RAIL_IN
+# = 17.75), held by ONE vertical M3 x 45 socket head through the top wall, lip and post into a 14 mm pilot in the block.
+ANCHOR_XY = (RAIL_X1 - GUIDE_T / 2, HALF_Y - 4.0)   # (18.35, 28): mid-post; 2.65 to the block's front face and +y end
+ANCHOR_PILOT_DEPTH = 14.0      # M3 x 45: 33.75 through the cover (z 17.75..51.5), 11.25 engaged in the block
 # cover screws: two M3 down into the bulkhead top, two M2.5 back into the wrist plate's front edge
 TOP_SCREWS = [(X_B - BULK_T / 2, -23.0), (X_B - BULK_T / 2, 14.0)]   # (x, y), clear of the servo window
 FRONT_SCREWS = [(-24.0, T_W / 2), (24.0, T_W / 2)]                  # (y, z)

@@ -1,7 +1,7 @@
 {
   "overhang_limit_deg": 45.0,
   "overhang_area_mm2": 210.9,
-  "overhang_pct": 1.41,
+  "overhang_pct": 1.4,
   "bed_contact_area_mm2": 2534.7,
   "bridges": [
     {

@@ -34,7 +34,22 @@ def solid(x, y, z):
 check("overall size 42.85 x 64 x 48.5", all(abs(a - b) < 0.01 for a, b in zip(size, [42.85, 64.0, 48.5])), size)
 check("one solid", len(part.solids()) == 1, len(part.solids()))
 dia = sorted(round(h["diameter"], 2) for h in holes)
-check("holes: clamp Ø2.6, 2 x M3 pilot Ø2.7, 2 x M2.5 pilot Ø2.2", dia == [2.2, 2.2, 2.6, 2.7, 2.7], dia)
+check("holes: clamp Ø2.6, 3 x M3 pilot Ø2.7 (2 top + the cover's anchor), 2 x M2.5 pilot Ø2.2",
+      dia == [2.2, 2.2, 2.6, 2.7, 2.7, 2.7], dia)
+anc = [h for h in holes if abs(h["diameter"] - 2.7) < 0.01 and abs(h["point_on_axis"][0] - 18.35) < 0.01
+       and abs(h["point_on_axis"][1] - 28.0) < 0.01 and abs(abs(h["axis"][2]) - 1) < 1e-6]
+check("anchor M3 pilot Ø2.5 + HOLE_COMP = Ø2.7 CAD, vertical, at (18.35, 28) in the rail block (claw strength round 3)",
+      len(anc) == 1, [(h["point_on_axis"], h["arc_deg"]) for h in anc])
+check("anchor pilot 14 deep from the block's top (z 17.75 -> 3.75), floor below it",
+      not solid(18.35, 28, 17.0) and not solid(18.35, 28, 3.85) and solid(18.35, 28, 3.65)
+      and not solid(18.35 + 1.3, 28, 10) and solid(18.35 + 1.4, 28, 10) and not solid(18.35, 28 + 1.3, 10)
+      and solid(18.35, 28 + 1.4, 10), "Ø2.7, z 3.75..17.75")
+check("rail block keeps 2.65 round the anchor pilot (front face x 22.35, +y end y 32; frame strength: root SF 5.93)",
+      solid(18.35 + 1.4, 28, 12) and solid(22.3, 28, 12) and not solid(22.4, 28, 12)
+      and solid(18.35, 29.4, 12) and solid(18.35, 31.9, 12) and not solid(18.35, 32.1, 12)
+      and solid(14.6, 28, 12) and solid(18.35, 26.6, 12), "x 19.7..22.35, y 29.35..32 at z 12")
+check("anchor pilot clear of the +y front M2.5 pilot (x >= 20.85, y 22.9..25.1)",
+      solid(20.9, 25.6, 3.0) and solid(19.7, 26.0, 3.9), "solid between them")
 check("wrist plate top (rack B's guide) z 6.0", solid(30, 0, 5.9) and not solid(30, 0, 6.1))
 check("wrist plate front edge x 34.85", solid(34.8, 0, 3) and not solid(34.9, 0, 3))
 check("rail block from the bulkhead's front face (x 10) to x 22.35, z 6..17.75", solid(10.1, 0, 12) and solid(22.3, 31.9, 17.7)

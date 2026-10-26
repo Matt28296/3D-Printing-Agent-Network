@@ -41,6 +41,8 @@ def run(p0, p1, step=0.01):
 T, HW, RIB_H = ns["T"], ns["HALF_W"], ns["RIB_H"]
 WX0, WX1, WHW = ns["WIN_X0"], ns["WIN_X1"], ns["WIN_HW"]
 PX, BX0, RX1, TAPER = ns["FAR_PILOT_X"], ns["BOSS_X0"], ns["RIB_X1"], ns["TAPER"]
+LPX, PD = ns["LEAD_PILOT_X"], ns["PILOT_D"]
+X1 = ns["X1"]
 YR = (WHW + HW) / 2                                   # mid-rail, 9.7
 
 # ---- CHECKS: one line per critical dimension in design_brief.md -----------------
@@ -60,15 +62,27 @@ s_far_rib = run((PX, 0, -3), (WX0 + 0.5, 0, -3))
 check("screw strips as the user decided on 26 Oct (lead end 1.34, far end 1.45 CAD; spec §8 first-print check)",
       abs(s_lead - 1.34) < 0.02 and abs(s_far - 1.45) < 0.02 and abs(s_far_rib - 1.45) < 0.02,
       f"lead end {s_lead:.3f}, far end {s_far:.3f} (plate) / {s_far_rib:.3f} (cross-rib)")
-check("lead-end pilot moved 1.3 mm out: x 99.7, slotted 0.4 outward (unchanged)",
-      not solid(99.7, 0, 5) and not solid(100.9, 0, 5) and solid(101.0, 0, 5) and solid(99.7, 0.95, 5), "x 98.85-100.95")
+pil = sorted((round(h["point_on_axis"][0], 2), round(abs(h["point_on_axis"][1]), 2)) for h in holes
+             if abs(h["diameter"] - 1.7) < 0.01 and h["arc_deg"] > 300)
+check("both MG90S tab pilots ROUND Ø1.5 + HOLE_COMP = Ø1.7 CAD at x 70.6 / 99.7, y 0 (links strength round 5)",
+      abs(PD - 1.7) < 1e-9 and pil == [(70.6, 0.0), (99.7, 0.0)], pil)
+r = PD / 2
+lead_out = run((LPX + r - 0.3, 0, 5), (LPX + r + 0.8, 0, 5))
+far_out = min(run((PX - r - 0.8, 0, z), (PX - r + 0.3, 0, z)) for z in (-5.9, -3, 5))
+check("no outward slot: solid from the pilot edge outward (lead end x 100.55, far end x 69.75)",
+      abs(lead_out - 0.8) < 0.02 and abs(far_out - 0.8) < 0.02 and not solid(LPX + r - 0.05, 0, 5)
+      and not solid(PX - r + 0.05, 0, -3), f"solid beyond the edge: lead {lead_out:.2f} / 0.80, far {far_out:.2f} / 0.80")
+check("lead-end pilot moved 1.3 mm out: x 99.7, round, 3.45 CAD to the plate end",
+      abs(LPX - 99.7) < 1e-9 and not solid(99.7, 0, 5) and solid(99.7, r + 0.05, 5)
+      and abs(run((LPX, 0, 5), (X1 + 1, 0, 5)) - (X1 - LPX - r)) < 0.02,
+      f"x {LPX - r:.2f}-{LPX + r:.2f}, plate end x {X1:g}: {run((LPX, 0, 5), (X1 + 1, 0, 5)):.2f}")
 far_depth = run((PX, 0, -RIB_H - 1), (PX, 0, T + 1))
-check("far pilot Ø1.7 CAD (1.5 printed) slotted 0.4 outward, open through plate + cross-rib (16 deep: M2 × 16, "
-      "13.5 engaged; strength asks >= 14)",
-      far_depth < 0.01 and not solid(PX - 0.4 - 0.75, 0, -5.9) and solid(PX - 0.4 - 0.95, 0, -5.9)
-      and solid(PX, 0.95, -3), f"solid on the axis z -7..11: {far_depth:.3f}")
-wall = run((BX0 - 0.5, 0, -RIB_H + 0.1), (PX - 0.4, 0, -RIB_H + 0.1))
-check("cross-rib wall beyond the far pilot's slot >= 2.4 at full depth (x 66.9-69.35)", wall >= 2.4, round(wall, 2))
+check("far pilot open through plate + cross-rib (16 deep: M2 × 16, 13.5 engaged; strength asks >= 14)",
+      far_depth < 0.01 and not solid(PX, r - 0.05, -5.9) and solid(PX, r + 0.05, -5.9),
+      f"solid on the axis z -7..11: {far_depth:.3f}")
+wall = run((BX0 - 0.5, 0, -RIB_H + 0.01), (PX, 0, -RIB_H + 0.01))
+check("cross-rib wall beyond the far pilot >= 2.4 at full depth (x 66.9-69.75: 2.85 since the pilot is round)",
+      wall >= 2.4 and abs(wall - (PX - r - BX0)) < 0.03, round(wall, 2))
 check("cross-rib full width, full depth from x 66.9 to the window (x 72.9)",
       all(solid(x, y, -RIB_H + 0.05) for x in (BX0 + 0.1, 68.0, WX0 - 0.1) for y in (-11.0, -3.0, 0.5, 3.0, 11.0) if
           not (abs(y) < 1.0 and PX - 1.4 < x < PX + 1.0)) and not solid(BX0 + 0.1, 0, -RIB_H - 0.05),
