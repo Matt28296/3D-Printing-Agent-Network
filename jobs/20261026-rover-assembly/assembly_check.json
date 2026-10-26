@@ -360,9 +360,9 @@
   "L": {
    "chassis_to_links_min_mm": 1.0,
    "at": [
-    -8.6,
+    -8.5,
     42.0,
-    32.0
+    9.6
    ],
    "nacelle_to_links_min_mm": 1.5,
    "nacelle_at": [
