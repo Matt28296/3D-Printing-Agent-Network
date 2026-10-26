@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 3,
+    "DESIGN": 4,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 built (V-groove): CAD DFM PASS 21/21, CAD-side strength NEEDS_TEST 3.03; independent recheck next",
+    "DESIGN": "round 5: strength NEEDS_TEST 3.03; DFM FAIL item 6 (bulkhead top on a slice plane, prints 48.4). Fix with the cover's round 6 (bulkhead top 48.45). Awaiting user decision",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Bulkhead top 48.45 with the cover's round 6 (user decision)"
+  ],
   "updated": "2026-10-26T16:09:12+00:00"
 }

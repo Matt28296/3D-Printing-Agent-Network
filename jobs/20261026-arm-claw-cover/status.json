@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 4,
+    "DESIGN": 5,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 built (user-approved V-seat): CAD DFM PASS 22/22, CAD-side strength NEEDS_TEST 3.01; independent recheck next (ridge-play sensitivity flagged)",
+    "DESIGN": "round 5 FAIL (independent review): DFM FAIL (\u00a73 fit), strength FAIL 1.84 at the realistic printed ridge play 0.082 mm. Fix proposed: ridge-first seat (VSEAT_CLR 0, TIE2_FOOT_Z 18.05, RIDGE_TIP_Z 17.35) + frame bulkhead top 48.45. Escalated to the user",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Round 6: ridge-first V-seat (cover foot 18.05, tip 17.35; frame VSEAT_CLR 0, bulkhead top 48.45)?"
+  ],
   "updated": "2026-10-26T16:09:12+00:00"
 }

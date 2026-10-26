@@ -3,9 +3,21 @@ anchor pilot: Ø2.7 CAD x 14 at ANCHOR_XY (18.35, 28) in the rail block's top, f
 V-groove beside it that locates the cover's post).
 
 Round 5 (the V-seat): a 90° V-groove 0.8 deep along y in the rail block's top (x 14.45..16.05 at z 17.75, y 23.5..32)
-takes the cover's ridge. The cover's +x push now enters the block on the groove's +x flank (positive, no preload relied
-on); the 45° flank lifts the cover by as much, which the M3 x 45 holds in tension. A Ø7 x 0.5 washer under the head
-leaves 10.75 engaged. Section 6 is rewritten for that path; the shank rows stay as a bound.
+takes the cover's ridge. The cover's +x push enters the block on the groove's +x flank once the ridge bears; the 45°
+flank lifts the cover by as much, which the M3 x 45 holds in tension. A Ø7 x 0.5 washer under the head leaves 10.75
+engaged. Section 6 covers that path; the shank rows stay as a bound.
+
+Round 5 INDEPENDENT REVIEW (strength-analyst; the CAD engineer's round-5 update was a self-check):
+- forces from the cover's review script: Fx 25.6 N (opening stall) / 32.5 N (proof push) with zero play ('locked');
+  with the play the as-built seat can print with (cover strength.md), less push reaches the groove and more lift reaches
+  the screw (up to ~105 N, no preload then): pull-out SF ~6, so the frame's rows below stay the governing set;
+- the 0.95 mm block between the groove and the anchor pilot DOES see the pilot's thread-forming pressure (the round-5
+  self-check said it carried no hoop load): new info row, why it is not a verdict row is written beside it;
+- slice facts (the frame's committed part.stl sliced with the arm's command, G-code read back): the bulkhead top (CAD
+  48.5, exactly on the slice plane of layer 48.4..48.6) prints at 48.4; the rail block top (17.75) prints at 17.8; the
+  groove's first layer (17.0..17.2) is a 0.3 mm slot between two external perimeters (closes up in print); the 0.95 mm
+  ligament prints as two external perimeters (0.52 wide each at the top layer). The bulkhead-top item is a DFM finding
+  (design_review.md), and part of the cover's required fix.
 
 Round 4 (independent re-check of the as-built anchor pilot): the rail-block rows whose spread reaches y 28 now take the
 pilot out of their section (it crosses the root plane z 6: the pilot runs z 3.75..17.75); new rows for the anchor: M3
@@ -495,6 +507,12 @@ if ANCHOR_D > 0:
         f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", T_STALL / A_TH, SHEAR_Z, SF_SHORT)
     row(f"cover anchor, spec §8 proof push {R_PROOF} N: preload + wedge + lift {T_PROOF} N",
         f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", (P_M3 + T_PROOF) / A_TH, SHEAR_Z, SF_SHORT / 1.5)
+    # review: with the ridge's play as printed (cover review, RSS-adverse 0.082 mm, preload crept away) the foot slides
+    # before the flank bears, and the cover's frame model sends far more lift to the screw: wedge + lift 106.0 N
+    # (opening stall) / 115.4 N (proof push), cover strength_calc.py output
+    for T_, lab, req in ((106.0, "opening stall", SF_SHORT), (115.4, f"spec §8 proof push {R_PROOF} N", SF_SHORT / 1.5)):
+        row(f"cover anchor, ridge play as printed (0.082 mm, preload gone): wedge + lift {T_} N under the {lab}",
+            f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", T_ / A_TH, SHEAR_Z, req)
     # hoop stress in the 2.65 mm walls: the pilot is vertical in a flat print, so the hoop runs along the layers (25 MPa).
     # Thread forming (at installation, short-term) as the frame's MG90S rows: p_form = 2 T / (mu pi d^2 L), the same
     # flank pressure as the M2's 40 N.mm over 5.5 mm (the same 0.25 radial interference); preload p = S tan30 / (pi d L)
@@ -527,6 +545,21 @@ if ANCHOR_D > 0:
                 1.5 * F_ / A_plug, SHEAR_Z, req)
         # the 0.95 mm of block between the groove and the pilot (at the top; 45° wider per mm down) passes its share on to
         # the screw's shank: bounded by the shank rows below (all of the push on the shank)
+        # review: the same ligament DOES carry the pilot's thread-forming pressure (it is the pilot's wall on the groove
+        # side). Lame on the thinnest ring it leaves, printed: pilot Ø2.5, groove edge 16.0 at the top layer (half-width
+        # 0.75 at 17.7..17.8) -> 18.35 - 1.25 - 16.0 = 1.10 (CAD 0.95). Info, not verdict: it acts only at installation,
+        # only on the top ~0.8 mm of a 10.75 mm engagement and on the groove side's ~90° of the circumference; a split
+        # there is backed by the screw itself for the flank push, and losing that thread costs at most ~0.2 mm-equivalent
+        # of engagement (pull-out on the preload 4.22 -> ~4.1, still >= 4).
+        w_lig = ANCHOR_X - C.M3_PILOT / 2 - (C.VSEAT_XC + (Z_BLOCK - 0.05 - (Z_BLOCK - C.VSEAT_D)))   # 1.10 printed
+        lame_l = ((r_i + w_lig) ** 2 + r_i ** 2) / ((r_i + w_lig) ** 2 - r_i ** 2)
+        row(f"info: cover anchor driven: thread forming ({p_form:.1f} MPa) + preload ({p_cl:.2f} MPa) in the ligament "
+            f"between the pilot and the V-groove (installation)", f"{w_lig:.2f} printed ({w_top:.2f} CAD) at the block "
+            f"top, Lame peak x{lame_l:.2f}, along the layers", "XY", (p_form + p_cl) * lame_l, ALLOW_XY, SF_SHORT, INFO)
+        L_lost = 0.8 * 0.25                                   # top 0.8 mm, the groove side's quarter of the thread
+        row("info: the same, if the ligament splits: M3 x 45 pull-out on the preload with that thread lost (sustained)",
+            f"thread cylinder Ø3 x {L_AN - L_lost:.2f}", "Z shear", P_M3 / (math.pi * 3.0 * (L_AN - L_lost)), SHEAR_Z,
+            SF_CYCLIC, INFO)
     # the shank bearing on the pilot towards the front face, if the cover's push ever reaches the screw (bound: the whole
     # push; round 5: the ridge takes it in the groove, so these rows are a bound, kept)
     L_B = 2 * 3.0

@@ -24,3 +24,4 @@
 - 2026-10-26T17:40Z · architect · user approved the V-groove positive lock (fifth attempt) · cad-engineer started
 - 2026-10-26T18:30Z · cad-engineer (fifth attempt, user-approved) · model.py, cad_checks.py, strength_calc.py, design_brief.md, design_review.md, strength.md, geometry.json, part.step/stl · ok (merged)
 - 2026-10-26T18:30Z · architect · spec §1 and §8 updated for round 5 · ok
+- 2026-10-26T18:55Z · design-reviewer + strength-reviewer (round 5) · design_review.md, strength.md, strength_calc.py · DFM FAIL, strength FAIL 1.84 · escalated
