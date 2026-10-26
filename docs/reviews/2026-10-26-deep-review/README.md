@@ -17,12 +17,12 @@ Five independent reviewers each took one slice of all three robot test builds: t
 
 | ID | Robot | Finding | Fix | Status |
 |---|---|---|---|---|
-| 01-B1 | Arm, hexapod | No servo lead can pass its closed window | `servo_mount_cutter(lead=...)` in `tools/hobby_parts.py` cuts a lead notch; MG90S windows shift the pilot | Library done (merged). Applying to the arm links and claw (arm round) and the hexapod (round 3) |
-| 01-B2 | Arm, hexapod | MG90S spline top is 14.0 mm above the tabs, not 10.8 | MG90S has its own spec in `hobby_parts.py` | Library done (merged). Wrist, claw and hexapod geometry being rebuilt |
+| 01-B1 | Arm, hexapod | No servo lead can pass its closed window | `servo_mount_cutter(lead=...)` in `tools/hobby_parts.py` cuts a lead notch; MG90S windows shift the pilot | Library done (merged). Hexapod: done in round 3 (coxa and tibia servos reversed, one notch with a shifted pilot). Arm links and claw: in progress |
+| 01-B2 | Arm, hexapod | MG90S spline top is 14.0 mm above the tabs, not 10.8 | MG90S has its own spec in `hobby_parts.py` | Library done (merged). Hexapod: done in round 3. Arm wrist and claw: in progress |
 | 02-A1 | Arm | `x` stopped a move, but the next command finished it | Cancel clears the target | Fixed and merged |
 | 02-A2 | Arm | Opening the PC port reset the ESP32, which snapped every joint to boot | Pose kept in NVS; slow start from it; port opened without reset | Fixed and merged |
 | 03-SYS-01 | Arm | The claw has no assembly or service sequence that works | Ø ≥ 20.6 mm pinion pass-through in the front plate; pinion fitted last with the jaws parked open | Arm round in progress |
-| 04-S-01 | Rover | Partly threaded M3 × 45 and × 35 bolts can't engage the wall trap nuts | Fully threaded bolts, or a changed clamp | Rover round 3 in progress |
+| 04-S-01 | Rover | Partly threaded M3 × 45 and × 35 bolts can't engage the wall trap nuts | Fully threaded bolts, or a changed clamp | Fixed in rover round 3: fully threaded class-12.9 M3 × 50 / × 40 bolts, checked in the assembly check (2.0 / 4.2 mm past the nylocs) |
 
 ## How the fixes flow
 
@@ -37,7 +37,7 @@ Five independent reviewers each took one slice of all three robot test builds: t
 | Robot | Round | Covers |
 |---|---|---|
 | Arm, mechanical | Links round 4, claw round 2 | 01-B1/B2/S2–S8, 03 (SYS-01 to SYS-05, SYS-08 to SYS-10, SYS-12, SYS-16 to SYS-18), claw DFM and strength round 1 |
-| Arm, firmware | Firmware round 2 | 03 SYS-02/03 (elbow window), SYS-06 (motion profiles), SYS-07 (trims and calibration), SYS-11, SYS-13 |
-| Rover | Round 3 | DFM and strength round 2, 01-S9 to S13, 04 |
-| Hexapod | Round 3 | Coxa redesign, 01-B1/B2/S14/S15, 05 |
+| Arm, firmware | Firmware round 2 (done and merged) | 03 SYS-02/03 (elbow window), SYS-06 (motion profiles), SYS-07 (trims and calibration), SYS-11, SYS-13 |
+| Rover | Round 3 (printability 6/6 pass; strength review running) | DFM and strength round 2, 01-S9 to S13, 04 |
+| Hexapod | Round 3 (femur, tibia, deck pass); round 4 for the coxa and bottom plate, approved by the user after their third failure | Coxa redesign, 01-B1/B2/S14/S15, 05 |
 | All | Firmware round 1 | 02 (done and merged) |
