@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-turntable-ring",
-  "stage": "AWAITING_APPROVAL",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
     "DESIGN": 0,
@@ -8,13 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "pass (DFM PASS; strength NEEDS_TEST with proof test in spec \u00a78)",
-    "SLICE": "pass",
+    "DESIGN": "reopened 2026-10-26 (deep review 03 SYS-05): running gap 1.5 \u2192 0.4 mm with PTFE tape; in review",
+    "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T01:29:19+00:00"
+  "updated": "2026-10-26T10:56:21+00:00"
 }

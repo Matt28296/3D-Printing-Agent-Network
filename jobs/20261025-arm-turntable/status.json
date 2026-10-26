@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "reopened 2026-10-26: deep review 01 B1: the shoulder MG996R's lead can't pass its window in the upright (needs a lead notch)",
+    "DESIGN": "round 4 in review: lead notches with 45\u00b0 tops, \u00d825 disc horn, M3 \u00d7 14 clamp",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T06:39:59+00:00"
+  "updated": "2026-10-26T10:56:21+00:00"
 }

@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 0,
+    "DESIGN": 1,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": null,
+    "DESIGN": "round 2 in review (round 1 DFM and strength FAIL): \u00d822.6 pinion pass-through with a 45\u00b0 top, 5 mm front plate, tie post",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T05:16:23+00:00"
+  "updated": "2026-10-26T10:56:21+00:00"
 }
