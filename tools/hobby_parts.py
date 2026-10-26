@@ -52,6 +52,15 @@ class ServoSpec:
     horn_screw_clear_d: float = 3.4   # clearance for the horn's centre screw, which clamps the LINK onto the spline
     stall_torque_nmm: float = 0.0  # datasheet stall torque at 6 V, N·mm
     mass_g: float = 0.0
+    # Lead exit (deep review 2026-10-26, B1): the lead leaves the case END nearest the shaft (+x),
+    # lead_z above the case bottom, as a flat ribbon lead_w × lead_t. A servo whose body passes
+    # through a closed window must get its lead through too, so the window needs a notch there
+    # (servo_mount_cutter lead="notch"/"notch_shift_pilot"), or the servo is mounted reversed.
+    lead_z: float = 0.0
+    lead_w: float = 0.0
+    lead_t: float = 0.0
+    lead_notch_w: float = 0.0      # printed notch width (lead + clearance)
+    lead_notch_reach: float = 0.0  # printed notch depth beyond the case end
 
 
 # TowerPro MG996R (standard size). Nominal: measure yours before printing.
@@ -61,7 +70,8 @@ MG996R = ServoSpec(
     name="MG996R", length=40.7, width=19.7, case_top=36.5, total_h=42.9, tab_height=27.0,
     tab_t=2.5, tab_span=54.0, hole_dx=48.5, hole_dy=10.0, tab_hole_d=4.5, screw_pilot_d=2.6,
     shaft_from_end=10.2, horn_kind="arm", horn_d=11.0, horn_t=2.8, horn_arm_len=17.5,
-    horn_tip_d=5.5, horn_arms=2, horn_screw_clear_d=3.4, stall_torque_nmm=1000.0, mass_g=55.0)
+    horn_tip_d=5.5, horn_arms=2, horn_screw_clear_d=3.4, stall_torque_nmm=1000.0, mass_g=55.0,
+    lead_z=6.0, lead_w=4.0, lead_t=1.3, lead_notch_w=4.4, lead_notch_reach=2.0)   # lead end unverified: notch both ends
 
 # Same servo with its round disc horn (Ø25), for parts printed pocket-side up.
 MG996R_DISC = replace(MG996R, horn_kind="disc", horn_d=25.0, horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1)
@@ -71,7 +81,8 @@ SG90 = ServoSpec(
     name="SG90", length=22.5, width=12.0, case_top=22.7, total_h=26.7, tab_height=15.9,
     tab_t=2.5, tab_span=32.2, hole_dx=27.8, hole_dy=0.0, tab_hole_d=2.0, screw_pilot_d=1.5,
     shaft_from_end=5.9, horn_kind="arm", horn_d=7.2, horn_t=1.6, horn_arm_len=14.0, horn_tip_d=4.2,
-    horn_screw_clear_d=2.4, stall_torque_nmm=160.0, mass_g=9.0)
+    horn_screw_clear_d=2.4, stall_torque_nmm=160.0, mass_g=9.0,
+    lead_z=5.1, lead_w=3.6, lead_t=1.2, lead_notch_w=4.2, lead_notch_reach=1.5)
 
 
 @dataclass(frozen=True)
@@ -110,7 +121,9 @@ def _body_x0(s: ServoSpec) -> float:
 def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
                        roof: str | None = None, through: float = 60.0,
                        hole_comp: float = HOLE_COMP_DEFAULT, end_clearance: float | None = None,
-                       pilot_teardrop: str | None = None) -> Part:
+                       pilot_teardrop: str | None = None, lead: str = "none",
+                       lead_both_ends: bool | None = None, min_ligament: float = 1.5,
+                       pilot_shift: float = 1.3) -> Part:
     """Cutter for a plate the servo hangs through (tabs resting on the plate's z=0 face).
 
     Cuts the body window and the tab-screw pilots. Sizes are PRINTED targets plus
@@ -121,12 +134,52 @@ def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
     printed in a vertical wall (the roof side must point up in print). Roofs on the short
     sides ("+x"/"-x") are refused when they would cut the tab pilots.
     pilot_teardrop="+x"/"-x"/"+y"/"-y" gives each pilot a 45° point that way (horizontal pilots).
+
+    lead: how the servo's lead gets through the window when the body passes through it
+    (deep review 2026-10-26, B1; the lead leaves the case end nearest the shaft, +x):
+      "none"              no notch: only for a servo mounted reversed (tabs on the far face, so
+                          the lead never crosses the plate) or a window that is open at +x.
+      "notch"             a notch lead_notch_w wide reaching lead_notch_reach beyond the case end,
+                          centred on the width; refused when it leaves under `min_ligament` to a pilot
+                          (true for micro servos, whose pilots sit on the centreline).
+      "notch_shift_pilot" micro servos: the +x pilot moves `pilot_shift` outward and the notch is cut.
+                          The builder opens the slit from that tab's hole to the tab end to 2.1 mm with
+                          a needle file so the screw reaches the moved pilot.
+    lead_both_ends: notch the far end too (default: True for "notch", because the MG996R's lead end
+    is unverified; False for "notch_shift_pilot").
     """
     c = clearance + hole_comp
     ce = (clearance if end_clearance is None else end_clearance) + hole_comp
     x0 = _body_x0(s) - ce / 2
     win_l, win_w = s.length + ce, s.width + c
     cutter = Pos(x0, -win_w / 2, -plate_t - 1) * Box(win_l, win_w, plate_t + 2, align=(Align.MIN,) * 3)
+    if lead not in ("none", "notch", "notch_shift_pilot"):
+        raise ValueError(f"lead must be 'none', 'notch' or 'notch_shift_pilot', not {lead!r}")
+    shift = pilot_shift if lead == "notch_shift_pilot" else 0.0
+    if lead != "none":
+        if s.lead_notch_w <= 0:
+            raise ValueError(f"{s.name} has no lead data (lead_notch_w); add it to its ServoSpec")
+        both = (lead == "notch") if lead_both_ends is None else lead_both_ends
+        nw = s.lead_notch_w + hole_comp
+        reach = s.lead_notch_reach + hole_comp / 2
+        ends = [1, -1] if both else [1]
+        x_end = {1: x0 + win_l - ce / 2, -1: x0 + ce / 2}        # the case ends
+        d = s.screw_pilot_d + hole_comp
+        for e in ends:
+            xa, xb = sorted((x_end[e], x_end[e] + e * reach))
+            for (px, py) in _pilot_xy(s, shift):
+                if (px - x_end[e]) * e <= 0:
+                    continue                                      # pilot at the other end
+                gx = max(xa - px, px - xb, 0.0)                   # gap from the notch box to the pilot centre
+                gy = max(abs(py) - nw / 2, 0.0)
+                lig = (gx ** 2 + gy ** 2) ** 0.5 - d / 2 + hole_comp   # as printed: both holes print ~HOLE_COMP/2 smaller
+                if lig < min_ligament:
+                    raise ValueError(
+                        f"{s.name}: a lead notch at the {'+x' if e > 0 else '-x'} end leaves {lig:.2f} mm to the tab "
+                        f"pilot as printed (need {min_ligament}). Use lead='notch_shift_pilot' (micro servos) or mount the "
+                        f"servo reversed (tabs on the far face) with lead='none'.")
+            cutter = cutter + Pos(min(xa, xb) - 0.01, -nw / 2, -plate_t - 1) * Box(abs(xb - xa) + 0.02, nw, plate_t + 2,
+                                                                                   align=(Align.MIN,) * 3)
     if roof:
         bad = _roof_hits_pilots(s, c, roof)
         if bad:
@@ -148,7 +201,7 @@ def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
             extrude(amount=plate_t + 2)
         cutter = cutter + bp.part
     d = s.screw_pilot_d + hole_comp
-    for (px, py) in _pilot_xy(s):
+    for (px, py) in _pilot_xy(s, shift):
         hole = Pos(px, py, -through / 2) * Cylinder(d / 2, through)
         if s.hole_dy == 0:  # micro servos: slot elongated OUTWARD along x tolerates spacing error
             out = 0.4 if px > _body_x0(s) + s.length / 2 else -0.4
@@ -162,10 +215,11 @@ def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
     return cutter
 
 
-def _pilot_xy(s: ServoSpec) -> list[tuple[float, float]]:
+def _pilot_xy(s: ServoSpec, shift_lead_end: float = 0.0) -> list[tuple[float, float]]:
+    """Tab pilot centres; `shift_lead_end` moves the +x (lead-end) pilot(s) outward."""
     xm = _body_x0(s) + s.length / 2
     ys = [0.0] if s.hole_dy == 0 else [-s.hole_dy / 2, s.hole_dy / 2]
-    return [(xm + dx, y) for dx in (-s.hole_dx / 2, s.hole_dx / 2) for y in ys]
+    return [(xm + dx + (shift_lead_end if dx > 0 else 0.0), y) for dx in (-s.hole_dx / 2, s.hole_dx / 2) for y in ys]
 
 
 def _roof_hits_pilots(s: ServoSpec, c: float, roof: str, wall: float = 1.0) -> list[tuple[float, float]]:
@@ -419,10 +473,18 @@ __all__ += ["GearMotorSpec", "N20_100RPM", "gearmotor_dummy", "gearmotor_wall_cu
 # Hexapod parts. Nominal: measure yours.
 # ----------------------------------------------------------------------------------------
 
-# TowerPro MG90S: SG90 body size with metal gears; ~2.2 kg·cm at 6 V. Same horn sizes as the SG90.
-# Kept at the SG90 body dimensions the arm parts were reviewed with (makers list 22.5-22.8 × 12-12.2):
-# measure yours and use replace(MG90S, length=..., width=...) if it differs by more than 0.3 mm.
-MG90S = replace(SG90, name="MG90S", stall_torque_nmm=216.0, mass_g=13.4)
+# TowerPro MG90S (metal gears, ~2.2 kg·cm at 6 V), its own spec since the deep review of 2026-10-26:
+#  - B2: the spline top is 14.0 mm above the tab underside (TowerPro table A 32.5 - F 18.5; MCAD's SG90
+#    model agrees), not the 10.8 the SG90-derived spec gave: the old total_h was the gear boss, not the spline.
+#  - S1: body 22.8 × 12.2 mm (TowerPro, Waveshare); case bottom 18.5 mm below the tabs.
+# Nominal: measure yours (case bottom -> tab underside, tab underside -> spline top, length, width) and
+# correct with replace(MG90S, ...) if anything differs by more than 0.1 mm.
+MG90S = ServoSpec(
+    name="MG90S", length=22.8, width=12.2, case_top=25.3, total_h=32.5, tab_height=18.5,
+    tab_t=2.5, tab_span=32.2, hole_dx=27.8, hole_dy=0.0, tab_hole_d=2.0, screw_pilot_d=1.5,
+    shaft_from_end=5.9, horn_kind="arm", horn_d=7.2, horn_t=1.6, horn_arm_len=14.0, horn_tip_d=4.2,
+    horn_screw_clear_d=2.4, stall_torque_nmm=216.0, mass_g=13.4,
+    lead_z=5.1, lead_w=3.6, lead_t=1.2, lead_notch_w=4.2, lead_notch_reach=1.5)
 
 PCA9685_BOARD = BoxSpec("PCA9685 16-ch servo driver", 62.5, 25.4, 12.0, 9.0,
                         "4 × Ø2.5 mounting holes at 56 × 19 mm; servo headers along one long edge")

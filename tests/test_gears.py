@@ -57,3 +57,33 @@ def test_pinion_and_rack_roll_without_interference(deg):
     # and they really are in mesh: moving the rack 0.3 mm towards the pinion makes them collide
     tight = Pos(0, -0.3, 0) * rack
     assert (gear & tight).volume > 0.05
+
+
+def test_root_fillets_round_the_roots_and_add_material():
+    plain = spur_gear(1.0, 18, 5.0)
+    filleted = spur_gear(1.0, 18, 5.0, root_fillet=0.38)
+    assert filleted.is_valid and filleted.volume > plain.volume          # the corners are filled in
+    pts = gear_outline(1.0, 18, root_fillet=0.38)
+    rs = [math.hypot(x, y) for x, y in pts]
+    assert min(rs) == pytest.approx(7.75, abs=1e-6) and max(rs) == pytest.approx(10.0, abs=1e-6)
+    rack_plain = rack_bar(1.0, -10, 20, 5.0, 5.0)
+    rack_fil = rack_bar(1.0, -10, 20, 5.0, 5.0, root_fillet=0.38)
+    assert rack_fil.is_valid and rack_fil.volume > rack_plain.volume
+
+
+def test_root_fillet_limits():
+    with pytest.raises(ValueError):
+        gear_outline(1.0, 18, root_fillet=0.5)        # would reach the mating tips
+    with pytest.raises(ValueError):
+        rack_outline(1.0, 0, 20, 5.0, root_fillet=0.45)
+
+
+@pytest.mark.parametrize("deg", [0.0, 2.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0])
+def test_filleted_pinion_and_rack_still_roll_clear(deg):
+    m, z, w = 1.0, 18, 4.0
+    rp = pitch_radius(m, z)
+    p = math.pi * m
+    gear = Rot(0, 0, deg) * spur_gear(m, z, w, phase_deg=90.0, root_fillet=0.38)
+    rack = Pos(-rp * math.radians(deg), rp, w) * Rot(180, 0, 0) * rack_bar(m, -25, 25, w, back=4.0, phase=p / 2,
+                                                                          root_fillet=0.38)
+    assert (gear & rack).volume < 0.01

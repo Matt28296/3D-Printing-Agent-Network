@@ -49,33 +49,18 @@
    "collisions": [],
    "render": "assembly_elbow.png"
   },
-  "elbow folded up 150": {
+  "elbow down 90": {
    "q_deg": [
     0,
-    30,
-    150,
+    90,
+    -90,
     0,
     0
    ],
    "fingertip_mm": [
-    -66.4,
+    173.3,
     75.9,
-    110.5
-   ],
-   "collisions": []
-  },
-  "elbow folded down 150": {
-   "q_deg": [
-    0,
-    60,
-    -150,
-    0,
-    0
-   ],
-   "fingertip_mm": [
-    60.1,
-    75.9,
-    -16.0
+    160.5
    ],
    "collisions": []
   },
@@ -127,31 +112,31 @@
   "pick from desk": {
    "q_deg": [
     -30,
-    70,
-    -120,
-    -40,
+    60,
+    -80,
+    -60,
     20
    ],
    "fingertip_mm": [
-    126.5,
-    14.6,
-    12.4
+    174.3,
+    -13.0,
+    44.3
    ],
    "collisions": [],
    "render": "assembly_pick.png"
   },
-  "camera over the arm (wrist -150)": {
+  "camera looking down": {
    "q_deg": [
     0,
-    30,
-    -30,
-    -150,
+    80,
+    -90,
+    -60,
     10
    ],
    "fingertip_mm": [
-    123.4,
+    141.2,
     75.9,
-    73.9
+    74.6
    ],
    "collisions": []
   }
@@ -159,10 +144,6 @@
  "sweeps": {
   "shoulder (elbow 0)": {
    "tested": [
-    -40,
-    -30,
-    -20,
-    -10,
     0,
     10,
     20,
@@ -184,7 +165,6 @@
     180
    ],
    "collision_free": [
-    -10,
     0,
     10,
     20,
@@ -205,154 +185,10 @@
     170,
     180
    ],
-   "first_hits": [
-    [
-     -40,
-     [
-      [
-       "brio",
-       "desk",
-       9516.4
-      ],
-      [
-       "camera_mount",
-       "desk",
-       2061.1
-      ],
-      [
-       "claw_cover",
-       "desk",
-       585.5
-      ],
-      [
-       "claw_frame",
-       "desk",
-       3027.6
-      ],
-      [
-       "desk",
-       "forearm",
-       3851.4
-      ],
-      [
-       "desk",
-       "servo_grip",
-       290.1
-      ],
-      [
-       "desk",
-       "servo_wrist",
-       387.1
-      ],
-      [
-       "ring",
-       "upper",
-       51.0
-      ],
-      [
-       "turntable",
-       "upper",
-       1137.7
-      ]
-     ]
-    ],
-    [
-     -30,
-     [
-      [
-       "brio",
-       "desk",
-       8417.8
-      ],
-      [
-       "camera_mount",
-       "desk",
-       1528.9
-      ],
-      [
-       "claw_cover",
-       "desk",
-       2753.5
-      ],
-      [
-       "claw_frame",
-       "desk",
-       4405.6
-      ],
-      [
-       "claw_jaw",
-       "desk",
-       1135.9
-      ],
-      [
-       "claw_jaw_b",
-       "desk",
-       681.4
-      ],
-      [
-       "claw_pinion",
-       "desk",
-       1230.0
-      ],
-      [
-       "desk",
-       "forearm",
-       1662.5
-      ],
-      [
-       "desk",
-       "servo_grip",
-       1106.6
-      ],
-      [
-       "desk",
-       "servo_wrist",
-       237.6
-      ],
-      [
-       "turntable",
-       "upper",
-       148.0
-      ]
-     ]
-    ],
-    [
-     -20,
-     [
-      [
-       "brio",
-       "desk",
-       7317.6
-      ],
-      [
-       "claw_cover",
-       "desk",
-       615.5
-      ],
-      [
-       "claw_frame",
-       "desk",
-       162.2
-      ],
-      [
-       "claw_jaw",
-       "desk",
-       1.7
-      ]
-     ]
-    ]
-   ]
+   "first_hits": []
   },
   "elbow (shoulder 60)": {
    "tested": [
-    -170,
-    -160,
-    -150,
-    -140,
-    -130,
-    -120,
-    -110,
-    -100,
     -90,
     -80,
     -70,
@@ -371,25 +207,9 @@
     60,
     70,
     80,
-    90,
-    100,
-    110,
-    120,
-    130,
-    140,
-    150,
-    160,
-    170
+    90
    ],
    "collision_free": [
-    -170,
-    -160,
-    -150,
-    -140,
-    -130,
-    -120,
-    -110,
-    -100,
     -90,
     -80,
     -70,
@@ -408,26 +228,12 @@
     60,
     70,
     80,
-    90,
-    100,
-    110,
-    120,
-    130,
-    140,
-    150,
-    160,
-    170
+    90
    ],
    "first_hits": []
   },
   "wrist (shoulder 45, elbow -45)": {
    "tested": [
-    -150,
-    -140,
-    -130,
-    -120,
-    -110,
-    -100,
     -90,
     -80,
     -70,
@@ -446,21 +252,9 @@
     60,
     70,
     80,
-    90,
-    100,
-    110,
-    120,
-    130,
-    140,
-    150
+    90
    ],
    "collision_free": [
-    -150,
-    -140,
-    -130,
-    -120,
-    -110,
-    -100,
     -90,
     -80,
     -70,
@@ -479,13 +273,7 @@
     60,
     70,
     80,
-    90,
-    100,
-    110,
-    120,
-    130,
-    140,
-    150
+    90
    ],
    "first_hits": []
   },
@@ -521,24 +309,192 @@
    "first_hits": []
   }
  },
+ "servo_travel_deg": {
+  "shoulder": [
+   0,
+   180
+  ],
+  "elbow": [
+   -90,
+   90
+  ],
+  "wrist": [
+   -90,
+   90
+  ]
+ },
+ "claw_internal": {
+  "strict_tol_mm3": 0.001,
+  "gaps_mm": [
+   0,
+   44,
+   1
+  ],
+  "worst_overlap_mm3": {
+   "claw_frame / claw_pinion": 0.0,
+   "claw_frame / claw_jaw": 0.0,
+   "claw_frame / claw_jaw_b": 0.0,
+   "claw_cover / claw_pinion": 0.0,
+   "claw_cover / claw_jaw": 0.0,
+   "claw_cover / claw_jaw_b": 0.0,
+   "claw_pinion / claw_jaw": 0.03261,
+   "claw_pinion / claw_jaw_b": 0.03261,
+   "claw_jaw / claw_jaw_b": 0.0
+  },
+  "clashes": [
+   [
+    0,
+    "claw_pinion",
+    "claw_jaw",
+    0.0326
+   ],
+   [
+    0,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0326
+   ],
+   [
+    1,
+    "claw_pinion",
+    "claw_jaw",
+    0.0293
+   ],
+   [
+    1,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0293
+   ],
+   [
+    2,
+    "claw_pinion",
+    "claw_jaw",
+    0.0254
+   ],
+   [
+    2,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0254
+   ],
+   [
+    3,
+    "claw_pinion",
+    "claw_jaw",
+    0.021
+   ],
+   [
+    3,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.021
+   ],
+   [
+    4,
+    "claw_pinion",
+    "claw_jaw",
+    0.0163
+   ],
+   [
+    4,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0163
+   ],
+   [
+    5,
+    "claw_pinion",
+    "claw_jaw",
+    0.0117
+   ],
+   [
+    5,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0117
+   ],
+   [
+    6,
+    "claw_pinion",
+    "claw_jaw",
+    0.0091
+   ],
+   [
+    6,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0091
+   ],
+   [
+    7,
+    "claw_pinion",
+    "claw_jaw",
+    0.0077
+   ],
+   [
+    7,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0077
+   ],
+   [
+    8,
+    "claw_pinion",
+    "claw_jaw",
+    0.0061
+   ],
+   [
+    8,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0061
+   ],
+   [
+    9,
+    "claw_pinion",
+    "claw_jaw",
+    0.0044
+   ],
+   [
+    9,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0044
+   ],
+   [
+    10,
+    "claw_pinion",
+    "claw_jaw",
+    0.0026
+   ],
+   [
+    10,
+    "claw_pinion",
+    "claw_jaw_b",
+    0.0026
+   ]
+  ],
+  "clash_count": 22
+ },
  "desk_reach": {
   "nearest": {
-   "radius_mm": 76.1,
+   "radius_mm": 122.7,
    "q_deg": [
     0,
-    155,
-    130,
-    30,
+    150,
+    90,
+    50,
     0
    ]
   },
   "farthest": {
-   "radius_mm": 260.5,
+   "radius_mm": 247.2,
    "q_deg": [
     0,
+    5,
+    -40,
     -10,
-    -10,
-    -20,
     0
    ]
   }
