@@ -19,7 +19,7 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.45). Interfaces:
+- Mating parts and their dimensions: 42.85 × 64 × 48.45 mm (claw frame G: x −8…34.85, y ±32, z 0…48.45). Interfaces:
   - MG90S arm-horn pocket on the back face (2 deep), Ø2.6 clamp hole at (0, 0) through plate and pad: 6.3 mm floor;
   - MG90S window through the bulkhead (x 3.5–10): 23.2 × 12.8 CAD (23.0 × 12.6 printed), shaft on (y 0, z 27.25); 7 mm 45° roof above it, Ø3 teardrop reliefs at its two lower corners;
   - lead notch at the shaft end (G +y): 4.4 wide CAD, reaching 1.6 beyond the case end; the tab pilots are Ø1.7 CAD teardrop slots (0.4 longer outwards) at G y −19.4 and +9.7: the lead-end one moved 1.3 mm out (`lead="notch_shift_pilot"`, deep review 01 B1);
@@ -35,7 +35,7 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 | Bulkhead front face (tab seat) | x 10.0 | ±0.2 | sets the pinion's back face, x 22.6 |
 | Wrist plate top (rack B's guide) | z 6.0 | ±0.15 | rack B rides on it (the gear's separating force seats it) |
 | Rail wall front face | x 22.35 | ±0.15 | 0.25 sliding gap behind rack B |
-| Wrist plate front edge | x 32.85 | ±0.15 | the cover's front plate slides down it |
+| Wrist plate front edge | x 34.85 | ±0.15 | the cover's front plate slides down it |
 | MG90S window | 23.0 × 12.6 printed | +0.3/−0 | clearance |
 | Wrist clamp floor | 6.3 | ±0.2 | M2 × 12 reaches 4.6 into the spline |
 | Bulkhead top (the cover's top-wall datum) | z 48.45 (prints 48.4) | ±0.1 | the cover's top wall stands 0.05 over it in CAD; must stay off a 0.2 mm slice plane |

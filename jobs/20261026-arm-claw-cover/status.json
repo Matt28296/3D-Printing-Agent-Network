@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-arm-claw-cover",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 6,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 7 built (user-approved washers + longer screws, slot chamfers): CAD DFM PASS 28/28, CAD-side strength NEEDS_TEST 3.03 (sustained heads 4.80/5.42); independent review next",
+    "DESIGN": "pass (round 7 independent review): DFM PASS; strength NEEDS_TEST, lowest 3.03 (plate strips); sustained heads 4.80/5.42, anchor 4.15; M2.5 under stall 3.62",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

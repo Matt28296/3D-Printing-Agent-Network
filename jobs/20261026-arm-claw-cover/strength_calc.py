@@ -1,13 +1,23 @@
-"""Strength check, round 7 CAD ENGINEER'S SELF-CHECK on the round 6 INDEPENDENT REVIEW's script: jobs/20261026-arm-claw-cover
+"""Strength check, round 7 INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-cover
 
-Round 7 (cad-engineer's self-check, not an independent review): the round 6 review's fix, user-approved. Every cover screw
-now has a washer under its head: top (no camera) M3 x 14 pan head + ISO 7089 Ø7 x 0.5 (claw_frame.TOP_WASHER; it was a
-bare M3 x 10), front M2.5 x 16 pan head + DIN 125 Ø6 x 0.5 (claw_frame.FRONT_WASHER) with FRONT_SCREWS z 3 -> 2.5 so the
-washer clears jaw B's neck, and a 0.3 x 45° chamfer on each slot's front edge nearer the axis (no strength effect). In
-this script: the top-screw head rows bear on the Ø7 washer (A_M3_TOP), the M2.5 head rows on the Ø6 washer (A_BRG), the
-M2.5 engagement is 16 - 5 - 0.5 = 10.5 (L_M25), the stall's screw force follows z 2.5 (130 N), the forced-closure info rows
-take the washer's OD into b_eff; the round 6 bare-head rows and the camera case (M3 x 18 bare button heads on the camera
-mount's pad) are kept as information rows. Everything else is the reviewer's script, unchanged.
+Round 7 design (user-approved, merged at a8ae29c): every cover screw has a washer. Top (no camera) M3 x 14 pan head + ISO
+7089 Ø7 x 0.5 (claw_frame.TOP_WASHER; round 6: bare M3 x 10); front M2.5 x 16 pan head + DIN 125 Ø6 x 0.5
+(claw_frame.FRONT_WASHER) with FRONT_SCREWS z 3 -> 2.5; a 0.3 x 45° chamfer on the front edge of each slot's side nearer
+the axis. The CAD engineer's round-7 update of this file was a self-check; this version recomputes it.
+
+What this review changes (every number is recomputed here; the hand checks are in strength.md):
+- THE M2.5 UNDER THE ONE-JAW STALL. The self-check's bound pivots the lower piece on the wrist plate's bottom edge at
+  z 0 (lever 12.05 / 2.5, 130 N). The frame's back face has a 0.4 x 45° bed chamfer on that edge (frame model.py
+  BED_CHAMFER; probed: no material at x 34.8, z 0.1), so the lowest point where the front plate can bear on the frame is
+  z 0.4: lever (12.05 - 0.4) / (2.5 - 0.4), 150 N. The bound stays conservative overall (the first tie, 4.6 mm from that
+  screw, and the second M2.5 are ignored), but its own lever was 15 % short. Rows: head on the Ø6 washer 3.62 (req 3);
+  the frame's pull-out row moves the same way (frame strength_calc.py). The self-check's 130 N stays as information.
+- THE Ø7 WASHER'S BEARING AREA. A 0.5 mm steel washer under a Ø5.6 pan head: the verdict row credits the full Ø7 (the
+  overhang, 0.7, is under the washer's characteristic length on PETG, ~1.3); an information row takes the 45° spread
+  through the washer only (Ø5.6 + 2 x 0.5 = Ø6.6) as the lenient-side bound.
+- What-if lines follow the corrected pivot.
+Everything else is the round 6 independent review's script with the round 7 hardware (it reads TOP_WASHER, FRONT_WASHER
+and FRONT_SCREWS from claw_frame.py), re-run.
 
 Round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-cover
 (front plate in two pieces + two ties, top wall, 8 mm lip, the second tie's 8 mm post located on the frame's rail block by
@@ -833,12 +843,18 @@ cover_rows("info, bound: opening stall on jaw B with the corners rigidly coupled
 INFO.extend(r for r in _bound if "first tie's post" in r[0] or "lip root at the top wall above the first" in r[0])
 
 # grip: rack B's -y end pushes the lower piece forward at z 6..18.1 (rack B's whole front face): all of it on ONE M2.5
-# (the lower piece pivots on the wrist plate's bottom edge, the screw 3 mm above it; the tie and the second screw ignored)
+# (the lower piece pivots on the wrist plate's front face at its lowest point, the screw above it; the tie and the second
+# screw ignored). Round 7 review: the wrist plate's front-bottom edge carries the frame's 0.4 x 45° bed chamfer, so the
+# pivot is at z 0.4, not 0 (the self-check's lever 12.05 / 2.5 = 130 N is kept as information)
 z_rbg = (C.T_W + (C.ZS - C.RACK_TIP)) / 2                 # 12.05: mid-height of rack B's front face
-T_g = R_go * z_rbg / C.FRONT_SCREWS[0][1]
+Z_PIVOT = FRAME_P["BED_CHAMFER"]                          # 0.4: top of the wrist plate's bed chamfer at x 34.85
+T_g = R_go * (z_rbg - Z_PIVOT) / (C.FRONT_SCREWS[0][1] - Z_PIVOT)   # 150 N
+T_g0 = R_go * z_rbg / C.FRONT_SCREWS[0][1]                # 130 N (pivot at z 0, the self-check)
 row(f"stall, one jaw blocked, jaws 44 open: rack B's -y end pushes the lower piece forward ({R_go:.1f} N at z "
-    f"{z_rbg:.1f}): one M2.5 at z {Z_SCREW:g} holds it, {T_g:.0f} N", f"{BRG_TXT} on the Ø{HOLE_PR} teardrop, "
-    f"{A_BRG:.1f} mm2", "XY comp", T_g / A_BRG, BEARING, SF_SHORT)
+    f"{z_rbg:.1f}): one M2.5 at z {Z_SCREW:g} holds it about the pivot at z {Z_PIVOT:g} (the frame's bed chamfer), "
+    f"{T_g:.0f} N", f"{BRG_TXT} on the Ø{HOLE_PR} teardrop, {A_BRG:.1f} mm2", "XY comp", T_g / A_BRG, BEARING, SF_SHORT)
+row(f"info: the same with the pivot at z 0 (round 7 self-check, ignores the frame's 0.4 bed chamfer): {T_g0:.0f} N",
+    f"{BRG_TXT}, {A_BRG:.1f} mm2", "XY comp", T_g0 / A_BRG, BEARING, SF_SHORT, INFO)
 # the plate between that screw (z 2.5) and the first tie's web (z 19.25), loaded at z 12 at the cover's -y edge
 a_, b_ = z_rbg - C.FRONT_SCREWS[0][1], Z_WEB0 - z_rbg
 M_pl = R_go * a_ * b_ / (a_ + b_)
@@ -976,6 +992,11 @@ row(f"front M2.5 x 16 pan heads, {BRG_TXT}, driven snug, {P_M25:.0f} N preload (
     f"{A_BRG:.1f} mm2 round the Ø{HOLE_PR} teardrop", "XY comp", P_M25 / A_BRG, BEARING, SF_CYCLIC)
 # information: the round-6 BOM (bare heads), and the camera case (M3 x 18 button heads on the camera mount's 3.5 pad,
 # Ø3.6 CAD teardrop holes, Ø3.4 printed: the same seat as here; BUILD_GUIDE lists no washer there)
+# review: the lenient-side bound on the Ø7 washer: only a 45° spread through its 0.5 thickness from the Ø5.6 head
+D_SPREAD = M3_PAN_DK + 2 * TOP_WASHER[1]                   # 6.6
+A_SPREAD = math.pi / 4 * (D_SPREAD ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)
+row(f"info, bound: the same top screws, the washer credited only to a 45° spread under the head (Ø{D_SPREAD:.1f}), "
+    f"{P_M3:.0f} N (sustained)", f"{A_SPREAD:.1f} mm2", "XY comp", P_M3 / A_SPREAD, BEARING, SF_CYCLIC, INFO)
 row(f"info: round 6 BOM, top M3 x 10 bare pan heads driven snug, {P_M3:.0f} N (sustained): bearing on the top wall",
     f"Ø{M3_PAN_DK} pan head on the Ø{C.M3_CLEAR} teardrop, {A_M3_PAN:.1f} mm2", "XY comp", P_M3 / A_M3_PAN, BEARING,
     SF_CYCLIC, INFO)
@@ -984,10 +1005,10 @@ row(f"info: round 6 BOM, front M2.5 bare pan heads driven snug, {P_M25:.0f} N (s
     INFO)
 BTN_DK = 5.7                                               # ISO 7380 M3 button head
 A_BTN = math.pi / 4 * (BTN_DK ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)
-row(f"info: camera case, M3 x 18 bare button heads (BOM) driven snug, {P_M3:.0f} N (sustained): bearing on the camera "
+row(f"info: camera case, M3 x 18 bare button heads (round 6 BOM) driven snug, {P_M3:.0f} N (sustained): bearing on the camera "
     f"mount's pad (not this part; the same Ø3.4 printed teardrop)", f"Ø{BTN_DK} button head, {A_BTN:.1f} mm2", "XY comp",
     P_M3 / A_BTN, BEARING, SF_CYCLIC, INFO)
-row(f"info: camera case with the proposed fix, M3 x 18 button heads on Ø7 x 0.5 washers, {P_M3:.0f} N (sustained): "
+row(f"info: camera case, round 7 BOM (BUILD_GUIDE §1, step 13), M3 x 18 button heads on Ø7 x 0.5 washers, {P_M3:.0f} N (sustained): "
     f"bearing on the camera mount's pad", f"{A_M3_TOP:.1f} mm2 (washer OD)", "XY comp", P_M3 / A_M3_TOP, BEARING,
     SF_CYCLIC, INFO)
 
@@ -1244,8 +1265,9 @@ print(f"  front M2.5 pan head Ø5, {P_M25:.0f} N: SF {BEARING / (P_M25 / A_HEAD)
       f"{BEARING / (P_M25 / A_M25_W6):.2f} (the washer needs the screws at z 2.5: at z 3 it touches jaw B's neck, "
       f"exact solids); preload for SF 4 on the bare head: {BEARING / 4 * A_HEAD:.0f} N")
 for z_s in (3.0, 2.5):
-    T_s = R_go * z_rbg / z_s
-    print(f"  M2.5 at z {z_s}: the stall's {T_s:.0f} N on one screw: bare head SF {BEARING / (T_s / A_HEAD):.2f}, on the "
+    T_s = R_go * (z_rbg - Z_PIVOT) / (z_s - Z_PIVOT)
+    print(f"  M2.5 at z {z_s} (pivot z {Z_PIVOT:g}): the stall's {T_s:.0f} N on one screw: bare head SF "
+          f"{BEARING / (T_s / A_HEAD):.2f}, on the "
           f"Ø6 washer {BEARING / (T_s / A_M25_W6):.2f}, pull-out ({L_M25:.1f} engaged) "
           f"{SHEAR_Z / (T_s / (math.pi * 2.5 * L_M25)):.2f}")
 print("What-if, strip under slot B (yaw stall, the worse of closed / open):")

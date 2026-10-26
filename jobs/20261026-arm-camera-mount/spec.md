@@ -8,7 +8,7 @@ Holds a Logitech Brio 4K (clip removed) on top of the claw, lens pointing along 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 40.3 × 32.4 mm side profile × 50 mm wide (print 40.3 × 32.4 × 50, standing on its −y end; claw frame G: x −26.3…14, y −28…22, z 51.5…83.9). Interfaces: pad x 0–14 on the cover's top wall (z 51.5–55); seat under the camera's bottom face (34°, thread at G (−8.5, 0, 68.4)); lip 6 tall, 5 thick, 0.3 behind the camera's back; 1/4" slot Ø7.05 CAD (6.85 printed), ±4 mm along the camera; 2 × Ø3.6 teardrop holes at (6.75, −23) and (6.75, 14); 0.3 mm chamfer on the −y (bed) end. The seat's front face stays at x ≤ 3.0, behind the M3 button heads (x 3.9–9.6), with room for a 2 mm hex key with the camera off.
-- Fasteners used: 2 × M3 × 18 button heads (ISO 7380) through pad + top wall into the bulkhead's 14 mm pilots, 11.5 mm engaged (they replace the cover's 2 × M3 × 10); 1 × 1/4"-20 × 5/16" knurled thumb screw: 7.9 mm under the head, so 3.9 mm into the camera after the 4 mm seat (deep review 01 S6; or a 3/8" screw with a 1.5 mm washer under its head)
+- Fasteners used: 2 × M3 × 18 button heads (ISO 7380), each with a Ø7 × 0.5 washer (ISO 7089), through pad + top wall into the bulkhead's 14 mm pilots, 11.0 mm engaged, snug only (they replace the cover's 2 × M3 × 14 + washers; claw round 7: a bare head was SF 2.64 at snug preload, 4.80 on the washer); 1 × 1/4"-20 × 5/16" knurled thumb screw: 7.9 mm under the head, so 3.9 mm into the camera after the 4 mm seat (deep review 01 S6; or a 3/8" screw with a 1.5 mm washer under its head)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
