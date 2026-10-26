@@ -1,69 +1,65 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review (round 3, reopened): 20261025-arm-turntable-ring
+# DFM review (round 5): 20261025-arm-turntable-ring
 
 Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26
 
-**Why it reopened.** Deep review 03 SYS-05 (status.json; log.md 10:25). The job was at AWAITING_APPROVAL with the round-2 PASS. Then:
-- the running gap went from 1.5 to 0.4 mm (`RUN_GAP`), so `H` went from 15.0 to 16.1;
-- one layer of PTFE tape now goes on the top face;
-- the ring now shares the arm's overturning moment in normal use, as a bearing.
+**Why it reopened.**
+- **Round 4 DFM failed** on the brief: it still described the 15.0 mm ring with a 1.5 mm gap.
+- **Links strength round 4 failed** the bare M3 × 6 pan head creeping into the 3 mm tab: SF 2.26 against 4 (log.md 11:38, 13:06).
+- **Design round 5** (design_brief.md "Round 5"):
+  - adds a Ø7 × 0.5 washer under each tab screw head;
+  - cuts a Ø8 relief through the wall round each screw, from the tab's top up (model.py:31, 48–49);
+  - corrects the brief.
 
 **Inputs**
-- This job: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, slice_plan.json, status.json, log.md and the round-2 review.
+- This job: spec.md, design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, slice_plan.json, log.md and the round-4 review.
 - Renders: all 5, regenerated with `tools/render.py` and viewed.
-- Related parts: the base and turntable model.py, and `horn_face_z` in tools/hobby_parts.py.
-- Assembly: assembly_plan.md, and BUILD_GUIDE §1 (PTFE tape) and §4 steps 1 and 4.
-- Deep review 03 (SYS-05). library/lessons.md: no entries.
+- Related: the base's ring pilots (base model.py:96–99) and BUILD_GUIDE §1 and §4 step 1.
+- Skills: fdm-design-rules, material-selection, build123d-cad. library/lessons.md has no entries.
 
 **Outputs are current.**
-- `build()` gives 13333.52 mm³ and a 91.272 × 96 × 16.1 bbox from (−45.636, −52, 0), the same as geometry.json.
+- `build()` run in memory gives 13284.15 mm³, a 91.27 × 96 × 16.1 bbox from (−45.64, −52, 0) and 1 solid. That matches geometry.json.
 - part.stl is watertight.
-- `tools/mesh_check.py`, re-run in memory, gives exactly the committed mesh_check.json.
-- The volume grew by 881.2 mm³ from round 2 (12452.3). That is exactly the taller wall: π(44² − 41²) × 1.1. Nothing else changed.
+- `tools/mesh_check.py` re-run gives the committed mesh_check.json.
+- The volume is −49.4 mm³ on round 4 (13333.52). That is three lens-shaped cuts, each ≈ 1.3 mm² × 13.1 mm tall: the Ø8 relief takes only the wall's outer 0.5 mm. Nothing else moved.
+- `cad_checks.py` re-run: 6/6 PASS.
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
 | 1 | Bed fit, 5 mm margin | PASS | 91.3 × 96.0 × 16.1 mm; `fits_bed: true` |
-| 2 | One watertight solid, min Z 0 | PASS | `solids: 1`, `watertight: true`, `min_z_mm: 0.0` |
-| 3 | Orientation matches the brief | PASS | Flat, tabs on the bed (iso.png, front.png, right.png) |
-| 4 | Load paths | PASS | The new bearing load (≈ 19 N at r 44, ×2 dynamic; the 52 N yaw-stall catch, spec §4) presses the top face down. That puts the wall in compression across the layers, and the base plate carries it directly under the ring's bed face. Tilting the disk the other way lifts it off the ring, so the layers are never in tension. Friction (μ ≈ 0.1 on PTFE) is a small shear into the tab screws |
-| 5 | Bed contact | PASS | 718.7 mm² of PETG (unchanged) |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | `bridges: []`. The 23.3 mm² (0.22 %) of overhang is all the 0.4 mm bottom chamfer's tessellated facets at z 0–0.4, 44.1° from straight down. The taller wall is vertical |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS | Sections: ring wall 3.0 at z 1.5, 8.0 and 16.0 (r 41–44); tab ligament 2.7 (Ø9 around Ø3.6) at z 1.5; tabs 3.0 thick. `thin_wall_warnings: []` |
-| 8 | HOLE_COMP; horizontal holes | PASS | `HOLE_COMP` (model.py:16) on the tab holes: Ø3.6 CAD (geometry.json), ≈ 3.4 printed (spec §3). No horizontal holes |
-| 9 | Bottom edges chamfered | PASS | `chamfer_bottom(design(), 0.4)` (model.py:44); the chamfer shows in bottom.png. slice_plan.json's `elefant_foot_compensation` 0.2 is paired with it |
-| 10 | Internal corners on load paths | PASS (advisory) | The web-to-ring and tab corners are sharp, as in round 2. They are loaded in compression and light shear only |
-| 11 | Fasteners per §4 | PASS | 3 × M3 × 6 self-tapping through the 3 mm tabs: 3 mm into the base's 4 mm plate (spec §2). The new downward load goes ring → base plate, not through the screws |
-| 12 | Critical dims: spec §3 = model.py = brief | **FAIL** | model.py matches spec §3: `RUN_GAP = 0.4` (model.py:19–21, sourced to 03 SYS-05) and `H = TURNTABLE_Z − RUN_GAP` = 16.5 − 0.4 = 16.1 (model.py:22; bbox top 16.1). **design_brief.md contradicts both.** Its critical-dimension table (line 17) still reads "Ring height \| 15.0 \| ±0.2 \| 1.5 mm running gap to turntable". Its Risks line (26) still reads "→ 1.5 mm gap, sand to fit". Spec §3 (line 16) says 16.1 ±0.15 with a 0.4 mm gap. This is the one dimension this round changed. Rule §3 requires the brief to carry it with its tolerance |
-| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at ≈ 70 °C; PTFE sliding at these loads adds no meaningful heat. `materials_on_hand` is empty: check the spool |
+| 2 | One watertight solid, min Z 0 | PASS | `solids: 1`, `watertight: true`, bbox min z 0.0 |
+| 3 | Orientation matches the brief | PASS | Flat, with the ring and tabs on the bed. iso.png, front.png and right.png show each relief as a vertical groove in the wall's outer face, rising from the tab's top face (z 3) to the top |
+| 4 | Load paths | PASS | The turntable presses the top face down, so the wall is in compression across the layers, as in round 4. Over each relief's 3.7 mm length the wall is 2.5 mm instead of 3.0. The brief carries the analyst's worst ring row with that: ≥ 7.7 |
+| 5 | Bed contact | PASS | **The ring's and tabs' bottom face prints down.** 718.7 mm², unchanged: the relief starts at the tab's top (z 3) and never reaches the bed |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | `bridges: []`. Each relief is a vertical cylinder cut with solid below it: its floor at z 3 faces up, and its walls are vertical. I listed every facet behind mesh_check's 34.9 mm² (0.33 %): all of them sit at z 0.03–0.33, in the 0.4 mm bottom chamfer, at 44.1–45.0°. Round 4 had 23.3 mm² of the same facets; the extra is re-tessellation. None is at the reliefs |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | **Wall at each relief: 2.50** (r 41–43.5, cad_checks at 30°, 150° and 270°). That is 5 lines and above the 1.8 rule. Elsewhere the wall is 3.0. Tab ligament round the Ø3.6 hole: 2.7 (Ø9 tab), unchanged, because the relief stops at the tab's top. `thin_wall_warnings: []` |
+| 8 | HOLE_COMP; horizontal holes | PASS | `HOLE_COMP` on the tab holes (model.py:46): Ø3.6 CAD, ≈ 3.4 printed. The relief is a clearance with 0.5 mm all round the Ø7 washer (`WASHER_CLR`), not a fit, so it gets no compensation. No horizontal holes |
+| 9 | Bottom edges chamfered | PASS | `chamfer_bottom(design(), 0.4)` (model.py:54) |
+| 10 | Internal corners on load paths | PASS (advisory) | The relief's floor-to-wall edge is a 90° internal corner at z 3, on a wall in compression. The web and tab corners are as accepted in round 4 |
+| 11 | Fasteners per §4 | PASS (note) | §4 asks for washers or wide heads against creep, and this round adds them. cad_checks shows each Ø7 washer sits flat on the tab and clears the wall by ≥ 0.5 mm. **Engagement:** 6 − 0.5 (washer) − 3 (tab) = 2.5 mm into the base's 4 mm through-pilot. That is short, but the parts are assembled once and BUILD_GUIDE §4 step 1 says "snug, no harder". The ring loads press it onto the plate, not off it (note 1) |
+| 12 | Spec §3 dims are named parameters | PASS | `H = TURNTABLE_Z − RUN_GAP` = 16.1, `TAB_HOLE` 3.4, `WASHER_D` 7.0, `WASHER_CLR` 0.5 (model.py:22–32), all sourced. **Round 4 fix 1 is closed:** the brief's table now reads "Ring height \| 16.1 \| ±0.15 \| 0.4 mm running gap … (≈ 0.3 with … PTFE tape)", and its Risks line gives the 0.4 mm gap, measuring the horn face and sanding to fit. The new washer-relief row (Ø8, wall 2.5) matches the model |
+| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at ≈ 70 °C. `materials_on_hand` is empty: check the spool |
 | 14 | Lessons in library/lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | No inputs/ folder |
 
 ## Required fixes
 
-1. **Update design_brief.md to the round-3 ring.** This is a documentation change only; no CAD change.
-   - **Rule:** fdm-design-rules §3: every critical dimension in the spec appears in design_brief.md with its tolerance. Checklist #12.
-   - **Evidence:** brief line 17 says 15.0 ±0.2 with a 1.5 mm gap. Spec §3 line 16 and model.py lines 19–22 say 16.1 ±0.15 with a 0.4 mm gap.
-   - **Change the table row** to: "Ring height | 16.1 | ±0.15 | 0.4 mm running gap to the turntable (≈ 0.3 with one layer of PTFE tape); sand the top to an even gap | source: deep review 03 SYS-05".
-   - **Change the Risks line** to say three things:
-     - 0.4 mm gap with PTFE tape;
-     - the gap depends on the disc horn's face height, so measure it first (spec §3);
-     - sand where it rubs, add tape where it's loose (BUILD_GUIDE §4 step 4).
+None.
 
 ## Notes (not blocking)
 
-1. **H 16.1 is half a layer.** slice_plan.json prints 0.2 mm layers, so PrusaSlicer ends the ring at 16.0 or 16.2. That is a 0.1 mm step either way, inside spec §3's ±0.15. BUILD_GUIDE §4 step 4 sands or tapes to the gap anyway, so no change is needed. For a predictable height, either use H 16.0 (0.5 mm bare, ≈ 0.4 taped) or keep 16.1 and expect up to 0.1 mm of sanding.
-2. **Top edges.** BUILD_GUIDE §1 lists plumber's PTFE tape, which isn't adhesive, so it will be wrapped over the 3 mm top face. A 0.3 mm chamfer on the two top edges would keep them from cutting the tape. Optional; the rule asks only for bottom chamfers.
-3. **The gap's real value** rests on `horn_face_z(MG996R)` = 16.5. That is the spline top (15.9, which TowerPro confirms) plus 0.6 mm assumed for the disc horn, unverified per 01 S2. Spec §3 already asks for the measurement before printing. Keep that step.
-4. **Strength.** strength.md (06:55) predates this change (10:25); the ring now carries load in normal use. The re-check is due, as status.json says.
+1. **Spec §2 is stale** (Architect). It still reads "3 mm tab + 3 mm into the 4 mm plate". With the washer it is 2.5 mm, as the brief, BUILD_GUIDE §1 and the base spec say. Change "3 mm into" to "2.5 mm into".
+2. **H 16.1** is still half a layer (round 4 note 1): at 0.2 mm layers PrusaSlicer ends the ring at 16.0 or 16.2. Both are inside ±0.15, and assembly sands or tapes to the gap.
+3. **Top edges** (round 4 note 2, optional): a 0.3 mm chamfer on the two top edges would keep them from cutting the PTFE tape.
 
-## Round 2 → round 3
+## Round 4 → round 5
 
-| Change | Status | How I checked |
+| Item | Status | How I checked |
 |---|---|---|
-| Running gap 1.5 → 0.4, H 15.0 → 16.1 (03 SYS-05) | Printable | Still a plain vertical wall: no overhang beyond the bottom chamfer, walls 3.0 / 2.7 (#6, #7). Height within tolerance (note 1) |
-| PTFE tape on the top face | OK | BOM line in BUILD_GUIDE §1. Step 1 fits it, step 4 sets the gap by sanding or taping, and spec §8 checks it with a feeler gauge at 8 points |
-| Documentation | **Open** | design_brief.md still describes the round-2 ring (fix 1) |
+| DFM round 4 fix 1: the brief gave the round-2 ring | Closed | #12: brief table and Risks line |
+| Strength round 4: pan head creep in the tab | Washer + Ø8 relief, printable | #6, #7, #11: vertical cut, wall 2.50, washer seat flat |
+| Round 4 notes 1–3 (half-layer height, top chamfer, horn-face measurement) | Notes 1–2 carried here as notes 2–3; the measurement is still asked for in spec §3 | — |
+| Round 4's passing items | Still pass | The volume change is the three reliefs |

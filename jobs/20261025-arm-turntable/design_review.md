@@ -1,52 +1,53 @@
 VERDICT: PASS
 
-# DFM review (round 4): 20261025-arm-turntable
+# DFM review (round 5): 20261025-arm-turntable
 
-Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26
+Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · third design attempt
 
-**Why it reopened.** Deep review 01 B1 (status.json; log.md 06:39:59): the shoulder MG996R's lead can't pass its window in the upright. Design round 3 (log.md 10:25) changed four things:
-- lead notches at both case ends, with 45° tops;
-- the base servo's Ø25 disc horn under the disk (03 SYS-05), with no CAD change;
-- an M3 × 14 ISO 4762 clamp (01 S2, 03 SYS-16);
-- the SYS-04 moment in spec §4.
+**Why it reopened.** Links strength round 4 failed two things (log.md 13:06): the disc horn's 2 × M2 × 6 anti-rotation screws (SF 2.00) and the upright's window region under the yaw-stall sweep (2.80). Design round 5 (design_brief.md "Round 5") changed three things:
+- `GUSSET_H` 70 → 90, cut off at the upright's top (model.py:37, 101–106);
+- 4 × M2 × 8 anti-rotation screws through the disc horn's own holes, with pilots drilled at assembly (model.py:40–46);
+- `print_requirements.json`: `bottom_solid_layers` 30 and `bottom_solid_min_thickness` 6.0.
 
 **Inputs**
-- This job: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, slice_plan.json, status.json, log.md and the round-3 review.
+- This job: spec.md, design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, print_requirements.json, slice_plan.json, log.md and the round-4 review.
 - Renders: all 5, regenerated with `tools/render.py` and viewed.
-- Tools and assembly: `tools/hobby_parts.py` (`servo_mount_cutter`, `lead="notch"`), and the assembly job's assembly_plan.md and BUILD_GUIDE §4.
-- Deep reviews: 01 (B1, S2, S3, S4) and 03 (SYS-04, SYS-05, SYS-16).
-- library/lessons.md: no entries.
+- Assembly: BUILD_GUIDE §1 and §4 step 3, and `hobby_parts.py` (MG996R lead exit).
+- Skills: fdm-design-rules, material-selection, build123d-cad. library/lessons.md has no entries.
 
 **Outputs are current.**
-- `build()` gives 89196.50 mm³ and a 96 × 96 × 80.8 bbox from (−48, −48, 0), the same as geometry.json.
+- `build()` run in memory gives 90736.48 mm³, a 96 × 96 × 80.8 bbox from (−48, −48, 0) and 1 solid. That matches geometry.json.
 - part.stl is watertight.
-- `tools/mesh_check.py`, re-run in memory, gives exactly the committed mesh_check.json.
-- The volume fell by 139.1 mm³ from round 3 (89335.6). That is the two notches plus their 45° tops: 2 × (4.6 × 1.81 + ½ × 1.8²) × 7 ≈ 139.3 mm³. Nothing else changed.
+- `tools/mesh_check.py` re-run gives the committed mesh_check.json.
+- The volume is +1540.0 mm³ on round 4 (89196.50). That is the gusset growth: 2 × 4 × [½(23 + 4.42) × 72.8 − ½ × 23 × 70] = 1545. Nothing else moved.
+- `cad_checks.py` re-run: 14/14 PASS.
 
-**Method**
-- Print frame: disk z 0–8; upright y −12…−5; window x ±20.65; shoulder axis z 44.0; pilots at x ±24.25, z 39.0 and 49.0.
-- Exact OCC distances between the hole outlines on vertical sections through the upright, at y −5.2, −8.5 and −11.8.
-- Point-in-solid probes along x at fixed z, giving the wall each layer actually prints.
+**Print frame:** the disk is at z 0–8 with the upright on it. The gussets sit at |x| 28.5–32.5 behind the upright (y < −12) and reach z 80.8.
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Bed fit, 5 mm margin | PASS | 96 × 96 × 80.8 mm, inside 240 × 200 × 210; `fits_bed: true` |
-| 2 | One watertight solid, min Z 0 | PASS | `solids: 1`, `watertight: true`, `min_z_mm: −0.0` |
-| 3 | Orientation matches the brief | PASS | Disk on the bed, upright vertical (iso.png, right.png). front.png shows the window's 45° roof, both notches with 45° tops, and the four teardrop pilots pointing up. bottom.png shows the flat underside for the disc horn, with only the Ø3.6 clamp hole |
-| 4 | Load paths | PASS (justified) | The brief accepts upright bending across the layers and sizes for it with UP_T 7, 3 mm root wedges and 70 mm gussets. The notches narrow each side post beside the window from 12.35 to 10.54 mm over print z 41.7–48.1 (x 22.46 → 33). That is for strength's round-4 check against spec §4's 290–335 N·mm (note 3) |
-| 5 | Bed contact | PASS | 7105.0 mm² (unchanged) |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | The notch outline in the mid-plane section is floor z 41.70 (x 20.65 → 22.46), end wall x 22.46 up to z 46.30, then a 45° top from (22.44, 46.30) to the window wall at (20.65, 48.10). So there is no flat ceiling. mesh_check's 0.28 mm² of overhang and two "bridges" (z 46.3, span 0.02, length 7.0) are one 0.02 mm × 7 mm flat per notch, x ±22.44…±22.46. That is where the triangle starts 0.01 mm inside the notch box (model.py:53) and the box runs 0.01 mm past the notch end (hobby_parts.py:181). It is 1/20 of a line width: cosmetic. Teardrops and the window roof are at 45° |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS | **In every layer the wall is ≥ 2.2 mm.** Probes at y −8.5: z 39.0 solid x 20.65–22.855 (window to lower pilot); z 41.0–41.6 solid from 20.65 (pilot tip at z 40.98, notch floor at 41.7); z 47.7 21.05–23.735; z 48.0 20.75–23.275 (45° top to upper pilot). **3D minimum:** 1.775 mm CAD from each lower pilot's teardrop flank to the notch's lower-outer corner, (±23.72, 40.45) → (±22.46, 41.70); and 1.788 mm from the 45° top to the upper pilots. Those are diagonals across about 4 layers, not walls a layer prints. Perimeter count is set per layer, and the layers there are fully solid. They are ≈ 1.97 / 1.99 printed. The notch also stays off the pilots' own layer planes (z 39.0, 49.0), where a self-tapper would split a standing wall; the in-layer wall there stays 2.2 mm. DISK_T 8, UP_T 7, GUSSET_T 4. `thin_wall_warnings: []` |
-| 8 | HOLE_COMP; horizontal holes | PASS | `HOLE_COMP` goes into the window, pilots and notch (`servo_mount_cutter(..., hole_comp=HOLE_COMP, lead="notch")`, model.py:92–93), and into `_notch_tops()` with the same `nw` and `reach` (model.py:49–50). Notch CAD: 4.6 tall (z 41.7–46.3), 2.1 past the case end (x 20.35 → 22.46), ≈ 4.4 × 2.0 printed. Pilots: Ø2.8 CAD teardrops pointing up in print (geometry.json `arc_deg` 270). Clamp hole Ø3.6. Every horizontal opening has a 45° top |
-| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(disk, Z0, 0.4)` (model.py:74) |
-| 10 | Internal corners on load paths | PASS (advisory) | Root wedges unchanged (3 mm, 45°). The notches' far corners are sharp, like the window corners accepted in rounds 1–3 |
-| 11 | Fasteners per §4 | PASS (note) | **Clamp:** M3 × 14 ISO 4762 + Ø9 washer goes 4.6 mm into the metal spline (spec §2). The washer seats flat: the front wedge stops at \|x\| ≥ 6 (model.py:34), and the washer rim is 0.5 mm from the upright. The washer is there for creep (§4), and spec §2 allows re-tightening with an L-key past the upright (SYS-16). **Shoulder tab screws:** M3 × 12 + Ø7 washers in the teardrop pilots. Their tips stand 2 mm out of the back face at x ±24.25, 4.25 mm clear of the gussets. **Anti-rotation:** see note 4 |
-| 12 | Spec §3 dims are named parameters | PASS | `XS` 10.15, `ZS` 60.5, `Z0 = horn_face_z(SERVO)` 16.5, `CLR`, `HOLE_COMP` (model.py:20–27). The notch comes from `MG996R.lead_notch_w` / `lead_notch_reach` (hobby_parts.py:74), and the 45° top from `_notch_tops()` (model.py:44–59). The CAD matches spec §3: clamp Ø3.4 printed, window 41.1 × 20.1 printed, notches 4.4 × 2.0 printed with 45° tops, axis (10.15, 60.5), disk underside Z 16.5 |
-| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at ≈ 70 °C. Check the spool: `materials_on_hand` is empty |
+| 1 | Bed fit, 5 mm margin | PASS | 96 × 96 × 80.8 mm; `fits_bed: true` |
+| 2 | One watertight solid, min Z 0 | PASS | `solids: 1`, `watertight: true`, bbox min z 0.0 |
+| 3 | Orientation matches the brief | PASS | Disk down, upright vertical. right.png shows each gusset as a trapezoid, 23 mm deep at the disk and 4.4 mm at the top, flush with the upright's top (z 80.8). front.png: window, 45° roof, notches with 45° tops, teardrop pilots, all unchanged. bottom.png: the plain underside with only the Ø3.6 clamp hole |
+| 4 | Load paths | PASS (justified) | The brief accepts upright bending across the layers and sizes for it with the across-layer allowable. The taller gussets carry more of it into the disk. The disk carries the anti-rotation screws in bearing, along the layers |
+| 5 | Bed contact | PASS | **The disk's underside prints down.** 7105.0 mm², unchanged. The 30 solid bottom layers make the first 6 mm of the Ø96 disk solid: more shrink stress than 40 % gyroid, but PETG on a heated sheet with the 0.4 mm chamfer handles it |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | `overhang_pct` 0.0, `bridges: []`. The gusset's outer face leans 14.3° **inward** as it rises (23 → 4.42 deep over 72.8 mm), so each layer sits inside the one below. Its top is a flat 4.4 × 4 face, level with the upright. Round 4 note 2 is closed: the notch tops now reach the notch ends, and the two 0.02 × 7 mm flats are gone (0.28 mm² → 0.0) |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | GUSSET_T 4.0 (about 9 lines), DISK_T 8, UP_T 7. Window, notch and pilot walls are unchanged from round 4: ≥ 2.2 in every layer, with a 3D minimum of 1.775 CAD, as the brief now says. **Anti-rotation pilots** (drilled Ø1.5, 6 deep): at r ≥ 7, a pilot leaves ≥ 4.45 mm to the Ø3.6 clamp hole and 2.0 mm of disk above its end. The zone r 4–13 is plain solid down to 6.5 mm (cad_checks: 648 probes, 0 void). `thin_wall_warnings: []` |
+| 8 | HOLE_COMP; horizontal holes | PASS | `HOLE_COMP` goes into the clamp hole and the shoulder cutter (model.py:108–113). The horizontal pilots are teardrops pointing up; the window and notch tops are 45°. The anti-rotation pilots aren't modelled: they are drilled through the horn at assembly (BUILD_GUIDE §4 step 3, model.py:40–41) |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(disk, Z0, 0.4)` (model.py:90) |
+| 10 | Internal corners on load paths | PASS (advisory) | The gusset-to-upright and gusset-to-disk junctions are sharp, as in rounds 1–4. The root wedges (3 mm, 45°) are unchanged |
+| 11 | Fasteners per §4 | PASS (note) | **Anti-rotation:** 4 × M2 × 8 self-tappers, 8 − 2.8 (disc) = 5.2 mm engaged in 6 mm pilots. All 5.2 mm sit inside the 6 mm of solid bottom layers (print_requirements.json `bottom_solid_layers` 30 at 0.2 mm, `bottom_solid_min_thickness` 6.0). That closes round 4 note 4. They are assembled once, so self-tappers are acceptable (§4). **Shoulder tab screws:** M3 × 12 + Ø7 washers; the tips stand 2 mm out of the back at x ±24.25, about 2.8 mm clear of the gussets' inner faces (x ±28.5), as before. **Clamp:** M3 × 14 + Ø9 washer, unchanged |
+| 12 | Spec §3 dims are named parameters | PASS (note) | `GUSSET_H` 90 (model.py:37) and `ANTI_ROT_N`, `ANTI_ROT_L`, `DISC_HOLE_R_MIN`, `ANTI_ROT_PILOT_D`, `ANTI_ROT_PILOT_DEPTH`, `ANTI_ROT_ZONE` (:42–46) are sourced and match the brief's new rows. `XS`, `ZS`, `Z0` and `CLR` are unchanged. Spec §3's notch row still says "2.0 mm printed ligament" (note 2) |
+| 13 | Service temperature ≥ 20 °C below softening | PASS | 40 °C against PETG at ≈ 70 °C. `materials_on_hand` is empty: check the spool |
 | 14 | Lessons in library/lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | No inputs/ folder |
+
+**The gussets against the parts around them**
+- **Shoulder servo body.** It is centred on x 0 and spans ±20.35, so it sits 8.15 mm inside the gussets' inner faces at every height. Its tab-screw tips are ≈ 2.8 mm clear.
+- **Upper link.** It is on the upright's front (+Y) side, away from the gussets. Its ribs sweep ≥ 11.89 mm from the turntable over shoulder 0–180° (my sweep, upper-link review).
+- **Disk edge.** The toe is at r 47.76, inside the disk's r 48.
 
 ## Required fixes
 
@@ -54,24 +55,21 @@ None.
 
 ## Notes (not blocking)
 
-1. **The brief overstates the ligament.**
-   - design_brief.md says "notch → nearest pilot 2.05 mm". That is the cutter's own check (hobby_parts.py:173–175), which treats the pilot as a plain circle.
-   - The lower pilots' teardrop points aim at the notch, so the true minimum is 1.775 mm CAD, ≈ 1.97 printed (#7). It still passes.
-   - Correct the brief, and spec §3's "2.0 mm printed ligament", to ≈ 1.97.
-2. **0.02 mm flats.** Starting the triangle at the notch's top edge (`−nw / 2 − 0.01` at model.py:53) instead of 0.01 mm inside it would remove the two z 46.3 slivers from mesh_check. Cosmetic.
-3. **For strength (round 4).** Two things to re-check:
-   - the side posts beside the window are now 10.54 mm wide over the notch height (#4);
-   - the 1.78 mm diagonal from the lower pilots to the notch corners now sits in the tab screws' tear-out path.
-4. **Anti-rotation screws under the disc horn** (01 S4, BUILD_GUIDE §4 step 3).
-   - The 2 × M2 × 6 are drilled through the horn into the bed face at assembly. They bite 1.0 mm of bottom skin (5 layers), then 40 % gyroid.
-   - Spec §4 routes the base-servo stall through them and the clamp's friction.
-   - If strength counts on them, a solid-infill modifier under the horn (r ≤ 13 mm, first 4 mm) gives them solid plastic. That is the slicing-lead's call.
+1. **Shoulder servo lead.** In the servo frame the MG996R lead leaves the case end 6 mm above the case bottom. On this part that is world y ≈ −26, at x ±20.35 (the lead end is unverified, so both ends are notched).
+   - At the shoulder axis's height the 90 mm gusset's back edge is now at y −25.8 (it was −23.2 at 70 mm).
+   - A 4 × 1.3 ribbon running straight out along x would meet the gusset's inner face 8.15 mm from the case end.
+   - It is flexible, and it has to turn towards −Y and down to the base anyway.
+   - Add one line to BUILD_GUIDE §4: route the shoulder lead back behind the gusset (−Y), not out sideways.
+2. **Spec §3** (Architect). The notch row still says "2.0 mm printed ligament". The brief already carries round 4 note 1's corrected 1.775 CAD (≈ 1.97 printed); the spec should match it.
+3. **Slicing.** slice_plan.json and slice_overrides.ini still give `bottom_solid_layers` 5. The new minimum is 30, with `bottom_solid_min_thickness` 6.0. The validator will hold the slice until slicing-lead updates the plan. Expect about +0.5 h (brief: 6.8 → ≈ 7.3 h of the 8 h limit).
 
-## Round 3 → round 4
+## Round 4 → round 5
 
-| Reason it reopened | Status | How I checked |
+| Item | Status | How I checked |
 |---|---|---|
-| 01 B1: the lead can't cross the closed window | Closed (DFM side) | Notches at both case ends with true 45° tops (outline in #6). No flat ceiling. In-layer walls ≥ 2.2 mm (#7) |
-| 03 SYS-05: disc horn | Closed | Flat underside, no pocket (bottom.png). The disc horn needs no CAD change |
-| 01 S2 / 03 SYS-16: M3 × 14 ISO 4762 clamp | Closed | Spec §2, assembly_plan.md and BUILD_GUIDE §4 step 4. The washer seat is unchanged (#11) |
-| Round 3's passing items | Still pass | The volume change is exactly the notches and their tops |
+| Strength round 4: window region (2.80) | Gussets 90 tall, printable | #3, #6: inward lean, no overhang; top flush with the upright |
+| Strength round 4: anti-rotation (2.00) | 4 × M2 × 8 in solid plastic | #7, #11; zone probes; print_requirements.json |
+| Round 4 note 1: brief overstated the ligament | Closed in the brief; spec open | Brief rows give 1.775 CAD (note 2) |
+| Round 4 note 2: 0.02 mm flats | Closed | `overhang_pct` 0.0, `bridges: []` |
+| Round 4 note 4: screws in sparse infill | Closed | 30 bottom layers / 6.0 mm |
+| Round 4's passing items | Still pass | The volume change is the gussets |
