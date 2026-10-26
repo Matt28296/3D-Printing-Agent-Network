@@ -1,15 +1,20 @@
-"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 5.
+"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 6.
 
 Run from the project root with the CAD venv's interpreter (build123d, trimesh, scipy), about 1-2 min:
     /home/claude/.venv-cad/bin/python3 jobs/20261026-rover-chassis/strength_calc.py
 
-Round 5 = the round-5 geometry (model.py, rover_frame.py) with round 4's method and loads. Round 5 made strength round 4's
+Round 6 changed one parameter, strength round 5's fix (user-approved): STOP_W 1.5 -> 2.0. The nut plate's end stops keep
+their inner faces at x 108 and 129 and now span x 106-108 and 129-131. Everything else, every load case and every method
+below is round 5's, unchanged; only the solid's probes and the advisory rows that predicted the fix are updated. The B18
+rows read STOP_W from model.py, so they are now the round-6 stops.
+
+Round 5 =the round-5 geometry (model.py, rover_frame.py) with round 4's method and loads. Round 5 made strength round 4's
 fix only (user-approved):
 - the 9 x 15 x 4.6 idler nut slot is deleted: 8.0 mm of solid PETG between the head-plate recess floor (|y| 30) and the
   wall's outer face (|y| 38), with only the bolt slot through it;
 - the nut plate is the head plate's twin (20.6 x 10 x 2, slot 3.4 x 12 from 6 to 18 mm along), flat on the outer face on a
   printed seat: a lip under its bottom edge (top Z_A - 5.2, 1.0 proud, 45° underside) and an end stop at each end (inner
-  faces x 108 and 129, STOP_W 1.5, up to Z_A + 5.2; the designer's addition);
+  faces x 108 and 129, STOP_W 1.5 (2.0 since round 6), up to Z_A + 5.2; the designer's addition);
 - a Ø9 x 0.8 DIN 9021 washer under the wall nut; the idler's hub 5.2 mm shorter (idler job).
 
 The clamp is round 4's contact model (no friction and no preload credited, DFM round 4 S2), generalised so that the
@@ -212,7 +217,7 @@ from scipy import ndimage, sparse  # noqa: E402
 from scipy.sparse.linalg import spsolve  # noqa: E402
 
 ns = runpy.run_path(os.path.join(JOBS, JOB, "model.py"), run_name="model")
-WORLD = ns["design"]()                       # round-5 chassis in the rover world frame
+WORLD = ns["design"]()                       # round-6 chassis in the rover world frame
 p = SimpleNamespace(**{k: v for k, v in ns.items() if k.isupper()})
 M = F.MOTOR
 HC = p.HOLE_COMP
@@ -302,7 +307,7 @@ m_printed = sum(v[0] for v in pm.values())
 m_solid = sum(v[1] for v in pm.values())
 m_bought = sum(g for _, g in BOM)
 m_est = m_printed + m_bought
-print("\nmass check (round 5): printed at the print_requirements minima: "
+print("\nmass check (round 6): printed at the print_requirements minima: "
       + ", ".join(f"{k} {v[0]:.1f} g" for k, v in pm.items()) + f" = {m_printed:.0f} g (all solid {m_solid:.0f} g)")
 print("  bought (BUILD_GUIDE §1): " + ", ".join(f"{n} {g:.1f}" for n, g in BOM) + f" = {m_bought:.0f} g")
 print(f"  rover {m_est:.0f} g at the print minima ({m_solid + m_bought:.0f} g if every printed part were solid);"
@@ -422,14 +427,20 @@ probe = {"8 mm PETG solid at (120, 30.1, Z_A+3.5)": solid_at(120.0, 30.1, ZA + 3
          and solid_at(118.0, 38.95, ZA - 6.15) and not solid_at(118.0, 38.95, ZA - 6.3),
          "lip: 45° underside (solid at (118, 38.05, Z_A-7.15), void at (118, 38.05, Z_A-7.3))":
          solid_at(118.0, 38.05, ZA - 7.15) and not solid_at(118.0, 38.05, ZA - 7.3),
-         "rear stop x 106.5-108: solid (107, 38.5, Z_A), void (108.1, 38.5, Z_A), void (106.4, 38.5, Z_A)":
-         solid_at(107.0, 38.5, ZA) and not solid_at(108.1, 38.5, ZA) and not solid_at(106.4, 38.5, ZA),
-         "front stop x 129-130.5: solid (130, 38.5, Z_A), void (128.9, 38.5, Z_A)": solid_at(130.0, 38.5, ZA)
-         and not solid_at(128.9, 38.5, ZA),
+         # round 6: STOP_W 2.0, inner faces unchanged (x 108 / 129), so the stops span x 106-108 and 129-131
+         "round 6: STOP_W 2.0 in model.py": abs(p.STOP_W - 2.0) < 1e-9,
+         "rear stop x 106-108: solid (106.1, 38.5, Z_A) and (107, 38.5, Z_A), void (108.1, 38.5, Z_A), void (105.9, 38.5, Z_A)":
+         solid_at(106.1, 38.5, ZA) and solid_at(107.0, 38.5, ZA) and not solid_at(108.1, 38.5, ZA)
+         and not solid_at(105.9, 38.5, ZA),
+         "front stop x 129-131: solid (130, 38.5, Z_A) and (130.9, 38.5, Z_A), void (128.9, 38.5, Z_A), void (131.1, 38.5, Z_A)":
+         solid_at(130.0, 38.5, ZA) and solid_at(130.9, 38.5, ZA) and not solid_at(128.9, 38.5, ZA)
+         and not solid_at(131.1, 38.5, ZA),
+         "rear stop's root solid to the wall over its 2.0 (106.1 / 107.9, |y| 37.5-38.95, Z_A-5.6 / Z_A / Z_A+5.1)":
+         all(solid_at(x, y, ZA + dz) for x in (106.1, 107.9) for y in (37.5, 38.05, 38.95) for dz in (-5.6, 0.0, 5.1)),
          "stops up to Z_A+5.2: solid (107, 38.5, Z_A+5.1), void (107, 38.5, Z_A+5.3)": solid_at(107.0, 38.5, ZA + 5.1)
          and not solid_at(107.0, 38.5, ZA + 5.3),
          "nut plate's space clear (120, 39.5, Z_A)": not solid_at(120.0, 39.5, ZA)}
-assert all(probe.values()), f"idler clamp geometry differs from the round-5 model: {probe}"
+assert all(probe.values()), f"idler clamp geometry differs from the round-6 model: {probe}"
 print(f"idler clamp (probed on the solid): head plate and nut plate both {P_LEN} x {P_H} x {F.PLATE_T} (checked at"
       f" {TP_MIN} for 14 ga) at x {H0:.1f}-{H0 + P_LEN:.1f} (slot {HS[0]:.1f}-{HS[1]:.1f}), z Z_A {PLATE_Z0:+.1f}..{PLATE_Z0 + P_H:+.1f}"
       f" (slot band {PLATE_MID - BAND:+.1f}..{PLATE_MID + BAND:+.1f}); head plate on the recess floor |y| {y_rec:.0f}, nut plate"
@@ -1177,23 +1188,20 @@ for lab, mu, Pq in (("oiled", MU_OIL, P_snug), ("dry", MU_DRY, T_SNUG_NMM / (K_D
           f" ({F_c:.1f} N on 2 x {p.LIP_OUT})", F_c / (2.0 * min(p.LIP_OUT, TP_MIN)), False, SF_STATIC, info=True)
     check(f"assembly, if the nut is turned instead of the head ({lab}): lip root bending over 4 mm (Kt {KT_SHARP})",
           bend_rect(F_c * STOP_ARM, 4.0, LIP_ROOT_H), False, SF_STATIC, Kt=KT_SHARP, info=True)
-# the smallest fix for the end stops: STOP_W 1.5 -> 2.0 (inner faces unchanged at x 108 / 129: stops x 106.0-108, 129-131)
-for tag, R, T, sf in stop_cases:
-    Fx = stop_demand(R, T)
-    check(f"FIX STOP_W 2.0: end stop root bending (Kt {KT_SHARP}), {tag} ({Fx:.1f} N)", bend_rect(Fx * STOP_ARM, STOP_H, 2.0),
-          False, sf, Kt=KT_SHARP, info=True)
-check(f"FIX STOP_W 2.0: end stop root bending, the plate on the stop's outer edge only (arm {p.LIP_OUT}), reverse stall",
-      bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, 2.0), False, SF_STATIC, Kt=KT_SHARP, info=True)
-check(f"FIX+ STOP_W 2.5 (more margin): end stop root bending, the plate on the stop's outer edge only (arm {p.LIP_OUT}),"
-      f" reverse stall", bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, 2.5), False, SF_STATIC,
-      Kt=KT_SHARP, info=True)
-check(f"FIX STOP_W 2.0: end stop root bending, proof {R44:.0f} N pull", bend_rect(stop_demand(R44, y44w.T) * STOP_ARM, STOP_H,
-      2.0), False, SF_PROOF, Kt=KT_SHARP, info=True)
-f_fs = 129.0 + 2.0
+# round 6 took strength round 5's fix (STOP_W 1.5 -> 2.0); the B18 rows above now use it. Cross-check against round 5:
+# the round-5 stop (1.5) through the same functions must give back round 5's 2.75, and the round-6 rows round 5's
+# FIX predictions (4.88 stall, 8.88 everyday, 14.53 sustained, 3.29 proof pull, 2.44 tip only).
+check(f"round 5 as built, STOP_W 1.5 (for reference; round 5: 2.75): end stop root bending (Kt {KT_SHARP}), reverse stall"
+      f" ({stop_demand(L.R_idler_stall, yR.T):.1f} N)", bend_rect(stop_demand(L.R_idler_stall, yR.T) * STOP_ARM, STOP_H, 1.5),
+      False, SF_STATIC, Kt=KT_SHARP, info=True)
+check(f"option STOP_W 2.5 (more margin, not required): end stop root bending, the plate on the stop's outer edge only (arm"
+      f" {p.LIP_OUT}), reverse stall", bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, 2.5), False,
+      SF_STATIC, Kt=KT_SHARP, info=True)
+f_fs = p.NUT_PLATE_X[1] + p.STOP_W
 y_fillet = F.HALF_W_OUT - p.CORNER_R + math.sqrt(p.CORNER_R ** 2 - (f_fs - (F.X_FRONT_OUT - p.CORNER_R)) ** 2)
-print(f"FIX STOP_W 2.0 fit: the front stop then ends at x {f_fs:.1f}, where the r{p.CORNER_R:.0f} corner fillet's face is at"
-      f" |y| {y_fillet:.2f}: the stop (from |y| {F.HALF_W_OUT - 1.0:.0f}) still joins it; the rear stop ends at x"
-      f" {p.NUT_PLATE_X[0] - 2.0:.1f}, on the flat outer face")
+print(f"round-6 stops (STOP_W {p.STOP_W}): the front stop ends at x {f_fs:.1f}, where the r{p.CORNER_R:.0f} corner fillet's face"
+      f" is at |y| {y_fillet:.2f}: the stop (from |y| {F.HALF_W_OUT - 1.0:.0f}) joins it; the rear stop ends at x"
+      f" {p.NUT_PLATE_X[0] - p.STOP_W:.1f}, on the flat outer face (probed above)")
 # option offered in round 4 and not taken: 1 x 45° chamfer on the recess floor's edge (Kt 1.6 there)
 tC = tilt_worst(dict(CLAMP_R5, kt_in_bot=1.6), L.drop, up=True)
 check("option (not required): 1 x 45° chamfer on the recess floor's edge (Kt 1.6): bottom strip root, 5 cm front corner",
