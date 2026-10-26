@@ -38,15 +38,16 @@ import time
 
 READY = "arm_test ready"
 
-# ---- Geometry (mm), as assembly_check.py places the CAD parts (claw v2, MG90S heights of 2026-10-26) ----------
+# ---- Geometry (mm), as assembly_check.py places the CAD parts (arm round 3: 20-tooth claw, 2026-10-26) ---------
 SHOULDER_X, SHOULDER_Z = 10.15, 60.5    # shoulder axis: along the arm from the yaw axis; above the base top plate
 UPPER_L, FORE_L = 100.0, 90.0           # shoulder -> elbow, elbow -> wrist
-TIP_L = 76.35                           # wrist axis -> the point between the fingertips (claw_frame.X_TIP - 3)
-TIP_Y = 79.1                            # the fingertips sit this far to the side of the yaw axis (+Y at yaw 0)
+TIP_L = 80.35                           # wrist axis -> the point between the fingertips (claw_frame.X_TIP - 3)
+TIP_Y = 83.85                           # the fingertips sit this far to the side of the yaw axis (+Y at yaw 0)
 DESK_Z = -40.0                          # desk top, relative to the base top plate
 LIMITS = ((-90.0, 90.0), (0.0, 180.0), (-150.0, 30.0), (-90.0, 90.0), (0.0, 44.0))   # as arm_test.ino
 CAMERA_ABOVE_MM = 10.0                  # approach moves keep the Brio's lowest corner this far above the fingertips
-CLAW_ROWS = 0.40                        # the claw's cover fills this share of the raw image, at its bottom
+CLAW_ROWS = 0.40                        # crop this share off the raw image's bottom: the claw's cover fills 38 % at
+                                        # the 65° view (43 % at 90°: set 0.43 there)
 
 # The sketch's guard, line for line (arm_test.ino, "Guard"): every moving part as a box in its link's frame,
 # (link, x0, x1, y0, y1, Y0, Y1, kind). It plans moves the sketch will accept; the sketch still checks them.
@@ -56,21 +57,28 @@ PARTS = (
     (1, -25.0, 121.0, -17.0, 17.0, -7.5, 35.4, 0),      # upper link and the elbow MG996R
     (2, -25.0, 104.0, -13.0, 13.0, 34.0, 44.0, 0),      # forearm
     (2, 68.4, 100.6, -6.1, 6.1, 25.5, 58.0, 0),         # wrist MG90S
-    (3, -8.5, 33.85, -32.0, 32.0, 56.6, 98.6, 0),       # claw frame, cover, pinion and claw MG90S
-    (3, -26.55, 14.0, -28.0, 22.0, 98.6, 122.7, 0),     # camera mount
-    (3, -21.69, 15.19, -51.0, 51.0, 102.35, 139.23, 1),  # Brio 4K
-    (3, 22.6, 30.6, 0.0, 0.0, 62.85, 95.35, 2),         # racks
-    (3, 30.6, 42.35, 0.0, 0.0, 62.85, 95.35, 3),        # necks
-    (3, 42.35, 79.35, 0.0, 0.0, 62.85, 95.35, 4),       # finger blades
+    (3, -8.5, 37.85, -32.0, 32.0, 52.6, 108.1, 0),      # claw frame, cover, pinion and claw MG90S
+    (3, -26.32, 14.0, -28.0, 22.0, 108.1, 140.49, 0),   # camera mount
+    (3, -24.33, 17.79, -51.0, 51.0, 113.07, 154.93, 1),  # Brio 4K with its right-angle plug and thumb screw
+    (3, 22.6, 32.6, 0.0, 0.0, 62.6, 105.1, 2),          # racks
+    (3, 32.6, 49.35, 0.0, 0.0, 62.6, 105.1, 3),         # necks, down to the finger roots
+    (3, 49.35, 76.35, 0.0, 0.0, 62.6, 105.1, 4),        # finger roots and their tapers
+    (3, 76.35, 83.35, 0.0, 0.0, 62.6, 105.1, 5),        # fingertips
 )
+CAMERA_BOX = PARTS[5][1:5]              # Brio's box in the claw's frame (x0, x1, y0, y1)
+FINGER_BOXES = (PARTS[8], PARTS[9])     # finger roots and fingertips
 
 
 def _part_y(kind: int, y0: float, y1: float, half_gap: float) -> tuple[float, float]:
+    """The jaws' half-widths grow with the opening (claw_frame.py): racks (RACK_Y), necks with their r 4 root
+    fillets, finger roots and tapers (BLADE_T_ROOT), fingertips (BLADE_T)."""
     if kind == 2:
-        h = max(28.27 - half_gap, 15.71 + half_gap)
+        h = max(31.42 - half_gap, 25.13 + half_gap)
     elif kind == 3:
-        h = 14.0 + half_gap
+        h = 24.0 + half_gap
     elif kind == 4:
+        h = 12.0 + half_gap
+    elif kind == 5:
         h = 6.0 + half_gap
     else:
         return y0, y1
@@ -184,7 +192,8 @@ def camera_above_tips(q, gap: float = 0.0) -> float:
 
     def low(x0, x1, y0, y1):
         return min(x0 * s, x1 * s) + min(-y0 * c, -y1 * c)
-    return low(-21.69, 15.19, -51.0, 51.0) - low(42.35, 79.35, -(6.0 + gap / 2), 6.0 + gap / 2)
+    fingers = min(low(p[1], p[2], *_part_y(p[7], 0.0, 0.0, gap / 2)) for p in FINGER_BOXES)
+    return low(*CAMERA_BOX) - fingers
 
 
 def plan_approach(x: float, y: float, z: float, gap: float, hover: float = 40.0, step: float = 10.0,
@@ -338,7 +347,7 @@ def open_camera(camera: int, focus: int | None = None):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     cap.set(cv2.CAP_PROP_FPS, 30)
-    if focus is not None:                       # lock the focus: autofocus hunts on the jaws 75 mm away
+    if focus is not None:                       # lock the focus: autofocus hunts on the jaws about 83 mm away
         cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
         cap.set(cv2.CAP_PROP_FOCUS, focus)
     return cap

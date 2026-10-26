@@ -252,7 +252,7 @@ int main() {
   mark = Serial.log.size();
   session(b4::loop, {{0, "s 15\n"}});
   POSE(b4);
-  check(contains(out_since(mark), "blocked: base") && b4::jointNow(1) > 50 && b4::jointNow(1) < 56,
+  check(contains(out_since(mark), "blocked: base") && b4::jointNow(1) > 56 && b4::jointNow(1) < 59,
         fmt("elbow folded -150: lowering the shoulder stops at s %.1f with blocked: base (the claw by the base wall)", b4::jointNow(1)));
   session(b4::loop, {{0, "s 90\n"}});
   check(near(b4::jointNow(1), 90, 0.01), "and back up is allowed");
@@ -282,7 +282,7 @@ int main() {
   idle_for(b6::loop, 1900);
   check(near(b6::jointNow(4), 18.5, 0.06), "still squeezing 1.9 s later");
   idle_for(b6::loop, 200);
-  double eased = 18.5 + 1.5 / 3.183;
+  double eased = 18.5 + 1.5 / b6::DEG_PER_MM;
   check(near(b6::jointNow(4), eased, 0.06) && contains(out_since(mark), "claw eased off to 19.0 mm"),
         fmt("after 2 s it eases off 1.5 deg, to %.2f mm, and says so", b6::jointNow(4)));
   idle_for(b6::loop, 10000);
@@ -301,13 +301,15 @@ int main() {
   check(near(b6::jointNow(4), 44, 0.06), "an opening move doesn't ease off");
   session(b6::loop, {{0, "g 0\n"}});
   idle_for(b6::loop, 3000);
-  check(near(b6::jointNow(4), 1.5 / 3.183, 0.06), "g 0 squeezes at most 2 s too, then eases off 0.5 mm");
+  check(near(b6::jointNow(4), 1.5 / b6::DEG_PER_MM, 0.06), "g 0 squeezes at most 2 s too, then eases off 0.5 mm");
   session(b6::loop, {{0, "g 30\n"}, {3000, "f\n"}});
   idle_for(b6::loop, 3000);
-  check(near(b6::jointNow(4), 0, 0.01), "f holds the exact closed angle (fitting the pinion)");
+  check(near(b6::jointNow(4), 1.5 / b6::DEG_PER_MM, 0.06), "f closes like g 0, squeeze limit included");
   mark = Serial.log.size();
+  int clawUs = b6::joints[4].servo.us;
   session(b6::loop, {{0, "h 0\n"}, {10, "h 50\n"}, {20, "h abc\n"}});
-  check(near(b6::jointNow(4), 0, 0.01) && contains(out_since(mark), "err need the object's width"), "h 0, h 50, h abc are refused");
+  check(b6::joints[4].servo.us == clawUs && contains(out_since(mark), "err need the object's width"),
+        "h 0, h 50, h abc are refused: the claw doesn't move");
 
   // ------------------------------------------------------------------------------------------------------------
   std::printf("== Rest and the idle park (SYS-02)\n");
@@ -388,7 +390,7 @@ int main() {
     Preferences::store["pose"] = std::string((const char *)p, sizeof p);
   }
   b10::setup();
-  double clawSv = 23 + 3.183 * 10;
+  double clawSv = 23 + b10::DEG_PER_MM * 10;
   check(b10::joints[4].servo.first_us == 500 + (int)std::lround(2000 * clawSv / 180) && b10::joints[2].servo.first_us == 1611 &&
         near(b10::jointNow(2), -50, 0.01) && b10::GRIP_CLOSED_DEG == 23,
         fmt("previous sketch's pose: claw back at servo %.1f deg (%d us), elbow servo 100 = joint -50, k trim kept",

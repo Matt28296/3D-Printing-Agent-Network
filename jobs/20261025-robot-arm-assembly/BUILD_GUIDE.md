@@ -223,7 +223,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 | Wrist | `w <deg>` | −90 … 90 | claw in line with the forearm | fingertips up |
 | Claw | `g <mm>` | 0 … 44 | closed | wider |
 
-`c` puts every servo at its centre, the pose §4 fits the horns in: base 0, shoulder 90, elbow −60, wrist 0, claw closed. The elbow's window is −150 … +30 because its horn goes on with the forearm 60° below the upper link's line, so it spends its travel on the desk side. `ELBOW_MIN` and `ELBOW_MAX` near the top of the sketch narrow it; every joint's mapping (pin, pulses, direction, centre, limits) is one line of the `joints[]` table.
+`c` puts every servo at its centre, the pose §4 fits the arm's horns in: base 0, shoulder 90, elbow −60, wrist 0, claw closed. The claw's pinion is the exception: it goes on last, pushed in through the cover with the jaws fully open at `g 44` (§4 steps 10–11). The elbow's window is −150 … +30 because its horn goes on with the forearm 60° below the upper link's line, so it spends its travel on the desk side. `ELBOW_MIN` and `ELBOW_MAX` near the top of the sketch narrow it; every joint's mapping (pin, pulses, direction, centre, limits) is one line of the `joints[]` table.
 
 **Commands** (Serial Monitor at 115200, line ending "Newline"):
 
@@ -235,7 +235,8 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 | `r` | rest: park upright (see Parking) |
 | `i <s>`, `i` | park after `<s>` seconds without a command (`i 0` = never); `i` alone shows it |
 | `t`, `t <b\|s\|e\|w> <deg>`, `t save` | show the trims; set one; keep them on the ESP32 (see Trims) |
-| `c`, `f`, `k <deg>` | servos to their centres; claw to its closed angle; trim the closed angle (§4) |
+| `c` | every servo to its centre, claw closed: the pose §4 fits the arm's horns in |
+| `f`, `k <deg>` | claw to its closed angle, like `g 0`; set that angle (§4 step 12) |
 | `u <joint> <µs>` | a raw pulse for §4's end-stop test. It ignores the limits and the guard |
 | `p` | print the angles; moves nothing |
 | `x` | stop the move where it is; no later command resumes it |
@@ -243,7 +244,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
 
 A command without a valid number (`s`, `s abc`) is refused with `err`. While a move runs, `?` answers at once, `x` stops it, and one more command can wait for it to end.
 
-**Moves** ramp up and down at 250 °/s² to 66.7 °/s, with every joint arriving at the same time and pulses in 1 µs steps (0.09°). The ramps ask the shoulder for 35–50 N·mm and the yaw for 47–63 N·mm on top of their load, where a sudden start asked for 600–900 N·mm (deep review 03, SYS-06). So the camera no longer shakes when a move ends. `SPEED` and `ACCEL` near the top of the sketch set them; keep `ACCEL` within 200–300. In vision code, still wait about 200 ms after a move before you grab a frame.
+**Moves** ramp up and down at 250 °/s² to 66.7 °/s, with every joint arriving at the same time and pulses in 1 µs steps (0.09°). With the arm straight out, the ramps ask the shoulder for about 45–65 N·mm and the yaw for 60–85 N·mm on top of their load, where a start in one step asked for 800–1 500 N·mm (deep review 03, SYS-06; inertia from `torque_budget.py`'s masses, 0–50 g payload). So the camera no longer shakes when a move ends. `SPEED` and `ACCEL` near the top of the sketch set them; keep `ACCEL` within 200–300. In vision code, still wait about 200 ms after a move before you grab a frame.
 
 ### Directions (first)
 
@@ -265,10 +266,11 @@ A horn goes onto its spline in steps of 14.4° (MG996R) or about 17–18° (MG90
 3. **Elbow.** The forearm must continue the upper link's line, vertical. Check it the same way and set `t e`.
 4. **Wrist.** The claw must continue the forearm's line. Check a finger blade's flat side and set `t w`.
 5. **Base.** At `b 0` the upright's front face is parallel to the base's ±Y walls. On the base's top plate, measure from its +Y edge to the upright's front face near each end of the upright (they are 66 mm apart). One degree off makes the two differ by 1.2 mm. If the gap is smaller at the +X end, the arm is turned anticlockwise: type `t b -n`. If it is larger, type `t b n`.
-6. **More than 3.6° on the base, shoulder or elbow:** turn that MG996R's double-arm horn end-for-end.
-   - Type `c`, take the link off its spline, unscrew the horn from its pocket, turn it 180° and screw it back. The drilled holes still match.
-   - Push the link back on at the spline position nearest its §4 fitting pose. The two horn orientations are half a tooth (7.2°) apart, so one of them is within ±3.6°.
-   - Type `t <joint> 0` and redo that joint's step.
+6. **More than 3.6° on the base, shoulder or elbow:** turn that MG996R's horn half a turn on its part. On the 25-tooth spline the two positions are half a tooth (7.2°) apart, so one of them is within ±3.6°.
+   - Type `c`.
+   - **Shoulder or elbow:** undo the link's M3 × 14 clamp screw and take the link off its spline. Unscrew the double-arm horn from its pocket, turn it end-for-end and screw it back: the drilled holes still match.
+   - **Base:** its Ø25 disc horn is screwed under the turntable, so it comes off with the turntable. Undo the turntable's M3 × 14 clamp screw from the top (an L-key reaches it past the upright) and lift the turntable off the spline. Turn the disc horn half a turn on the turntable's underside and screw it back into the same pilots.
+   - Push the link or the turntable back on at the spline position nearest its §4 fitting pose and refit the clamp screw. Type `t <joint> 0` and redo that joint's step.
 7. `t` shows the trims. `t save` keeps them on the ESP32; without it, a reset brings back the last saved ones. Type `i 60` to switch parking back on.
 
 The trims come before the limits and the guard, so those work on the real joint angles. A trim shortens its joint's window at one end, because the servo's own 0–180° doesn't move: with `t e 5` the elbow reaches −145, not −150.
@@ -282,15 +284,16 @@ Limiting each joint on its own doesn't keep the claw or the camera off the desk.
 
 It checks every step again while the move runs. From a pose that is already too close, a move may only get clearer.
 
-- **Checked against the CAD meshes** over 52 000 poses: shoulder 0–180, elbow −150–30, wrist ±90, claw closed and open, base contacts at yaw 0, ±45° and ±90° (`firmware_test/guard_mesh_check.py`). No contact got through. The guard also blocks 0.2 % of the poses that clear the desk by 8 mm, and near the base 1–2 % that touch nothing.
-- **Desk reach.** With the claw pointing straight down, the fingertips come to 11 mm above the desk (the guard keeps the ends of the tips 8 mm up) from 59 to 199 mm out along the arm, which is 98–214 mm from the yaw axis. At yaw ±90° the near limit is 74 mm, because the jaws then pass the base's side wall. With the claw tilted, they reach the desk up to 252 mm out (265 mm from the yaw axis).
+- **Checked against the CAD meshes** over 52 000 poses: shoulder 0–180, elbow −150–30, wrist ±90, claw closed and open, base contacts at yaw 0, ±45° and ±90°, the Brio with its right-angle plug and thumb screw (`firmware_test/guard_mesh_check.py`). No pose closer than 8 mm to the desk and no contact got through. The guard also blocks 0.4 % of the poses that clear the desk by 8 mm, and near the base 0.7–1.9 % that touch nothing.
+- **Desk reach with the guard.** With the claw pointing straight down, the fingertips come to 11 mm above the desk (the ends of the tips stay 8 mm up) from 60 to 200 mm out along the arm. That is 103–217 mm from the yaw axis, because the fingertips sit 84 mm to its side, or 99–223 mm with the claw up to 5° off straight down. The elbow's −150° stop and the shoulder's 0° stop set those ends, not the guard. At yaw ±90° the near limit is 84 mm out along the arm (119 mm from the axis), because the jaws then pass the base's side wall. With the claw tilted further, the fingertips come within 16 mm of the desk from 90 mm (107 mm at yaw ±90°) to 271 mm from the yaw axis.
+- **Why the top of this guide says 84–263 mm** (98–220 mm with the claw within 5° of straight down): those count every pose that touches nothing with the fingertips 0–8 mm above the desk. The guard keeps every part 8 mm off the desk and the base instead. With the claw near straight down that only lifts the fingertips 8 mm; the same stops set the ends. At other claw angles the guard also gives up the nearest poses, where the claw points down and back right beside the base's wall, and its far end is further out only because the fingertips are higher.
 - **Without the Brio,** set `CAMERA_FITTED = false`: the wrist may then come closer to the desk.
 - The guard takes the desk to be level with the underside of the base, which is screwed down on it. It knows nothing else on the desk, nor your hands.
 
 **Check it** once the directions and trims are set:
 
-1. Type `i 0`, `r`, `s 0` (the arm straight out), then `e -90`. It should stop with `blocked: desk` when the forearm is about 26° below horizontal (31° without the camera).
-2. Type `r`, `e -150`, `w -30`, then `s 15`. It should stop with `blocked: base` at about `s 54`.
+1. Type `i 0`, `r`, `s 0` (the arm straight out), then `e -90`. It should stop with `blocked: desk` when the forearm is about 26° below horizontal (30° without the camera).
+2. Type `r`, `e -150`, `w -30`, then `s 15`. It should stop with `blocked: base` at about `s 57`.
 3. If either keeps going, type `x` and check the directions again. Type `r` and `i 60`.
 
 ### Holding something
@@ -299,14 +302,13 @@ The sketch can't feel an object, and an MG90S held stalled draws about 0.7 A and
 
 - **Grip with `h`.** Measure the object, open the claw wider (`g`), then type `h` and its width, e.g. `h 20`. The claw closes to 1.5 mm under the width (`GRIP_SQUEEZE_MM`).
 - **Squeeze limit.** Every move that closes the claw squeezes for at most 2 s (`GRIP_SQUEEZE_MS`). Then the servo eases off 1.5° (`GRIP_BACKOFF_DEG`, about 0.5 mm), holds there and prints `claw eased off to … mm`.
-- **`g 0` is for an empty claw.** On an object it stays stalled, because easing off 0.5 mm doesn't reach the object's width.
-- `f` holds its exact angle, for fitting the pinion.
+- **`g 0` (and `f`) is for an empty claw.** On an object it stays stalled, because easing off 0.5 mm doesn't reach the object's width.
 
-**Claw scale:** type `g 40` and measure the gap between the grip faces with calipers. It should be 40 ± 1 mm. If not, the claw servo turns more or less than 180° between its `minUs` and `maxUs`: set `DEG_PER_MM` to 3.183 × 40 / (the measured gap) and re-flash.
+**Claw scale:** type `g 40` and measure the gap between the grip faces with calipers. It should be 40 ± 1 mm. If not, the claw servo turns more or less than 180° between its `minUs` and `maxUs`: set `DEG_PER_MM` to 2.865 × 40 / (the measured gap) and re-flash.
 
 ### Parking
 
-Holding the arm straight out with the camera takes 42–54 % of the shoulder MG996R's stall torque, more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 1 N·mm.
+With the camera, holding the empty arm straight out takes 51–56 % of the shoulder MG996R's stall torque (sliced or solid parts, `torque_budget.py`), more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 2 N·mm.
 
 - `r` parks now. The base and the claw stay as they are, so a held object stays held.
 - After 60 s without a command (`IDLE_PARK_S`) the arm parks by itself and prints `idle 60 s: parking`. **So it can move on its own.**
@@ -330,23 +332,23 @@ The Brio plugs into your PC, and the ESP32's USB port takes commands from the sa
 - **In your own code,** `Arm(port)` gives `move()`, `status()`, `grip()`, `park()`, `approach()`, `idle_park()` and `stop()`. They use the sketch's `m`, `?`, `h`, `r`, `i` and `x`.
   - `move()` returns True when every joint arrived and False after `stop()`.
   - They raise `RuntimeError` when the sketch refuses (`err …`) or the guard ends the move (`blocked: …`), `TimeoutError` when the arm doesn't answer, and `ValueError` for a NaN or unreachable target.
-  - `ik()`, `fingertip()` and `plan_approach()` do the kinematics, including the fingertips' 79 mm sideways offset from the yaw axis. `guard_margins()` is the sketch's own guard, for planning.
+  - `ik()`, `fingertip()` and `plan_approach()` do the kinematics, including the fingertips' 84 mm sideways offset from the yaw axis. `guard_margins()` is the sketch's own guard, for planning.
 - **Keep one connection open** for a whole session, as the preview does, rather than running the script once per move. It opens the port with DTR and RTS off, which keeps most PCs from resetting the ESP32, but not all. After a reset the sketch restarts where the arm stopped, which takes about 2 s.
 - **Parking.** The arm parks after 60 s without a command. If your program pauses longer and the arm must hold its pose, call `status()` now and then, or `idle_park(0)` and then `idle_park(60)` when it finishes (the sketch keeps the setting).
 
 **Camera** (deep review 03, SYS-13):
 
 - The camera is mounted turned 90° to the arm. With the claw level, "up" is at the right of the raw image; the preview rotates it upright.
-- In Logi Tune, choose the **65° field of view**. The jaws then span most of the frame's width at full opening, and a 16 mm cube between the fingertips fills about 8 % of the frame.
-- **Check and lock the focus at about 75 mm**, the fingertips' distance from the lens. Logitech publishes no close-focus distance, and autofocus hunts on the jaws.
+- In Logi Tune, choose the **65° field of view**: the closest view of the jaws, where a 16 mm cube held between the fingertips fills about 8 % of the frame.
+- **Check and lock the focus at about 83 mm**, the fingertips' distance from the lens. Logitech publishes no close-focus distance, and autofocus hunts on the jaws.
   1. Start the preview with `--focus 200`.
   2. Step it with `,` and `.` until the fingertips are sharp.
   3. Pass that value to `open_camera()` in your own code.
-- **Crop the bottom 40 %.** The claw's own cover fills the bottom 40 % of the raw image: the right-hand side of the upright preview, past the orange line. In vision code, cut it off with `crop_claw(frame)`, on the raw frame.
+- **Crop the bottom 40 %.** The claw's own cover fills the bottom 38 % of the raw image at 65° (43 % at 90°): the right-hand side of the upright preview, past the orange line. In vision code, cut 40 % off with `crop_claw(frame)`, on the raw frame. If you use the 90° view, set `CLAW_ROWS` near the top of `arm_pc_control.py` to 0.43.
 
 ## 7. Safety
 
-- Keep your fingers out of the claw and the elbow while the arm is powered. The claw squeezes about 12 N per finger, and an MG996R stalls at about 1 N·m.
+- Keep your fingers out of the claw and the elbow while the arm is powered. At stall the claw pushes 10.8 N per jaw (21.6 N into one jaw if the other is blocked), and an MG996R stalls at about 1 N·m.
 - **The arm moves on its own:** it parks after 60 s without a command. Switch the 6 V off, or type `i 0`, before you reach into it.
 - The switch on the 6 V lead is the emergency stop. `x` stops a move from the keyboard.
 - The guard keeps the arm 8 mm off the desk, the base and the turntable, and off nothing else: not your hands, not the camera cable, not things on the desk. It is only right once the directions are set (§5), and `u` ignores it.

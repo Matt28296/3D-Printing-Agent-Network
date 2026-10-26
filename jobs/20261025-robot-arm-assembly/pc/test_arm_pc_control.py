@@ -32,39 +32,19 @@ pc = _load(HERE / "arm_pc_control.py", "arm_pc_control")
 
 @pytest.fixture(scope="module")
 def cad():
-    """The CAD's own frame constants, and assembly_check.py's place() chain for the fingertip."""
+    """The CAD's own modules and assembly_check.py's chain(), the arm's kinematics as the CAD checks place it."""
     pytest.importorskip("build123d")
-    np = pytest.importorskip("numpy")
+    pytest.importorskip("trimesh")
     sys.path.insert(0, str(ROOT / "tools"))
     sys.path.insert(0, str(JOB))
+    import assembly_check as AC
     import claw_frame as C
-    from hobby_parts import BRIO_4K, MG90S, MG996R, link_back_z
-    tt = _load(ROOT / "jobs/20261025-arm-turntable/model.py", "m_turntable")
-    up = _load(ROOT / "jobs/20261025-arm-upper-link/model.py", "m_upper")
-    fa = _load(ROOT / "jobs/20261025-arm-forearm/model.py", "m_forearm")
-    lb_mg, lb_sg = link_back_z(MG996R), link_back_z(MG90S)
-
-    def T(x=0.0, y=0.0, z=0.0):
-        m = np.eye(4); m[:3, 3] = (x, y, z); return m
-
-    def Rz(d):
-        c, s = math.cos(math.radians(d)), math.sin(math.radians(d))
-        m = np.eye(4); m[:2, :2] = [[c, -s], [s, c]]; return m
-
-    def frame(o, xd, zd):
-        x = np.array(xd, float); x /= np.linalg.norm(x)
-        z = np.array(zd, float); z /= np.linalg.norm(z)
-        m = np.eye(4); m[:3, 0], m[:3, 1], m[:3, 2], m[:3, 3] = x, np.cross(z, x), z, o
-        return m
-
-    def place_tip(q):                       # assembly_check.py place(), fingertip only
-        yaw, sh, el, wr = q[:4]
-        U = Rz(yaw) @ frame((tt.XS, tt.UP_Y + lb_mg, tt.ZS), (math.cos(math.radians(sh)), 0, math.sin(math.radians(sh))), (0, 1, 0))
-        F = U @ T(100, 0, up.T + lb_mg) @ Rz(-el)
-        G = F @ T(90, 0, fa.T + lb_sg) @ Rz(-wr)
-        return (G @ np.array([C.X_TIP - 3.0, 0.0, C.ZS, 1.0]))[:3]
-
-    return types.SimpleNamespace(C=C, tt=tt, up=up, fa=fa, lb_mg=lb_mg, lb_sg=lb_sg, BRIO=BRIO_4K, place_tip=place_tip)
+    from hobby_parts import MG90S, MG996R, link_back_z
+    mods = {k: AC.load_model(v) for k, v in AC.JOBS.items()}
+    place = AC.chain(mods)
+    return types.SimpleNamespace(AC=AC, C=C, mods=mods, tt=mods["turntable"], up=mods["upper"], fa=mods["forearm"],
+                                 lb_mg=link_back_z(MG996R), lb_sg=link_back_z(MG90S), MG90S=MG90S,
+                                 place_tip=lambda q: place(tuple(q[:4]) + (0.0,))[1])
 
 
 def random_pose(rng):
@@ -88,24 +68,36 @@ def test_geometry_constants_match_cad(cad):
 
 
 def test_guard_part_boxes_match_cad(cad):
-    """If the claw or the servo stack changes in the CAD, these fail: re-measure the part boxes with
-    firmware_test/guard_mesh_check.py, then update PARTS here and in arm_test.ino."""
-    C, P = cad.C, {i: p for i, p in enumerate(pc.PARTS)}
+    """If the claw or the servo stack changes in the CAD, these fail: re-measure the part boxes (and run
+    firmware_test/guard_mesh_check.py), then update PARTS here and in arm_test.ino."""
+    np = pytest.importorskip("numpy")
+    C, AC, P = cad.C, cad.AC, {i: p for i, p in enumerate(pc.PARTS)}
     y_fore = cad.tt.UP_Y + cad.lb_mg + cad.up.T + cad.lb_mg        # forearm's back face, sideways
     y_claw = y_fore + cad.fa.T + cad.lb_sg                            # claw frame's back face
     assert P[1][5:7] == pytest.approx((y_fore, y_fore + cad.fa.T))
-    assert P[3][5] == pytest.approx(y_claw) and P[3][2] == pytest.approx(C.X_F1) and P[3][4] == pytest.approx(C.HALF_Y)
-    assert P[4][2] == pytest.approx(C.PAD_X[1]) and P[4][3:5] == pytest.approx(C.MOUNT_Y)
-    t = math.radians(C.CAM_TILT)
-    assert P[5][1:5] == pytest.approx((C.CAM_XC - cad.BRIO.width / 2 * math.cos(t),
-                                       C.CAM_XC + cad.BRIO.width / 2 * math.cos(t) + cad.BRIO.height * math.sin(t),
-                                       -cad.BRIO.length / 2, cad.BRIO.length / 2), abs=0.01)
-    assert P[6][1:3] == pytest.approx((C.X_P0, C.X_P1))
-    assert P[7][2] == pytest.approx(C.NECK_X1 + C.NECK_Y - C.BLADE_T)
-    assert P[8][2] == pytest.approx(C.X_TIP)
-    # the jaws' y rules: racks max(28.27 - g/2, 15.71 + g/2), necks 14 + g/2, blades 6 + g/2
-    assert (-C.RACK_Y[0], C.RACK_Y[1]) == pytest.approx((15.71, 28.27), abs=0.01)
-    assert (C.NECK_Y, C.BLADE_T) == (14.0, 6.0)
+    # claw body: claw MG90S's case bottom .. the cover's front plate; the front plate's foot .. the top wall
+    assert P[3][1:7] == pytest.approx((C.X_B - cad.MG90S.tab_height, C.X_F1, -C.HALF_Y, C.HALF_Y,
+                                       y_claw + C.FRONT_Z0, y_claw + C.Z_TOP1))
+    # camera mount and the Brio with its plug and thumb screw: bounding boxes of the CAD solids in the claw frame
+    lo, hi = AC.to_mesh(cad.mods["camera_mount"].design()).bounds
+    assert P[4][1:7] == pytest.approx((lo[0], hi[0], lo[1], hi[1], y_claw + lo[2], y_claw + hi[2]), abs=0.01)
+    brio = AC.to_mesh(AC.brio_with_plug()).apply_transform(AC.T(C.CAM_XC, 0, C.CAM_ZC) @ AC.Ry(C.CAM_TILT))
+    lo, hi = brio.bounds
+    assert P[5][1:7] == pytest.approx((lo[0], hi[0], lo[1], hi[1], y_claw + lo[2], y_claw + hi[2]), abs=0.01)
+    # jaws: x bands rack | neck and its 45° step down to the finger root | root and taper | tip, each band's end
+    # padded by the kink fillet; sideways, jaw B is jaw A turned about the pinion axis
+    jaw_x = (C.X_P0, C.X_P1, C.NECK_X1 + C.NECK_Y - C.BLADE_T_ROOT + C.KINK_FILLET, C.TAPER_X1 + C.KINK_FILLET, C.X_TIP)
+    jaw_Y = (y_claw + 2 * C.ZS - C.Z_TOP0, y_claw + C.Z_TOP0)
+    for i, k in zip(range(6, 10), range(4)):
+        assert P[i][1:3] == pytest.approx(jaw_x[k:k + 2]) and P[i][5:7] == pytest.approx(jaw_Y), P[i]
+    lo, hi = AC.to_mesh(cad.mods["claw_jaw"].design()).bounds
+    assert (lo[0], hi[0], lo[1], hi[1]) == pytest.approx((C.X_P0, C.X_TIP, C.RACK_Y[0], C.RACK_Y[1]), abs=0.01)
+    assert hi[2] == pytest.approx(C.Z_TOP0, abs=0.01)
+    # their half-widths: racks max(31.42 - g/2, 25.13 + g/2), necks 24 + g/2, roots 12 + g/2, tips 6 + g/2
+    assert pc._part_y(2, 0, 0, 0) == pytest.approx((-C.RACK_Y[1], C.RACK_Y[1]), abs=0.01)
+    assert pc._part_y(2, 0, 0, 22) == pytest.approx((-(22 - C.RACK_Y[0]), 22 - C.RACK_Y[0]), abs=0.01)
+    assert [pc._part_y(k, 0, 0, 0)[1] for k in (3, 4, 5)] == [C.NECK_Y + C.NECK_FILLET, C.BLADE_T_ROOT, C.BLADE_T]
+    assert np.isfinite(lo).all()
 
 
 def test_ik_round_trip():
@@ -134,9 +126,10 @@ def test_ik_refuses_what_the_arm_cant_do():
 
 
 def test_camera_above_tips():
-    assert pc.camera_above_tips((0, 90, -150, -30)) == pytest.approx(64.2, abs=0.1)   # claw straight down
-    assert pc.camera_above_tips((0, 0, 0, 0)) < -40                                    # level: the camera hangs low
-    assert pc.camera_above_tips((0, 45, -60, -30), gap=0) == pytest.approx(13.5, abs=0.1)   # pitch -45
+    assert pc.camera_above_tips((0, 90, -150, -30)) == pytest.approx(83.35 - 17.79)    # straight down: 65.6 mm
+    assert pc.camera_above_tips((0, 0, 0, 0)) == pytest.approx(12 - 51)                # level: the camera hangs low
+    assert pc.camera_above_tips((0, 45, -60, -30), gap=0) == pytest.approx(14.5, abs=0.1)   # pitch -45
+    assert pc.camera_above_tips((0, 45, -60, -25), gap=0) < pc.CAMERA_ABOVE_MM             # pitch -40: too flat
 
 
 def test_plan_approach():
