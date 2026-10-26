@@ -9,6 +9,11 @@ between the frame's lower rail and this front plate. Each jaw's neck passes thro
 the front plate: slot A (upper) is open at the -y end, slot B (lower) at the +y end, so the jaws
 slide in from the ends after the cover is screwed on.
 
+Round 4 (claw strength round 3: the reversed rack-B push, opening stall or crash on jaw B, left the cover only through
+the 3 mm top wall behind the lip, SF 1.23): the second tie's post is 8 thick (x 14.35..22.35), reaches down to the
+frame's rail block (z 17.75) and is anchored there by one vertical M3 x 45 through the top wall, the lip and the post
+(Ø3.6 hole at ANCHOR_XY (18.35, 28), a teardrop pointing +y in print).
+
 Round 3 (claw DFM + strength round 2):
 - lip 4 -> 8 thick (GUIDE_T 8, x 14.35..22.35), and the first tie's post with it;
 - a second tie (post + web) at y 24..32 joins the upper piece to the lip (strength change 2); it is at the top of the
@@ -40,7 +45,7 @@ from build123d import Align, Box, BuildPart, BuildSketch, Circle, Keep, Location
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
-from claw_frame import (ACCESS_D, CORNER_FILLET, CORNER_FILLET_Y0, CRESCENT_Y, FRONT_SCREWS, FRONT_Z0, HALF_Y, LIP_X0,  # noqa: E402
+from claw_frame import (ACCESS_D, ANCHOR_XY, CORNER_FILLET, CORNER_FILLET_Y0, CRESCENT_Y, FRONT_SCREWS, FRONT_Z0, HALF_Y, LIP_X0,  # noqa: E402
                         M3_CLEAR, M25_CLEAR, NECK_Z, RAIL_IN, RAIL_X1, SLOT_A_END, SLOT_B_END, SLOT_CLR, SLOT_FILLET,
                         TIE2_Y, TIE_X0, TIE_Y, TIE_Z, TOP_CHAMFER, TOP_SCREWS, TOP_X0, X_F0, X_F1, Z_TOP0, Z_TOP1, ZS)
 
@@ -63,9 +68,12 @@ Z_CRES = math.sqrt(R_PASS ** 2 - CRESCENT_Y ** 2)   # 9.0: where the pass-throug
 # Each pillar stands on the lower half below its piece and stops SUP_GAP short of it; snap both off before assembly.
 SUP_X = (X_F0 + 0.5, X_F1 - 0.5)             # 4 mm along x, 0.5 in from both plate faces
 SUP_A = (-8.0, SLOT_A_END, ZA0 - 1.45, ZA0 - 0.15)      # y from, piece starts at y, z 36.8..38.1: under the piece
-SUP_B = (-6.0, CRESCENT_Y, ZB1 + 0.1, ZB1 + 1.1)        # beside slot A's end / beside slot B (z 16.35..17.35)
+SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)        # beside slot A's end / beside slot B (z 16.45..18.05, 1.6
+                                                        # thick, from y -8 where the plate is solid to z 19.13: carries
+                                                        # piece (b)'s whole first layer; claw DFM round 3 fix 1)
 SUP_GAP = 0.25                               # one layer (0.2) and a bit, under each piece
-TIE2_POST_T = 4.0              # second tie's post, x 18.35..22.35 (the first tie's 4 x 8 post gave SF >= 4.4 in round 2)
+TIE2_POST_T = 8.0              # second tie's post, x 14.35..22.35 like the first tie's (claw strength round 3: 4 -> 8)
+TIE2_FOOT_Z = ZS - RAIL_IN     # 17.75: the post's full-depth part (y 24..32) stands on the frame's rail block (was 19.25)
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -136,8 +144,10 @@ def second_tie():
     (full depth at y >= TIE2_Y[0]); the web grows from the post (its back) and from the front plate (its front), whose
     material starts just above the pass-through's 45° teardrop flanks (apex y 2k = 16.12)."""
     z0, z1, zp = ZS - TIE_Z, ZS + TIE_Z, ZS + RAIL_IN           # 19.25, 35.25, 36.75 (the post meets the lip)
-    yp = TIE2_Y[0] - (zp - z0)                                  # 6.5: the post's underside meets the lip here
-    post = _yz_prism([(yp - 0.01, zp + 0.01), (HALF_Y, zp + 0.01), (HALF_Y, z0), (TIE2_Y[0], z0)], RAIL_X1 - TIE2_POST_T,
+    yp = TIE2_Y[0] - (zp - z0)                                  # 6.5: where the web's growth from the post starts
+    zf = TIE2_FOOT_Z                                            # 17.75: the post's foot on the rail block (round 4)
+    yf = TIE2_Y[0] - (zp - zf)                                  # 5.0: the post's 45° underside meets the lip here
+    post = _yz_prism([(yf - 0.01, zp + 0.01), (HALF_Y, zp + 0.01), (HALF_Y, zf), (TIE2_Y[0], zf)], RAIL_X1 - TIE2_POST_T,
                      RAIL_X1 + 0.01)
     web = _box(RAIL_X1, X_F0 + 0.01, yp, HALF_Y, z0, z1)
     s2 = math.sqrt(0.5)
@@ -197,6 +207,9 @@ def design():
     d = M25_CLEAR + HOLE_COMP
     for (y, z) in FRONT_SCREWS:
         c -= Pos(X_F0 - 1, y, z) * Rot(0, 90, 0) * _teardrop_z(d, X_F1 - X_F0 + 2, "+y")
+    # anchor M3 x 45 (round 4): down through the top wall, the lip and the second tie's post to the rail block
+    d = M3_CLEAR + HOLE_COMP
+    c -= Pos(ANCHOR_XY[0], ANCHOR_XY[1], TIE2_FOOT_Z) * _teardrop_z(d, Z_TOP1 - TIE2_FOOT_Z, "+y")
     return c
 
 

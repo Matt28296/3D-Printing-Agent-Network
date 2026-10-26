@@ -18,7 +18,7 @@ Flat 10 mm plate on the shoulder servo's double-arm horn, carrying the elbow MG9
 | Horn slot | as turntable | +0.2/−0 | locating | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
 | Elbow window | 41.1 × 20.1 | +0.3/−0 | clearance | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
 | Lead notches (round 3) | 4.4 wide, 2.0 beyond each case end (printed) | +0.2/−0 | 4 × 1.3 mm lead ribbon; 1.84 CAD (≈ 2.04 printed) to the nearest pilot | HOLE_COMP +0.2 on holes/pockets | deep review 01 B1 (`MG996R.lead_notch_w/reach`); DFM round 4 note 3 |
-| Rail ribs (round 5) | 6 deep on the back face, as wide as the rails (6.85: window wall to plate edge), full depth x 64.2–117, 45° run-out to x 58.2 | +0.3/−0 | strength: rails 6.85 × 16 | none | links strength round 4 FIX (6 mm; 4 mm gives 2.93) |
+| Rail ribs (round 5) | 6 deep on the back face, as wide as the rails (6.85: window wall to plate edge), full depth x 64.2–117, 27° run-out (`RIB_TAPER` 12) to x 52.2 | +0.3/−0 | strength: rails 6.85 × 16; rib root fed into the plate over 12 mm | none | links strength round 4 FIX (6 mm; 4 mm gives 2.93); run-out: links strength round 5 FIX (`RIB_TAPER` 6 → 12) |
 
 Printed targets: servo windows +0.4 total (SG90 window ends +0.2), horn pockets +0.5 total, M3 clearance Ø3.4, M2 clearance Ø2.4, self-tap pilots Ø2.6 (MG996R tab screws) and Ø1.5 (SG90 tab screws). Every hole and pocket also gets **HOLE_COMP = +0.2 mm** in CAD (fdm-design-rules default; no library row yet), applied in tools/hobby_parts.py cutters and each model.py. Horn joints: the horn's centre screw is replaced by a longer one + washer through the link, clamping link and horn onto the spline (strength round 1).
 
@@ -29,7 +29,7 @@ SERVO, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, BED_CHAMFER, WIN_HW, WIN_
 - Horn-slot bridge 10.6 mm (DFM round 1) → printed front-face down, pocket opens upward
 - Sideways loads (strength round 1) → T 6→10, lightening slot removed, centre-screw clamp
 - The window rails carry the elbow servo's sideways moment past the window, because each MG996R tab row acts as a pin (links strength round 4, SF 1.49) → 6 mm back-face ribs on both rails (round 5)
-- Ribs behind the link could meet the turntable, the shoulder servo or its horn → they start 58 mm out from the shoulder axis, outside anything on the turntable; measured clearance ≥ 11.9 mm over the shoulder's 0–180°
+- Ribs behind the link could meet the turntable, the shoulder servo or its horn → they start 58 mm out from the shoulder axis (52.2 since round 6), outside anything on the turntable; measured clearance ≥ 11.9 mm over the shoulder's 0–180° (round 5); round 6: `assembly_check.py` re-run clean
 
 ## Round 3 (2026-10-26: deep reviews 01 B1/S2/S3/S4, 03 SYS-04)
 - **Lead notches (B1).** The elbow MG996R goes in from the front face, case bottom first; `lead="notch"` cuts a 4.4 × 2.0 mm (printed) notch at both case ends through the 10 mm plate. Printed ligament to the nearest Ø2.6 pilot: 2.05 mm. The plate prints flat, so the notches are vertical cuts (no overhang).
@@ -67,3 +67,13 @@ SERVO, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, BED_CHAMFER, WIN_HW, WIN_
   - the notch → pilot strip, 1.835 CAD;
   - the ribs: depth, rail depth 16.00 at the window's far end, width 6.85, extent, run-out, and nothing between them or at the shoulder end.
 - **Mass.** +4.57 cm³: 44.1 cm³, 56 g solid (was 50). It moves the arm's worst static shoulder torque from 553 to 562 N·mm (camera, sliced; torque_budget.json).
+
+## Round 6 (2026-10-26: links strength round 5, rib root SF 1.89). Fourth design attempt, user-approved fix
+- **What failed.** The rib root: the ribs' force (106 N at x 64.2 under the yaw stall) passed into the plate across the layers through the 6 mm, 45° run-out. Interlayer shear 3.30 MPa against 6.25: yaw stall **1.89**, hand push 2.47, spec §8 bench test (2) **1.07**.
+- **Change: `RIB_TAPER` 6 → 12**, exactly as the analyst's required change. Nothing else moves.
+  - The ribs still reach full depth at x 64.2; the run-out now slopes at 27° and meets the back face at **x 52.2** (was 58.2). It is under 1 mm tall for its first 2 mm.
+  - Analyst's what-if for 12: rib root yaw **3.78**, hand 4.94, weight ×2 13.2; §8 bench test **2.14**; turntable arm-up test 2.69; plain plate at the new foot 4.40.
+- **Printing.** The run-out is a ramp rising in print (front face down), so no support. mesh_check: 0.0 % overhang, no bridges, no thin walls, bed contact 3881 mm² (unchanged).
+- **Clearance.** The ribs now start 52.2 mm from the shoulder axis. `assembly_check.py` re-run (named poses and the shoulder sweep): clean.
+- **Checks.** `cad_checks.py` (14 checks, exit 0): the run-out probe now checks `RIB_TAPER` 12, depth 3 at x 58.2, 1 at x 54.2 and 0 at x 52.2.
+- **Mass.** +0.25 cm³: 44.3 cm³ (was 44.1).

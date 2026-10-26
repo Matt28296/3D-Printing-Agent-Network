@@ -76,9 +76,12 @@ check("ribs exactly as wide as the rails: window wall to plate edge (6.85)", abs
 check("ribs full depth from 5 mm before the window (x 64.2) to x 117",
       solid(RX0 + 0.1, YR, -RIB_H + 0.05) and solid(RX1 - 0.1, 12.0, -RIB_H + 0.05)
       and not solid(RX1 + 0.1, 12.0, -1.0), f"x {RX0:.1f}-{RX1:g}")
-check("45° run-out towards the shoulder, back face at x 58.2",
-      solid(RX0 - 3.0, YR, -2.95) and not solid(RX0 - 3.0, YR, -3.05) and not solid(RX0 - TAPER - 0.1, YR, -0.05),
-      "depth 3 at x 61.2, 0 at x 58.2")
+check("RIB_TAPER 12: 27° run-out towards the shoulder, back face at x 52.2 (links strength round 5)",
+      abs(TAPER - 12.0) < 1e-9 and abs(RX0 - TAPER - 52.2) < 0.01
+      and solid(RX0 - 6.0, YR, -2.95) and not solid(RX0 - 6.0, YR, -3.05)
+      and solid(RX0 - 10.0, YR, -0.95) and not solid(RX0 - 10.0, YR, -1.05)
+      and solid(RX0 - TAPER + 0.2, YR, -0.05) and not solid(RX0 - TAPER - 0.1, YR, -0.05),
+      f"depth 3 at x {RX0 - 6.0:.1f}, 1 at x {RX0 - 10.0:.1f}, 0 at x {RX0 - TAPER:.1f}")
 check("nothing on the back face between the ribs (elbow servo case and its lead)",
       not any(solid(x, y, -0.5) for x in (60.0, 68.0, 90.0, 112.0, 116.0) for y in (0.0, 5.0, -9.9)),
       "probes at z -0.5, |y| <= 9.9")

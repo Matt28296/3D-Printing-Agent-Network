@@ -9,8 +9,8 @@
     -32.0,
     0.0
   ],
-  "volume_mm3": 46477.38,
-  "area_mm2": 14986.02,
+  "volume_mm3": 46397.22,
+  "area_mm2": 15104.77,
   "solids": 1,
   "holes": [
     {
@@ -56,6 +56,20 @@
       "arc_deg": 355.0
     },
     {
+      "diameter": 2.7,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        18.35,
+        28.0,
+        10.75
+      ],
+      "arc_deg": 355.0
+    },
+    {
       "diameter": 2.2,
       "axis": [
         1.0,
@@ -86,7 +100,7 @@
   ],
   "min_z_mm": 0.0,
   "watertight": true,
-  "mesh_faces": 5736,
+  "mesh_faces": 6240,
   "fits_bed": true,
   "bed_mm": [
     250,

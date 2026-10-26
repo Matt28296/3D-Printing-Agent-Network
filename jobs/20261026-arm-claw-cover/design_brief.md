@@ -33,10 +33,10 @@ So `build()` adds two **breakaway pillars** (`supports()`; `design()` is the cov
 | Pillar | y (from → top) | z (claw G) | Under |
 |---|---|---|---|
 | A | −8 → 6.25 (emerges at the cut-back's floor, y −7) | 36.8…38.1 (1.3 thick) | piece (a), first layer at y 6.5: z 36.62…38.26 |
-| B | −6 → 6.75 (emerges between y −5.8 and −5 as the pass-through's surface crosses it) | 16.35…17.35 (1.0 thick) | piece (b), first layer at y 7.0: z 16.26…18.25 |
+| B | −8 → 6.75 (its foot inside the plate, solid to z 19.13 at y −8; emerges between y −6.7 and −5 as the pass-through's surface crosses it) | 16.45…18.05 (1.6 thick; was 16.35…17.35) | piece (b), whole first layer (print z 39.0–39.2, y 7.1): z 16.25…18.33, 0.20 / 0.28 beyond the pillar |
 
 **Removal and checks:**
-- Both pillars stand inside the pass-through, clear of both slots: z ≤ 38.1 against slot A's 38.25, and z ≥ 16.35 against slot B's 16.25.
+- Both pillars stand inside the pass-through, clear of both slots: z ≤ 38.1 against slot A's 38.25, and z ≥ 16.45 against slot B's 16.25.
 - They block only the pinion. BUILD_GUIDE §4 step 9 snaps them off, and trims any nub flush, before the cover goes on.
 - They are the part's only supports: `print_requirements.json` now requires `support_material` 0, so the slicer adds none of its own.
 - The layer check of part.stl (0.2 mm layers, 0.04 mm raster, each layer compared with the one below grown 0.3 mm) finds, besides the two pieces over their pillars' one-layer gap:
@@ -87,10 +87,11 @@ The strength analyst checks (a)–(c) at the 12.5 MPa across-layer allowable, as
 | Slot A / slot B | z 38.25–48.5 / 5.75–16.25 | +0.2/−0 | 0.25 around the 10 mm necks | — | claw_frame.py |
 | Pinion pass-through | Ø22.8 CAD, ≈22.6 printed | +0.3/−0 | pinion Ø21.7: 0.55 CAD / 0.45 printed radial | HOLE_COMP +0.2 | deep review 03 SYS-01 (≥ 20.6) |
 | Top / front screw holes | Ø3.6 / Ø3.0 | +0.2 | M3 / M2.5 clearance | HOLE_COMP +0.2 | fdm-design-rules default |
-| **Second tie** | y 24…32; post x 18.35…22.35, z 19.25…36.75; web x 22.35…34.85, z 19.25…35.25 | ±0.2 | 1.15 from both racks' tips | — | strength round 2 change 2 |
-| **Support pillars** | see the table above | — | removed before assembly | — | DFM round 2 fix 1 |
+| **Second tie** | y 24…32; post **x 14.35…22.35 (8 thick), z 17.75…36.75** (round 4; was x 18.35…22.35, z 19.25…); web x 22.35…34.85, z 19.25…35.25 | ±0.2 | 1.15 from both racks' tips; **post foot on the frame's rail block, zero nominal gap** (dry fit: 0.1 feeler) | — | strength round 2 change 2; claw strength round 3 required change |
+| **Anchor hole (round 4)** | Ø3.6 CAD at **(x 18.35, y 28)**, vertical through the top wall, lip and post (z 17.75…51.5), teardrop pointing +y in print | +0.2 | M3 × 45 socket head clearance | HOLE_COMP +0.2 | claw strength round 3 required change |
+| **Support pillars** | see the table above | — | removed before assembly | — | DFM round 2 fix 1; pillar B: DFM round 3 fix 1 |
 
-measure_holes (geometry.json): Ø22.8 pass-through, 2 × Ø3.6, 2 × Ø3.0, all teardrops (270°). `cad_checks.py` proves the plate, top wall, lip, slots, pass-through, both ties with their 45° undersides, the tie's clearance to the pinion, and the pillars, which exist only as printed.
+measure_holes (geometry.json): Ø22.8 pass-through, 3 × Ø3.6 (2 top + the anchor, round 4), 2 × Ø3.0, all teardrops (270°). `cad_checks.py` proves the plate, top wall, lip, slots, pass-through, both ties with their 45° undersides, the tie's clearance to the pinion, and the pillars, which exist only as printed.
 
 ## Strength, predicted
 From the strength-analyst's `strength_calc.py` and its what-if lines, on the round-3 parameters. The analyst's script does not model the second tie or the longer M2.5 engagement yet; those lines are its own what-if formulas.
@@ -105,19 +106,54 @@ From the strength-analyst's `strength_calc.py` and its what-if lines, on the rou
 The cover's lowest predicted SF is **3.58**: row 12, rack A's +y end on the upper piece near slot A's end (one jaw blocked). Without the second tie, the upper piece's own rows 8–9 would be 2.00 / 2.09; the tie carries that push.
 
 ## Parameters exposed by model.py
-- model.py: HOLE_COMP, BED_CHAMFER, TO_PRINT, APEX_R, R_PASS, ZA0/ZA1, ZB0/ZB1, Z_CRES, SUP_X, SUP_A, SUP_B, SUP_GAP, TIE2_POST_T.
-- shared, in claw_frame.py: X_F0, X_F1, FRONT_Z0, Z_TOP0, Z_TOP1, TOP_X0, RAIL_IN, LIP_X0, RAIL_X1, GUIDE_T, NECK_Z, SLOT_CLR, SLOT_A_END, SLOT_B_END, SLOT_FILLET, ACCESS_D, CRESCENT_Y, TIE_X0, TIE_Y, TIE2_Y, TIE_Z, CORNER_FILLET, CORNER_FILLET_Y0, TOP_CHAMFER, TOP_SCREWS, FRONT_SCREWS, M3_CLEAR, M25_CLEAR.
+- model.py: HOLE_COMP, BED_CHAMFER, TO_PRINT, APEX_R, R_PASS, ZA0/ZA1, ZB0/ZB1, Z_CRES, SUP_X, SUP_A, SUP_B, SUP_GAP, TIE2_POST_T, TIE2_FOOT_Z.
+- shared, in claw_frame.py: ANCHOR_XY (round 4), X_F0, X_F1, FRONT_Z0, Z_TOP0, Z_TOP1, TOP_X0, RAIL_IN, LIP_X0, RAIL_X1, GUIDE_T, NECK_Z, SLOT_CLR, SLOT_A_END, SLOT_B_END, SLOT_FILLET, ACCESS_D, CRESCENT_Y, TIE_X0, TIE_Y, TIE2_Y, TIE_Z, CORNER_FILLET, CORNER_FILLET_Y0, TOP_CHAMFER, TOP_SCREWS, FRONT_SCREWS, M3_CLEAR, M25_CLEAR.
 
 ## Risks
-- **The front plate is two pieces**, joined only through the ties and the top wall: both ties are in the strength check, and the claw proof test checks them.
+- **The front plate is two pieces**, joined only through the ties and the top wall: both ties are in the strength check, and the claw proof test checks them. Since round 4 the second tie's post is also anchored on the frame's rail block by an M3 × 45.
+- **The anchored post must seat** (round 4): post foot and top-wall underside are 30.75 apart on the cover, the same as the rail block's top and the bulkhead's top on the frame, at zero nominal gap. BUILD_GUIDE §4 step 9 checks it with a 0.1 mm feeler before the anchor is driven, and the anchor is driven snug only.
 - **The two support pillars must come off before the pinion goes in.** BUILD_GUIDE §4 step 9 says so, and they sit inside the pass-through where they are easy to reach with pliers. A nub left on the pass-through's surface must be trimmed flush: the pinion clears it by 0.45 mm.
 - **Long slots in a vertical wall would bridge 32 mm:** printed standing on its end, so the slots are vertical.
 - **Tall thin print:** 5 mm brim, PETG first layer.
 - **Assembly order is fixed** (cover before the jaws, pinion last): `claw_sequence_check.py` sweeps every step with exact solids, 0 mm³.
-- **The cover is heavier:** 31.7 cm³ against 22.5 (lip +3.0, second tie +4.3, plate +1.3). The payload table uses it.
+- **The cover is heavier:** 32.8 cm³ as fitted since round 4 (32.9 as printed, with the pillars) against 22.5 (lip +3.0, second tie +4.3, plate +1.3). The payload table uses it.
 - **Spec §3 values that changed:**
   - front plate inner face x 32.85 → 34.85, plate x 34.85…39.85, z −6…48.5;
   - lip x 14.35…22.35 (was 18.35);
   - a second tie at y 24…32;
   - front screws M2.5 × 16;
   - envelope 39.85 × 64 × 57.5 (print 39.85 × 57.5 × 64).
+
+## Claw DFM round 3 fix 1 (2026-10-26): pillar B carries all of piece (b). User-approved fix
+- **What failed (design_review.md item 6).** Pillar B (1.0 thick, z 16.35…17.35, from y −6) carried only the lower half of piece (b)'s first layer (print z 39.0–39.2, z 16.25…18.33). At print z 39.1, 4.24 mm² of the 10.4 mm² layer started in mid-air, up to 1.13 mm from the pillar: a strip along the pass-through edge over the full plate thickness.
+- **Change (model.py):** `SUP_B = (-6.0, CRESCENT_Y, ZB1 + 0.1, ZB1 + 1.1)` → `SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)`, exactly as the reviewer's fix 1.
+  - The pillar is now G y −8 → 6.75, z 16.45…18.05 (1.6 thick), x 35.35…39.35 as before.
+  - It starts at y −8, where the plate is solid up to the pass-through at z 19.13, so the whole 1.6 mm foot grows out of the lower piece.
+  - Unchanged: SUP_GAP 0.25 (one 0.2 mm layer under the piece), the clearance to slot B, the 1.6 × 4 mm section that snaps with pliers, BUILD_GUIDE §4 step 9, and `design()`, so `claw_sequence_check.py` stays valid.
+- **Layer check, re-run on the new part.stl** (0.2 mm layers on a 0.04 mm raster; support = the union of the 3 layers below, so each pillar's top counts across its gap; allowance 0.3 mm). Every patch beyond 0.3 mm:
+
+  | Print z | Where | Area | Max distance | Status |
+  |---|---|---|---|---|
+  | 38.5 | piece (a)'s first layer, the 0.5 mm x-inset strips at both plate faces | 0.40 + 0.33 mm² | 0.54 | as round 3, the reviewer's allowed x-inset |
+  | 39.1 | piece (b)'s first layer, the 0.5 mm x-inset strips at both plate faces only | 0.52 + 0.44 mm² | 0.59 (the strips' corners) | **was 4.24 mm², up to 1.13 mm, across the full width** |
+  | 41.1 | end of the corner fillet | 0.20 mm² | 0.60 | as round 3 |
+  | 42.9–43.1 | slot A's r 1.5 roof apex | ≤ 2.6 mm² | 0.56 | as round 3 |
+  | 47.5 | pass-through's teardrop apex | 4.6 mm² | 0.76 | as round 3 |
+
+  No first layer of either piece now lies more than 0.3 mm beyond its pillar except at the 0.5 mm x-inset at the plate faces. Piece (b) overhangs pillar B by 0.20 mm (below) and 0.28 mm (above).
+- **mesh_check:** overhang 0.27 %, bed contact 703.6 mm², thin walls 0, as before.
+- **Checks.** `cad_checks.py` (exit 0): the pillar probe now tests z 16.45…18.05 from y −8, and two new checks prove pillar B's extent and its foot in the plate, and that piece (b)'s first layer stays within 0.3 mm of it in z.
+- **Mass as printed:** 31.82 cm³ (+0.03, the pillar only; snapped off before assembly).
+
+## Round 4 (2026-10-26: claw strength round 3, cover SF 1.23). User-approved
+- **What failed (strength.md).** The reversed rack-B push lands on the upper piece's bottom strip at z 17.2: 27 N under an opening stall on jaw B (17.2 N in the 13 N desk crash). Its reaction is on the frame, and the cover could pass it there only through the 3 mm top wall behind the lip (SF **1.23**), the M3 holes over the bulkhead (1.53) and the first tie's post (1.56).
+- **Change: the second tie's post is anchored on the frame's rail block**, exactly as the analyst's smallest fix.
+  - `TIE2_POST_T` 4 → **8**: the post is x 14.35…22.35, like the first tie's.
+  - `TIE2_FOOT_Z` = ZS − RAIL_IN = **17.75**: its full-depth part (y 24…32) reaches down to the rail block's top (was 19.25). Its 45° underside moves down 1.5 with it and now meets the lip at y 5; at y 5.9 it is 2.5 mm over the claw servo's case. The web is unchanged.
+  - A vertical **Ø3.6 CAD** hole (M3_CLEAR + HOLE_COMP) at **`ANCHOR_XY` (18.35, 28)** (`claw_frame.py`, shared with the frame's pilot) through the top wall, the lip and the post, z 17.75…51.5, a teardrop pointing +y in print like the top holes. Walls: 2.2 to both post faces; 1.45 from the teardrop's tip to the cover's +y end. It is clear of the camera mount (y ≤ 22) and of rack A (x ≥ 22.6).
+  - **Hardware:** one M3 × 45 socket head, driven snug (≤ 150 N, about 0.09 N·m) after the cover's other screws, into the frame's new Ø2.7 × 14 pilot: 33.75 through the cover, 11.25 engaged. BUILD_GUIDE §1 and §4 step 9 (with the 0.1 mm seat check and how to reach it: from above with a 2.5 mm L-key, before the camera goes on).
+- **Predicted (analyst's what-if, 64 variants):** every cover row **≥ 4.64** (the first tie's post); M3 pull-out from the rail block **4.42** on the preload (4.11 with the lift); the 8 × 8 post round its hole 9.0; the frame's block root with the pilot 5.93.
+- **Printing.** The post grows from the lip at 45° (G +y is up), so it needs no support. mesh_check: overhang 0.26 % (same 42.6 mm² area), bed contact 703.6 mm², widest bridge 2.0 mm, thin walls 0. The layer check (above) finds exactly the same 9 patches as before this round: the post and the anchor hole add none.
+- **Assembly.** `claw_sequence_check.py` (exact solids): cover lowered 57 positions, both jaw slide-ins 91 positions each, the swept pinion, the stroke 0–44 every 1 mm and one tooth pitch in 0.1 mm steps: **0 mm³ everywhere**, `ok`. The post stays 0.25 behind both racks (x 22.35 against 22.6), like the lip. `assembly_check.py`: every named pose and sweep collision-free, `claw: clear`.
+- **Checks.** `cad_checks.py` (20 checks, exit 0) adds: the 8 mm post, its foot at z 17.75 over y 24…32, its 45° underside (y 5 → 24), the anchor hole (Ø3.6 by `measure_holes`, open from z 17.75 to 51.5, teardrop +y) and the walls round it.
+- **Mass.** +1.12 cm³: 32.8 cm³ as fitted (was 31.7), 32.9 as printed with the pillars. About 1.4 g more at the end of the arm; `torque_budget.json` has not been re-run for it.

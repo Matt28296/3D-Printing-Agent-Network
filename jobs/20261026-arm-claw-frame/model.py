@@ -10,6 +10,10 @@ face (x = 10) with the shaft on the claw axis (y 0, z ZS). Rack B rides on the w
 face, backed by the lower rail. The cover screws on top (2 x M3 into the bulkhead top) and at
 the front (2 x M2.5 into the wrist plate's front edge).
 
+Round 4 (claw strength round 3, the cover's required fix): one Ø2.5 printed (Ø2.7 CAD) x 14 M3 pilot, vertical, in
+the rail block's top at ANCHOR_XY (18.35, 28) for the M3 x 45 that anchors the cover's second-tie post on the block.
+It is 2.65 mm from the block's front face and its +y end; the block's rack-side root keeps SF 5.93 (frame strength).
+
 Round 3 (claw DFM + strength round 2):
 - the rail behind rack B is a block from the bulkhead's front face (x 10..22.35), not a 4 mm wall: its root gave
   SF 0.65 under one jaw blocked (strength fix 1); RAIL_X0 = X_B in claw_frame.py;
@@ -40,7 +44,7 @@ from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Location, Pl
 from cadlib import HOLE_COMP_DEFAULT, teardrop_cutter, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
-from claw_frame import (BULK_T, FRONT_SCREWS, HALF_Y, M3_PILOT, M25_PILOT, PAD_T, RAIL_IN, RAIL_X0,  # noqa: E402
+from claw_frame import (ANCHOR_PILOT_DEPTH, ANCHOR_XY, BULK_T, FRONT_SCREWS, HALF_Y, M3_PILOT, M25_PILOT, PAD_T, RAIL_IN, RAIL_X0,  # noqa: E402
                         RAIL_X1, SERVO, T_W, TOP_SCREWS, WINDOW_ROOF, WRIST_HORN, WRIST_WASHER_OD, X_B, X_F0, X_REAR,
                         Z_TOP0, ZS)
 
@@ -147,6 +151,10 @@ def design():
     for (x, y) in TOP_SCREWS:                                                  # cover (+ camera mount) screws
         f -= Pos(x, y, Z_TOP0 - TOP_PILOT_DEPTH) * Cylinder(d / 2, TOP_PILOT_DEPTH + 1,
                                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
+    d = M3_PILOT + HOLE_COMP                                                   # cover anchor M3 x 45 (round 4):
+    z_blk = ZS - RAIL_IN                                                       # vertical in print, so a plain hole
+    f -= Pos(ANCHOR_XY[0], ANCHOR_XY[1], z_blk - ANCHOR_PILOT_DEPTH) * Cylinder(
+        d / 2, ANCHOR_PILOT_DEPTH + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
     d = M25_PILOT + HOLE_COMP
     for (y, z) in FRONT_SCREWS:                                                # cover front screws: flat-top teardrops
         td = teardrop_cutter(d, 2 * FRONT_PILOT_DEPTH, axis="X", center=(X_F0, y, z))
