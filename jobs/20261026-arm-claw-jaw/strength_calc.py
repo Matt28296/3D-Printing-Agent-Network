@@ -676,6 +676,8 @@ print(f"stall rack force {F1:.1f} N (one jaw blocked), {F1 / 2:.1f} N per jaw (b
 def jaw_cases(g, record=True):
     """All verdict rows of the jaw for geometry g. Returns [(name, sf, req)]."""
     F = g["F_RACK"]
+    Q_GRIP = (g["X_TIP"] - 3.0, 0.0, 0.0)
+    Q_TIP = (g["X_TIP"], -CF.BLADE_T / 2, 0.0)
     rows = []
     for lbl, f, req in ((f"grip at stall, one jaw blocked, {F:.0f} N", F, SF_STATIC),
                         (f"grip at stall, both jaws, {F / 2:.0f} N each (cyclic)", F / 2, SF_SUSTAINED)):
@@ -736,9 +738,20 @@ CANDS = [
     jaw_geom(label="B: as A, rack 4 mm taller (RACK_BACK 6 -> 10) so the neck is 20 x 10",
              NECK_Y=20.0, NECK_Z=(CF.RACK_ROOT, CF.RACK_OUT + 4.0), GUSSET_FULL=True, Z_TOP=CF.RACK_OUT + 4.0,
              KT_ROOT=1.5, KT_KINK=1.5, BLADE_T=lambda x: 10.0 if x <= 51.15 else max(6.0, 10.0 - (x - 51.15) * 0.4)),
+    jaw_geom(label="D: as C with the rack only 2 mm taller (RACK_BACK 6 -> 8): neck 20 x 8",
+             NECK_Y=20.0, NECK_Z=(CF.RACK_ROOT, CF.RACK_OUT + 2.0), GUSSET_FULL=True, Z_TOP=CF.RACK_OUT + 2.0,
+             KT_ROOT=1.5, KT_KINK=1.5, BLADE_T=lambda x: 12.0 if x <= 51.15 else max(6.0, 12.0 - (x - 51.15) * 0.4)),
     jaw_geom(label="C: as B, finger 12 thick to x 51 then 6 by x 66",
              NECK_Y=20.0, NECK_Z=(CF.RACK_ROOT, CF.RACK_OUT + 4.0), GUSSET_FULL=True, Z_TOP=CF.RACK_OUT + 4.0,
              KT_ROOT=1.5, KT_KINK=1.5, BLADE_T=lambda x: 12.0 if x <= 51.15 else max(6.0, 12.0 - (x - 51.15) * 0.4)),
+    jaw_geom(label="C5: C with the cover's front plate 5 thick (FRONT_T 3 -> 5): neck 2 mm longer, fingertip at x 78.15",
+             NECK_Y=20.0, NECK_Z=(CF.RACK_ROOT, CF.RACK_OUT + 4.0), GUSSET_FULL=True, Z_TOP=CF.RACK_OUT + 4.0,
+             KT_ROOT=1.5, KT_KINK=1.5, NECK_X1=CF.NECK_X1 + 2.0, X_TIP=CF.X_TIP + 2.0,
+             BLADE_T=lambda x: 12.0 if x <= 53.15 else max(6.0, 12.0 - (x - 53.15) * 0.4)),
+    jaw_geom(label="D5: D with FRONT_T 5",
+             NECK_Y=20.0, NECK_Z=(CF.RACK_ROOT, CF.RACK_OUT + 2.0), GUSSET_FULL=True, Z_TOP=CF.RACK_OUT + 2.0,
+             KT_ROOT=1.5, KT_KINK=1.5, NECK_X1=CF.NECK_X1 + 2.0, X_TIP=CF.X_TIP + 2.0,
+             BLADE_T=lambda x: 12.0 if x <= 53.15 else max(6.0, 12.0 - (x - 53.15) * 0.4)),
 ]
 for g in CANDS:
     rows = jaw_cases(g)

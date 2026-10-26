@@ -695,3 +695,10 @@ for m, z, b in ((1.0, 18, 8.0), (1.0, 18, 10.0), (1.0, 18, 12.0), (1.0, 24, 8.0)
     sl = F / (b * m * Y_LEWIS[z])
     print(f"  m {m}, z {z} (R_P {m * z / 2:.2f}, rack force {F:.1f} N), face {b:.0f}: actual tooth SF {allow_mpa(False) / s:.2f} / "
           f"{2 * allow_mpa(False) / s:.2f}; standard root SF {allow_mpa(False) / sl:.2f} / {2 * allow_mpa(False) / sl:.2f}")
+for dw in (5.0, 6.0):
+    A_w = math.pi / 4 * (dw ** 2 - (HORN.horn_screw_clear_d + P.HOLE_COMP) ** 2)
+    print(f"  M2 clamp on a D{dw:.0f} washer (counterbore HEAD_D {P.HEAD_D} -> {dw + 0.4:.1f}, HEAD_H {P.HEAD_H} -> 2.0): "
+          f"SF {allow_mpa(False) / (P_CLAMP / A_w):.2f} (sustained, req 4)")
+for bl in (0.1, 0.15):
+    print(f"  BACKLASH {bl} per member: flanks wedge after {2 * bl / (2 * math.tan(A20)):.3f} mm radial vs tips bottoming "
+          f"after {0.25 * CF.M:.3f} mm (margin {2 * bl / (2 * math.tan(A20)) - 0.25 * CF.M:+.3f})")

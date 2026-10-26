@@ -657,8 +657,8 @@ for t in (4.5, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0):
     print(f"  T_V {t:4.1f}: service cases w >= {a if a else '>40'}   with the drop w >= {b if b else '>40'}")
 
 # --- advisory 3: the required-change set -----------------------------------------------------------------------
-FIX_T, FIX_W = 10.0, 12.0
-FIX_TC, FIX_WASH, FIX_TAB = 7.0, 10.0, 10.0
+FIX_T, FIX_W = 10.0, 13.0
+FIX_TC, FIX_WASH, FIX_TAB = 8.0, 10.0, 10.0
 fix_x0 = WIN_X[0] - FIX_W
 fix_y0 = H.Y_F - FIX_T
 print(f"\nrequired-change set: T_V {FIX_T} (plate y {fix_y0:.1f}..{H.Y_F}), posts {FIX_W} wide (plate x {fix_x0:.2f}.."
