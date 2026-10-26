@@ -9,15 +9,154 @@
     -38.0,
     -0.0
   ],
-  "volume_mm3": 87993.92,
-  "area_mm2": 62439.3,
+  "volume_mm3": 115008.31,
+  "area_mm2": 61829.97,
   "solids": 1,
-  "holes": {
-    "error": "type NoneType doesn't define __round__ method"
-  },
+  "holes": [
+    {
+      "diameter": 6.4,
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "point_on_axis": [
+        -16.75,
+        0.0,
+        23.32
+      ],
+      "arc_deg": 270.0
+    },
+    {
+      "diameter": 2.8,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        -13.0,
+        -30.0,
+        34.0
+      ],
+      "arc_deg": 355.0
+    },
+    {
+      "diameter": 2.8,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        -13.0,
+        30.0,
+        34.0
+      ],
+      "arc_deg": 355.0
+    },
+    {
+      "diameter": 10.7,
+      "axis": [
+        -0.0,
+        1.0,
+        -0.0
+      ],
+      "point_on_axis": [
+        0.0,
+        0.0,
+        12.0
+      ],
+      "arc_deg": 270.0
+    },
+    {
+      "diameter": 3.6,
+      "axis": [
+        -0.0,
+        1.0,
+        -0.0
+      ],
+      "point_on_axis": [
+        40.0,
+        0.0,
+        12.0
+      ],
+      "arc_deg": 270.0
+    },
+    {
+      "diameter": 3.6,
+      "axis": [
+        -0.0,
+        1.0,
+        -0.0
+      ],
+      "point_on_axis": [
+        80.0,
+        0.0,
+        12.0
+      ],
+      "arc_deg": 270.0
+    },
+    {
+      "diameter": 2.8,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        100.0,
+        -30.0,
+        34.0
+      ],
+      "arc_deg": 355.0
+    },
+    {
+      "diameter": 2.8,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        100.0,
+        30.0,
+        34.0
+      ],
+      "arc_deg": 355.0
+    },
+    {
+      "diameter": 16.6,
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "point_on_axis": [
+        132.75,
+        -13.0,
+        21.32
+      ],
+      "arc_deg": 270.0
+    },
+    {
+      "diameter": 16.6,
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "point_on_axis": [
+        132.75,
+        13.0,
+        21.32
+      ],
+      "arc_deg": 270.0
+    }
+  ],
   "min_z_mm": -0.0,
   "watertight": true,
-  "mesh_faces": 13324,
+  "mesh_faces": 10068,
   "fits_bed": true,
   "bed_mm": [
     250,
