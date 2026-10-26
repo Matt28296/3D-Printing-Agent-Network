@@ -1,0 +1,17 @@
+{
+ "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+ "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
+ "filament_profile": "profiles/filament/Prusament_PETG.ini",
+ "model": "part.stl",
+ "overrides": {
+  "perimeters": 4,
+  "top_solid_layers": 6,
+  "bottom_solid_layers": 6,
+  "fill_density": "100%",
+  "fill_pattern": "rectilinear",
+  "layer_height": 0.2,
+  "elefant_foot_compensation": 0.2
+ },
+ "copies": 1,
+ "rationale": "Stock QUALITY + Prusament PETG; solid (100 % rectilinear: gyroid can't reach 100 %) because the teeth and horn pocket carry the grip torque; EFC 0.2 with the 0.25 mm bed chamfer keeps the bottom tooth edges true."
+}

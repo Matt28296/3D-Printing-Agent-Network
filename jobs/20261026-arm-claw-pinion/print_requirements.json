@@ -11,7 +11,7 @@
   "layer_height": 0.2
  },
  "equals": {
-  "fill_pattern": "gyroid"
+  "fill_pattern": "rectilinear"
  },
  "nozzle_temp_c": [
   230,

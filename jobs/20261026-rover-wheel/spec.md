@@ -7,23 +7,23 @@ Carries the rover on the bottom track run (rim r 13.1 meets the links' inner fac
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: Ø32.2 × 32.5 mm, running bore Ø3.4.
-- Fasteners used: Rides on an M3×40 bolt between the wall nut and a washer + nyloc nut
+- Mating parts and their dimensions: Ø32.2 × 32.5 mm, running bore Ø3.5 printed.
+- Fasteners used: Rides on an M3 × 45 bolt between the wall nut (with a washer) and a washer + nyloc nut
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Rim radius | 13.10 | ±0.15 | meets the link inner face 13.18 below the axle |
-| Running bore | Ø3.2 printed | +0.15/−0 | running fit on M3 |
+| Running bore | Ø3.5 printed | +0.15/−0 | running fit on M3, 0.5 clearance |
 
-Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10, face screw spacing 9, shaft Ø3 with D-flat 2.5, shaft length 10 from the face) and your 2 × 18650 holder (77 × 41 × 21) before printing; give Claude any difference over 0.3 mm. Track pins are 1.75 mm filament (PLA or PETG), cut 25 mm long.
+Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10 × 9, can Ø12 with 10 mm flats, shaft Ø3 with a 2.5 mm D-flat, 10 mm long from the gearbox face) and your 2 × 18650 holder (77 × 41 × 21) before printing, and give Claude any difference over 0.3 mm. Track pins are **2 mm steel rod** (silver steel, drill rod or piano wire), cut 23.5 mm and deburred.
 
 ## 4. Loads
-Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) → up to **10 N of track pull per side** at the 16.2 mm sprocket pitch radius; rover mass ≈0.5 kg (4.9 N); skid-steer turning drags the tracks sideways (μ ≈ 0.6 → ≈3 N per track); a **30 cm drop** off a desk is taken as 5 × weight on one track (≈25 N), short-term.
+Design loads (strength round 1 re-derived them; see the strength.md files): N20 stall ≈160 N·mm at the 7.4 V pack → ≈10 N of sprocket pull per side at the 16.18 mm pitch radius, 14.9 N in the tight run with a 5 N pretension (sustained); rover ≈0.58 kg (5.7 N); skid-steer drag 3 N per track. **Drop: 5 cm onto a hard floor** (the design limit; strength round 1 showed the printed pins and hubs can't survive a 30 cm desk fall): 5 mm stopping distance → 20 g peak → ≈14 N per axle flat, ≈29 N per axle on a corner, short-term.
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Drop case | 25 N radial | rim → bore bearing | short-term | seconds |
+| Drop (5 cm) | ≈14 N flat / 29 N corner, radial | rim → bore bearing | short-term | seconds |
 | Skid-steer | 3 N axial on a flange | flange root | cyclic | hours |
 
 ## 5. Environment

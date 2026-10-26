@@ -7,14 +7,14 @@ L-shaped bracket under the coxa MG90S horn: a hub plate round the horn and an ar
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 53 × 25 × 33.8 mm. Interfaces: SG90-size arm-horn pocket + Ø2.4 clamp hole on the bed face; MG90S window 22.9 × 12.8 with a 45° roof and 2 teardrop pilots in the vertical plate.
-- Fasteners used: Coxa horn: M2×12 centre screw + Ø6 washer from below (clamps bracket + horn onto the spline) + 1 small screw through the horn arm; femur servo: 2 tab screws (M2×8 self-tapping recommended)
+- Mating parts and their dimensions: 53 × 25 × 37.8 mm. Interfaces: SG90-size arm-horn pocket (2 deep, 3 mm floor) + Ø2.6 clamp hole on the bed face; MG90S window 22.9 × 12.6 CAD with a 45° roof and 2 teardrop pilots in the vertical plate (femur axis 17 below the back face); 45° × 5 mm root gusset on the tab side along the plate; r2.5 fillet where the arm leaves the hub.
+- Fasteners used: Coxa horn: **M2×10** centre screw + Ø6 washer from below (0.5 washer + 3 mm floor + horn hub + spline thread; the femur and tibia use M2×12) + 1 small screw through the horn arm; femur servo: 2 tab screws (M2×8 self-tapping recommended)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Coxa axis → femur axis | 32.0 radial | ±0.3 | leg geometry |
-| Femur axis height | 13.0 below the back face | ±0.3 | leg geometry |
+| Femur axis height | 17.0 below the back face | ±0.3 | leg geometry (stance: body-plate underside 96.4 above the ground) |
 
 Servo dimensions are nominal: MG90S kept at the SG90 body size the arm parts were reviewed with (tools/hobby_parts.py). Makers list 22.5–22.8 × 12–12.2 mm, so measure your MG90S (body length and width, tab-hole spacing, shaft to near end, horn hub and arm) and give Claude any difference over 0.3 mm. The SG90 window ends have only 0.1 mm clearance each.
 

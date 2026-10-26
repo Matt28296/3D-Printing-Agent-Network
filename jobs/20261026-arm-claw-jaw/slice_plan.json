@@ -1,0 +1,17 @@
+{
+ "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+ "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
+ "filament_profile": "profiles/filament/Prusament_PETG.ini",
+ "model": "part.stl",
+ "overrides": {
+  "perimeters": 5,
+  "top_solid_layers": 5,
+  "bottom_solid_layers": 5,
+  "fill_density": "60%",
+  "fill_pattern": "gyroid",
+  "layer_height": 0.2,
+  "elefant_foot_compensation": 0.2
+ },
+ "copies": 2,
+ "rationale": "Stock QUALITY + Prusament PETG; 5 perimeters and 60 % gyroid (the 6 mm blade and 5 mm neck print almost solid); EFC 0.2 so the rack's bed edge stays square; 2 copies on one plate (jaw A and jaw B are the same part)."
+}

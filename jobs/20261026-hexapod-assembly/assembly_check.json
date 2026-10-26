@@ -1,6 +1,6 @@
 {
  "tol_mm3": 1.0,
- "stance_z_tab_mm": 92.4,
+ "stance_z_tab_mm": 96.4,
  "stance": {
   "collisions": [],
   "feet_z_mm": [
@@ -40,7 +40,7 @@
   "overall_mm": [
    276.6,
    281.8,
-   146.4
+   160.4
   ],
   "body_underside_clearance_mm": 49.2
  },

@@ -488,7 +488,7 @@ function tick(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (model) {
     if (cfg.robot === 'arm' && state.demo) stepDemo(dt);
-    if (cfg.robot === 'rover') { if (state.anim && !reduce) state.s += dt * ($('speed')?.value || 0) * 1.2; placeTracks(); }
+    if (cfg.robot === 'rover') { if (state.anim && !reduce) state.s += dt * ($('speed')?.value || 0) * 1.2 * (tk.dir || 1); placeTracks(); }
     if (cfg.robot === 'hexapod' && state.anim && !reduce) stepGait(dt);
     explode();
   }

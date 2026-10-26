@@ -24,3 +24,4 @@ HOLE_COMP, SIZE, CORNER_R, SCREWS, SCREW_D, BOARDS, USB_END_X, LEDGE_H, CLR, RAI
 
 ## Risks
 - Posts 5 mm tall Ø5.5 with a Ø2.4 pilot: 1.55 mm wall, but non-structural
+- Column screw heads on the PCA9685 posts (DFM round 1) → column pattern (±40, ±25) from hex_frame.py; heads clear the posts, boards and cable slots

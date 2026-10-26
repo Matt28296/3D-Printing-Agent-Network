@@ -2,7 +2,7 @@
  "filament_type": "PETG",
  "nozzle_diameter": 0.4,
  "min": {
-  "perimeters": 3,
+  "perimeters": 5,
   "top_solid_layers": 4,
   "bottom_solid_layers": 4,
   "fill_density": 20

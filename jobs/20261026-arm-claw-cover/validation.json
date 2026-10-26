@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-arm-claw-cover/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 05:24:39 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 7335,
+    "print_time_h": 2.04,
+    "filament_g": 18.03,
+    "filament_mm": 5900.73,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 320,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        145.402
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        113.0
+      ]
+    }
+  },
+  "sha256": "d5afb9938f2dd77ebec8a46f955fa2329b1919df75c9c1c881e033add766d966",
+  "validator_version": "1.0.0"
+}

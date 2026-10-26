@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-arm-claw-pinion/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 05:24:41 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 956,
+    "print_time_h": 0.27,
+    "filament_g": 2.32,
+    "filament_mm": 758.14,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 100.0,
+    "fill_pattern": "rectilinear",
+    "layers": 40,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        137.707
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        57.0
+      ]
+    }
+  },
+  "sha256": "195ed231ec2314f47ae3dfc0771750158b35ce9c5167b4b47551fa892b91b7ef",
+  "validator_version": "1.0.0"
+}

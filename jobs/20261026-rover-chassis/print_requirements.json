@@ -2,10 +2,10 @@
  "filament_type": "PETG",
  "nozzle_diameter": 0.4,
  "min": {
-  "perimeters": 4,
+  "perimeters": 5,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
-  "fill_density": 25
+  "fill_density": 30
  },
  "max": {
   "layer_height": 0.2
@@ -21,5 +21,5 @@
   80,
   90
  ],
- "max_print_hours": 10
+ "max_print_hours": 12
 }

@@ -7,7 +7,7 @@ Job: 20261026-hexapod-body-top · Written by: Architect · Date: 2026-10-26 · A
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 130 × 104 × 8 mm. Interfaces: 4 × Ø3.6 holes on the columns; ESP32 seat 55.6 × 29.7 (ledges 2 above the deck); 8 posts Ø5.5 × 5 with Ø2.4 pilots on a 56 × 19 pattern at y ±34.5.
+- Mating parts and their dimensions: 130 × 104 × 8 mm. Interfaces: 4 × Ø3.6 holes on the columns at (±40, ±25); ESP32 seat 55.6 × 29.7 (ledges 2 above the deck); 8 posts Ø5.5 × 5 with Ø2.4 pilots on a 56 × 19 pattern at y ±34.5.
 - Fasteners used: 4 × M3×8 self-tapping into the columns; 8 × M2.5×6 self-tapping for the PCA9685 boards; 1 zip tie for the ESP32
 
 ## 3. Critical dimensions and tolerances

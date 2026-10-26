@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-arm-claw-frame/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 05:24:37 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 8199,
+    "print_time_h": 2.28,
+    "filament_g": 23.2,
+    "filament_mm": 7593.94,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 5.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 195,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        145.202
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        88.0
+      ]
+    }
+  },
+  "sha256": "7911a32e3f6822fe332edb059110908d0143fed12a0975fa7b2fedcf5488fce2",
+  "validator_version": "1.0.0"
+}

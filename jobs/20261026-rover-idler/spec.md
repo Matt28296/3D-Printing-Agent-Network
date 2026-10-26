@@ -3,26 +3,26 @@
 Job: 20261026-rover-idler · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
-The sprocket's toothed geometry with a round Ø3.4 running bore, free on the M3 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
+The sprocket's toothed geometry with a round Ø3.5 running bore and a shorter hub, free on the M3 × 45 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: Ø35.8 × 20 mm, round bore through.
-- Fasteners used: Rides on the M3×40 idler bolt between the wall nut and a washer + nyloc nut
+- Fasteners used: Rides on the M3 × 45 idler bolt between the wall nut (with a washer) and a washer + nyloc nut
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
-| Running bore | Ø3.2 printed (Ø3.4 CAD) | +0.15/−0 | running fit on M3 |
+| Running bore | Ø3.5 printed (Ø3.7 CAD) | +0.15/−0 | running fit on M3, 0.5 clearance |
 
-Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10, face screw spacing 9, shaft Ø3 with D-flat 2.5, shaft length 10 from the face) and your 2 × 18650 holder (77 × 41 × 21) before printing; give Claude any difference over 0.3 mm. Track pins are 1.75 mm filament (PLA or PETG), cut 25 mm long.
+Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10 × 9, can Ø12 with 10 mm flats, shaft Ø3 with a 2.5 mm D-flat, 10 mm long from the gearbox face) and your 2 × 18650 holder (77 × 41 × 21) before printing, and give Claude any difference over 0.3 mm. Track pins are **2 mm steel rod** (silver steel, drill rod or piano wire), cut 23.5 mm and deburred.
 
 ## 4. Loads
-Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) → up to **10 N of track pull per side** at the 16.2 mm sprocket pitch radius; rover mass ≈0.5 kg (4.9 N); skid-steer turning drags the tracks sideways (μ ≈ 0.6 → ≈3 N per track); a **30 cm drop** off a desk is taken as 5 × weight on one track (≈25 N), short-term.
+Design loads (strength round 1 re-derived them; see the strength.md files): N20 stall ≈160 N·mm at the 7.4 V pack → ≈10 N of sprocket pull per side at the 16.18 mm pitch radius, 14.9 N in the tight run with a 5 N pretension (sustained); rover ≈0.58 kg (5.7 N); skid-steer drag 3 N per track. **Drop: 5 cm onto a hard floor** (the design limit; strength round 1 showed the printed pins and hubs can't survive a 30 cm desk fall): 5 mm stopping distance → 20 g peak → ≈14 N per axle flat, ≈29 N per axle on a corner, short-term.
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Track tension at the idler | 2 × 10 N (both runs) | bore bearing on the bolt, teeth | cyclic | hours |
+| Track tension at the idler | 2 × 14.9 N stall, 2 × 5 N sustained | bore bearing on the bolt, teeth | as stated | hours |
 
 ## 5. Environment
 - Max temperature (°C): 40 (indoor floor; N20 motors run warm, the 18650 cells must stay below 45 °C)
@@ -40,7 +40,7 @@ Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) →
 
 ## 8. Acceptance criteria (measurable)
 - [ ] Spins freely on the bolt with < 0.5 mm axial play
-- [ ] **Proof test:** Covered by the sprocket stall test and the chassis drop test; the idler must spin freely afterwards.
+- [ ] **Proof test:** Covered by the chassis stall and drop tests; the idler must still spin freely afterwards.
 
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

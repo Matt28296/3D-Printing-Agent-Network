@@ -3,30 +3,31 @@
 Job: 20261026-rover-chassis · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
-Open-top tub, 154 × 76 × 40 mm, that holds both N20 drive motors (gearbox face screwed to the side walls, can on a cradle with a zip tie), the M3 axle bolts for 4 road wheels and 2 idlers (nuts in traps in the walls' outer faces; idler bolts in an 8 mm tension slot), the 2 × 18650 holder (velcro strap through floor slots), a mini rocker switch (rear wall) and an HC-SR04 (front wall).
+Open-top tub, 154 × 76 × 40 mm, 4.5 mm walls. Holds both N20 drive motors in cradles (cheeks, a rear stop and a zip-tie tunnel; no face screws), with each sprocket hub running in a 6 mm journal in the side wall so the track loads go into the wall, not the N20 shaft. Carries the M3 × 45 axle bolts for 4 road wheels and 2 idlers (heads inside, nuts in traps in the outer faces; idler bolts in an 8 mm tension slot with a sliding nut), the 2 × 18650 holder (velcro strap through floor slots), a mini toggle switch (rear wall) and an HC-SR04 (front wall).
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 154 × 76 × 40 mm. Wheel axles at Z 20.68 (X 0 sprocket, 40 and 80 road wheels, 120 ± 4 idler), track centre planes Y ±55. Interfaces: N20 shaft-boss hole Ø4.8 + 2 × Ø2.2 face-screw holes (teardrops); 4 × Ø3.6 bolt holes + nut traps; 2 idler slots; 4 lid columns with Ø2.8 pilots; switch cut-out 15 × 10 with 45° roof; 2 × Ø16.6 teardrop sensor holes; 2 × 3 × 22 strap slots.
-- Fasteners used: 4 × M1.6×5 (or M1.6×4) screws through the wall into each N20 gearbox face (2 per motor); 6 × M3×40 bolts + M3 nuts in the traps (+ washer and nyloc on the outer end, wheel/idler free between); 4 × M3×10 self-tapping for the lid; 2 zip ties for the motors; 1 velcro strap for the battery holder
+- Mating parts and their dimensions: 154 × 76 × 40 mm. Axles at Z 20.68 (X 0 sprocket journal, 40 and 80 road wheels, 120 ± 4 idler), track centre planes Y ±55. Interfaces: journal Ø10.7 CAD through wall + 1.5 mm boss (6 mm long); N20 cradle with cheeks at x ±6.3–8.3, rear stop posts, zip-tie tunnel; Ø20 road-wheel bosses and a 30 × 24 idler block down to the floor; 6 × Ø3.6 teardrop bolt holes + 5.8 AF nut traps; idler slot ±4 with teardrop ends and a nut slot; 4 lid columns (−13, ±30), (100, ±30) with Ø2.8 pilots; toggle hole Ø6.4; 2 × Ø16.6 teardrop sensor holes; strap slots at |y| 27.5; 3 mm 45° floor fillets.
+- Fasteners used: 6 × M3 × 45 bolts (head inside the tub) + M3 nut in each wall trap + washer and nyloc on the outer end (wheels and idlers run free between); 2 zip ties for the motors; 4 × M3 × 10 self-tapping for the lid; 1 velcro strap for the battery holder; MTS-102 mini toggle switch (6 mm bushing nut)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
 | Sprocket-to-idler axle distance | 120.0 (slot ±4) | ±0.3 | track length 34 × 10 |
 | Axle height | Z 20.68 | ±0.3 | track meets the ground |
-| N20 face holes | 2 × Ø1.6 + 0.4 clearance, 9 apart | ±0.15 | clearance |
+| Journal | Ø10.5 printed, 6 long | +0.15/−0 | running fit on the Ø10 sprocket hub |
 | Nut traps | 5.8 AF × 2.6 deep | +0.2/−0 | M3 nut push fit |
 
-Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10, face screw spacing 9, shaft Ø3 with D-flat 2.5, shaft length 10 from the face) and your 2 × 18650 holder (77 × 41 × 21) before printing; give Claude any difference over 0.3 mm. Track pins are 1.75 mm filament (PLA or PETG), cut 25 mm long.
+Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10 × 9, can Ø12 with 10 mm flats, shaft Ø3 with a 2.5 mm D-flat, 10 mm long from the gearbox face) and your 2 × 18650 holder (77 × 41 × 21) before printing, and give Claude any difference over 0.3 mm. Track pins are **2 mm steel rod** (silver steel, drill rod or piano wire), cut 23.5 mm and deburred.
 
 ## 4. Loads
-Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) → up to **10 N of track pull per side** at the 16.2 mm sprocket pitch radius; rover mass ≈0.5 kg (4.9 N); skid-steer turning drags the tracks sideways (μ ≈ 0.6 → ≈3 N per track); a **30 cm drop** off a desk is taken as 5 × weight on one track (≈25 N), short-term.
+Design loads (strength round 1 re-derived them; see the strength.md files): N20 stall ≈160 N·mm at the 7.4 V pack → ≈10 N of sprocket pull per side at the 16.18 mm pitch radius, 14.9 N in the tight run with a 5 N pretension (sustained); rover ≈0.58 kg (5.7 N); skid-steer drag 3 N per track. **Drop: 5 cm onto a hard floor** (the design limit; strength round 1 showed the printed pins and hubs can't survive a 30 cm desk fall): 5 mm stopping distance → 20 g peak → ≈14 N per axle flat, ≈29 N per axle on a corner, short-term.
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Track pull at the drive motor | 10 N at the sprocket (≈16 mm out from the wall) | N20 face screws + wall at the motor | cyclic | hours |
-| Wheel load, drop case | 25 N on one road-wheel bolt, 17 mm from the wall | bolt boss bending, nut trap | short-term | seconds |
+| Sprocket radial load through the journal | 19.9 N stall, 12.9 N cyclic, 10 N sustained (pretension) | journal bearing, wall bending | as stated | hours |
+| Road-wheel bolt, drop | ≈14 N flat / 29 N corner per axle (5 cm drop), 17 mm from the wall | boss bending, nut trap | short-term | seconds |
+| Idler clamp in the slot | 2 × track tension, ≤ 30 N | nut slot bearing, friction | sustained | hours |
 | Skid-steer side load | 3 N per wheel axially | flanges → bolts → walls | cyclic | hours |
 
 ## 5. Environment
@@ -41,13 +42,14 @@ Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) →
 
 ## 7. Quantity and time
 - Quantity: 1
-- Max acceptable print time per batch (h): 10
+- Max acceptable print time per batch (h): 12
 
 ## 8. Acceptance criteria (measurable)
-- [ ] Both N20 motors fit with their face screws; shafts turn freely
+- [ ] Both N20 motors seat in their cradles and the sprocket hubs turn freely in the journals
 - [ ] Battery holder fits between the strap slots
 - [ ] HC-SR04 transducers fit through the front wall
-- [ ] **Proof test:** With a road wheel fitted on its M3×40 bolt, hang 2 kg from the bolt end next to the wheel for 1 min (≈20 N, 17 mm out). Pass: no cracking at the boss or nut trap, the bolt stays square to the wall. Then drop the assembled rover (battery fitted, lid on) from 30 cm onto a hard floor, flat and on one corner: no cracks, tracks stay on.
+- [ ] Idler bolts slide the full ±4 mm slot
+- [ ] **Proof test:** (1) With a road wheel fitted on its M3 × 45 bolt, hang 3 kg (≈30 N) from the bolt end next to the wheel for 1 min. Pass: no cracking at the boss or nut trap; the bolt stays square to the wall. (2) Track tensioned, stall both motors at 80 % PWM for 3 s, 5 times: no cracks at the journals, no motor movement in the cradles. (3) Drop the assembled rover (battery fitted, lid on) from 5 cm onto a hard floor, flat and on each corner: no cracks, tracks stay on.
 
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

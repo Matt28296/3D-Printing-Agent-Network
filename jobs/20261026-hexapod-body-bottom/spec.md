@@ -7,7 +7,7 @@ Job: 20261026-hexapod-body-bottom · Written by: Architect · Date: 2026-10-26 �
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 155 × 131 × 34 mm (columns). Interfaces: 6 MG90S windows 22.9 × 12.8 with 2 Ø1.7 slotted pilots each, at the mounts in hex_frame.py; 4 columns Ø8 with Ø2.8 pilots at (±30, ±25); strap slots 22 × 3.
+- Mating parts and their dimensions: 155 × 131 × 44 mm (columns). Interfaces: 6 MG90S windows 22.9 × 12.8 with 2 Ø1.7 slotted pilots each, at the mounts in hex_frame.py; 4 columns Ø8 × 40 with r1.5 root fillets and Ø2.8 pilots at (±40, ±25) (hex_frame.COLUMNS, shared with the top plate); strap slots 22 × 3.
 - Fasteners used: 12 × MG90S tab screws (servo bag) — use M2×8 self-tapping if the bag screws are short; 4 × M3×8 self-tapping (top plate onto the columns); 1 velcro strap for the LiPo
 
 ## 3. Critical dimensions and tolerances
@@ -15,7 +15,7 @@ Job: 20261026-hexapod-body-bottom · Written by: Architect · Date: 2026-10-26 �
 |---|---|---|---|
 | Coxa servo windows | 22.7 × 12.6 printed | +0.3/−0 | 0.1 end / 0.2 side clearance |
 | Mount positions | per hex_frame.LEG_MOUNTS | ±0.3 | leg spacing |
-| Column height | 30.0 | ±0.3 | top-plate seat |
+| Column height | 40.0 | ±0.3 | top-plate seat; room for the ESP32 leads above the LiPo |
 
 Servo dimensions are nominal: MG90S kept at the SG90 body size the arm parts were reviewed with (tools/hobby_parts.py). Makers list 22.5–22.8 × 12–12.2 mm, so measure your MG90S (body length and width, tab-hole spacing, shaft to near end, horn hub and arm) and give Claude any difference over 0.3 mm. The SG90 window ends have only 0.1 mm clearance each.
 

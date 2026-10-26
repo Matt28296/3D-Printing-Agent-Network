@@ -1,0 +1,44 @@
+{
+  "file": "jobs/20261026-arm-camera-mount/part.gcode",
+  "pass": true,
+  "errors": [],
+  "warnings": [],
+  "stats": {
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 05:24:43 UTC",
+    "printer_model_check": "MK3S",
+    "nozzle_check_mm": 0.4,
+    "print_time_s": 4639,
+    "print_time_h": 1.29,
+    "filament_g": 11.23,
+    "filament_mm": 3676.4,
+    "filament_type": "PETG",
+    "layer_height": 0.2,
+    "perimeters": 4.0,
+    "fill_density": 40.0,
+    "fill_pattern": "gyroid",
+    "layers": 250,
+    "max_nozzle_c": 250.0,
+    "max_bed_c": 90.0,
+    "la_k_values": [
+      0.0,
+      0.08,
+      45.0
+    ],
+    "extents_mm": {
+      "X": [
+        0.0,
+        153.098
+      ],
+      "Y": [
+        -3.0,
+        200.0
+      ],
+      "Z": [
+        0.2,
+        99.0
+      ]
+    }
+  },
+  "sha256": "5e5088a10d691d0cc3fb2b0f469157de50c5ba59e3f45d6cc55e42bacfd2c8c7",
+  "validator_version": "1.0.0"
+}

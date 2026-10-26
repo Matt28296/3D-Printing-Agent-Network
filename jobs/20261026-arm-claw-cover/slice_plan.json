@@ -1,0 +1,19 @@
+{
+ "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+ "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
+ "filament_profile": "profiles/filament/Prusament_PETG.ini",
+ "model": "part.stl",
+ "overrides": {
+  "perimeters": 4,
+  "top_solid_layers": 5,
+  "bottom_solid_layers": 5,
+  "fill_density": "40%",
+  "fill_pattern": "gyroid",
+  "layer_height": 0.2,
+  "elefant_foot_compensation": 0.2,
+  "brim_type": "outer_only",
+  "brim_width": 5
+ },
+ "copies": 1,
+ "rationale": "Stock QUALITY + Prusament PETG; 4 perimeters (the 3 mm walls print solid), 40 % gyroid; standing 64 mm tall on a 203 mm\u00b2 end face, so a 5 mm outer brim; EFC 0.2 with the 0.3 mm bed chamfer so the rack channels' entry stays clean."
+}

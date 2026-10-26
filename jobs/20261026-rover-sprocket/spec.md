@@ -3,28 +3,30 @@
 Job: 20261026-rover-sprocket · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
-10-tooth sprocket (pitch radius 16.18) on the N20's D-shaft, driving the track through notches in the links; hub reaches back to 0.5 mm from the chassis wall.
+10-tooth sprocket (pitch radius 16.18, 45° tooth-root chamfers) on the N20's D-shaft. Its Ø10 hub runs back through the 6 mm journal in the chassis wall to 0.5 mm from the gearbox face, so the wall carries the track loads and the shaft only the torque; the D-bore takes 9.5 mm of the shaft.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: Ø35.8 × 20 mm. D-bore 6.5 mm engaged (+0.5), M2 grub-screw pilot onto the flat.
-- Fasteners used: 1 × M2×4 set screw (or M2×6 self-tapper) per sprocket onto the shaft flat; a drop of thread-locker or CA on the bore
+- Mating parts and their dimensions: Ø35.8 × 26.5 mm. D-bore Ø3.2 / flat CAD (press fit) 10 deep; M2 set-screw teardrop pilot 2.5 mm outside the wall.
+- Fasteners used: 1 × M2 × 4 set screw (or M2 × 6 self-tapper) per sprocket onto the shaft flat; a drop of thread-locker or CA on the bore
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
-| D-bore | Ø3.1 / flat 2.6 | +0.1/−0 | press fit on the N20 shaft |
-| Pitch radius | 16.18 | ±0.15 | matches 10 mm link pitch |
+| D-bore | Ø3.0 / flat 2.5 printed | +0.1/−0 | press fit on the N20 shaft |
+| Hub | Ø10.0 | −0.1/+0 | runs in the Ø10.5 journal |
+| Pitch radius | 16.18 | ±0.15 | matches the 10 mm link pitch |
 
-Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10, face screw spacing 9, shaft Ø3 with D-flat 2.5, shaft length 10 from the face) and your 2 × 18650 holder (77 × 41 × 21) before printing; give Claude any difference over 0.3 mm. Track pins are 1.75 mm filament (PLA or PETG), cut 25 mm long.
+Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650, HCSR04). Measure your N20 (gearbox 12 × 10 × 9, can Ø12 with 10 mm flats, shaft Ø3 with a 2.5 mm D-flat, 10 mm long from the gearbox face) and your 2 × 18650 holder (77 × 41 × 21) before printing, and give Claude any difference over 0.3 mm. Track pins are **2 mm steel rod** (silver steel, drill rod or piano wire), cut 23.5 mm and deburred.
 
 ## 4. Loads
-Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) → up to **10 N of track pull per side** at the 16.2 mm sprocket pitch radius; rover mass ≈0.5 kg (4.9 N); skid-steer turning drags the tracks sideways (μ ≈ 0.6 → ≈3 N per track); a **30 cm drop** off a desk is taken as 5 × weight on one track (≈25 N), short-term.
+Design loads (strength round 1 re-derived them; see the strength.md files): N20 stall ≈160 N·mm at the 7.4 V pack → ≈10 N of sprocket pull per side at the 16.18 mm pitch radius, 14.9 N in the tight run with a 5 N pretension (sustained); rover ≈0.58 kg (5.7 N); skid-steer drag 3 N per track. **Drop: 5 cm onto a hard floor** (the design limit; strength round 1 showed the printed pins and hubs can't survive a 30 cm desk fall): 5 mm stopping distance → 20 g peak → ≈14 N per axle flat, ≈29 N per axle on a corner, short-term.
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Motor stall torque | 160 N·mm | D-flat bearing, grub screw | short-term | seconds |
-| Tooth load | 10 N on one tooth tip | tooth root bending (in-plane, along layers) | cyclic | hours |
+| Motor stall torque | 160 N·mm (182 fresh pack at 100 % PWM) | D-flat bearing, set screw | short-term | seconds |
+| Tooth load | 14.9 N on one tooth tip (tight run at stall) | tooth root bending (in-plane) | short-term | seconds |
+| Radial load | 19.9 N stall / 10 N sustained | hub bearing in the journal | as stated | hours |
 
 ## 5. Environment
 - Max temperature (°C): 40 (indoor floor; N20 motors run warm, the 18650 cells must stay below 45 °C)
@@ -41,8 +43,9 @@ Design loads: N20 stall ≈130 N·mm at 6 V (≈160 N·mm at the 7.4 V pack) →
 - Max acceptable print time per batch (h): 2
 
 ## 8. Acceptance criteria (measurable)
-- [ ] Pushes onto the N20 shaft firmly; grub screw bites the flat
-- [ ] **Proof test:** Hold the track still and stall the motor at full PWM for 3 s, 5 times. Pass: the sprocket doesn't slip on the shaft, no tooth cracks or shears.
+- [ ] Presses onto the N20 shaft firmly; set screw bites the flat
+- [ ] Hub turns freely in the journal
+- [ ] **Proof test:** Hold the track still and stall the motor at 80 % PWM for 3 s, 5 times. Pass: the sprocket doesn't slip on the shaft, no tooth cracks or shears, the hub still turns freely in the journal.
 
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.
