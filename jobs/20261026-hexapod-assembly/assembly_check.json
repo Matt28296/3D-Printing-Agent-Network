@@ -61,6 +61,11 @@
     -25.0
    ]
   ],
+  "coxa_tab_stack": {
+   "screw": "M2 x 14",
+   "nyloc_h_mm": 3.0,
+   "thread_past_nyloc_mm": 1.9
+  },
   "ubec_box_xyz": [
    -25.0,
    25.0,

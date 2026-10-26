@@ -1,6 +1,6 @@
 # Hexapod: build guide
 
-Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo drivers, ESP32, 2S LiPo. About 276 × 290 × 160 mm standing, ≈ 0.8 kg (round 3: 812 g estimated, 877 g with solid printed parts).
+Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo drivers, ESP32, 2S LiPo. About 276 × 290 × 160 mm standing, ≈ 0.9 kg (round 4: about 906 g, strength round 3's itemised estimate with the solid coxa brackets and the bigger bottom plate).
 
 ## 1. Bill of materials
 
@@ -9,11 +9,11 @@ Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo dri
 |---|---|---|---|
 | Bottom body plate (with columns) | `20261026-hexapod-body-bottom` | 1 | 1 |
 | Top plate / electronics deck | `20261026-hexapod-body-top` | 1 | 1 |
-| Coxa bracket | `20261026-hexapod-coxa` | 6 | 1 |
+| Coxa bracket (solid, 100 % infill) | `20261026-hexapod-coxa` | 2 | 3 |
 | Femur | `20261026-hexapod-femur` | 6 | 1 |
 | Tibia | `20261026-hexapod-tibia` | 6 | 1 |
 
-Print times and filament: each job's `slice_stats.json` once it is sliced. Round 3 changed the bottom plate, the deck, the coxa bracket and the femur, so those four need slicing again.
+Print times and filament: each job's `slice_stats.json` once it is sliced. Round 3 changed the bottom plate, the deck, the coxa bracket and the femur, so those four need slicing again. Round 4 changed the bottom plate and the coxa bracket once more.
 
 ### Bought
 | Qty | Item | Notes |
@@ -37,7 +37,7 @@ Print times and filament: each job's `slice_stats.json` once it is sliced. Round
 | 1 | 1000 µF 10 V capacitor | across the servo rail |
 | 12 | M2 × 12 pan-head machine screws + 12 M2 washers Ø6 | femur and tibia horn clamps (replace the short horn screw). If a bare servo's shaft thread bottoms before 6.5 mm, use M2 × 10 |
 | 6 | M2 × 12 pan-head machine screws (M2 × 14 if the shaft thread is 7.5 mm deep or more) + 6 M3 penny washers Ø10 × 1 | coxa horn clamps: washer 1 + 6 mm floor, then the spline (strength round 1) |
-| 12 | M2 × 12 pan-head machine screws + 24 M2 washers Ø5 + 12 M2 nuts | coxa servo tabs, through the 6 mm bottom plate: head and washer underneath, washer and nut on the tab |
+| 12 | M2 × 14 pan-head machine screws + 24 M2 washers Ø5 + 12 M2 Nyloc nuts (nylon insert, DIN 985) | coxa servo tabs, through the 6 mm bottom plate: head and washer underneath, washer and Nyloc on the tab. × 14 so the thread comes through the Nyloc's nylon ring |
 | 12 | M2 × 10 self-tapping screws | femur servo tabs, 7.5 mm into the 10 mm coxa plate |
 | 12 | M2 × 8 self-tapping screws | tibia servo tabs, from behind the femur |
 | 18 | M1.7 × 5 screws (or M2 × 6 self-tapping with the horn hole opened to 2.0 mm) | horn anti-rotation screws, one per horn. Measure your horns' holes first |
@@ -96,7 +96,8 @@ Fit every horn with its servo centred (90°): femur level, tibia perpendicular t
 4. **Femur servos only (6):** with a needle file, open the slit from the tab hole to the tab end to **2.1 mm**, on the tab at the **shaft end**. That tab's screw sits 1.3 mm further out than its hole, beside the lead notch.
 5. **Body (deck off, LiPo not fitted yet):**
    - Lower each coxa servo into its bottom-plate window from above, **spline first**. Its tabs rest on the plate's top face, its case stands inside the body and its lead points outboard.
-   - Fix each tab with an M2 × 12 from below: washer, then the screw up through the plate and the tab, then a washer and a nut on the tab inside the body. Tighten to a firm stop.
+   - Fix each tab with an M2 × 14 from below: washer, then the screw up through the plate and the tab, then a washer and a Nyloc nut on the tab inside the body. The thread must come through the Nyloc's nylon ring.
+   - Drive each one **snug, at most 0.045 N·m** above the Nyloc's running torque: run the nut down until both washers just clamp, then stop. Never tighten to a firm stop: the washer under the head bears on only 14 mm² of the plate (strength round 3). The Nyloc holds without preload.
 6. **Legs (×6), on the bench, off the body.** With the leg on the body, a screwdriver on the femur or tibia clamp screw would run into the neighbouring leg, so do these screws now.
    - **Femur servo into the coxa bracket:** tabs on the **gusset face** of the vertical plate, shaft towards where the femur goes.
      1. Feed the lead's plug through the notch at the window's outboard end.
@@ -142,11 +143,11 @@ Flash `hexapod_test/hexapod_test.ino` (Arduino IDE, board "ESP32 Dev Module" on 
 | `x` | stop and stand, within one 25 ms gait frame |
 | `o` | measure the PCA9685 clocks (below) |
 
-- If a joint moves the wrong way, flip its sign in `DIR[]`. The sketch keeps neighbouring coxae from closing more than the 60° the round-3 assembly check allows (`MAX_COXA` 30), and the femurs within −70…+90° and the tibias within −80…+90°.
-- **Stance:** the walking stance tucks the tibias 18.7° in at the same body height. That keeps the femur and knee servos at about 40 % of stall instead of about 70 % at a 30 mm stride (`assembly_plan.md`, "Stance"). The constants sit in the sketch's neutral-stance block.
+- If a joint moves the wrong way, flip its sign in `DIR[]`. The sketch keeps neighbouring coxae from closing more than the 60° the round-3 assembly check allows (`MAX_COXA` 30), and the femurs within −70…+80° (the round-4 plate's edge meets a femur raised further) and the tibias within −80…+90°.
+- **Stance:** the walking stance tucks the tibias 18.7° in at the same body height. At the round-4 mass (906 g) that keeps the femur and knee servos at about 44 % of stall instead of about 79 % at a 30 mm stride (`assembly_plan.md`, "Stance"). The constants sit in the sketch's neutral-stance block.
 - **Clock calibration, once per board:** a PCA9685's oscillator is 25 MHz typical but anywhere from about 23 to 27 MHz, and every servo pulse is off by the same ratio. Jumper the left board's channel-15 signal pin to GPIO34 and type `o`; copy the printed value into `OSC_L`. Move the jumper to the right board, type `o`, copy into `OSC_R`, re-flash and remove the jumper.
 - **Gait:** a tripod gait with inverse kinematics. Planted feet move straight back along the ground, so none slides, and each swing lands exactly where the next stroke starts: 30 mm stride, 20 mm lift, 0.5 s per cycle. Each tripod swings for 40 % of the cycle, so all six feet share the load at each hand-over. The neutral stance (femur and tibia angles) and the leg geometry sit in one block at the top of the sketch.
-- **Battery:** the sketch reads the LiPo through the divider. When it reads below 6.6 V twice in a row (3.3 V per cell under load), the hexapod stops walking and won't walk again until restarted: switch off and charge. Expect about 11–16 minutes of walking per charge at the round-2 mass, the shorter figure on carpet. The round-3 robot is about 20 % heavier (0.81–0.88 kg), so expect less.
+- **Battery:** the sketch reads the LiPo through the divider. When it reads below 6.6 V twice in a row (3.3 V per cell under load), the hexapod stops walking and won't walk again until restarted: switch off and charge. Expect about 11–16 minutes of walking per charge at the round-2 mass, the shorter figure on carpet. The round-4 robot is about 35 % heavier (≈ 0.91 kg), so expect less.
 - Walking also needs both boards to answer. With one board on the bench (section 3, step 1) the sketch says which is missing, and `c`, `s` and `t` still work.
 - If a servo twitches each time the Serial Monitor opens (the ESP32 restarts while the boards keep their power), hold the boards' OE pin high during start-up.
 

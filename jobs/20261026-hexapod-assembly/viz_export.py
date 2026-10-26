@@ -35,7 +35,7 @@ LABELS = {"bottom": "Bottom body plate", "top": "Top plate / electronics deck", 
           "femur": "Femur", "tibia": "Tibia"}
 QTY = {"bottom": 1, "top": 1, "coxa": 6, "femur": 6, "tibia": 6}
 PETG = "petg_white"
-STAMPS = [{"text": "Round 3 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
+STAMPS = [{"text": "Round 4 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
           {"text": "Not sliced yet", "kind": "note"}]
 LEG_NAMES = ["left front", "left middle", "left rear", "right front", "right middle", "right rear"]
 GAIT_STRIDE, GAIT_LIFT, FRAME_S = 30.0, 20.0, 0.025
@@ -126,13 +126,14 @@ def main(out_dir: Path):
     for i, (mx, my, a) in enumerate(H.LEG_MOUNTS):
         S0 = frame((mx, my, zp + H.S0_Z), (math.cos(math.radians(a)), math.sin(math.radians(a)), 0), (0, 0, -1))
         S.add("mg90s_body", servo, root, matrix=S0, label="MG90S servo (coxa, mounted reversed)", category="actuator")
-        for px in pilots():      # coxa tabs: M2 × 12 from below, washer + nut on the tab inside the body
+        for px in pilots():      # coxa tabs: M2 × 14 from below, washer + Nyloc on the tab inside the body (round 4)
             S.add("washer2_5", V.washer_parts(2, 5.0, 0.3), root, matrix=S0 @ V.T(px, 0, H.S0_Z), label="M2 washer", category="hardware")
-            S.add("m2x12", V.screw_parts(2, 12, "pan"), root, matrix=S0 @ V.T(px, 0, H.S0_Z + 0.3),
-                  label="M2 × 12 machine screw (coxa servo tab)", category="hardware")
+            S.add("m2x14", V.screw_parts(2, 14, "pan"), root, matrix=S0 @ V.T(px, 0, H.S0_Z + 0.3),
+                  label="M2 × 14 machine screw (coxa servo tab, snug)", category="hardware")
             S.add("washer2_5", V.washer_parts(2, 5.0, 0.3), root, matrix=S0 @ V.T(px, 0, 0) @ V.Rx(180), label="M2 washer",
                   category="hardware")
-            S.add("nut2", V.nut_parts(2.0), root, matrix=S0 @ V.T(px, 0, -0.3) @ V.Rx(180), label="M2 nut", category="hardware")
+            S.add("nyloc2", V.nut_parts(2.0, nyloc=True), root, matrix=S0 @ V.T(px, 0, -0.3) @ V.Rx(180), label="M2 Nyloc nut",
+                  category="hardware")
         S.group(f"M_coxa{i}", root, S0 @ V.T(0, 0, H.LB))
         S.group(f"J_coxa{i}", f"M_coxa{i}")
         jc = f"J_coxa{i}"
@@ -215,7 +216,7 @@ def main(out_dir: Path):
             "facts": [["Controller", "ESP32 DevKit + 2 × PCA9685 (0x40, 0x41) on I²C"],
                       ["Servos", "18 × MG90S: coxa, femur, tibia per leg"],
                       ["Legs", f"coxa {H.L_C:.0f} mm, femur {H.L_F:.0f} mm, tibia {H.L_T:.0f} mm"],
-                      ["Mass", "≈ 0.81 kg (0.88 kg with solid printed parts)"],
+                      ["Mass", "≈ 0.91 kg (round 4: solid coxa brackets, bigger bottom plate)"],
                       ["Power", "2S 1000 mAh LiPo; 6 V UBEC for the servos, MP1584 5 V for the ESP32"],
                       ["Ground clearance", f"≈ {chk['stance']['lowest_point_mm'][0]:.0f} mm under the coxa brackets; "
                                            f"the body plate is {H.STANCE_Z_PU:.0f} mm up"],

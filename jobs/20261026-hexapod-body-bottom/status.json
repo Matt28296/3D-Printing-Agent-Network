@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 3 (third DESIGN failure): strength SF 2.03 < 3 (strip outside each coxa window, tab-screw bearing, columns)",
+    "DESIGN": "round 4 in review (approved by the user after the third failure): MARGIN 8, Nyloc tab nuts (M2 \u00d7 14), \u00d810 columns",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Third DESIGN failure. Proposed round 4: MARGIN 4 to 8, snug tab screws with Nyloc nuts, columns \u00d88 to \u00d810 (checked together: SF 3.22), then re-run the assembly check. Waiting for the user's decision."
-  ],
-  "updated": "2026-10-26T09:32:12+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T10:17:15+00:00"
 }

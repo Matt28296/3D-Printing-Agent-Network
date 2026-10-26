@@ -58,7 +58,7 @@ int TRIM[18] = {0};                       // degrees, from 't' commands
 int DIR[18] = { +1, +1, +1,  +1, +1, +1,  +1, +1, +1,
                 -1, +1, +1,  -1, +1, +1,  -1, +1, +1 };
 const int MAX_COXA = 30;                  // keeps neighbours within the 60° the round-3 assembly check allows
-const int FEMUR_MIN = -70, FEMUR_MAX = 90;   // assembly check: the femur is clear from -70° to +90°
+const int FEMUR_MIN = -70, FEMUR_MAX = 80;   // round 4: the wider bottom plate meets a femur raised past 80° with the coxa at ±30°
 const int TIBIA_MIN = -80, TIBIA_MAX = 90;   // assembly check: -170°..0° in its frame = -80°..+90° here
 const int CAL_PIN = 34;                   // o: the measured board's channel 15, jumpered here
 const int VBAT_PIN = 35;                  // ADC1, input-only: 100k from the switched LiPo +, 33k to GND, 100 nF across the 33k

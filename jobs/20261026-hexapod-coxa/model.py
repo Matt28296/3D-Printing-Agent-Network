@@ -15,8 +15,10 @@ Round 3 (strength round 1 + deep review 2026-10-26):
     needs the notch at the window's outboard end; the outboard pilot moves 1.3 mm out and the builder
     files that tab's slit to 2.1 mm (servo_mount_cutter lead="notch_shift_pilot").
   - SYS-5: a tie slot through the outer post, above the pilot row, for the femur and tibia leads.
+Round 4 (DFM round 3): the lead notch's flat top was a 1.41 mm ledge anchored on one edge only; it now
+rises at 45° from the notch's end wall to the window face (NOTCH_ROOF).
 Printed as modelled: the horizontal plate on the bed (horn pocket on the bed face, bridge < 8 mm),
-the vertical plate standing; the window roof, pilot teardrops, reliefs and tie slot point up.
+the vertical plate standing; the window roof, lead-notch roof, pilot teardrops, reliefs and tie slot point up.
 """
 import math
 import sys
@@ -46,6 +48,12 @@ HUB_R = 2.0                      # hub corner radius: the ramp's foot (x -6.1) m
 ARM_Y = (Y_F - T_V, -6.5)        # -23.5 … -6.5: clears the femur plane (y >= -0.9) by 5.6 mm
 WIN_HALF = (SERVO.width + CLR + HOLE_COMP) / 2                  # 6.4
 ROOF = (SERVO.length + END_CLR + HOLE_COMP) / 2                 # 11.6: 45° roof over the window's long side
+NOTCH_END_X = L_C + SERVO.shaft_from_end + SERVO.lead_notch_reach + HOLE_COMP / 2 + 0.01   # 39.51: the lead notch's
+                                 # end wall (servo_mount_cutter: case end + reach + HOLE_COMP/2, its box 0.01 long)
+NOTCH_TOP = Z_F + (SERVO.lead_notch_w + HOLE_COMP) / 2          # 22.2: the notch's top (4.4 wide about the femur axis)
+NOTCH_ROOF = [(WIN_X[1], NOTCH_TOP), (NOTCH_END_X, NOTCH_TOP),
+              (WIN_X[1], NOTCH_TOP + NOTCH_END_X - WIN_X[1])]   # DFM round 3: 45° roof (38.1, 22.2) (39.51, 22.2)
+                                 # (38.1, 23.61): the notch is 4.4 at its end wall, opening at 45° to 5.8 at the window face
 VPLATE_H = Z_F + WIN_HALF + ROOF + 3.0                          # 41.0
 GUSSET = Z_F - SERVO.width / 2 - 1.0 - T_C   # 4.9: 45° root gusset on the tab side, 1 mm under the femur tabs
 RAMP = 8.0                       # strength round 1: 45° ramp >= 8 mm where the plate's inner end meets the hub
@@ -102,6 +110,8 @@ def design():
     br -= femur_servo_loc() * servo_mount_cutter(SERVO, T_V, clearance=CLR, end_clearance=END_CLR, roof="-y",
                                                  through=2 * T_V + 2, hole_comp=HOLE_COMP, pilot_teardrop="-y",
                                                  lead=LEAD)
+    # DFM round 3: 45° roof on the lead notch, through the plate (its flat top was a one-sided ledge over the lead)
+    br -= _prism_y(NOTCH_ROOF, Y_F - T_V - 1, Y_F + 1)
     # R1 T-bone reliefs: tangent to each post's inner face on the window floor line
     floor, r = Z_F - WIN_HALF, RELIEF_D / 2
     for xc in (WIN_X[0] + r, WIN_X[1] - r):

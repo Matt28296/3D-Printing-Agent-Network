@@ -60,7 +60,9 @@ check("R1 T-bone reliefs at the window floor's corners", not solid(wx0 + 1.0, ym
 nx0 = 32 + 5.9                                          # case end (servo shaft end)
 check("B1 lead notch at the outboard end: 4.4 wide, to 1.6 beyond the case end",
       not solid(nx0 + 1.5, ym, Z_F + 2.1) and not solid(nx0 + 1.5, ym, Z_F - 2.1) and solid(nx0 + 1.7, ym, Z_F)
-      and solid(nx0 + 1.0, ym, Z_F + 2.4), "probes at x 39.4 / 39.6, z 20 ± 2.1")
+      and solid(nx0 + 1.7, ym, Z_F + 2.4), "probes at x 39.4 / 39.6, z 20 ± 2.1; solid at (39.6, z 22.4)")
+check("lead notch roof at 45°: 4.4 at the end wall, opening to 5.8 at the window face (DFM round 3)",
+      not solid(38.4, ym, 23.2) and solid(39.3, ym, 22.5), "void (38.4, 23.2), solid (39.3, 22.5)")
 px = 32 + (-(22.8 - 5.9) + 22.8 / 2 + 27.8 / 2) + 1.3   # 41.7: outboard pilot moved 1.3 mm out
 check("outboard pilot moved 1.3 mm out (x 41.7), Ø1.7 teardrop", not solid(px, ym, Z_F) and solid(px - 1.0, ym, Z_F)
       and not solid(px, ym, Z_F + 1.0), f"x {px:.2f}")
