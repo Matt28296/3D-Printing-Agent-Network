@@ -1,38 +1,57 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review: 20261026-arm-camera-mount
+# DFM review: 20261026-arm-camera-mount (round 2)
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, renders/*.png (all 5 viewed), ../20261025-robot-arm-assembly/claw_frame.py, tools/hobby_parts.py (BRIO_4K, TRIPOD_SCREW_D, `_teardrop_z`), the cover and frame models, slice_plan.json (read only), library/ (empty, so skill defaults apply).
-Outputs are current: `build()` gives 8846.95 mm³, the same as geometry.json. Ray casts below run through `design()` in the claw frame G; in print, G +y is up.
+Reviewer: dfm-reviewer (independent) · 2026-10-26 · DESIGN gate, round 2 (round 1: FAIL).
+Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, renders/*.png (regenerated; all 5 viewed), round-1 design_review.md and strength.md, ../20261025-robot-arm-assembly/claw_frame.py, claw_sequence_check.py/.json, assembly_plan.md, BUILD_GUIDE §1 and §4 step 13, deep reviews 01 (S5, S6) and 03 (SYS-13), tools/hobby_parts.py (`BRIO_4K`, `TRIPOD_SCREW_D`, `_teardrop_z`), library/ (no lessons, no material rows, so skill defaults apply).
+
+The outputs are current. `build()` rebuilt in memory gives 10 479.88 mm³ and 6427.91 mm², the same as geometry.json, and mesh_check re-run in memory reproduces mesh_check.json. Extra evidence:
+- a layer-by-layer slice of part.stl: 0.2 mm layers on a 0.04 mm raster;
+- a per-layer 0.9 mm thin-feature test.
+
+Print frame: (X, Y, Z) = claw G (x, −z, y + 28).
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits bed with 5 mm margin | PASS | 40.55 × 24.1 × 50.0 mm |
-| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, min Z 0 |
-| 3 | Orientation matches brief | PASS | Standing on the −y end with the side profile (pad, 30° seat, lip) on the bed (iso.png, top.png, bottom.png) |
-| 4 | Load paths vs layers | PASS | The seat cantilever and the lip bend in the profile plane, along the layers. A cable tug along y reaches the seat as in-plane shear and goes on to the two screws |
-| 5 | Bed contact | PASS (note) | 186.3 mm² under a 50 mm part. The brief asks for a brim and slice_plan.json uses a 5 mm outer brim, but print_requirements.json does not require one (R1) |
-| 6 | Overhangs / bridges | PASS | Overhang 0 % and no bridges. The 1/4" slot and the M3 holes are teardrops |
-| 7 | Walls | PASS | Seat 4.0, lip 3.0, pad 3.5. The slot has at least 9.9 mm on each side, and the M3 holes are at least 5.2 mm from the pad's ends |
-| 8 | HOLE_COMP / horizontal holes | PASS | 1/4" slot Ø7.05 in CAD = 6.35 + SCREW_CLR 0.5 + HOLE_COMP 0.2, printing Ø6.85 as spec §3 asks. M3 holes Ø3.6. All points face print +Z (front.png, iso.png) |
-| 9 | Bottom edges chamfered | **FAIL** | There is no chamfer anywhere: design()/build() (l.52–73) never chamfer. A ray 0.05 mm above the pad's underside starts at y −28.00, and bottom.png shows square edges. The bed end carries the pad's underside, which seats on the cover; the seat face, which the camera sits on; and the lip's inner face, which runs 0.3 mm from the camera. The elephant's-foot ridge on these faces works against "camera sits flat on the seat" (spec §8) |
-| 10 | Internal corners on load paths | PASS (advisory) | The lip root is a sharp 90° corner on the anti-rotation path. Nominal stress is about 5 MPa in the layer plane for a 20 N lip load, which is low (R2) |
-| 11 | Fasteners (§4) | **FAIL** | Spec §2 picks a 1/4"-20 × 3/8" (9.5 mm) thumb screw and says it "may stand ≤ 5 mm above the 4 mm seat", but 9.53 − SEAT_T 4.0 = **5.5 mm**. If the Brio's thread is about 5 mm deep, the screw bottoms out before it clamps. The M3×18 button heads engage 11.5 mm of the frame's 14 mm pilots (frame review, item 11) |
-| 12 | Spec §3 dims named and matching | PASS | CAM_TILT 30, SCREW_CLR 0.5 (+ HOLE_COMP gives Ø6.85 printed), SLOT_HALF 4 and LIP_CLR 0.3, each named with a comment |
-| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
+| 1 | Fits the bed with a 5 mm margin | PASS | 40.32 × 32.39 × 50.0 mm, `fits_bed: true` |
+| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, `min_z_mm: 0.0` |
+| 3 | Orientation matches the brief | PASS | Standing on its −y end with the side profile in the bed plane: pad, 34° seat, lip with its root fillet (top.png, bottom.png, iso.png) |
+| 4 | Load paths vs layers | PASS (note) | The seat and lip bend in the profile, along the layers, as the brief says. The mount bending as a beam along y between the pad screws runs across the layers. Round-1 strength checked that (row 11, SF 5.66), but the brief doesn't mention it (R1) |
+| 5 | Bed contact | PASS | 183.5 mm² on a 50 mm-tall part, with `brim_width` ≥ 5 required in print_requirements.json (round-1 R1) |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | 0 % overhang and no bridges (mesh_check). The layer check finds no unsupported region. The 1/4" slot and the M3 holes are teardrops pointing up in print (front.png, right.png) |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS | Seat 4, lip 5 (LIP_T, round 2), pad 3.5. The M3 holes are ≥ 4.8 mm from the pad's front and rear and 3.2 mm from the bed end. The slot is ≥ 10 mm from the seat's edges. `thin_wall_warnings` is empty, and the per-layer 0.9 mm test finds nothing |
+| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | 1/4" slot Ø7.05 CAD = 6.35 + SCREW_CLR 0.5 + HOLE_COMP 0.2, so 6.85 printed, ±4 mm along the camera. M3 holes Ø3.6 = 3.4 + 0.2; measure_holes agrees. All are teardrops pointing up in print |
+| 9 | Bottom edges chamfered | PASS | 0.3 mm `chamfer_plane_edges` on the −y end, applied before the slot and holes are cut (model.py l.77; bottom.png shows the bevel all round), round-1 fix 1 |
+| 10 | Internal corners on load paths filleted | PASS (advisory) | Lip root r 2 (LIP_FILLET, round-1 strength fix; top.png). The corner between the pad top and the seat's front face (x ≈3.0, z 55) is sharp, but the camera's moment through it is small (round-1 strength rows 9–10: SF ≥ 12 without Kt) |
+| 11 | Fasteners per §4 | PASS | **Camera:** 1/4"-20 × 5/16" thumb screw, 7.9 mm under the head, so 3.9 mm into the camera after the 4 mm seat (round-1 fix 2; 01 S6). Spec §2 and BUILD_GUIDE §1 agree. **Mount:** M3 × 18 button heads through the pad (3.5) and the top wall (3), so 11.5 mm into the bulkhead's 14 mm pilots |
+| 12 | Spec §3 dims are named parameters | PASS (note) | Named, with comments in claw_frame.py and model.py: CAM_TILT 34, CAM_XC −8.5, CAM_ZC 68.4, LIP_T, LIP_H, LIP_CLR 0.3, SCREW_CLR 0.5, SLOT_HALF 4. The seat front face (spec §3: x 3.0 ±0.3) is derived: it comes out at x 2.69–2.99, from those parameters and a literal 0.3 in `profile()` (l.61). model.py's docstring still says 33.5° (l.1) (R2) |
+| 13 | Service temperature | PASS | 40 °C against PETG at ≈70 °C |
 | 14 | lessons.md | N/A | No entries |
-| 15 | FreeCAD reference | N/A | inputs/ is empty |
+| 15 | FreeCAD reference | N/A | No inputs/ |
 
 ## Required fixes
 
-1. **Chamfer the bed end (item 9).** As the cover does, chamfer the extruded profile's −y end 0.3–0.4 mm **before** cutting the slot and the M3 holes: `m = TO_PRINT.inverse() * chamfer_plane_edges(TO_PRINT * m, MOUNT_Y[0], 0.3)`. Rule §2 and §6.
-2. **Make the thumb screw meet the spec's 5 mm limit (item 11).** Choose one: a 1/4"-20 × 5/16" (7.9 mm) thumb screw, which stands 3.9 mm above the seat; the 3/8" screw with a 1 mm washer under its head, which stands 4.5 mm; or measure the Brio's thread depth and change the limit. Update spec §2 and the BUILD_GUIDE parts list to match. Checklist item 11 (fastener length against what it threads into).
+None.
+
+## Round-1 required fixes
+
+| Round-1 fix | Status | Evidence |
+|---|---|---|
+| 1. Chamfer the bed end before the holes | Done | Item 9 |
+| 2. Thumb screw meets the 5 mm limit | Done | 1/4"-20 × 5/16": 3.9 mm into the camera (item 11) |
+| R1. `brim_width` 5 in print_requirements.json | Done | `min.brim_width: 5` |
+| R2. Lip-root fillet | Done | r 2, with the lip at 5 mm (strength fix) |
+| R3. Pad fully supported | Done | The cover's top wall now starts at x 0, under the pad's x 0–14 |
+
+Other round-2 changes checked:
+- **34° tilt and new placement:** CAM_XC −8.5, CAM_ZC 68.4.
+- **Seat front face:** stays behind the cover screws' button heads at x 3.9–9.6.
+- **Fit check:** claw_sequence_check lowers the mount onto the cover with 0 mm³ against the frame, the servo and the cover.
 
 ## Recommendations (not blocking)
 
-- R1. Add `"brim_width": 5` under `min` in print_requirements.json so the validator enforces the brim that the brief and slice plan rely on.
-- R2. Put an r 1 mm fillet at the lip root. The Brio's rounded long edges (BRIO_EDGE_R 6, estimated) leave room for it.
-- R3. The pad spans x 0–14, but the cover's top wall starts at x 4, so the rear 4 mm of the pad is unsupported. Cover R2 extends the top wall to x 0.
-- Process note: part.gcode and the other slice files were written here at about 05:24–05:25 UTC, before this review. Re-slice after the fixes.
+- R1. Add the across-layer beam case (the mount bending along y between the pad screws under a cable tug) to the brief's orientation section, next to the along-the-layers cases.
+- R2. Update model.py's docstring from 33.5° to 34°, and name the 0.3 mm seat-front offset in `profile()` (l.61) with its source (spec §3's x 3.0).
+- R3. Process: the slice files in this folder date from before round 1. Re-slice after the DESIGN gate passes.

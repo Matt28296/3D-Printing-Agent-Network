@@ -1,40 +1,58 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review: 20261026-arm-claw-pinion
+# DFM review: 20261026-arm-claw-pinion (round 2)
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, renders/*.png (all 5 viewed), ../20261025-robot-arm-assembly/claw_frame.py, assembly_check.py/json, BUILD_GUIDE.md (step 9), tools/gears.py, tools/hobby_parts.py (`horn_pocket_cutter`, MG90S_DOUBLE), the jaw model, library/ (empty, so skill defaults apply).
-Outputs are current: `build()` gives 1765.53 mm³, the same as geometry.json. Numbers below come from ray casts through `design()` and, for item 16, from mesh booleans with the pinion placed in G as assembly_check.py places it.
+Reviewer: dfm-reviewer (independent) · 2026-10-26 · DESIGN gate, round 2 (round 1: FAIL).
+Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, renders/*.png (regenerated; all 5 viewed), round-1 design_review.md and strength.md, ../20261025-robot-arm-assembly/claw_frame.py, claw_sequence_check.py/.json, assembly_plan.md, BUILD_GUIDE §4 steps 11–12, deep reviews 01 (B2, S2) and 03 (SYS-01, SYS-08), tools/gears.py, tools/hobby_parts.py (`horn_pocket_cutter`, `MG90S_DOUBLE`), library/ (no lessons, no material rows, so skill defaults apply).
+
+The outputs are current. `build()` rebuilt in memory gives 2773.40 mm³ and 1937.33 mm², the same as geometry.json, and mesh_check re-run in memory reproduces mesh_check.json. Extra evidence:
+- a layer-by-layer slice of part.stl: 0.2 mm layers on a 0.02 mm raster;
+- a per-layer 0.9 mm thin-feature test;
+- sections of the teeth near the bed;
+- `gears._chamfer_band` rebuilt both ways, as a loft and as 0.1 mm steps.
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits bed with 5 mm margin | PASS | 20.0 × 19.8 × 8.0 mm |
-| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, min Z 0 |
-| 3 | Orientation matches brief | PASS | Back face (horn pocket) on the bed, axis vertical, so the involute lies in the bed plane (iso.png, top.png, bottom.png) |
-| 4 | Load paths vs layers | PASS | Tooth bending and horn-stub bearing both lie in the layer plane |
-| 5 | Bed contact | PASS | 138.7 mm² |
-| 6 | Overhangs / bridges | PASS | Only the pocket ceiling at z 2.0: span 7.7 (hub), length 11.5. The 4.67 % overhang is that ceiling |
-| 7 | Walls | PASS (note) | Pocket arc (r 5.75) to root circle (r 7.75): **2.0 mm** (rays at 10°, 30° and 170°). Hub to root: 3.9. Teeth (module 1, 0.45 mm extrusion): 1.52 at the pitch line, which is **3.4** extrusion widths, not the 4 in claw_frame.py's comment; 1.54–1.68 at the root; 0.94 at r 9.72, 0.80 at r 9.85 and **0.63** at the tip. Only the outer 0.15 mm of each tooth is under the 0.8 mm minimum feature, so the tips may print slightly rounded. The contact ratio is 1.76 nominal and about 1.66 even if that 0.15 mm is lost |
-| 8 | HOLE_COMP / horizontal holes | PASS | Pocket clearance 0.3 + HOLE_COMP 0.2, clamp hole Ø2.6, counterbore Ø4.4. There are no horizontal holes |
-| 9 | Bottom edges chamfered | PASS (note) | The 0.25 bed chamfer is present despite the try/except at l.31–34: a ray at r 9.9 starts at z 0.15, and bottom.png shows the bevel on every tooth. The pocket mouth is unchamfered (snug static fit; the slice uses EFC 0.2). See R1 |
-| 10 | Internal corners on load paths | **FAIL** | Tooth roots are sharp. `gear_outline` (tools/gears.py) joins the radial flank to the root circle at a corner with no fillet (top.png, bottom.png). Lewis at stall: 24 N on one rack, Y 0.309 (18 teeth), b 8, m 1 → **9.7 MPa**. With Kt 2–3 at a sharp root that is 19–29 MPa, against the 25 MPa in-plane placeholder, and normal gripping cycles at about half that. rover-sprocket round 1 failed the same point |
-| 11 | Fasteners (§4) | PASS | M2×10 from the Ø4.4 × 1.6 counterbore: 6.4 mm through the pinion, then about 5 mm into the spline past the horn face. The wrist joint's M2×12 was accepted at about 7 mm |
-| 12 | Spec §3 dims named and matching | PASS (note) | M, Z_TEETH, BACKLASH, POCKET_CLR 0.3, HORN_TRIM_R 5.5 and HEAD_D/HEAD_H are named with comments. Spec §2 gives the hub as Ø7.6, but the CAD hub is Ø7.7. The Ø4.4 counterbore is the CAD size; it prints at about 4.2 (R3) |
-| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
+| 1 | Fits the bed with a 5 mm margin | PASS | 21.7 × 21.7 × 10.0 mm, `fits_bed: true` |
+| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, `min_z_mm: 0.0` |
+| 3 | Orientation matches the brief | PASS | Horn-pocket face on the bed, axis vertical. iso.png and top.png show the 20 teeth, the counterbore and the clamp hole; bottom.png shows the clipped horn pocket and the bed chamfer on every tooth |
+| 4 | Load paths vs layers | PASS | Tooth bending and horn-stub bearing lie in the layer plane. The clamp preload squeezes the 6.3 mm floor |
+| 5 | Bed contact | PASS | 197.7 mm², PETG |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | **Pocket ceiling:** the only unsupported surface, at z 2.0, 7.5 × 11.3 mm (mesh_check). It is anchored all round: the layer check at z 2.1 puts its farthest point 3.26 mm from support, so it bridges two-sided, ≤ 7.5. overhang_pct 3.52 is that ceiling. **Bed chamfer:** a true 45° band. The loft and the 0.1 mm stepped band give the same volume, 71.550 mm³; the 0.25 mm inset keeps all 780 outline edges; the sections at z 0–0.25 are nested insets. Layer 2 overhangs layer 1 by at most 0.18 mm, which is under 45° |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS (note) | **Walls:** pocket stub ends (r 5.65 CAD) to the root circle (r 8.75): 3.1; counterbore Ø6.4 to the root circle: 5.55; floor 6.3. `thin_wall_warnings` is empty, and the per-layer 0.9 mm test finds nothing. **Teeth at a 0.4 mm nozzle:** 1.47 mm at the pitch line (π/2 − 0.10), 3.3 lines; root chord 1.63 at r 9.0 (brief); tip land ≈0.76 after the 0.15 topping. The tip land is 0.04 under rule §2's 0.8 mm smallest feature, but it is the tip of a tapered tooth, not a wall, as accepted in round 1. At the bed the chamfer narrows it to 0.44 |
+| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | Horn pocket POCKET_CLR 0.1 + HOLE_COMP (hub Ø7.5 CAD, stubs clipped at r 5.65). Clamp hole Ø2.6 = 2.4 + 0.2. Counterbore Ø6.4 = 6.2 + 0.2; measure_holes agrees. No horizontal holes |
+| 9 | Bottom edges chamfered | PASS (note) | 0.25 × 45° on the whole tooth outline, a true face (item 6). That is under the rule's 0.3, because `tools/gears.py` gives a true 45° face only up to 0.25 m; round 1 accepted it on the same grounds. **The horn pocket's mouth is unchamfered.** With the new 0.1 mm fit, a first-layer lip would make the horn tight to push in. It can't move the centring, because the horn plate sits at z 0.4–2.0, above the first two layers (R1) |
+| 10 | Internal corners on load paths filleted | PASS | Tooth roots r 0.38 (`PINION_ROOT_FILLET`, gears.py; top.png), round-1 fix 3. The rule's r ≥ 1 can't fit a module-1 root (round 1) |
+| 11 | Fasteners per §4 | PASS | M2 × 12 + Ø6 × 0.5 washer in the Ø6.4 × 1.7 counterbore: 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, like every horn clamp on the arm (01 S2). Head and washer stand ≤ 0.8 mm proud of the front face, inside the cover's pass-through |
+| 12 | Spec §3 dims are named parameters | PASS | M 1, Z_TEETH 20, FACE_W 10, PINION_BACKLASH 0.2 (each tooth 0.10 thinner), TIP_RELIEF 0.15 (Ø21.7), PINION_ROOT_FILLET 0.38, POCKET_CLR 0.1, HORN_TRIM_R 5.5, CB_D/CB_H 6.2/1.7. All named, with comments, in model.py or claw_frame.py, matching spec §3 |
+| 13 | Service temperature | PASS | 40 °C against PETG at ≈70 °C |
 | 14 | lessons.md | N/A | No entries |
-| 15 | FreeCAD reference | N/A | inputs/ is empty |
-| 16 | Cross-part fit with real hardware (added, as in rover-sprocket) | **FAIL** | (a) **The trimmed horn does not fit the pocket.** BUILD_GUIDE step 9 says to cut the arms 5.5 mm from the centre and "file the cut ends flat". The pocket's stub ends are r 5.75 arcs (bottom.png; pocket half-width 2.84 at x 5.0 and 1.68 at x 5.5). A flat end 5.5 out on an arm about 6.0 wide (hobby_parts MG90S taper, half-width 3.01) puts the corners at **r 6.27**, 0.5 mm into the wall. (b) **No axial clearance to the jaw necks.** The front face (G x 27.40) overlaps both necks, whose back faces are at x 27.39: 0.033 mm³ per jaw over y −3.8 to 0, z 30.5–32.5 at closed. They still touch at a 10 mm gap and are clear by 16 mm. assembly_check.py counts anything under 1 mm³ as touching, so it could not flag this. In print, the neck bridges over the rack's tooth gaps (jaw mesh_check, z 7.99) and sags into the space these teeth run through |
+| 15 | FreeCAD reference | N/A | No inputs/ |
 
 ## Required fixes
 
-1. **Make the horn preparation and the pocket agree without thinning the 2.0 mm root wall (item 16a).** Keep the pocket. Change spec §1 and BUILD_GUIDE step 9 (the Architect's files) from "cut 5.5 mm from the centre, file the ends flat" to "cut 5.5 mm from the centre, then file each stub end round so the horn fits inside a Ø11 circle". The alternative is to cut flat at 4.6 mm from the centre. Do **not** square the pocket ends instead: at x 5.75 the corners reach r 6.61, which leaves only 1.14 mm to the tooth roots. Rule §2 (structural walls ≥ 1.8) and §3 (fits).
-2. **Give the pinion 0.5 mm of axial clearance from the necks (item 16b).** Relieve the front face 0.5 mm over r ≥ 7.5, the teeth only, keeping the hub and the Ø4.4 × 1.6 counterbore as they are. Alternatively, make the pinion 7.5 wide instead of 8.0 and re-check the M2×10 length. The teeth then use 7.5 of the racks' 8 mm, so strength-analyst should add about 7 % to the Lewis stress. Also make assembly_check.py report pinion/jaw overlaps above about 0.001 mm³ instead of 1 mm³. Rule §3 (free-running clearance ≥ 0.5 mm). Evidence: item 16b.
-3. **Fillet the tooth roots (item 10).** In tools/gears.py (toolsmith), add the standard 0.38 m = **0.38 mm** root fillet to `gear_outline`, and about 0.3 mm to `rack_outline`, whose root land is 0.71 mm wide. Rebuild the pinion and the jaw and re-check the mesh over 0–44 mm. At r 8.0, the depth the rack tips reach, the 0.38 fillet stands only 0.02 mm off the flank, while the rack tip passes about 0.2 mm from it. The rule's r ≥ 1–2 mm cannot fit a 1.17 mm root land. Rule §2 (internal corners on load paths).
+None.
+
+## Round-1 required fixes
+
+| Round-1 fix | Status | Evidence |
+|---|---|---|
+| 1. Horn preparation matches the pocket | Done | BUILD_GUIDE §4 step 11: cut both arms 5.5 mm from the centre and file the ends round to fit a Ø11 circle. The pocket is clipped at r 5.65 CAD (≈5.55 printed) |
+| 2. Axial clearance to the necks | Done another way | The necks now sit at r ≥ 11.25, on the racks' solid back, outside the 10.85 tip circle. claw_sequence_check: pinion/jaw 0 mm³ over the stroke at 0.001 mm³ tolerance |
+| 3. Tooth-root fillets | Done | `gears.gear_outline(root_fillet=0.38)` |
+| R1. No silent chamfer fallback | Done | model.py has no try/except, and gears.py's loft is true for this outline (item 6) |
+| R3. Counterbore and hub wording in the spec | Done | Spec §2/§3: Ø6.4 CAD × 1.7 |
+| Strength: 20 teeth, face 10, root fillets, Ø6 washer, 0.35 backlash | Done | claw_frame.py; backlash measured 0.327–0.35 per mesh (claw_sequence_check.json) |
+
+Other round-2 changes checked:
+- **Fitted last** through the cover's Ø22.6 pass-through: claw_sequence_check sweeps the pinion as one exact solid, 0 mm³; 0.45 mm radial clearance printed.
+- **Tip relief:** 0.40 mm tip clearance.
+- **Pocket fit:** the 0.1 mm light fit (SYS-08).
 
 ## Recommendations (not blocking)
 
-- R1. Drop the try/except around `chamfer_plane_edges` (l.31–34). A future failure should stop the build instead of silently dropping the chamfer.
-- R2. Slicing: the outer 0.3 mm of each tooth is 0.63–0.94 mm wide. The profile leaves `perimeter_generator` unset, so confirm in the slice preview that Arachne or gap fill fills the tips. print_requirements.json now asks for 100 % rectilinear, which suits PrusaSlicer at 100 %.
-- R3. In spec §2/§3, write "Ø4.4 CAD (≈4.2 printed)" for the counterbore and "hub Ø7.7 CAD" for the pocket.
-- Process note: part.gcode and the other slice files were written here at about 05:24–05:25 UTC, before this review. Re-slice after the fixes.
+- R1. **Horn-pocket mouth.** Chamfer it 0.2 × 45°: the horn plate starts 0.4 mm above the bed face. Or make `elefant_foot_compensation` 0.2 a requirement in print_requirements.json; the old slice plan used it, but nothing enforces it. The 0.1 mm fit also rests on the default HOLE_COMP, because library/ has no fit-gauge row, so BUILD_GUIDE step 12's dry run is the real test. That step already allows CA glue.
+- R2. **Slicing:** check in the preview that the ≈0.76 mm tip lands fill (Arachne).
+- R3. **Process:** the slice files in this folder date from before round 1. Re-slice after the DESIGN gate passes.
