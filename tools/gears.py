@@ -17,12 +17,19 @@ Conventions
   The bar spans x from x0 to x1 and z from 0 to `width`.
 - A rack meshes with a gear when its pitch line is tangent to the gear's pitch circle
   (centre distance = pitch radius), with a GAP of the rack facing a TOOTH of the gear.
+- `tip_relief` tops every tooth that much below the standard 1.0 m addendum (more tip
+  clearance against centre-distance errors of printed parts, at a slightly lower contact ratio).
+- `chamfer=(c0, c1)` puts a 45° chamfer of c0 on the z = 0 end and c1 on the z = width end
+  (elephant's-foot relief on the bed face). It is a ruled loft from the outline to its 2D inset,
+  which works where an edge chamfer of the many short outline edges (root fillets) fails; where
+  the loft fails too (tooth tips that the inset collapses, e.g. 0.3 on module 1) it falls back
+  to 0.1 mm stepped slices. Keep gear chamfers at 0.25 m or less to get the true 45° face.
 """
 from __future__ import annotations
 
 import math
 
-from build123d import Align, Box, BuildPart, BuildSketch, Part, Plane, Polygon, Pos, extrude
+from build123d import Align, Box, BuildPart, BuildSketch, Part, Plane, Polygon, Pos, extrude, insert
 
 __all__ = ["pitch_radius", "gear_outline", "spur_gear", "rack_outline", "rack_bar", "min_teeth_no_undercut"]
 
@@ -43,21 +50,24 @@ def _inv(a: float) -> float:
 def gear_outline(m: float, z: int, pressure_deg: float = 20.0, backlash: float = 0.1,
                  phase_deg: float = 0.0, flank_pts: int = 10, tip_pts: int = 3,
                  root_pts: int = 4, root_fillet: float = 0.0,
-                 fillet_pts: int = 5) -> list[tuple[float, float]]:
+                 fillet_pts: int = 5, tip_relief: float = 0.0) -> list[tuple[float, float]]:
     """Closed CCW outline (x, y) of an involute spur gear.
 
     root_fillet > 0 rounds each tooth-root corner with an arc of that radius, tangent to the
     flank and to the root circle (a sharp root is a stress raiser; 0.25-0.38 m is usual). The
     arc stays inside the 0.25 m tip-clearance band, so a standard rack or gear still clears it.
+    tip_relief > 0 tops the teeth: outside radius rp + m - tip_relief.
     """
     if z < 6:
         raise ValueError("fewer than 6 teeth is not a usable gear")
     if m < 0.5:
         raise ValueError("module below 0.5 mm cannot be printed with a 0.4 mm nozzle")
+    if not 0.0 <= tip_relief < 0.5 * m:
+        raise ValueError("tip_relief must be at least 0 and under 0.5 m")
     a = math.radians(pressure_deg)
     rp = pitch_radius(m, z)
     rb = rp * math.cos(a)
-    ra = rp + m
+    ra = rp + m - tip_relief
     rf = rp - 1.25 * m
     s = math.pi * m / 2.0 - backlash / 2.0
     psi_p = s / (2.0 * rp)
@@ -130,28 +140,91 @@ def gear_outline(m: float, z: int, pressure_deg: float = 20.0, backlash: float =
     return pts
 
 
-def spur_gear(m: float, z: int, width: float, pressure_deg: float = 20.0, backlash: float = 0.1,
-              phase_deg: float = 0.0, root_fillet: float = 0.0) -> Part:
-    """Spur gear blank (no bore): axis +Z, z 0..width."""
-    with BuildPart() as bp:
-        with BuildSketch(Plane.XY):
-            Polygon(*gear_outline(m, z, pressure_deg, backlash, phase_deg, root_fillet=root_fillet), align=None)
-        extrude(amount=width)
+CHAMFER_STEP = 0.1   # mm: slice height of the stepped fallback chamfer (finer than a 0.2 mm layer)
+
+
+def _chamfer_band(pts: list[tuple[float, float]], z_end: float, c: float, toward: int, method: str = "loft"):
+    """45° chamfer band of height c at the end face z = z_end of an extruded outline; the band lies
+    on the side `toward` (+1: z_end .. z_end + c, -1: z_end - c .. z_end) and the end face is the
+    outline inset by c in 2D.
+    method "loft": a ruled loft from the full outline to the inset outline (a true 45° face).
+    method "steps": CHAMFER_STEP slices of outlines inset by each slice's mid depth (within
+    CHAMFER_STEP / 2 of a 45° face); used when the loft fails (very narrow tooth tips)."""
+    from build123d import Face, Kind, Solid, Wire
+
+    wire = Wire.make_polygon([(x, y, 0.0) for x, y in pts], close=True)
+
+    def inset_wire(d):
+        o = wire.offset_2d(-d, kind=Kind.INTERSECTION)
+        return o[0] if isinstance(o, list) else o
+
+    z_full = z_end + toward * c
+    if method == "loft":
+        band = Solid.make_loft([Pos(0, 0, min(z_full, z_end)) * (wire if z_full < z_end else inset_wire(c)),
+                                Pos(0, 0, max(z_full, z_end)) * (wire if z_full > z_end else inset_wire(c))],
+                               ruled=True)
+        if not band.is_valid:
+            raise ValueError("chamfer loft is not a valid solid")
+        return [band]
+    n = max(2, math.ceil(c / CHAMFER_STEP - 1e-9))
+    h = c / n
+    out = []
+    for k in range(n):            # k = 0 is the slice at the chamfered end face
+        z0 = z_end + k * h if toward > 0 else z_end - (k + 1) * h
+        out.append(Pos(0, 0, z0) * Solid.extrude(Face(inset_wire(c * (1 - (k + 0.5) / n))), (0, 0, h)))
+    return out
+
+
+def _extrude_chamfered(pts: list[tuple[float, float]], width: float,
+                       chamfer: tuple[float, float] = (0.0, 0.0)) -> Part:
+    """Extrude a closed outline along +Z from 0 to width, with 45° end chamfers: c0 at z = 0 and
+    c1 at z = width. Each chamfer is a ruled loft from the outline to its 2D inset (OCC's edge
+    chamfer fails on the many short edges of filleted tooth outlines; 2D insets do not), falling
+    back to 0.1 mm stepped slices where the loft fails."""
+    from build123d import Face, Solid, Wire
+
+    c0, c1 = (float(c) for c in chamfer)
+    if c0 < 0 or c1 < 0 or c0 + c1 >= width:
+        raise ValueError("chamfers must be at least 0 and leave some straight face width")
+    wire = Wire.make_polygon([(x, y, 0.0) for x, y in pts], close=True)
+    body = Pos(0, 0, c0) * Solid.extrude(Face(wire), (0, 0, width - c0 - c1))
+    for z_end, c, toward in ((0.0, c0, +1), (width, c1, -1)):
+        if c <= 0:
+            continue
+        try:
+            pieces = _chamfer_band(pts, z_end, c, toward, "loft")
+        except Exception:     # OCC: the loft fails where the inset collapses tooth tips
+            pieces = _chamfer_band(pts, z_end, c, toward, "steps")
+        for p in pieces:
+            body = body + p
+    with BuildPart() as bp:      # return a Part, as the plain extrusion always did
+        insert(body)
     return bp.part
+
+
+def spur_gear(m: float, z: int, width: float, pressure_deg: float = 20.0, backlash: float = 0.1,
+              phase_deg: float = 0.0, root_fillet: float = 0.0, tip_relief: float = 0.0,
+              chamfer: tuple[float, float] = (0.0, 0.0)) -> Part:
+    """Spur gear blank (no bore): axis +Z, z 0..width."""
+    pts = gear_outline(m, z, pressure_deg, backlash, phase_deg, root_fillet=root_fillet, tip_relief=tip_relief)
+    return _extrude_chamfered(pts, width, chamfer)
 
 
 def rack_outline(m: float, x0: float, x1: float, back: float, pressure_deg: float = 20.0,
                  backlash: float = 0.1, phase: float = 0.0, root_fillet: float = 0.0,
-                 fillet_pts: int = 5) -> list[tuple[float, float]]:
+                 fillet_pts: int = 5, tip_relief: float = 0.0) -> list[tuple[float, float]]:
     """Closed outline of a rack from x0 to x1 (teeth clipped at the ends).
 
     root_fillet > 0 rounds each root corner (flank to root land) with an arc of that radius.
     The arc stays below the depth a standard mating tooth tip reaches (1.0 m), so it is clear
-    of the pinion for root_fillet up to about 0.38 m."""
+    of the pinion for root_fillet up to about 0.38 m. tip_relief > 0 tops the teeth at
+    y = m - tip_relief."""
+    if not 0.0 <= tip_relief < 0.5 * m:
+        raise ValueError("tip_relief must be at least 0 and under 0.5 m")
     a = math.radians(pressure_deg)
     p = math.pi * m
     hw = (math.pi * m / 2.0 - backlash / 2.0) / 2.0     # half tooth width on the pitch line
-    yt, yr = m, -1.25 * m
+    yt, yr = m - tip_relief, -1.25 * m
     wt, wr = hw - yt * math.tan(a), hw - yr * math.tan(a)   # half widths at tip and root
     if wt <= 0:
         raise ValueError("rack teeth come to a point: raise the module")
@@ -199,13 +272,11 @@ def rack_outline(m: float, x0: float, x1: float, back: float, pressure_deg: floa
 
 
 def rack_bar(m: float, x0: float, x1: float, width: float, back: float, pressure_deg: float = 20.0,
-             backlash: float = 0.1, phase: float = 0.0, root_fillet: float = 0.0) -> Part:
+             backlash: float = 0.1, phase: float = 0.0, root_fillet: float = 0.0, tip_relief: float = 0.0,
+             chamfer: tuple[float, float] = (0.0, 0.0)) -> Part:
     """Rack bar (profile in XY, extruded z 0..width)."""
-    with BuildPart() as bp:
-        with BuildSketch(Plane.XY):
-            Polygon(*rack_outline(m, x0, x1, back, pressure_deg, backlash, phase, root_fillet=root_fillet), align=None)
-        extrude(amount=width)
-    return bp.part
+    pts = rack_outline(m, x0, x1, back, pressure_deg, backlash, phase, root_fillet=root_fillet, tip_relief=tip_relief)
+    return _extrude_chamfered(pts, width, chamfer)
 
 
 def _demo():  # pragma: no cover - manual check

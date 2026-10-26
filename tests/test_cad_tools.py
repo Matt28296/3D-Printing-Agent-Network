@@ -47,6 +47,20 @@ def test_cadlib_helpers():
     assert abs(lifted.bounding_box().min.Z) < 1e-9
 
 
+def test_measure_holes_sees_trimmed_teardrops():
+    """A teardrop made as cylinder + rotated box leaves a trimmed cylindrical face (build123d radius None)."""
+    from build123d import Align, Box, Cylinder, Pos, Rot
+    import cadlib as c
+
+    r = 1.8
+    cutter = Pos(0, 0, -1) * Cylinder(r, 6, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    cutter += Pos(0, r / 2 ** 0.5, -1) * Rot(0, 0, 45) * Box(r, r, 6, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    plate = Box(20, 20, 4, align=(Align.CENTER, Align.CENTER, Align.MIN)) - cutter
+    holes = c.measure_holes(plate)
+    assert [h["diameter"] for h in holes] == [3.6]
+    assert holes[0]["axis"] == [0.0, 0.0, 1.0] and 260 <= holes[0]["arc_deg"] <= 280
+
+
 @pytest.mark.parametrize("example", sorted(p.name for p in COOKBOOK.glob("*.py")))
 def test_cookbook_examples_build(job, example):
     shutil.copy(COOKBOOK / example, job / "model.py")

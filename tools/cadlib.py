@@ -91,6 +91,27 @@ def _angles_around(face, axis, samples: int = 72) -> list[float]:
     return out
 
 
+def _cylinder_of(face) -> tuple:
+    """(axis, radius) of a cylindrical face, or (None, None).
+
+    build123d reports radius None when the kernel wraps the cylinder in a trimmed
+    surface, which is what a teardrop cutter made as cylinder + rotated box often
+    leaves behind; the surface adaptor still gives the cylinder.
+    """
+    axis, radius = face.axis_of_rotation, face.radius
+    if axis is not None and radius is not None:
+        return axis, radius
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.GeomAbs import GeomAbs_Cylinder
+
+    s = BRepAdaptor_Surface(face.wrapped)
+    if s.GetType() != GeomAbs_Cylinder:
+        return None, None
+    cyl = s.Cylinder()
+    loc, d = cyl.Axis().Location(), cyl.Axis().Direction()
+    return Axis((loc.X(), loc.Y(), loc.Z()), (d.X(), d.Y(), d.Z())), cyl.Radius()
+
+
 def _coverage(angles: list[float]) -> float:
     a = sorted(angles)
     gaps = [a[i + 1] - a[i] for i in range(len(a) - 1)] + [a[0] + 360 - a[-1]]
@@ -109,9 +130,9 @@ def measure_holes(part: Part, min_arc_deg: float = 250) -> list[dict]:
     groups: dict[tuple, dict] = {}
     for f in part.faces().filter_by(GeomType.CYLINDER):
         try:
-            axis, radius = f.axis_of_rotation, f.radius
+            axis, radius = _cylinder_of(f)
             if axis is None or radius is None:
-                continue  # the kernel can't give this face an axis or radius (some split/trimmed faces)
+                continue  # the kernel can't give this face an axis or radius
             p = f.position_at(0.5, 0.5)
             ad = axis.direction.normalized()
             radial = (p - axis.position) - ad * (p - axis.position).dot(ad)

@@ -467,9 +467,10 @@ def brio4k_parts(cable_len: float = 30.0) -> list[trimesh.Trimesh]:
     for y in (-24.0, 24.0):                                                             # IR sensor windows
         p.append(cyl(2.4, 13.55, 13.7, "led_red", axis="x").apply_translation((0, y, 13.5)))
     p.append(cyl(0.9, 13.55, 13.75, "plastic_white", axis="x").apply_translation((0, 9.0, 13.5)))  # status LED
-    p.append(box(-3.0, 3.0, 50.9, 51.1, 11.0, 16.0, "plastic_black"))                  # USB-C socket (+Y end)
-    p.append(box(-3.5, 3.5, 51.0, 59.0, 10.0, 17.0, "plastic_black"))                  # USB-C plug
-    p.append(cyl(2.0, 59.0, 59.0 + cable_len, "wire_black", axis="y").apply_translation((0, 0, 13.5)))  # cable stub
+    # USB-C on the BACK (deep review 01 S5), assumed centred: a right-angle plug turned to run along +Y
+    p.append(box(-13.6, -13.4, -4.5, 4.5, 11.0, 16.0, "plastic_black"))                # USB-C socket
+    p.append(box(-25.5, -13.5, -4.0, 21.0, 9.5, 17.5, "plastic_black"))                # right-angle plug, 12 x 25 x 8
+    p.append(cyl(2.0, 21.0, 21.0 + cable_len, "wire_black", axis="y").apply_translation((-19.5, 0, 13.5)))  # cable stub
     return merge_by_material([q for q in p if q is not None])
 
 
