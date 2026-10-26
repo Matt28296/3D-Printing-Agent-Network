@@ -1,14 +1,18 @@
-"""Strength check for jobs/20261026-hexapod-body-bottom (round 3). Run from the project root:
+"""Strength check for jobs/20261026-hexapod-body-bottom (round 4). Run from the project root:
     python3 jobs/20261026-hexapod-body-bottom/strength_calc.py
 It needs build123d, trimesh and scipy, like cad_checks.py (CAD venv: /home/claude/.venv-cad). Takes 0.5-2 min:
 it builds all five hexapod parts to get the robot's printed mass.
 
-strength-analyst, round 3, 2026-10-26. Hand calculations (strength-checks skill) on placeholder PETG allowables.
-Section properties come from the build123d solid, sampled on the printed layers: perimeters and top/bottom solid
-layers count as solid, the gyroid infill core as a cellular solid (stiffness rho^2, strength rho^1.5), as in the
-rover-wheel review. The block between the ==== lines at the top is identical in all five hexapod strength_calc.py.
+strength-analyst, round 4 (independent), 2026-10-26. Hand calculations (strength-checks skill) on placeholder PETG
+allowables. Section properties come from the build123d solid, sampled on the printed layers: perimeters and
+top/bottom solid layers count as solid, a sparse infill core as a cellular solid (stiffness rho^2, strength
+rho^1.5), as in the rover-wheel review and strength round 3. At 100 % infill (the coxa since round 4) the core is
+solid rectilinear infill, the same extrusion as the solid skins, and counts as solid.
+The block between the ==== lines at the top is identical in the round-4 coxa and body-bottom strength_calc.py. It is
+round 3's shared block with the round-4 tab hardware in the bought list, the fill pattern read from
+print_requirements.json, and without round 3's change-set mass (W_ALL_FIX): those changes are now in the models.
 """
-# ==== shared hexapod round-3 load model (identical block in all five round-3 strength_calc.py) =================
+# ==== shared hexapod load model, round 4 (identical block in the round-4 coxa and body-bottom strength_calc.py) ====
 # Needs the CAD venv (build123d, trimesh, scipy). Reads hex_frame.py, tools/hobby_parts.py, each hexapod model.py
 # (built with build123d) and print_requirements.json. Writes nothing.
 import json
@@ -68,6 +72,11 @@ def print_settings(part):
     req = json.load(open(os.path.join(JOBS, JOB[part], "print_requirements.json")))["min"]
     return dict(perimeters=req["perimeters"], top=req["top_solid_layers"], bottom=req["bottom_solid_layers"],
                 fill=req["fill_density"] / 100.0)
+
+
+def fill_pattern(part):
+    req = json.load(open(os.path.join(JOBS, JOB[part], "print_requirements.json")))
+    return req.get("equals", {}).get("fill_pattern", "?")
 
 
 def build_part(part):
@@ -269,8 +278,10 @@ BOUGHT = [
     ("LiPo voltage alarm (est.)", 7.0),
     ("2 x 1000 uF 10 V, divider, Schottky (est.)", 5.6),
     ("12 servo extensions, 15 cm (DR05: 3 g each)", 36.0),
-    ("screws, washers, nuts (30 M2x12-14, 12 M2x10, 12 M2x8, 18 M1.7x5, 4 M3x8, 8 M2.5x6, 36 washers, 6 penny "
-     "washers, 12 nuts; est.)", 33.4),
+    # round 4: the 12 coxa tab screws are M2 x 14 (was x 12: +2 mm of M2 shank, ~0.04 g each) with M2 Nyloc nuts
+    # (DIN 985, ~0.19 g against ~0.12 g for a plain nut): +1.3 g on round 3's 33.4 g estimate
+    ("screws, washers, nuts (18 M2x12-14 horn clamps, 12 M2x14 coxa tab screws, 12 M2x10, 12 M2x8, 18 M1.7x5, "
+     "4 M3x8, 8 M2.5x6, 36 washers, 6 penny washers, 12 M2 Nyloc nuts; est.)", 33.4 + 1.3),
     ("zip ties, velcro strap, tape (est.)", 10.0),
     ("power harness, I2C and power jumpers (DR05: 17 g; est.)", 20.0),
 ]
@@ -286,11 +297,8 @@ M_TOTAL = M_PRINTED + M_BOUGHT
 W_N = M_TOTAL * G
 M_DECK = M_PART["body-top"] + 2 * PCA9685_BOARD.mass_g + 10.0 + 2.0 + 15.0 + 10.0   # deck, 2 boards, ESP32, buck,
 #                                                      switch, half the harness (the UBEC stands on the bottom plate)
-# robot mass with the round-3 required changes made (coxa printed solid; body-bottom MARGIN 8 and O10 columns, whose
-# +13 g the body-bottom strength_calc.py computes): the basis of every change-set row
-M_COXA_FIX = MASS_CAL * RHO * SOLID["coxa"].volume
-BOTTOM_FIX_G = 13.0
-W_ALL_FIX = W_N + (6 * (M_COXA_FIX - M_PART["coxa"]) + BOTTOM_FIX_G) * G
+# Round 4: round 3's change set (the coxa printed solid; the bottom plate's MARGIN 8 and O10 columns) is now in the
+# models and print_requirements.json, so W_N above is the round-4 robot. Round 3's W_ALL_FIX estimate is gone.
 
 # --- leg poses, servo torques, tripod shares -----------------------------------------------------------------------
 class Pose:
@@ -473,7 +481,7 @@ def report(title):
     for i, (n, d, s, a, sf, req) in enumerate(rows, 1):
         print(f"| {i} | {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:.0f} | {'OK' if sf >= req else '**FAIL**'} |")
     if advisory:
-        print("\nAdvisory and change-set rows (not in the verdict):")
+        print("\nAdvisory, sensitivity and proof-load rows (not in the verdict):")
         print("| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
         print("|---|---|---|---|---|---|---|")
         for n, d, s, a, sf, req in advisory:
@@ -492,7 +500,7 @@ def print_load_model():
     for k in QTY:
         ps = print_settings(k)
         print(f"   {k}: {QTY[k]} x {M_PART[k]:.1f} g printed ({M_PART_SOLID[k]:.1f} g solid; {ps['perimeters']} "
-              f"perimeters, {ps['fill']:.0%} gyroid)")
+              f"perimeters, {ps['fill']:.0%} {fill_pattern(k)})")
     for n, m in BOUGHT:
         print(f"   {n}: {m:.1f} g")
     print(f"tripod share (CG within +-{CG_BOX:.0f} mm): max {SHARE_MAX:.3f} over {len(POSES)} planted feet; "
@@ -547,9 +555,10 @@ WIN_W = s.width + P["CLR"] + P["HOLE_COMP"]                          # 12.8
 HOLE_D = P["TAB_SCREW_CLEAR"] + P["HOLE_COMP"]                       # 2.4 CAD, slotted 0.4 outward
 TAB_HALF = s.width / 2
 print_load_model()
-print(f"\nbody-bottom: plate {T} mm, {ps['perimeters']} perimeters (band {F.band:.2f}), {ps['fill']:.0%} gyroid; coxa "
-      f"window S0 x {WIN[0]:.1f}..{WIN[1]:.1f} x {WIN_W:.1f}; M2 screws at S0 x {PIL[0]:.1f} / {PIL[1]:.1f} in O{HOLE_D} "
-      f"holes slotted 0.4 outward")
+print(f"\nbody-bottom (round 4): plate {T} mm, MARGIN {P['MARGIN']:.0f}, columns O{P['COLUMN_D']:.0f}; "
+      f"{ps['perimeters']} perimeters (band {F.band:.2f}), {ps['fill']:.0%} {fill_pattern('body-bottom')}; coxa window "
+      f"S0 x {WIN[0]:.1f}..{WIN[1]:.1f} x {WIN_W:.1f}; M2 x 14 tab screws with Nyloc nuts at S0 x {PIL[0]:.1f} / "
+      f"{PIL[1]:.1f} in O{HOLE_D:.1f} holes slotted 0.4 outward")
 
 
 def to_print(mount, u, v, w=0.0):
@@ -605,6 +614,9 @@ def strip_sections(field, mount, u1):
 MOUNT = H.LEG_MOUNTS[0]
 U_EDGE = strip_edge(S, MOUNT)
 D_STRIP = U_EDGE - WIN[1]
+_d_all = [strip_edge(S, m) - WIN[1] for m in H.LEG_MOUNTS]
+print(f"strip outside each window's outboard end (MARGIN {P['MARGIN']:.0f}), probed on the built plate at v 0 in 0.05 "
+      f"steps: {', '.join(f'{d:.2f}' for d in _d_all)} mm (mounts 0-5); sections below at mount 0")
 STRIP = strip_sections(F, MOUNT, U_EDGE)
 L_STRIP = WIN_W + 2 * T                                             # fixed-fixed span: window + one plate thickness
 #                                                                     each side (predecessor's model)
@@ -621,7 +633,14 @@ def strip_sigma(pose, f, props, Kt):
 
 # washer (O5) under the screw head on the underside: plug shear, and bearing (preload)
 R_W = 2.5
-A_WASHER = math.pi * R_W ** 2 - (math.pi * (HOLE_D / 2) ** 2 + HOLE_D * 0.4)
+# Round 4: at its tab hole the screw sits at the slot's window end (the slot runs 0.4 outward), so the washer's rim
+# reaches past the window's end (DFM round 3): that segment bears on nothing. CAD edge (u 6.1), between the printed
+# window end (~6.0) and the first layer's (elephant-foot compensation 0.2: ~6.2).
+H_OVER = max(R_W - (PIL[1] - WIN[1]), 0.0)                          # 0.2 mm
+A_OVER_WIN = R_W ** 2 * math.acos((R_W - H_OVER) / R_W) - (R_W - H_OVER) * math.sqrt(2 * R_W * H_OVER - H_OVER ** 2)
+A_WASHER = math.pi * R_W ** 2 - (math.pi * (HOLE_D / 2) ** 2 + HOLE_D * 0.4) - A_OVER_WIN
+print(f"O5 washer bearing on the underside: {A_WASHER:.2f} mm2 (its rim reaches {H_OVER:.2f} past the window's end: "
+      f"{A_OVER_WIN:.2f} mm2 lost)")
 
 
 def plug_area(field, centre, r, z0, z1, n_th=360):
@@ -640,7 +659,12 @@ print(f"O5 washer under the outboard screw: plug r {R_W} through the plate: soli
       f"{A_PLUG:.0f} mm2; the hole's perimeter ring covers {SOLID_UNDER_WASHER:.0%} of the washer's radius")
 
 LIG = PIL[1] - HOLE_D / 2 - WIN[1]                                   # window -> clearance hole, 1.1 CAD
-PRELOAD = {"snug 0.05 N.m": 125.0, "'firm stop' 0.1 N.m": 250.0}
+# Round 4 tab hardware: M2 x 14, Nyloc nut, driven snug at most 0.045 N.m above the Nyloc's running torque (spec
+# section 2, BUILD_GUIDE section 3 step 5). Preload F = T / (K d), nut factor K 0.2 (dry steel; the round-3 basis).
+K_NUT, D_SCREW = 0.2, 2.0e-3
+T_SNUG = 0.045
+PRELOAD_SNUG = T_SNUG / (K_NUT * D_SCREW)                           # 112.5 N (round 3 used 110 N for 0.045 N.m)
+PRELOAD_FIRM = 0.1 / (K_NUT * D_SCREW)                              # 250 N: a 'firm stop', which BUILD_GUIDE now forbids
 
 # ================================ verdict rows (as printed) =========================================================
 for key in ("sust", "walk", "scrub", "shove", "stall", "drop"):
@@ -660,8 +684,8 @@ check(f"drop: window-to-hole ligament {LIG:.2f} CAD, whole radial force on one s
       worst("drop", lambda p, f: screw_forces(p, f)[4]) / (2 * LIG * T), False, SF_STATIC, shear=True)
 check("coxa stall 216 N.mm: screws bearing in their holes (2 screws, 27.8 apart)", STALL / S_SCR / (2.0 * T), False,
       SF_STATIC)
-check(f"assembly: tab screw snug ({PRELOAD['snug 0.05 N.m']:.0f} N): O5 washer bearing on the plate underside",
-      PRELOAD["snug 0.05 N.m"] / A_WASHER, False, SF_STATIC, tag="bearing")
+check(f"assembly: tab screw snug at the spec's {T_SNUG} N.m cap ({PRELOAD_SNUG:.1f} N, K {K_NUT}): O5 washer bearing "
+      f"on the plate underside ({A_WASHER:.1f} mm2)", PRELOAD_SNUG / A_WASHER, False, SF_STATIC, tag="bearing")
 
 # --- plate between the mounts, columns, deck screws ----------------------------------------------------------------
 M_ON_PLATE = M_DECK + LIPO_2S_1000.mass_g + 25.0 + 0.5 * M_PART["body-bottom"]      # + UBEC on the plate
@@ -684,7 +708,9 @@ for lab, g, a_, b_, req in ((f"walking x{DYN:.0f}, tripod span", DYN, 52.0, 42.0
           M * MID[1]["ct"] / MID[1]["Itt"], False, req, Kt=2.5)
 COL = (H.COLUMNS[0][0], H.COLUMNS[0][1])
 Z_COL = T + P["COLUMN_FILLET"] + 0.1
-CS = section(F, (COL[0] - 5, COL[1], Z_COL), (1, 0, 0), (0, 1, 0), (0, 10), (-5, 5), du=0.05, dv=0.05)
+_dc = P["COLUMN_D"]                                                   # round 4: O10 (window 1 mm wider all round)
+CS = section(F, (COL[0] - _dc / 2 - 1, COL[1], Z_COL), (1, 0, 0), (0, 1, 0), (0, _dc + 2), (-_dc / 2 - 1, _dc / 2 + 1),
+             du=0.05, dv=0.05)
 I_COL = (CS[1]["Iss"] + CS[1]["Itt"]) / 2
 C_COL = P["COLUMN_D"] / 2
 M_BOTTOM_GROUP = M_TOTAL - M_DECK
@@ -705,9 +731,11 @@ L_COL = 8.0 - H.T_TOP
 check(f"handling: M3x8 self-tapping pull-out from a column (2 screws carry it, O{P['COLUMN_PILOT']} pilot, {L_COL:.0f} mm)",
       2 * F_HANG / (math.pi * P["COLUMN_PILOT"] * L_COL), True, SF_STATIC, shear=True)
 
-# ================================ advisory ==========================================================================
-check(f"assembly: tab screw at the BUILD_GUIDE's 'firm stop' (~0.1 N.m, {PRELOAD[chr(39) + 'firm stop' + chr(39) + ' 0.1 N.m']:.0f} N): "
-      f"O5 washer bearing", 250.0 / A_WASHER, False, SF_STATIC, tag="bearing", info=True)
+# ================================ advisory: overtightening, beyond the spec, model sensitivities ====================
+check(f"assembly: tab screw driven to a 'firm stop' (~0.1 N.m, {PRELOAD_FIRM:.0f} N), which BUILD_GUIDE forbids: O5 "
+      f"washer bearing", PRELOAD_FIRM / A_WASHER, False, SF_STATIC, tag="bearing", info=True)
+check(f"SENSITIVITY assembly: {T_SNUG} N.m with a lubricated thread (K 0.15, {T_SNUG / (0.15 * D_SCREW):.0f} N): O5 "
+      f"washer bearing", T_SNUG / (0.15 * D_SCREW) / A_WASHER, False, SF_STATIC, tag="bearing", info=True)
 for key, (lab, sets, req) in ADV_CASES.items():
     adv = {key: ADV_CASES[key]}
     check(f"{lab}: strip at the screw hole (as printed)",
@@ -717,58 +745,38 @@ check(f"SPAN SENSITIVITY drop: strip at the screw hole, span {L_ALT:.1f} (window
       worst("drop", lambda p, f: strip_sigma(p, f, STRIP["hole"][1], 2.0)) * L_ALT / L_STRIP, False, SF_STATIC, info=True)
 check("SOLID SECTIONS drop: strip at the screw hole", worst("drop", lambda p, f: strip_sigma(p, f, STRIP["hole"][0], 2.0)),
       False, SF_STATIC, info=True)
+# Round 4: the uplift enters at the outboard screw, S0 x 8.4, which is 2.3 mm from the window's end and 9.0 from the
+# outline: off the strip's centroid, so the strip also twists. Fixed-fixed beam, torque split half to each end;
+# Saint-Venant torsion of the solid rectangle D_STRIP x T (alpha 0.2425 at b/t 1.88), scaled by the as-printed /
+# solid stiffness ratio of the corner section. Its shear peaks at the middle of the long (top/bottom) faces, where
+# the bending stress carries no Kt (combined by Tresca); it is zero at the section's corners, where Kt 2.5 acts.
+U_C = WIN[1] + D_STRIP / 2
+E_TOR = U_C - PIL[1]
+ALPHA_TOR = 0.2425
+RATIO = STRIP["corner"][0]["Itt"] / STRIP["corner"][1]["Itt"]
 
-# ================================ change set: deeper strip (MARGIN), tab screws snug at <= 0.045 N.m ================
-def rebuilt(margin):
-    ns = MODEL["body-bottom"]
-    ns["design"].__globals__["MARGIN"] = margin
-    part = ns["build"]()
-    ns["design"].__globals__["MARGIN"] = P["MARGIN"]
-    return part
+
+def strip_torsion_combined(pose, f):
+    up = screw_forces(pose, f)[0]
+    tau = RATIO * up * E_TOR / 2 / (ALPHA_TOR * D_STRIP * T ** 2)
+    sig = strip_sigma(pose, f, STRIP["corner"][1], 1.0)
+    return np.sqrt(sig ** 2 + 4 * tau ** 2)
 
 
-PRELOAD_FIX = 110.0                                       # ~0.045 N.m (F = T / (0.2 d))
-for margin in (6.0, 7.0, 8.0):
-    sol_m = rebuilt(margin)
-    fld = PrintField(sol_m, **ps)
-    u1 = strip_edge(sol_m, MOUNT)
-    st = strip_sections(fld, MOUNT, u1)
-    m_fix = fld.mass_g
-    print(f"MARGIN {margin:.0f}: plate {m_fix:.1f} g printed (+{m_fix - M_PART['body-bottom']:.1f} g), strip "
-          f"{u1 - WIN[1]:.2f} deep")
-    cf = cases_at(W_ALL_FIX)
-    for key in ("walk", "drop"):
-        lab, sets, req = cf[key]
-        check(f"FIX MARGIN {margin:.0f} (strip {u1 - WIN[1]:.1f} deep, plate {m_fix:.0f} g): {lab}: strip at the screw hole",
-              worst(key, lambda p, f: strip_sigma(p, f, st["hole"][1], 2.0), cf), False, req, info=True)
-        check(f"FIX MARGIN {margin:.0f}: {lab}: strip at the window's corners",
-              worst(key, lambda p, f: strip_sigma(p, f, st["corner"][1], 2.5), cf), False, req, info=True)
-check(f"FIX assembly: tab screws snug at <= 0.045 N.m ({PRELOAD_FIX:.0f} N): O5 washer bearing", PRELOAD_FIX / A_WASHER,
-      False, SF_STATIC, tag="bearing", info=True)
+check(f"TORSION drop: strip at the window's corners, bending (no Kt) + torsion from the uplift's {E_TOR:.2f} mm offset "
+      f"(Tresca, face middle)", worst("drop", strip_torsion_combined), False, SF_STATIC, info=True)
 # columns: the handling case takes each column as a cantilever from the plate (the predecessor's model, deck joint
-# taken as a pin). Sensitivity: the deck clamps the column tops (one M3 each on a O8 face) and restrains their
+# taken as a pin). Sensitivity: the deck clamps the column tops (one M3 each on a O10 face) and restrains their
 # rotation, which leaves 0.6-0.8 of the cantilever moment at the root.
 check("SENSITIVITY handling tipped 90 deg: column root with the deck restraining the tops (0.7 x the cantilever moment)",
       0.7 * F_HANG * H.COLUMN_H * C_COL / I_COL, True, SF_STATIC, Kt=1.5, info=True)
 
-
-def rebuilt_col(d):
-    ns = MODEL["body-bottom"]
-    ns["design"].__globals__["COLUMN_D"] = d
-    part = ns["build"]()
-    ns["design"].__globals__["COLUMN_D"] = P["COLUMN_D"]
-    return part
-
-
-for d in (9.0, 10.0):
-    fld = PrintField(rebuilt_col(d), **ps)
-    cs = section(fld, (COL[0] - d / 2 - 1, COL[1], Z_COL), (1, 0, 0), (0, 1, 0), (0, d + 2), (-d / 2 - 1, d / 2 + 1),
-                 du=0.05, dv=0.05)
-    i_c = (cs[1]["Iss"] + cs[1]["Itt"]) / 2
-    print(f"columns O{d:.0f}: plate {fld.mass_g:.1f} g printed (+{fld.mass_g - M_PART['body-bottom']:.1f} g); I as printed "
-          f"{i_c:.0f} mm4")
-    f_h = (W_ALL_FIX / G - M_DECK) * G * DYN / 4
-    check(f"FIX columns O{d:.0f} (fillet r{P['COLUMN_FILLET']}): handling tipped 90 deg, column root bending (as printed)",
-          f_h * H.COLUMN_H * (d / 2) / i_c, True, SF_STATIC, Kt=1.5, info=True)
+# ================================ proof-test check (spec section 8, step 2: handling hold) ===========================
+M_HOLD = 0.8                                                          # kg hung from the plate's lower edge
+F_HOLD = (M_BOTTOM_GROUP / 1000 + M_HOLD) * 9.81 / 4                  # per column (the robot's own lower group + 0.8 kg)
+print(f"handling hold: robot below the deck {M_BOTTOM_GROUP:.0f} g + {M_HOLD} kg = "
+      f"{(M_BOTTOM_GROUP / 1000 + M_HOLD) / (M_BOTTOM_GROUP / 1000):.2f} x its static load on the columns")
+check(f"PROOF spec section 8 step 2: tipped 90 deg, + {M_HOLD} kg: column root bending",
+      F_HOLD * H.COLUMN_H * C_COL / I_COL, True, 1.0, Kt=1.5, info=True)
 
 report(JOB["body-bottom"])

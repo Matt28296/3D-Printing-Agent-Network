@@ -1,14 +1,18 @@
-"""Strength check for jobs/20261026-hexapod-coxa (round 3). Run from the project root:
+"""Strength check for jobs/20261026-hexapod-coxa (round 4). Run from the project root:
     python3 jobs/20261026-hexapod-coxa/strength_calc.py
 It needs build123d, trimesh and scipy, like cad_checks.py (CAD venv: /home/claude/.venv-cad). Takes 0.5-2 min:
 it builds all five hexapod parts to get the robot's printed mass.
 
-strength-analyst, round 3, 2026-10-26. Hand calculations (strength-checks skill) on placeholder PETG allowables.
-Section properties come from the build123d solid, sampled on the printed layers: perimeters and top/bottom solid
-layers count as solid, the gyroid infill core as a cellular solid (stiffness rho^2, strength rho^1.5), as in the
-rover-wheel review. The block between the ==== lines at the top is identical in all five hexapod strength_calc.py.
+strength-analyst, round 4 (independent), 2026-10-26. Hand calculations (strength-checks skill) on placeholder PETG
+allowables. Section properties come from the build123d solid, sampled on the printed layers: perimeters and
+top/bottom solid layers count as solid, a sparse infill core as a cellular solid (stiffness rho^2, strength
+rho^1.5), as in the rover-wheel review and strength round 3. At 100 % infill (the coxa since round 4) the core is
+solid rectilinear infill, the same extrusion as the solid skins, and counts as solid.
+The block between the ==== lines at the top is identical in the round-4 coxa and body-bottom strength_calc.py. It is
+round 3's shared block with the round-4 tab hardware in the bought list, the fill pattern read from
+print_requirements.json, and without round 3's change-set mass (W_ALL_FIX): those changes are now in the models.
 """
-# ==== shared hexapod round-3 load model (identical block in all five round-3 strength_calc.py) =================
+# ==== shared hexapod load model, round 4 (identical block in the round-4 coxa and body-bottom strength_calc.py) ====
 # Needs the CAD venv (build123d, trimesh, scipy). Reads hex_frame.py, tools/hobby_parts.py, each hexapod model.py
 # (built with build123d) and print_requirements.json. Writes nothing.
 import json
@@ -68,6 +72,11 @@ def print_settings(part):
     req = json.load(open(os.path.join(JOBS, JOB[part], "print_requirements.json")))["min"]
     return dict(perimeters=req["perimeters"], top=req["top_solid_layers"], bottom=req["bottom_solid_layers"],
                 fill=req["fill_density"] / 100.0)
+
+
+def fill_pattern(part):
+    req = json.load(open(os.path.join(JOBS, JOB[part], "print_requirements.json")))
+    return req.get("equals", {}).get("fill_pattern", "?")
 
 
 def build_part(part):
@@ -269,8 +278,10 @@ BOUGHT = [
     ("LiPo voltage alarm (est.)", 7.0),
     ("2 x 1000 uF 10 V, divider, Schottky (est.)", 5.6),
     ("12 servo extensions, 15 cm (DR05: 3 g each)", 36.0),
-    ("screws, washers, nuts (30 M2x12-14, 12 M2x10, 12 M2x8, 18 M1.7x5, 4 M3x8, 8 M2.5x6, 36 washers, 6 penny "
-     "washers, 12 nuts; est.)", 33.4),
+    # round 4: the 12 coxa tab screws are M2 x 14 (was x 12: +2 mm of M2 shank, ~0.04 g each) with M2 Nyloc nuts
+    # (DIN 985, ~0.19 g against ~0.12 g for a plain nut): +1.3 g on round 3's 33.4 g estimate
+    ("screws, washers, nuts (18 M2x12-14 horn clamps, 12 M2x14 coxa tab screws, 12 M2x10, 12 M2x8, 18 M1.7x5, "
+     "4 M3x8, 8 M2.5x6, 36 washers, 6 penny washers, 12 M2 Nyloc nuts; est.)", 33.4 + 1.3),
     ("zip ties, velcro strap, tape (est.)", 10.0),
     ("power harness, I2C and power jumpers (DR05: 17 g; est.)", 20.0),
 ]
@@ -286,11 +297,8 @@ M_TOTAL = M_PRINTED + M_BOUGHT
 W_N = M_TOTAL * G
 M_DECK = M_PART["body-top"] + 2 * PCA9685_BOARD.mass_g + 10.0 + 2.0 + 15.0 + 10.0   # deck, 2 boards, ESP32, buck,
 #                                                      switch, half the harness (the UBEC stands on the bottom plate)
-# robot mass with the round-3 required changes made (coxa printed solid; body-bottom MARGIN 8 and O10 columns, whose
-# +13 g the body-bottom strength_calc.py computes): the basis of every change-set row
-M_COXA_FIX = MASS_CAL * RHO * SOLID["coxa"].volume
-BOTTOM_FIX_G = 13.0
-W_ALL_FIX = W_N + (6 * (M_COXA_FIX - M_PART["coxa"]) + BOTTOM_FIX_G) * G
+# Round 4: round 3's change set (the coxa printed solid; the bottom plate's MARGIN 8 and O10 columns) is now in the
+# models and print_requirements.json, so W_N above is the round-4 robot. Round 3's W_ALL_FIX estimate is gone.
 
 # --- leg poses, servo torques, tripod shares -----------------------------------------------------------------------
 class Pose:
@@ -473,7 +481,7 @@ def report(title):
     for i, (n, d, s, a, sf, req) in enumerate(rows, 1):
         print(f"| {i} | {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:.0f} | {'OK' if sf >= req else '**FAIL**'} |")
     if advisory:
-        print("\nAdvisory and change-set rows (not in the verdict):")
+        print("\nAdvisory, sensitivity and proof-load rows (not in the verdict):")
         print("| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
         print("|---|---|---|---|---|---|---|")
         for n, d, s, a, sf, req in advisory:
@@ -492,7 +500,7 @@ def print_load_model():
     for k in QTY:
         ps = print_settings(k)
         print(f"   {k}: {QTY[k]} x {M_PART[k]:.1f} g printed ({M_PART_SOLID[k]:.1f} g solid; {ps['perimeters']} "
-              f"perimeters, {ps['fill']:.0%} gyroid)")
+              f"perimeters, {ps['fill']:.0%} {fill_pattern(k)})")
     for n, m in BOUGHT:
         print(f"   {n}: {m:.1f} g")
     print(f"tripod share (CG within +-{CG_BOX:.0f} mm): max {SHARE_MAX:.3f} over {len(POSES)} planted feet; "
@@ -543,11 +551,15 @@ PIL_X = [H.L_C + px for px in P["PILOT_X"]]                 # 12.6, 41.7 (outboa
 S_SCR = PIL_X[1] - PIL_X[0]
 HB = H.Z_F - WIN_Z0                                         # screw line above the post root: 6.4
 TAB_HALF = s.width / 2                                      # tab edge to the screw line: 6.1
+TAB_TOP = H.Z_F + TAB_HALF                                  # 26.1: the femur-servo tabs' upper edge (print z)
 VX = P["VPLATE_X"]
+NOTCH_END_X, NOTCH_TOP = P["NOTCH_END_X"], P["NOTCH_TOP"]   # round 4: the lead notch's 45 deg roof starts at the end
+#                                                             wall's top, (39.51, 22.2), and rises to (38.1, 23.61)
 print_load_model()
 print(f"\ncoxa: window x {WIN_X[0]:.2f}..{WIN_X[1]:.2f}, floor z {WIN_Z0:.2f}; posts {WIN_X[0] - VX[0]:.1f} / "
-      f"{VX[1] - WIN_X[1]:.1f} x {H.T_V}; pilots x {PIL_X[0]:.2f} / {PIL_X[1]:.2f}; floor under the horn "
-      f"{H.T_C - HORN_DEPTH:.0f}; printed {ps['perimeters']} perimeters (band {F.band:.2f} mm), {ps['fill']:.0%} gyroid")
+      f"{VX[1] - WIN_X[1]:.1f} x {H.T_V}; pilots x {PIL_X[0]:.2f} / {PIL_X[1]:.2f}; lead notch to x {NOTCH_END_X:.2f} "
+      f"with a 45 deg roof from z {NOTCH_TOP:.1f}; floor under the horn {H.T_C - HORN_DEPTH:.0f}; printed "
+      f"{ps['perimeters']} perimeters (band {F.band:.2f} mm), {ps['fill']:.0%} {fill_pattern('coxa')}")
 
 
 def at_point(pose, f, q):
@@ -576,6 +588,13 @@ print(f"post roots z {Z_ROOT:.1f}: area exact {_ex[0]:.1f} mm2, raster {POST[0][
       f"modulus {POST[0][1]['Zoop'] / POST[0][0]['Zoop']:.3f}, in-plane {POST[0][1]['Zip'] / POST[0][0]['Zip']:.3f}")
 print(f"pilot row z {H.Z_F:.0f}: inner A {POST_PIL[0][0]['A']:.1f} mm2, outer A {POST_PIL[1][0]['A']:.1f} mm2 (pilots, "
       f"lead notch)")
+# round 4: the outer post just above the lead notch's 45 deg roof (the only geometry change since round 3)
+Z_ROOF = NOTCH_TOP + 0.1                                    # 22.3, 0.1 above the roof's lowest corner (39.51, 22.2)
+POST_ROOF = post_props(Z_ROOF, 1)
+_exr = exact_section(S, (0, 0, Z_ROOF), (0, 0, 1), (1, 0, 0))
+print(f"notch-roof row z {Z_ROOF:.1f}: outer post {POST_ROOF[0]['w']:.2f} wide, no hole (pilot row: net "
+      f"{POST_PIL[1][0]['A'] / H.T_V:.2f} of {POST_PIL[1][0]['w']:.2f}); area exact (both posts) {_exr[0]:.1f} mm2, "
+      f"raster {POST_ROOF[0]['A'] + post_props(Z_ROOF, 0)[0]['A']:.1f}")
 
 
 def servo_loads(pose, f):
@@ -617,6 +636,19 @@ def screw_tension(pose, f):
 def pilot_force(pose, f):
     (Fx, Fy, Fz), (Mx, My, Mz) = servo_loads(pose, f)
     return np.hypot(np.abs(Fx) / 2, np.abs(My) / S_SCR + np.abs(Fz) / 2), np.abs(Fx)
+
+
+def roof_post(pose, f, Kt=2.5):
+    """Round 4: the outer post just above the lead notch's roof (z 22.3), [solid, as printed], across the layers.
+    The section lies above the screw line (z 20), so the screw forces, the radial force and the axial loads all enter
+    below it. It carries only what the outer tab presses on the post above it, and every such force is put at the
+    tab's upper edge (z 26.1), 3.8 mm above the section: the rocking couple's edge force when the tab pivots there
+    (Mx > 0, the pilot row's case), half of it on the outer tab (an upper bound: the outer post is the narrower and
+    takes less), plus the whole yaw force. Kt 2.5, the skill's sharp-internal-corner value, at the roof's corner on
+    the end wall, which is an obtuse 135 deg corner (the flat top it replaced made a 90 deg one)."""
+    (Fx, Fy, Fz), (Mx, My, Mz) = servo_loads(pose, f)
+    m_oop = (0.5 * np.maximum(Mx, 0.0) / TAB_HALF + np.abs(Mz) / S_SCR) * (TAB_TOP - Z_ROOF)
+    return [Kt * m_oop / POST_ROOF[k]["Zoop"] for k in (0, 1)]
 
 
 # --- horn clamp: the O10 penny washer pulled through the floor, the joint tipping on the horn hub's edge -------------
@@ -716,6 +748,10 @@ def coxa_rows(tag, k, P_cap, fill, cases, info, prefix=""):
         lab, sets, req = cases[key]
         check(f"{prefix}{lab}: post net section at the pilot row z {H.Z_F:.0f} (Kt 2; {tag})",
               worst(key, lambda p, f: posts(p, f, props=POST_PIL, pilot=True)[k], cases), True, req, info=info)
+    for key in ("shove", "stall", "drop"):
+        lab, sets, req = cases[key]
+        check(f"{prefix}{lab}: outer post just above the lead-notch roof z {Z_ROOF:.1f}, {POST_ROOF[0]['w']:.1f} wide "
+              f"(round 4; Kt 2.5; {tag})", worst(key, lambda p, f: roof_post(p, f)[k], cases), True, req, info=info)
     for key in ("sust", "walk", "scrub", "shove", "stall", "drop"):
         lab, sets, req = cases[key]
         check(f"{prefix}{lab}: femur-servo tab screw pull-out (M2x10, {L_TAB:.1f} mm in the pilot's perimeters)",
@@ -739,42 +775,36 @@ def coxa_rows(tag, k, P_cap, fill, cases, info, prefix=""):
           allow(True, True) * PRELOAD_SNUG / P_cap, True, SF_STATIC, shear=True, info=info)
 
 
-# ================================ verdict rows: the design as specified, as printed =================================
+# ================================ verdict rows: the round-4 design as specified, as printed ==========================
+TAG = f"as printed, {ps['fill']:.0%} {fill_pattern('coxa')}"
 check("coxa stall 216 N.mm: horn-arm bearing on the pocket wall (perimeters)", horn_bearing_mpa(), False, SF_STATIC)
-coxa_rows(f"as printed, {ps['fill']:.0%}", 1, P_CAP["printed"], ps["fill"], CASES, False)
+coxa_rows(TAG, 1, P_CAP["printed"], ps["fill"], CASES, False)
 
-# ================================ advisory: beyond the spec, and the solid-section comparison =======================
+# ================================ advisory: beyond the spec, sensitivities ===========================================
 for key, (lab, sets, req) in ADV_CASES.items():
     adv = {key: ADV_CASES[key]}
-    check(f"{lab}: horn clamp (as printed)", allow(True, True) * worst(key, lambda p, f: clamp_demand(p, f) /
-                                                                         P_CAP["printed"], adv), True, req, shear=True,
+    check(f"{lab}: horn clamp ({TAG})", allow(True, True) * worst(key, lambda p, f: clamp_demand(p, f) /
+                                                                     P_CAP["printed"], adv), True, req, shear=True,
           info=True)
-    check(f"{lab}: post roots (as printed)", worst(key, lambda p, f: posts(p, f)[1], adv), True, req, info=True)
-    check(f"{lab}: pilot row (as printed)", worst(key, lambda p, f: posts(p, f, props=POST_PIL, pilot=True)[1], adv),
+    check(f"{lab}: post roots ({TAG})", worst(key, lambda p, f: posts(p, f)[1], adv), True, req, info=True)
+    check(f"{lab}: pilot row ({TAG})", worst(key, lambda p, f: posts(p, f, props=POST_PIL, pilot=True)[1], adv),
+          True, req, info=True)
+    check(f"{lab}: outer post above the lead-notch roof ({TAG})", worst(key, lambda p, f: roof_post(p, f)[1], adv),
           True, req, info=True)
     check(f"{lab}: tab screw pull-out", worst(key, lambda p, f: screw_tension(p, f) / (math.pi * s.screw_pilot_d *
                                                                                        L_TAB), adv), True, req,
           shear=True, info=True)
-check("SOLID SECTIONS (the predecessor's basis) drop: horn clamp", allow(True, True) * worst(
-    "drop", lambda p, f: clamp_demand(p, f) / P_CAP["solid"]), True, SF_STATIC, shear=True, info=True)
-check(f"assembly: horn clamp screw 'firm' 0.1 N.m ({PRELOAD_FIRM:.0f} N): washer pull-through (as printed)",
+check(f"assembly: horn clamp screw 'firm' 0.1 N.m ({PRELOAD_FIRM:.0f} N): washer pull-through ({TAG})",
       allow(True, True) * PRELOAD_FIRM / P_CAP["printed"], True, SF_STATIC, shear=True, info=True)
+# slice_plan.json still says 50 % gyroid (the slicing stage's file). A slice at 50 % would fail
+# print_requirements.json (fill_density >= 100, fill_pattern rectilinear) in the validator; this row shows why it must.
+F50 = PrintField(S, perimeters=ps["perimeters"], top=ps["top"], bottom=ps["bottom"], fill=0.5)
+A_PLUG50 = plug_area(F50, R_W, 0.0, H.T_C)[1]
+check(f"IF SLICED AS slice_plan.json STILL SAYS (50 % gyroid): drop: horn clamp, O10 washer pulled through the floor "
+      f"(plug {A_PLUG50:.0f} mm2 equivalent against {A_PLUG:.0f})", worst("drop", clamp_demand) / A_PLUG50, True,
+      SF_STATIC, shear=True, info=True)
 
-# ================================ change set: print the coxa at 100 % infill =========================================
-CASES_FIX = cases_at(W_ALL_FIX)
-print(f"\nchange set: coxa fill_density 50 -> 100 %: {M_COXA_FIX:.1f} g each; robot with every round-3 change "
-      f"{W_ALL_FIX / G:.0f} g")
-coxa_rows("100 % infill", 0, P_CAP["solid"], 1.0, CASES_FIX, True, prefix="FIX ")
-for key, (lab, sets, req) in ADV_CASES.items():
-    adv = {key: ADV_CASES[key]}
-    check(f"FIX {lab}: pilot row (100 %)", worst(key, lambda p, f: posts(p, f, props=POST_PIL, pilot=True)[0], adv),
-          True, req, info=True)
-    check(f"FIX {lab}: post roots (100 %)", worst(key, lambda p, f: posts(p, f)[0], adv), True, req, info=True)
-    check(f"FIX {lab}: horn clamp (100 %)", allow(True, True) * worst(key, lambda p, f: clamp_demand(p, f) /
-                                                                        P_CAP["solid"], adv), True, req, shear=True,
-          info=True)
-
-# ================================ proof-test equivalence ============================================================
+# ================================ proof-test equivalence (spec section 8, step 2) ===================================
 class HornLoad:
     """A load already in C, applied at a point of the bracket's leg (for the proof-test equivalence)."""
 
@@ -785,23 +815,26 @@ class HornLoad:
         return self.point, np.atleast_2d(np.asarray(f, float))
 
 
-F_TEST = 2 * DYN * SHARE_MAX * W_ALL_FIX            # 2 x the walking foot load (proof load, skill: 1.5-2 x service)
+F_TEST = 2 * DYN * SHARE_MAX * W_N                  # 2 x the walking foot load (proof load, skill: 1.5-2 x service)
 _st = KEY["stance"]
 _foot = np.array([[0.0, 0.0, F_TEST]])
 HORN_PT = (H.L_C, H.Y_F + (s.total_h - s.tab_height) + 0.6 - s.horn_t / 2, H.Z_F)       # mid-horn: C (32, 0.3, 20)
 _unit = np.array([[0.0, 0.0, -1.0]])                 # 1 N along -C z: the ground's direction with the leg inverted
 _h = HornLoad(HORN_PT)
-need = {"post roots": posts(_st, _foot)[0][0] / posts(_h, _unit)[0][0],
+need = {"post roots": posts(_st, _foot)[1][0] / posts(_h, _unit)[1][0],
         "tab screws": screw_tension(_st, _foot)[0] / screw_tension(_h, _unit)[0],
         "horn clamp": clamp_demand(_st, _foot)[0] / clamp_demand(_h, _unit)[0]}
 P_HANG = max(need.values())
+P_SPEC = 2.8 * 9.81                                  # spec section 8 step 2: 2.8 kg
 print(f"\nproof load: 2 x walking at the stance foot = {F_TEST:.1f} N ({F_TEST / 9.81:.2f} kg). Hung from the femur-servo "
       f"horn at C {tuple(round(v, 1) for v in HORN_PT)} instead (femur off, coxa servo clamped shaft-up), the same "
       f"post, tab-screw and clamp loads need: " + ", ".join(f"{k} {v:.1f} N" for k, v in need.items())
-      + f" -> hang {P_HANG / 9.81:.2f} kg")
-check(f"PROOF hang {P_HANG / 9.81:.1f} kg on the femur-servo horn (100 % infill): post roots", posts(_h, P_HANG * _unit)[0][0],
+      + f" -> hang {P_HANG / 9.81:.2f} kg; the spec's 2.8 kg is {P_SPEC / P_HANG:.2f} x that")
+check("PROOF spec section 8: 2.8 kg hung on the femur-servo horn: post roots", posts(_h, P_SPEC * _unit)[1][0],
       True, 1.0, info=True)
-check(f"PROOF hang {P_HANG / 9.81:.1f} kg on the femur-servo horn (100 % infill): horn clamp",
-      allow(True, True) * clamp_demand(_h, P_HANG * _unit)[0] / P_CAP["solid"], True, 1.0, shear=True, info=True)
+check("PROOF spec section 8: 2.8 kg hung on the femur-servo horn: tab screw pull-out",
+      screw_tension(_h, P_SPEC * _unit)[0] / (math.pi * s.screw_pilot_d * L_TAB), True, 1.0, shear=True, info=True)
+check("PROOF spec section 8: 2.8 kg hung on the femur-servo horn: horn clamp",
+      allow(True, True) * clamp_demand(_h, P_SPEC * _unit)[0] / P_CAP["printed"], True, 1.0, shear=True, info=True)
 
 report(JOB["coxa"])
