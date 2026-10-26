@@ -18,3 +18,5 @@
 - 2026-10-26T16:08Z · strength-analyst (claw round 3, independent) · strength.md, strength_calc.py · FAIL (1.23, top wall behind the lip under an opening stall on jaw B)
 - 2026-10-26T16:08Z · architect · merged; escalated with the reviewer's anchor fix · ok
 - 2026-10-26T16:09Z · architect · user approved adding the reviewer's anchor fix to round 4 · ok
+- 2026-10-26T16:34Z · cad-engineer (fourth attempt, user-approved) · model.py, cad_checks.py, design_brief.md · ok (merged fa56765)
+- 2026-10-26T16:34Z · architect · spec updated for the change; recheck next · ok

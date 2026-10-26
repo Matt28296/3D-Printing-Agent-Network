@@ -25,3 +25,5 @@
 - 2026-10-26T15:43Z · strength-analyst (round 5, independent) · strength.md, strength_calc.py · FAIL round 5 strength
 - 2026-10-26T15:43Z · architect (as head-orchestrator) · merged; status.json updated · ok
 - 2026-10-26T15:44Z · architect · user approved a fourth attempt: RIB_TAPER 6 → 12 · ok
+- 2026-10-26T16:34Z · cad-engineer (fourth attempt, user-approved) · model.py, cad_checks.py, design_brief.md · ok (merged fa56765)
+- 2026-10-26T16:34Z · architect · spec updated for the change; recheck next · ok

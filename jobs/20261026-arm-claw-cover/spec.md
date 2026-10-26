@@ -8,6 +8,9 @@ Closes both rack channels. The front plate holds both racks forward and carries 
 
 **Round 3 (claw DFM and strength round 2): lip wall GUIDE_T 8 (lip at x 14.35); a second tie at y 24–32 with 45° undersides; FRONT_Z0 −6 (front plate down to 6 below the claw's back face); X_F0 / X_F1 34.85 / 39.85; two breakaway support pillars under the pieces beside the pinion pass-through (slicer supports off; BUILD_GUIDE step 9 snaps them off; justified in the brief); front screws M2.5 × 16. Where a row in §2–§4 below gives an older value, these govern.**
 
+
+**Round 4 (user-approved, claw round 3 DFM and strength): support pillar B SUP_B = (−8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8); the second tie's post 8 mm thick (x 14.35–22.35), down onto the frame's rail block at z 17.75, held by one M3 × 45 socket head through a Ø3.6 hole at (18.35, 28) into the frame's Ø2.7 × 14 pilot.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 37.85 × 64 × 55.5 mm (print: 37.85 × 55.5 × 64; claw frame G: x 0…37.85, y ±32, z −4…51.5). Interfaces:
@@ -67,7 +70,7 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
   2. Push jaw B's fingertip sideways towards the wrist (−z) with **10.7 N** (1.5 × the yaw stall), 10 s, jaws closed and again at 44 mm.
 
   Pass:
-  - no crack or whitening at the lip's roots, the tie's post, web and their corners, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
+  - no crack or whitening at the lip's roots, the top wall behind the lip, both ties' posts, webs and their corners, the anchored second post and its M3 × 45 (still tight), the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
   - both jaws still slide the full 0–44 mm without binding;
   - the cover screws are still tight.
 ## 9. Notes and open questions

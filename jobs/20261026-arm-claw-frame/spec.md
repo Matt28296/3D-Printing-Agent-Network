@@ -8,6 +8,9 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 
 **Round 3 (claw DFM and strength round 2): rail block from the bulkhead (x 10–22.35) instead of a 4 mm rail wall; two 6 × 10 ribs behind the bulkhead and an r 1.5 fillet at its root; lead notch with a 45° top; wrist clamp washer Ø8 × 0.8 (DIN 9021, 4.3 mm into the spline) with a 1 mm relief in the bulkhead; front screws M2.5 × 16 in 14 mm pilots. Where a row in §2–§4 below gives an older value, these govern.**
 
+
+**Round 4 (user-approved with the cover anchor): one Ø2.7 × 14 M3 pilot in the rail block at (18.35, 28) for the cover's M3 × 45 anchor; 2.65 mm wall round it.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.5). Interfaces:
