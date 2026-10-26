@@ -21,7 +21,7 @@ from hobby_parts import ESP32_DEVKIT_30, ESP32_DEVKIT_38, MINI_BREADBOARD, chamf
 HOLE_COMP = HOLE_COMP_DEFAULT
 T = 3.0
 CORNER_R = 6.0
-SCREWS = [(-11.5, 30.5), (-11.5, -30.5), (127.5, 30.5), (127.5, -30.5)]   # = chassis COLUMNS
+SCREWS = [(-13.0, 30.0), (-13.0, -30.0), (100.0, 30.0), (100.0, -30.0)]   # = chassis COLUMNS (round 2)
 SCREW_D = 3.4
 BOARDS = (ESP32_DEVKIT_38, ESP32_DEVKIT_30)
 USB_END_X = 14.0          # both boards' USB end (rear), so a cable reaches over the rear
@@ -34,6 +34,7 @@ HALF = max(b.width for b in BOARDS) / 2 + CLR + HOLE_COMP / 2
 ROW_KEEP = 9.0            # tongue |y| < 9 sits between the pin rows
 END_LEDGE = 2.4           # full-width ledge at each end, outside the pin housings
 TIE_SLOT = (3.2, 1.8)     # zip-tie slots beside the board (x, y)
+TIE_FROM_END = 1.2        # ties cross the board 1.2 mm from its ends, where there are no pins (DFM round 1)
 BB_X0 = 84.0              # mini breadboard area (47 × 35) starts here
 CABLE_HOLE = (76.0, 0.0, 10.0)    # x, y, Ø: motor, battery and sensor leads up from the tub
 BED_CHAMFER = 0.4
@@ -60,10 +61,11 @@ def design():
     win = _box(USB_END_X + END_LEDGE, USB_END_X + LONG - END_LEDGE, -HALF, HALF, z0 - 1, ztop + 1)
     win -= _box(USB_END_X + SHORT - 2.5, xb, -ROW_KEEP, ROW_KEEP, z0 - 2, ztop + 2)
     lid -= win
-    xm = USB_END_X + SHORT / 2
-    for s in (-1, 1):
-        yc = s * (HALF + RAIL_W + 1.5 + TIE_SLOT[1] / 2)
-        lid -= _box(xm - TIE_SLOT[0] / 2, xm + TIE_SLOT[0] / 2, yc - TIE_SLOT[1] / 2, yc + TIE_SLOT[1] / 2, z0 - 1, z1 + 1)
+    # zip ties over the board's pin-free ends: USB end, the 38-pin board's far end, the 30-pin board's far end
+    for xm in (USB_END_X + TIE_FROM_END, USB_END_X + LONG - TIE_FROM_END, USB_END_X + SHORT - TIE_FROM_END):
+        for s in (-1, 1):
+            yc = s * (HALF + RAIL_W + 1.5 + TIE_SLOT[1] / 2)
+            lid -= _box(xm - TIE_SLOT[0] / 2, xm + TIE_SLOT[0] / 2, yc - TIE_SLOT[1] / 2, yc + TIE_SLOT[1] / 2, z0 - 1, z1 + 1)
     # screws, cable hole
     for (x, y) in SCREWS:
         lid -= Pos(x, y, z0 - 1) * Cylinder((SCREW_D + HOLE_COMP) / 2, T + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))

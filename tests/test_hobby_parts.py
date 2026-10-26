@@ -159,3 +159,14 @@ def test_n20_fits_its_wall_cutter_and_d_bore():
     # the flat must actually key the shaft: a round Ø3 shaft would not fit
     round_shaft = Pos(0, 0, 3.5) * Cylinder(1.5, 6, align=(Align.CENTER, Align.CENTER, Align.MIN))
     assert (hub & round_shaft).volume > 0.5
+
+
+def test_chamfer_plane_edges_skips_tangent_edges():
+    """A knuckle cylinder tangent to the bed face must not make the bed chamfer fail."""
+    from build123d import Align, Box, Cylinder, Pos, Rot
+    from hobby_parts import chamfer_plane_edges
+    blank = Box(10, 12, 6, align=(Align.MIN, Align.CENTER, Align.CENTER))
+    blank += Rot(90, 0, 0) * Cylinder(3.0, 12)           # radius = half thickness: tangent at z = ±3
+    out = chamfer_plane_edges(blank, 3.0, 0.3)
+    assert out.is_valid
+    assert out.volume < blank.volume - 0.3 ** 2 / 2 * (10 + 12 + 10) * 0.9   # the three plain edges were cut

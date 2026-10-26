@@ -1,5 +1,5 @@
 """Road wheel (×4, 2 per side): carries the rover on the bottom track run, with 45° V-flanges
-that keep the track centred. Free on an M3 bolt held in the chassis wall's nut trap.
+that keep the track centred. Free on an M3 × 45 bolt held in the chassis wall's nut trap.
 
 Wheel frame: axis = +Z away from the chassis, origin on the axis at the track centre plane.
 The rim (r 13.1) meets the links' inner faces on the straight bottom run (13.18 below the axle).
@@ -20,7 +20,7 @@ RIM_R = STRAIGHT_IN - 0.08            # 13.1
 RIM_HALF = TRACK_W / 2 + 0.3          # 12.3: 0.3 mm side clearance to the track edge
 CONE_RISE = 3.0                       # 45° V-flange: r +3 over 3 mm
 FLANGE_FLAT = 0.7
-BORE = 3.2                            # printed running bore on the M3 bolt
+BORE = 3.5                            # printed running bore on the M3 bolt, 0.5 mm running clearance (DFM round 1)
 HUB_R = 5.0                           # inner-side hub to the washer/nut
 INNER_FACE_Z = -(Y_T - (HALF_W_OUT + HUB_GAP))   # -16.5: 0.5 mm off the wall (washer)
 

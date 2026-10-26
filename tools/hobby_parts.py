@@ -270,12 +270,26 @@ def slot_cutter(x0: float, x1: float, y: float, w: float, t: float, z0: float = 
     return c
 
 
+def _is_tangent_edge(edge, faces, tol_deg: float = 1.0) -> bool:
+    """True when the two faces meeting at `edge` are tangent there (for example a cylinder
+    resting on a plane). Such an edge has no corner to chamfer, and the kernel fails on it."""
+    adj = [f for f in faces if any(edge.is_same(fe) for fe in f.edges())]
+    if len(adj) != 2:
+        return False
+    p = edge.position_at(0.5)
+    return adj[0].normal_at(p).get_angle(adj[1].normal_at(p)) < tol_deg
+
+
 def chamfer_plane_edges(part: Part, z: float, size: float = 0.4) -> Part:
     """Chamfer every edge lying in the plane Z = z (use on the blank, before cutting holes,
-    for the face that goes on the bed: elephant's-foot relief)."""
+    for the face that goes on the bed: elephant's-foot relief). Edges where a curved face is
+    tangent to the plane (a knuckle or boss touching the bed along a line) are skipped: they
+    have no corner, and a curved face leaves the bed on its own."""
     from build123d import chamfer
+    faces = part.faces()
     edges = [e for e in part.edges()
-             if abs(e.bounding_box().min.Z - z) < 1e-6 and abs(e.bounding_box().max.Z - z) < 1e-6]
+             if abs(e.bounding_box().min.Z - z) < 1e-6 and abs(e.bounding_box().max.Z - z) < 1e-6
+             and not _is_tangent_edge(e, faces)]
     if not edges:
         raise ValueError(f"no edges in the plane Z = {z}")
     return chamfer(edges, length=size)

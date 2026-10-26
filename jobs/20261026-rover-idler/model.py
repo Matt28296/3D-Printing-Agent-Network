@@ -11,7 +11,7 @@ _sp = runpy.run_path(str(Path(__file__).resolve().parent.parent / "20261026-rove
                      run_name="sprocket")
 
 # --- parameters (mm) -----------------------------------------------------------
-ROUND_BORE = 3.2      # printed running bore on the M3 bolt (+ HOLE_COMP in the sprocket model)
+ROUND_BORE = 3.5      # printed running bore on the M3 bolt, 0.5 mm running clearance (DFM round 1)
 
 
 def design():

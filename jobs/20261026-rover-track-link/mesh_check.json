@@ -1,26 +1,20 @@
 {
   "overhang_limit_deg": 45.0,
-  "overhang_area_mm2": 64.9,
-  "overhang_pct": 5.93,
-  "bed_contact_area_mm2": 136.9,
+  "overhang_area_mm2": 25.6,
+  "overhang_pct": 2.35,
+  "bed_contact_area_mm2": 122.8,
   "bridges": [
     {
-      "z_mm": 4.05,
-      "span_mm": 0.26,
-      "length_mm": 13.5,
-      "area_mm2": 3.5
+      "z_mm": 5.99,
+      "span_mm": 0.04,
+      "length_mm": 2.4,
+      "area_mm2": 0.1
     },
     {
-      "z_mm": 4.05,
-      "span_mm": 0.26,
-      "length_mm": 4.75,
-      "area_mm2": 1.2
-    },
-    {
-      "z_mm": 4.05,
-      "span_mm": 0.26,
-      "length_mm": 4.75,
-      "area_mm2": 1.2
+      "z_mm": 5.99,
+      "span_mm": 0.04,
+      "length_mm": 2.4,
+      "area_mm2": 0.1
     }
   ],
   "thin_wall_warnings": [],
