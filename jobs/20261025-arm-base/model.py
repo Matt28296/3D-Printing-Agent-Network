@@ -13,13 +13,14 @@ from hobby_parts import MG996R, chamfer_plane_edges, servo_mount_cutter
 SERVO = MG996R            # nominal; replace with measured values (spec §3)
 HOLE_COMP = HOLE_COMP_DEFAULT   # +0.2 mm on hole diameters, default from fdm-design-rules (no library row yet)
 BED_CHAMFER = 0.4         # elephant's-foot relief on the bed face (top plate, printed upside down)
+SERVO_CLR = 0.4           # base-servo window clearance (printed, 0.2/side), default from fdm-design-rules
 BX, BY, H = 110.0, 104.0, 40.0   # outside size, height (desk to top-plate top)
 WALL = 3.0                # 6-7 perimeters
 PLATE_T = 4.0             # top plate
 CORNER_R = 6.0            # outside corner rounding (vertical edges)
 PILLAR_D, PILLAR_HOLE = 8.0, 3.4      # desk-screw pillars, M3 clearance (printed)
 SERVO_BOSS_D, SERVO_BOSS_L = 6.5, 6.0  # under-plate bosses lengthening the servo screw grip
-RING_PILOT_R, RING_PILOT_ANG = 47.5, (30.0, 150.0, 270.0)   # ring tab screws; r 47.5 keeps the pilot 1 mm off the inner wall (y -49)
+RING_PILOT_R, RING_PILOT_ANG = 47.5, (30.0, 150.0, 270.0)   # ring tab screws; at 270° the Ø2.8 pilot stops 0.1 mm short of the inner wall (y -49)
 CRADLE_PILOTS = [(-9.4, 18.0), (-9.4, 38.0), (40.0, 7.9)]  # ESP32 cradle screws (x, y)
 CRADLE_BOSS_D, CRADLE_BOSS_L = 7.0, 6.0   # boss Z -4..-10
 PILOT = 2.6               # M3 self-tapping pilot (printed)
@@ -59,7 +60,7 @@ def design():
         part -= Pos(x, y, -PLATE_T - CRADLE_BOSS_L - 1) * Cylinder((PILOT + HOLE_COMP) / 2, CRADLE_BOSS_L + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
     # servo window + tab pilot holes (through plate and bosses)
-    part -= servo_mount_cutter(SERVO, PLATE_T + SERVO_BOSS_L, clearance=0.4, hole_comp=HOLE_COMP)
+    part -= servo_mount_cutter(SERVO, PLATE_T + SERVO_BOSS_L, clearance=SERVO_CLR, hole_comp=HOLE_COMP)
 
     # turntable-ring tab pilots
     import math

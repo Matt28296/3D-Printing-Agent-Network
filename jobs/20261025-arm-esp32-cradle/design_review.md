@@ -1,38 +1,45 @@
 VERDICT: FAIL
 
-# DFM review: 20261025-arm-esp32-cradle
+# DFM review (round 2): 20261025-arm-esp32-cradle
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), base model.py, tools/hobby_parts.py, assembly_plan.md, library/lessons.md (no entries).
-Outputs are current: `build()` gives 5990.6 mm³, matching geometry.json (5990.58 mm³).
+Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), base model.py and spec.md, tools/hobby_parts.py, assembly_plan.md, library/lessons.md (no entries).
+Outputs are current: `build()` gives 11498.6 mm³, matching geometry.json (11498.57 mm³).
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits bed with 5 mm margin | PASS | 64 × 41.85 × 6 mm |
+| 1 | Fits bed with 5 mm margin | PASS | 66.5 × 43.25 × 10 mm |
 | 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, min Z 0 |
-| 3 | Orientation matches brief | PASS | The Z −16 face is on the bed and every ledge rises from it (iso.png) |
-| 4 | Load paths | PASS | Non-structural. The 5 N jumper pull goes into the ledges in compression |
-| 5 | Bed contact | PASS | 1176.4 mm² |
-| 6 | Overhangs / bridges | PASS | `overhang_pct` 0.0, no bridges |
-| 7 | Walls | PASS (note) | WALL 2.5. The USB-end ledge is 1.6 mm wide (x 49.4–51.0) and only supports the PCB end. That is above 0.9 mm and non-structural |
-| 8 | Fit holes / HOLE_COMP | **FAIL** | No `HOLE_COMP`. Spec §3 sets the PCB pocket width at 29.5 **+0.3/−0**, and it prints about 0.2 mm narrow, which falls outside that tolerance (the 1.2 mm total clearance still lets the board in). The Ø3.4 M3 clearance holes are fine |
-| 9 | Bottom edges chamfered | **FAIL** | `build()` returns `to_bed(design())` with no `chamfer_bottom` |
-| 10 | Internal corners on load paths | PASS | Non-structural part |
-| 11 | Fasteners | **FAIL** | The 3 × M3×8 screws (spec §2) pass through the 6.0 mm frame (`TOP − BOT`) into the base's Ø2.6 × 6 mm blind boss pilots, which leaves **2.0 mm of thread engagement**. A self-tapper's tapered lead is about 1 to 1.5 mm, so the screw has almost no full thread in the boss |
-| 12 | Critical dims named | PASS | `HALF` (from CLR 0.6), `PCB_BOT = −11.6`, and `SCREWS` matches the base `CRADLE_PILOTS` [(−9.4, 18), (−9.4, 38), (40, 7.9)] |
-| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C. Correct the brief's "~80 °C" |
+| 3 | Orientation matches brief | PASS | The Z −20 face is on the bed. Counterbores open from the bed side (bottom.png) |
+| 4 | Load paths | PASS | Non-structural |
+| 5 | Bed contact | PASS | 1055.6 mm² |
+| 6 | Overhangs / bridges | PASS (note) | The three counterbore ceilings at print z 6 are annular bridges (25.1 mm² each, bounding-box span 6.7). Each runs 1.55 mm from Ø6.7 in to the Ø3.6 hole, well under 10 |
+| 7 | Walls | PASS | WALL 2.5. Counterbore walls: pad 5.8 − 3.35 = 2.45, far block x 12.75 − 15.5 → 2.75, towards the pocket 2.05, y sides 4.0. The USB ledge is 2.8 wide. No region under 1.8 mm at z 1, 5, 7 and 9 |
+| 8 | HOLE_COMP | PASS | Holes Ø3.6 and counterbores Ø6.7 in CAD (geometry.json). `HALF = 14.15 + 0.6 + 0.1` = 14.85, so the pocket is 29.7 in CAD and prints at about 29.5 (spec §3) |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(c, BOT, 0.4)` |
+| 10 | Internal corners | PASS | Non-structural |
+| 11 | Fasteners | **FAIL** | Spec §2 calls for "3 × M3×12 … (4 mm clamp + ~8 mm thread)", but the base's cradle pilots are only **6 mm** deep: Ø2.8 from Z −10 to −4, blind (base model.py `CRADLE_BOSS_L + 1` cylinder starting at Z −11). With the head on the counterbore floor at Z −14 (BOT −20 + `CBORE_DEPTH` 6), an M3×12 tip reaches Z −2, 2 mm into unpiloted plate with only 2 mm of plate left under the base's bed face. The screw bottoms out before it clamps, or cracks or raises the plate top |
+| 12 | Critical dims named | PASS | `HALF`, `PCB_BOT`, `CBORE_D`, `CBORE_DEPTH`, and `SCREWS` matching the base `CRADLE_PILOTS` |
+| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C |
 | 14 | lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | inputs/ is empty |
 
 ## Required fixes
 
-1. **Get at least 4 mm of screw engagement** (rule §4, checklist 11). Either counterbore the 3 holes from the bed side, Ø6.5 × 3.0 deep, so the heads seat at Z −13 and M3×8 then engages 5 mm (the counterbore ceiling is a 1.55 mm-wide annular bridge, which prints fine), or change spec §2 and the assembly plan to M3×10 (4 mm engagement; M3×12 would just reach the end of the 6 mm pilot).
-2. **Chamfer the bed edges**: `to_bed(chamfer_bottom(design(), 0.4))` (rule §2 and §6, checklist 9).
-3. **Apply `HOLE_COMP` to the pocket width**: `HALF = max(width)/2 + CLR + HOLE_COMP/2` (rule §3, checklist 8; spec §3 −0 tolerance).
+1. **Use M3×10, not M3×12** (rule §4, checklist 11). The head seats at Z −14 and the tip reaches Z −4, which is exactly the end of the 6 mm pilot: 6 mm of engagement plus the 4 mm clamp. Update this spec, the base spec §2 and the assembly plan's fastener row. The alternative is deepening the base pilots (see the base review).
 
-## Notes (cross-part, design frame = base frame)
+## Round 1 → round 2
 
-1. The USB-end ledge corner (49.5, 42.5) sits exactly on the base corner pillar's circle (centre (49.5, 46.5), r 4.0): 0.0 mm clearance, line to line. The cradle locates on Ø3.4 holes over Ø2.6 pilots, so it can shift ±0.4 mm into the pillar. Lower the ledge's y1 by 1 mm (`YC + ROW_KEEP + 2.5`).
-2. The −Y wall (y ≥ 10.75, x −13 to 51, Z −16 to −10) runs beside the base servo body (y ≤ 9.85 nominal, plus 0.2 window float), leaving a 0.7 to 0.9 mm gap. A servo 1 mm wider than nominal, which the assembly plan says is possible, would touch it. Check this with your measured servo.
-3. The USB plug has to pass the base slot (13 × 7 at Z −12 to −5, plus a 45° roof) with 1 mm between the board end (x 51) and the inner wall (x 52). Try your cable's plug overmold in the base slot before printing the cradle.
+| Round-1 finding | Status | How I checked |
+|---|---|---|
+| 2 mm screw engagement | Replaced by an overshoot | The counterbores are in, but M3×12 overshoots the pilot (item 11) |
+| No bottom chamfer | Closed | `chamfer_plane_edges` on the blank |
+| Pocket width without HOLE_COMP | Closed | `HALF` includes `HOLE_COMP/2` |
+| USB ledge tangent to the base corner pillar | Closed | Ledge y1 is 41.5, so the corner (49.5, 41.5) is 5.0 mm from the pillar centre (49.5, 46.5): **1.0 mm** clear of r 4. The +Y wall still stops at x 44 against the pillar edge at x 45.5 |
+| −Y wall beside the base servo | Open (note) | y_out0 = 28 − 14.85 − 2.5 = 10.65 against the servo body at y 9.85 nominal: 0.8 mm gap, or 0.6 with the window float. Check it against your measured servo |
+
+## Notes
+
+1. The USB ledge (x 48.2–51) relies on the last header pins sitting at x ≤ 47.9 (model.py comment), which leaves 0.3 mm to the jumper housings. That figure isn't in `BoardSpec`, so check it on your board.
+2. The assembly plan's "Decisions" row still lists M3×8 for the ring and the cradle, which is stale against the specs (M3×6 ring, and M3×12, to become M3×10, for the cradle).

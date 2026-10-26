@@ -1,12 +1,3 @@
-"""Strength check for jobs/20261025-arm-gripper-jaw. Run: python3 jobs/20261025-arm-gripper-jaw/strength_calc.py
-
-strength-analyst, 2026-10-25. Plain python3 (no build123d): geometry is copied from model.py, and the section
-properties were cross-checked against build123d sections of design() (printed "CAD" values).
-Moving jaw: horn-pocket bearing, bar in-plane bending under grip, horn arm-screw pull-out and out-of-plane bending
-(yaw-stall sweep, 5 N hand push); what-if.
-Units: N, mm, MPa, N.mm. Allowables are PETG placeholders (no measured row in library/materials.csv), so the best
-possible verdict is NEEDS_TEST. Directions: "XY" = stress along the layers, "Z" = across the layers (or shearing them).
-"""
 import math
 
 # --- allowables -------------------------------------------------------------------
@@ -95,37 +86,175 @@ def report(title):
     print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables; PASS not possible without measured data)")
     return worst, fails
 
-# --- arm model (assembly frame, yaw 0; assembly_plan.md) -----------------------------
-# Servo datasheet values (tools/hobby_parts.py): MG996R 1000 N.mm / 55 g, SG90 160 N.mm / 9 g.
-STALL_MG996R_NMM, STALL_SG90_NMM = 1000.0, 160.0
-L1, L2, L3 = 100.0, 90.0, 95.0          # shoulder->elbow, elbow->wrist, wrist->fingertip
-GRIP_DX = 40.0                          # wrist axis -> gripper servo axis
-SX, SZ = 10.15, 60.5                    # shoulder axis X, Z
+# --- read the real parameters (model.py / tools/hobby_parts.py / geometry.json) ---------------------------
+# model.py imports build123d, which plain python3 doesn't have, so its top-level constants are evaluated with
+# ast against stand-ins for the hobby_parts names. Anything that can't be evaluated that way is skipped.
+import ast
+import json
+import os
+from types import SimpleNamespace
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+JOBS = os.path.join(ROOT, "jobs")
+_SERVO_FIELDS = ["name", "length", "width", "case_top", "total_h", "tab_height", "tab_t", "tab_span", "hole_dx",
+                 "hole_dy", "tab_hole_d", "screw_pilot_d", "shaft_from_end", "horn_kind", "horn_d", "horn_t"]
+_SERVO_DEFAULTS = dict(horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1, horn_screw_clear_d=3.4, stall_torque_nmm=0.0,
+                       mass_g=0.0)
+_BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+
+
+def _lit(node):
+    return ast.literal_eval(node)
+
+
+def _read_hobby():
+    tree = ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read())
+    ns = {}
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)):
+            continue
+        name, v = node.targets[0].id, node.value
+        fn = getattr(getattr(v, "func", None), "id", "")
+        if fn == "ServoSpec":
+            d = dict(_SERVO_DEFAULTS)
+            d.update(zip(_SERVO_FIELDS, [_lit(a) for a in v.args]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        elif fn == "BoardSpec":
+            ns[name] = SimpleNamespace(**dict(zip(_BOARD_FIELDS, [_lit(a) for a in v.args])))
+        elif fn == "replace":
+            d = dict(vars(ns[v.args[0].id]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        else:
+            try:
+                ns[name] = _lit(v)
+            except Exception:
+                pass
+    cad = ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read())
+    for node in cad.body:
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "HOLE_COMP_DEFAULT":
+            ns["HOLE_COMP_DEFAULT"] = _lit(node.value)
+    return ns
+
+
+HOBBY = _read_hobby()
+MG996R, SG90 = HOBBY["MG996R"], HOBBY["SG90"]
+HORN_DEPTH = HOBBY.get("HORN_DEPTH", 2.0)
+
+
+def horn_face_z(s):
+    return (s.total_h - s.tab_height) + 0.6          # same formula as tools/hobby_parts.py
+
+
+def link_back_z(s, depth=HORN_DEPTH):
+    return horn_face_z(s) - depth
+
+
+def model_params(job):
+    """Top-level constants of jobs/<job>/model.py, evaluated in order."""
+    ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
+    base = set(ns)
+    tree = ast.parse(open(os.path.join(JOBS, job, "model.py")).read())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        try:
+            val = eval(compile(ast.Expression(node.value), "model.py", "eval"), ns)
+        except Exception:
+            continue
+        t = node.targets[0]
+        if isinstance(t, ast.Name):
+            ns[t.id] = val
+        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
+            for e, v in zip(t.elts, val):
+                ns[e.id] = v
+    return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+
+
+def volume_mm3(job):
+    return json.load(open(os.path.join(JOBS, job, "geometry.json")))["volume_mm3"]
+
+
+HOLE_COMP = HOBBY["HOLE_COMP_DEFAULT"]
+
+# --- arm model, built from the jobs' model.py / geometry.json (assembly_plan.md frames) -------------------
+UL = model_params("20261025-arm-upper-link")
+FA = model_params("20261025-arm-forearm")
+GB = model_params("20261025-arm-gripper-base")
+JW = model_params("20261025-arm-gripper-jaw")
+TT = model_params("20261025-arm-turntable")
+STALL_MG996R_NMM, STALL_SG90_NMM = MG996R.stall_torque_nmm, SG90.stall_torque_nmm
+L1, L2 = UL.L, FA.L                     # shoulder->elbow, elbow->wrist
+GRIP_DX, L3 = GB.GRIP_X, GB.JAW_X1      # wrist -> gripper servo axis, wrist -> fingertip
+SX, SZ = TT.XS, TT.ZS                   # shoulder axis X, Z
 DESK_Z = -40.0
-Y_HORN = {"shoulder": 11.5, "elbow": 32.0, "wrist": 46.4, "gripper": 60.8}   # horn faces (world Y)
-Y_TIP = 61.3                            # fingertip / payload plane (jaw band Y 58.8-63.8)
-F_HAND_N = 5.0                          # added handling case: hand push out of the arm plane at the fingertip
-# Part masses = CAD volume (geometry.json) x 1.27 g/cm3; CG from design() (build123d centre of mass).
-# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 gripper,
-#  s = distance along the straight horizontal arm from the shoulder axis (mm), world Y (mm))
+F_HAND_N = 5.0                          # handling case (spec 4): hand push out of the arm plane at the fingertip
+HFZ_MG, HFZ_SG = horn_face_z(MG996R), horn_face_z(SG90)
+# world-Y stack: each link's back face sits HORN_DEPTH below the horn face; the next servo's tabs sit on its front face
+Y_SH_HORN = TT.UP_Y + HFZ_MG
+Y_UL_BACK = Y_SH_HORN - HORN_DEPTH
+Y_EL_TAB = Y_UL_BACK + UL.T
+Y_EL_HORN = Y_EL_TAB + HFZ_MG
+Y_FA_BACK = Y_EL_HORN - HORN_DEPTH
+Y_WR_TAB = Y_FA_BACK + FA.T
+Y_WR_HORN = Y_WR_TAB + HFZ_SG
+Y_GB_BACK = Y_WR_HORN - HORN_DEPTH
+Y_GR_TAB = Y_GB_BACK + GB.T
+Y_GR_HORN = Y_GR_TAB + HFZ_SG
+Y_JW_BACK = Y_GR_HORN - HORN_DEPTH
+Y_HORN = {"shoulder": Y_SH_HORN, "elbow": Y_EL_HORN, "wrist": Y_WR_HORN, "gripper": Y_GR_HORN}
+Y_TIP = Y_JW_BACK + JW.T / 2            # payload / fingertip: middle of the moving-jaw band
+
+
+def _servo_body(s):
+    """Body-centre offsets in the servo frame: x along the body, z (case centre below the tab underside)."""
+    return -(s.length - s.shaft_from_end) + s.length / 2, s.case_top / 2 - s.tab_height
+
+
+def _plate_cg_x(x0, x1, w, win_x, win_a):
+    a = (x1 - x0) * w
+    return (a * (x0 + x1) / 2 - win_a * win_x) / (a - win_a)
+
+
+_mx, _mz = _servo_body(MG996R)
+_sx, _sz = _servo_body(SG90)
+M_UL, M_FA = volume_mm3("20261025-arm-upper-link") * RHO_G_PER_MM3, volume_mm3("20261025-arm-forearm") * RHO_G_PER_MM3
+M_GB, M_JW = volume_mm3("20261025-arm-gripper-base") * RHO_G_PER_MM3, volume_mm3("20261025-arm-gripper-jaw") * RHO_G_PER_MM3
+M_TT = volume_mm3("20261025-arm-turntable") * RHO_G_PER_MM3
+CG_UL = _plate_cg_x(UL.X0, UL.X1, 2 * UL.HALF_W, UL.L + _mx, MG996R.length * MG996R.width)
+CG_FA = _plate_cg_x(FA.X0, FA.X1, 2 * FA.HALF_W, FA.L + _sx, SG90.length * SG90.width)
+_a_pl = (GB.X1 - GB.X0) * (GB.Y1 - GB.Y0) * GB.T
+_a_jb = (GB.JAW_X1 - GB.JAW_X0) * (GB.JAW_Y1 - GB.JAW_Y0) * (GB.JAW_TOP - GB.T)
+_a_wn = SG90.length * SG90.width * GB.T
+CG_GB = ((_a_pl * (GB.X0 + GB.X1) / 2 + _a_jb * (GB.JAW_X0 + GB.JAW_X1) / 2 - _a_wn * (GB.GRIP_X + _sx))
+         / (_a_pl + _a_jb - _a_wn))
+CGZ_GB = (_a_pl * GB.T / 2 + _a_jb * (GB.T + GB.JAW_TOP) / 2 - _a_wn * GB.T / 2) / (_a_pl + _a_jb - _a_wn)
+_a_hub, _a_bar = math.pi * JW.HUB_R ** 2, (JW.BAR_X1 + 4.0) * (JW.BAR_Y1 - JW.BAR_Y0)
+CG_JW = (_a_bar * (JW.BAR_X1 - 4.0) / 2) / (_a_hub + _a_bar)
+# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 gripper, s along the straight arm, world Y)
 ITEMS = [
-    ("shoulder MG996R", 55.0, 0, -10.15, -13.75),
-    ("shoulder horn + screws", 4.0, 1, 0.0, 10.0),
-    ("upper link", 21245.89 * RHO_G_PER_MM3, 1, 40.57, 12.56),
-    ("elbow MG996R", 55.0, 1, 89.85, 6.75),
-    ("cable allowance 1", 6.0, 1, 100.0, 20.0),
-    ("elbow horn + screws", 4.0, 2, 100.0, 30.6),
-    ("forearm", 12046.19 * RHO_G_PER_MM3, 2, 136.13, 32.57),
-    ("wrist SG90", 9.0, 2, 184.65, 30.45),
-    ("cable allowance 2", 4.0, 2, 190.0, 35.0),
-    ("wrist horn + screw", 1.5, 3, 190.0, 45.6),
-    ("gripper base", 15634.5 * RHO_G_PER_MM3, 3, 244.03, 49.77),
-    ("gripper SG90", 9.0, 3, 224.65, 44.85),
-    ("gripper horn + screw", 1.5, 4, 230.0, 60.0),
-    ("moving jaw", 3390.04 * RHO_G_PER_MM3, 4, 254.47, 61.38),
-    ("payload", 50.0, 4, 285.0, Y_TIP),
+    ("shoulder MG996R", MG996R.mass_g, 0, -SX, TT.UP_Y + _mz),
+    ("shoulder horn + clamp screw", 5.0, 1, 0.0, Y_SH_HORN - 1.4),
+    ("upper link", M_UL, 1, CG_UL, Y_UL_BACK + UL.T / 2),
+    ("elbow MG996R", MG996R.mass_g, 1, L1 + _mx, Y_EL_TAB + _mz),
+    ("cable allowance 1", 6.0, 1, L1, Y_EL_TAB),
+    ("elbow horn + clamp screw", 5.0, 2, L1, Y_EL_HORN - 1.4),
+    ("forearm", M_FA, 2, L1 + CG_FA, Y_FA_BACK + FA.T / 2),
+    ("wrist SG90", SG90.mass_g, 2, L1 + L2 + _sx, Y_WR_TAB + _sz),
+    ("cable allowance 2", 4.0, 2, L1 + L2, Y_WR_TAB),
+    ("wrist horn + clamp screw", 2.0, 3, L1 + L2, Y_WR_HORN - 0.8),
+    ("gripper base", M_GB, 3, L1 + L2 + CG_GB, Y_GB_BACK + CGZ_GB),
+    ("gripper SG90", SG90.mass_g, 3, L1 + L2 + GRIP_DX + _sx, Y_GR_TAB + _sz),
+    ("gripper horn + clamp screw", 2.0, 4, L1 + L2 + GRIP_DX, Y_GR_HORN - 0.8),
+    ("moving jaw", M_JW, 4, L1 + L2 + GRIP_DX + CG_JW, Y_JW_BACK + JW.T / 2),
+    ("payload", 50.0, 4, L1 + L2 + L3, Y_TIP),
 ]
-S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}   # joint positions along s
+S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}
+print(f"arm model: Y horn faces {', '.join(f'{k} {v:.1f}' for k, v in Y_HORN.items())}; fingertip Y {Y_TIP:.1f}; "
+      f"masses UL {M_UL:.1f} FA {M_FA:.1f} GB {M_GB:.1f} JW {M_JW:.1f} TT {M_TT:.1f} g; "
+      f"CG x UL {CG_UL:.1f} FA {CG_FA:.1f} GB {CG_GB:.1f} (z {CGZ_GB:.1f}) JW {CG_JW:.1f}")
 
 
 def beyond(k):
@@ -225,79 +354,99 @@ def sweep(points, mode):
 
 
 
-# --- 20261025-arm-gripper-jaw: parameters copied from model.py -----------------------------------
-T, HUB_R_JAW, BAR_X1, BAR_Y0, BAR_Y1 = 5.0, 8.0, 55.0, -6.0, 5.5
-HORN_DEPTH = 2.0
-SG_HUB_R, SG_ARM_L, SG_TIP_R = 3.6, 14.0, 2.1         # SG90 single-arm horn
-HS_D, HS_R = 1.6, 7.0          # horn arm screw: M2 self-tapping, pilot 1.6, innermost arm hole r 7 (assumed)
-WASHER_D = 6.0
-LEV_T = min(HS_R + SG_HUB_R, SG_ARM_L - HS_R)   # 7.0
-LEV_TOR = SG_HUB_R
-BW = BAR_Y1 - BAR_Y0                            # 11.5
+# --- clamped horn joints (round 2): centre screw + washer clamps link and horn onto the spline -------------
+HS_D, HS_LEN = 1.6, 5.0       # anti-rotation screws through the horn arms: M2 self-tapping, drilled pilot 1.6,
+                              # ~5 mm engaged (M2x8 through the 2.8 mm horn) - assumption
+HS_R = {"MG996R": 15.0, "SG90": 7.0}       # arm hole used (outermost on the MG996R double arm, inner on the SG90)
+WASHER_D = {"MG996R": 9.0, "SG90": 6.0}    # DIN 9021 washers specified for M3x16 / M2x12 clamp screws
 
 
-def jaw_oop(x, t=T, bw=BW):
-    """Out-of-plane I, c at x (CAD sections of design(): x8 Iyy 82 c 2.89, x16.5 Iyy 119)."""
-    if x < SG_ARM_L + SG_TIP_R + 0.25:
-        rh, rt = SG_HUB_R + 0.25, SG_TIP_R + 0.25
-        wp = 2 * (rh - (rh - rt) * x / SG_ARM_L)
-        rects = [(bw - wp, t, t / 2), (wp, t - HORN_DEPTH, HORN_DEPTH + (t - HORN_DEPTH) / 2)]
+def clamp_caps(kind, t_floor):
+    """Allowable moments of a clamped horn joint (washer pull-through over the floor + arm screws, interlayer shear).
+
+    cap_t: transverse (about the link's y axis, along the horn arms); cap_T: torsion (about the arm axis, pivot on the
+    hub edge). The two paths are summed (PETG is ductile; both are bounded by the same allowable)."""
+    s = MG996R if kind == "MG996R" else SG90
+    a = allow_mpa(True, True)
+    wash = math.pi * WASHER_D[kind] * t_floor
+    arm = math.pi * HS_D * min(t_floor, HS_LEN)
+    hub, arm_l, r = s.horn_d / 2, s.horn_arm_len, HS_R[kind]
+    if s.horn_arms == 2:
+        cap_T = a * (wash + 2 * arm) * hub
+        cap_t = a * (wash * arm_l + arm * (r + arm_l))
+    else:   # single arm: weak direction pivots on the hub's far edge, the other on the arm tip
+        cap_T = a * (wash + arm) * hub
+        cap_t = min(a * (wash * hub + arm * (r + hub)), a * (wash * arm_l + arm * (arm_l - r)))
+    return cap_t, cap_T
+
+
+def check_util(name, u, sf_req, info=False):
+    """Record a utilisation-type check (u = demand / allowable capacity) as an equivalent interlayer shear stress."""
+    return check(name, allow_mpa(True, True) * u, True, sf_req, shear=True, info=info)
+
+
+def pocket_half_w(s, x):
+    """Half width of the horn pocket at distance x along the arm (hull of discs, +0.5 clearance + HOLE_COMP)."""
+    c = 0.5 + HOLE_COMP
+    rh, rt = (s.horn_d + c) / 2, (s.horn_tip_d + c) / 2
+    x = abs(x)
+    if x <= s.horn_arm_len:
+        return rh - (rh - rt) * x / s.horn_arm_len
+    return math.sqrt(max(rt ** 2 - (x - s.horn_arm_len) ** 2, 0.0))
+
+# --- 20261025-arm-gripper-jaw (round 2) ------------------------------------------------------------------
+P = JW
+t_floor = P.T - HORN_DEPTH
+BW = P.BAR_Y1 - P.BAR_Y0
+
+
+def jaw_oop(x):
+    """Out-of-plane I, c at x (CAD round 2: x8 Iyy 469, x16.5 Iyy 596)."""
+    if x < SG90.horn_arm_len + SG90.horn_tip_d / 2 + 0.35:
+        wp = 2 * pocket_half_w(SG90, x)
+        rects = [(BW - wp, P.T, P.T / 2), (wp, P.T - HORN_DEPTH, HORN_DEPTH + (P.T - HORN_DEPTH) / 2)]
     else:
-        rects = [(bw, t, t / 2)]
+        rects = [(BW, P.T, P.T / 2)]
     A, zb, I = comp_section(rects)
-    return I, max(zb, t - zb)
+    return I, max(zb, P.T - zb)
 
 
-print(f"jaw_oop x8 {jaw_oop(8)[0]:.0f} (CAD 82), x16.5 {jaw_oop(16.5)[0]:.0f} (CAD 119)")
-pts = {"horn": ("G", 2, (LEV_T, LEV_TOR)), "x8": (("G", 8.0, 0.0), 2, None), "x16": (("G", 16.5, 0.0), 2, None)}
+def jaw_in(x):
+    """In-plane I, c at x (stress along x varies with y); pocket region counted at the floor thickness."""
+    if x < SG90.horn_arm_len + SG90.horn_tip_d / 2 + 0.35:
+        wp = 2 * pocket_half_w(SG90, x)
+        rects = [(P.T, BW, 0.0), (-HORN_DEPTH, wp, (P.BAR_Y0 + P.BAR_Y1) / 2 - (P.BAR_Y0 + P.BAR_Y1) / 2)]
+        I = P.T * BW ** 3 / 12 - HORN_DEPTH * wp ** 3 / 12
+    else:
+        I = P.T * BW ** 3 / 12
+    return I, BW / 2
+
+
+print(f"jaw_oop x8 {jaw_oop(8)[0]:.0f} (CAD 469), x16.5 {jaw_oop(16.5)[0]:.0f} (CAD 596)")
+cap_t, cap_T = clamp_caps("SG90", t_floor)
+pts = {"horn": ("G", 2, (cap_t, cap_T)), "x8": (("G", 8.0, 0.0), 2, None), "x16": (("G", 16.5, 0.0), 2, None)}
 SW = {m: sweep(pts, m) for m in ("yaw", "hand")}
 for m in SW:
-    print(f"{m:4s} sweep: " + "; ".join(f"{n} T={o['T']:.0f} Mt={o['Mt']:.0f} Fs={o['Fs']:.1f}" for n, o in SW[m].items()))
+    print(f"{m:4s} sweep: " + "; ".join(f"{n} T={o['T']:.0f} Mt={o['Mt']:.0f}" for n, o in SW[m].items()))
 
-# 1. gripper stall into the single-arm pocket
-F = STALL_SG90_NMM / (SG_ARM_L + SG_TIP_R - 2.0)
+F = STALL_SG90_NMM / (SG90.horn_arm_len + SG90.horn_tip_d / 2 - 2.0)
 check("gripper stall 160 N.mm: horn-pocket wall bearing", bearing(F, 4.0, HORN_DEPTH), False, SF_STATIC)
-# 2. in-plane bending of the bar by the grip force (fingertip 2.9 N or root 10.7 N)
-F_tip, F_root = STALL_SG90_NMM / BAR_X1, STALL_SG90_NMM / 15.0
-M8 = max(F_tip * (BAR_X1 - 8.0), F_root * (15.0 - 8.0))
-check("gripper stall: bar in-plane bending x8 over the pocket (Kt 2.5)", bend(M8, 596.0, 5.81), False, SF_STATIC, Kt=2.5)
-check("gripper stall: bar in-plane bending x16.5 pocket tip (Kt 1.5)", bend(F_tip * (BAR_X1 - 16.5), 631.0, 5.75), False,
+F_tip, F_root = STALL_SG90_NMM / P.BAR_X1, STALL_SG90_NMM / 15.0
+I8, c8 = jaw_in(8.0)
+I16, c16 = jaw_in(16.5)
+check("gripper stall: bar in-plane bending x8 over the pocket (Kt 2.5)",
+      bend(max(F_tip * (P.BAR_X1 - 8), F_root * (15 - 8)), I8, c8), False, SF_STATIC, Kt=2.5)
+check("gripper stall: bar in-plane bending x16.5 pocket tip (Kt 1.5)", bend(F_tip * (P.BAR_X1 - 16.5), I16, c16), False,
       SF_STATIC, Kt=1.5)
-check("10 N proof squeeze at the tip: bar in-plane bending x8 (Kt 2.5)", bend(10.0 * (BAR_X1 - 8.0), 596.0, 5.81), False,
-      1.5, Kt=2.5, info=True)
-# 3. horn joint (one arm screw; the centre screw head bears on the horn, not the jaw)
-t_floor = T - HORN_DEPTH
-check("grip reaction 2.9 N at the tip (in-plane, carried by the pocket walls)",
-      bearing(F_tip * BAR_X1 / (SG_ARM_L + SG_TIP_R - 2.0), 4.0, HORN_DEPTH), False, SF_STATIC)
+check("proof 5 N at the tip: bar in-plane bending x8 (Kt 2.5)", bend(5.0 * (P.BAR_X1 - 8), I8, c8), False, 1.5, Kt=2.5,
+      info=True)
 for m, lbl in (("yaw", "yaw-stall sweep"), ("hand", "hand push 5 N")):
-    check(f"{lbl}: gripper horn arm-screw pull-out (floor {t_floor:.0f}, lever {LEV_T:.0f})",
-          pullout(SW[m]["horn"]["Fs"], HS_D, t_floor), True, SF_STATIC, shear=True)
-    I8, c8 = jaw_oop(8.0)
-    I16, c16 = jaw_oop(16.5)
-    check(f"{lbl}: out-of-plane bending x8 over the pocket (Kt 2 arm-screw hole)", bend(SW[m]["x8"]["Mt"], I8, c8),
-          False, SF_STATIC, Kt=2.0)
-    check(f"{lbl}: out-of-plane bending x16.5 at the pocket tip (Kt 1.5)", bend(SW[m]["x16"]["Mt"], I16, c16),
-          False, SF_STATIC, Kt=1.5)
-
+    check_util(f"{lbl}: clamped gripper-horn joint (D6 washer + arm screw, floor {t_floor:.0f})", SW[m]["horn"]["Fs"],
+               SF_STATIC)
+    Io8, co8 = jaw_oop(8.0)
+    Io16, co16 = jaw_oop(16.5)
+    check(f"{lbl}: out-of-plane bending x8 over the pocket (Kt 2 arm-screw hole)", bend(SW[m]["x8"]["Mt"], Io8, co8), False,
+          SF_STATIC, Kt=2.0)
+    check(f"{lbl}: out-of-plane bending x16.5 at the pocket tip (Kt 1.5)", bend(SW[m]["x16"]["Mt"], Io16, co16), False,
+          SF_STATIC, Kt=1.5)
 worst, fails = report("20261025-arm-gripper-jaw")
-
-print("\nWHAT-IF  T 5->8 (floor 3->6), BAR_Y1 5.5->8.0 (bar 11.5->14 wide, matches the hub r 8) and the horn clamped by"
-      " its centre screw (access hole 6.5 -> 2.4, M2x12 + OD6 washer):")
-t2, bw2 = 8.0, 14.0
-tf = t2 - HORN_DEPTH
-a = allow_mpa(True, True)
-cap_t = min(a * (math.pi * WASHER_D * tf * SG_HUB_R + math.pi * HS_D * tf * (HS_R + SG_HUB_R)),
-            a * (math.pi * WASHER_D * tf * SG_ARM_L + math.pi * HS_D * tf * (SG_ARM_L - HS_R)))
-cap_T = a * (math.pi * WASHER_D * tf + math.pi * HS_D * tf) * SG_HUB_R
-pts2 = dict(pts)
-pts2["horn"] = ("G", 2, (cap_t, cap_T))
-wi = []
-for m in ("yaw", "hand"):
-    S = sweep(pts2, m)
-    wi.append((f"{m}: clamped gripper horn joint", 1 / S["horn"]["Fs"]))
-    for n, x, kt in (("x8", 8.0, 2.0), ("x16", 16.5, 1.5)):
-        I, c = jaw_oop(x, t2, bw2)
-        wi.append((f"{m}: out-of-plane bending {n}", allow_mpa(False) / (kt * bend(S[n]["Mt"], I, c))))
-for n, sf in wi:
-    print(f"  {n:40s} SF {sf:5.2f} {'OK' if sf >= 3 else 'FAIL'}")
-print(f"  what-if lowest SF {min(sf for _, sf in wi):.2f}")

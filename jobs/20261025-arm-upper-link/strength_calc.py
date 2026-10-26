@@ -1,12 +1,3 @@
-"""Strength check for jobs/20261025-arm-upper-link. Run: python3 jobs/20261025-arm-upper-link/strength_calc.py
-
-strength-analyst, 2026-10-25. Plain python3 (no build123d): geometry is copied from model.py, and the section
-properties were cross-checked against build123d sections of design() (printed "CAD" values).
-Upper link: shoulder-horn slot bearing, in-plane bending, elbow tab pilots, shoulder-horn arm-screw pull-out,
-out-of-plane bending and torsion (yaw-stall sweep, 5 N hand push, weight); what-if.
-Units: N, mm, MPa, N.mm. Allowables are PETG placeholders (no measured row in library/materials.csv), so the best
-possible verdict is NEEDS_TEST. Directions: "XY" = stress along the layers, "Z" = across the layers (or shearing them).
-"""
 import math
 
 # --- allowables -------------------------------------------------------------------
@@ -95,37 +86,175 @@ def report(title):
     print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables; PASS not possible without measured data)")
     return worst, fails
 
-# --- arm model (assembly frame, yaw 0; assembly_plan.md) -----------------------------
-# Servo datasheet values (tools/hobby_parts.py): MG996R 1000 N.mm / 55 g, SG90 160 N.mm / 9 g.
-STALL_MG996R_NMM, STALL_SG90_NMM = 1000.0, 160.0
-L1, L2, L3 = 100.0, 90.0, 95.0          # shoulder->elbow, elbow->wrist, wrist->fingertip
-GRIP_DX = 40.0                          # wrist axis -> gripper servo axis
-SX, SZ = 10.15, 60.5                    # shoulder axis X, Z
+# --- read the real parameters (model.py / tools/hobby_parts.py / geometry.json) ---------------------------
+# model.py imports build123d, which plain python3 doesn't have, so its top-level constants are evaluated with
+# ast against stand-ins for the hobby_parts names. Anything that can't be evaluated that way is skipped.
+import ast
+import json
+import os
+from types import SimpleNamespace
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+JOBS = os.path.join(ROOT, "jobs")
+_SERVO_FIELDS = ["name", "length", "width", "case_top", "total_h", "tab_height", "tab_t", "tab_span", "hole_dx",
+                 "hole_dy", "tab_hole_d", "screw_pilot_d", "shaft_from_end", "horn_kind", "horn_d", "horn_t"]
+_SERVO_DEFAULTS = dict(horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1, horn_screw_clear_d=3.4, stall_torque_nmm=0.0,
+                       mass_g=0.0)
+_BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+
+
+def _lit(node):
+    return ast.literal_eval(node)
+
+
+def _read_hobby():
+    tree = ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read())
+    ns = {}
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)):
+            continue
+        name, v = node.targets[0].id, node.value
+        fn = getattr(getattr(v, "func", None), "id", "")
+        if fn == "ServoSpec":
+            d = dict(_SERVO_DEFAULTS)
+            d.update(zip(_SERVO_FIELDS, [_lit(a) for a in v.args]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        elif fn == "BoardSpec":
+            ns[name] = SimpleNamespace(**dict(zip(_BOARD_FIELDS, [_lit(a) for a in v.args])))
+        elif fn == "replace":
+            d = dict(vars(ns[v.args[0].id]))
+            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
+            ns[name] = SimpleNamespace(**d)
+        else:
+            try:
+                ns[name] = _lit(v)
+            except Exception:
+                pass
+    cad = ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read())
+    for node in cad.body:
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "HOLE_COMP_DEFAULT":
+            ns["HOLE_COMP_DEFAULT"] = _lit(node.value)
+    return ns
+
+
+HOBBY = _read_hobby()
+MG996R, SG90 = HOBBY["MG996R"], HOBBY["SG90"]
+HORN_DEPTH = HOBBY.get("HORN_DEPTH", 2.0)
+
+
+def horn_face_z(s):
+    return (s.total_h - s.tab_height) + 0.6          # same formula as tools/hobby_parts.py
+
+
+def link_back_z(s, depth=HORN_DEPTH):
+    return horn_face_z(s) - depth
+
+
+def model_params(job):
+    """Top-level constants of jobs/<job>/model.py, evaluated in order."""
+    ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
+    base = set(ns)
+    tree = ast.parse(open(os.path.join(JOBS, job, "model.py")).read())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        try:
+            val = eval(compile(ast.Expression(node.value), "model.py", "eval"), ns)
+        except Exception:
+            continue
+        t = node.targets[0]
+        if isinstance(t, ast.Name):
+            ns[t.id] = val
+        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
+            for e, v in zip(t.elts, val):
+                ns[e.id] = v
+    return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+
+
+def volume_mm3(job):
+    return json.load(open(os.path.join(JOBS, job, "geometry.json")))["volume_mm3"]
+
+
+HOLE_COMP = HOBBY["HOLE_COMP_DEFAULT"]
+
+# --- arm model, built from the jobs' model.py / geometry.json (assembly_plan.md frames) -------------------
+UL = model_params("20261025-arm-upper-link")
+FA = model_params("20261025-arm-forearm")
+GB = model_params("20261025-arm-gripper-base")
+JW = model_params("20261025-arm-gripper-jaw")
+TT = model_params("20261025-arm-turntable")
+STALL_MG996R_NMM, STALL_SG90_NMM = MG996R.stall_torque_nmm, SG90.stall_torque_nmm
+L1, L2 = UL.L, FA.L                     # shoulder->elbow, elbow->wrist
+GRIP_DX, L3 = GB.GRIP_X, GB.JAW_X1      # wrist -> gripper servo axis, wrist -> fingertip
+SX, SZ = TT.XS, TT.ZS                   # shoulder axis X, Z
 DESK_Z = -40.0
-Y_HORN = {"shoulder": 11.5, "elbow": 32.0, "wrist": 46.4, "gripper": 60.8}   # horn faces (world Y)
-Y_TIP = 61.3                            # fingertip / payload plane (jaw band Y 58.8-63.8)
-F_HAND_N = 5.0                          # added handling case: hand push out of the arm plane at the fingertip
-# Part masses = CAD volume (geometry.json) x 1.27 g/cm3; CG from design() (build123d centre of mass).
-# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 gripper,
-#  s = distance along the straight horizontal arm from the shoulder axis (mm), world Y (mm))
+F_HAND_N = 5.0                          # handling case (spec 4): hand push out of the arm plane at the fingertip
+HFZ_MG, HFZ_SG = horn_face_z(MG996R), horn_face_z(SG90)
+# world-Y stack: each link's back face sits HORN_DEPTH below the horn face; the next servo's tabs sit on its front face
+Y_SH_HORN = TT.UP_Y + HFZ_MG
+Y_UL_BACK = Y_SH_HORN - HORN_DEPTH
+Y_EL_TAB = Y_UL_BACK + UL.T
+Y_EL_HORN = Y_EL_TAB + HFZ_MG
+Y_FA_BACK = Y_EL_HORN - HORN_DEPTH
+Y_WR_TAB = Y_FA_BACK + FA.T
+Y_WR_HORN = Y_WR_TAB + HFZ_SG
+Y_GB_BACK = Y_WR_HORN - HORN_DEPTH
+Y_GR_TAB = Y_GB_BACK + GB.T
+Y_GR_HORN = Y_GR_TAB + HFZ_SG
+Y_JW_BACK = Y_GR_HORN - HORN_DEPTH
+Y_HORN = {"shoulder": Y_SH_HORN, "elbow": Y_EL_HORN, "wrist": Y_WR_HORN, "gripper": Y_GR_HORN}
+Y_TIP = Y_JW_BACK + JW.T / 2            # payload / fingertip: middle of the moving-jaw band
+
+
+def _servo_body(s):
+    """Body-centre offsets in the servo frame: x along the body, z (case centre below the tab underside)."""
+    return -(s.length - s.shaft_from_end) + s.length / 2, s.case_top / 2 - s.tab_height
+
+
+def _plate_cg_x(x0, x1, w, win_x, win_a):
+    a = (x1 - x0) * w
+    return (a * (x0 + x1) / 2 - win_a * win_x) / (a - win_a)
+
+
+_mx, _mz = _servo_body(MG996R)
+_sx, _sz = _servo_body(SG90)
+M_UL, M_FA = volume_mm3("20261025-arm-upper-link") * RHO_G_PER_MM3, volume_mm3("20261025-arm-forearm") * RHO_G_PER_MM3
+M_GB, M_JW = volume_mm3("20261025-arm-gripper-base") * RHO_G_PER_MM3, volume_mm3("20261025-arm-gripper-jaw") * RHO_G_PER_MM3
+M_TT = volume_mm3("20261025-arm-turntable") * RHO_G_PER_MM3
+CG_UL = _plate_cg_x(UL.X0, UL.X1, 2 * UL.HALF_W, UL.L + _mx, MG996R.length * MG996R.width)
+CG_FA = _plate_cg_x(FA.X0, FA.X1, 2 * FA.HALF_W, FA.L + _sx, SG90.length * SG90.width)
+_a_pl = (GB.X1 - GB.X0) * (GB.Y1 - GB.Y0) * GB.T
+_a_jb = (GB.JAW_X1 - GB.JAW_X0) * (GB.JAW_Y1 - GB.JAW_Y0) * (GB.JAW_TOP - GB.T)
+_a_wn = SG90.length * SG90.width * GB.T
+CG_GB = ((_a_pl * (GB.X0 + GB.X1) / 2 + _a_jb * (GB.JAW_X0 + GB.JAW_X1) / 2 - _a_wn * (GB.GRIP_X + _sx))
+         / (_a_pl + _a_jb - _a_wn))
+CGZ_GB = (_a_pl * GB.T / 2 + _a_jb * (GB.T + GB.JAW_TOP) / 2 - _a_wn * GB.T / 2) / (_a_pl + _a_jb - _a_wn)
+_a_hub, _a_bar = math.pi * JW.HUB_R ** 2, (JW.BAR_X1 + 4.0) * (JW.BAR_Y1 - JW.BAR_Y0)
+CG_JW = (_a_bar * (JW.BAR_X1 - 4.0) / 2) / (_a_hub + _a_bar)
+# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 gripper, s along the straight arm, world Y)
 ITEMS = [
-    ("shoulder MG996R", 55.0, 0, -10.15, -13.75),
-    ("shoulder horn + screws", 4.0, 1, 0.0, 10.0),
-    ("upper link", 21245.89 * RHO_G_PER_MM3, 1, 40.57, 12.56),
-    ("elbow MG996R", 55.0, 1, 89.85, 6.75),
-    ("cable allowance 1", 6.0, 1, 100.0, 20.0),
-    ("elbow horn + screws", 4.0, 2, 100.0, 30.6),
-    ("forearm", 12046.19 * RHO_G_PER_MM3, 2, 136.13, 32.57),
-    ("wrist SG90", 9.0, 2, 184.65, 30.45),
-    ("cable allowance 2", 4.0, 2, 190.0, 35.0),
-    ("wrist horn + screw", 1.5, 3, 190.0, 45.6),
-    ("gripper base", 15634.5 * RHO_G_PER_MM3, 3, 244.03, 49.77),
-    ("gripper SG90", 9.0, 3, 224.65, 44.85),
-    ("gripper horn + screw", 1.5, 4, 230.0, 60.0),
-    ("moving jaw", 3390.04 * RHO_G_PER_MM3, 4, 254.47, 61.38),
-    ("payload", 50.0, 4, 285.0, Y_TIP),
+    ("shoulder MG996R", MG996R.mass_g, 0, -SX, TT.UP_Y + _mz),
+    ("shoulder horn + clamp screw", 5.0, 1, 0.0, Y_SH_HORN - 1.4),
+    ("upper link", M_UL, 1, CG_UL, Y_UL_BACK + UL.T / 2),
+    ("elbow MG996R", MG996R.mass_g, 1, L1 + _mx, Y_EL_TAB + _mz),
+    ("cable allowance 1", 6.0, 1, L1, Y_EL_TAB),
+    ("elbow horn + clamp screw", 5.0, 2, L1, Y_EL_HORN - 1.4),
+    ("forearm", M_FA, 2, L1 + CG_FA, Y_FA_BACK + FA.T / 2),
+    ("wrist SG90", SG90.mass_g, 2, L1 + L2 + _sx, Y_WR_TAB + _sz),
+    ("cable allowance 2", 4.0, 2, L1 + L2, Y_WR_TAB),
+    ("wrist horn + clamp screw", 2.0, 3, L1 + L2, Y_WR_HORN - 0.8),
+    ("gripper base", M_GB, 3, L1 + L2 + CG_GB, Y_GB_BACK + CGZ_GB),
+    ("gripper SG90", SG90.mass_g, 3, L1 + L2 + GRIP_DX + _sx, Y_GR_TAB + _sz),
+    ("gripper horn + clamp screw", 2.0, 4, L1 + L2 + GRIP_DX, Y_GR_HORN - 0.8),
+    ("moving jaw", M_JW, 4, L1 + L2 + GRIP_DX + CG_JW, Y_JW_BACK + JW.T / 2),
+    ("payload", 50.0, 4, L1 + L2 + L3, Y_TIP),
 ]
-S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}   # joint positions along s
+S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}
+print(f"arm model: Y horn faces {', '.join(f'{k} {v:.1f}' for k, v in Y_HORN.items())}; fingertip Y {Y_TIP:.1f}; "
+      f"masses UL {M_UL:.1f} FA {M_FA:.1f} GB {M_GB:.1f} JW {M_JW:.1f} TT {M_TT:.1f} g; "
+      f"CG x UL {CG_UL:.1f} FA {CG_FA:.1f} GB {CG_GB:.1f} (z {CGZ_GB:.1f}) JW {CG_JW:.1f}")
 
 
 def beyond(k):
@@ -225,151 +354,123 @@ def sweep(points, mode):
 
 
 
-# --- generic flat link on an MG996R double-arm horn (upper link / forearm) ----------------------------
-HORN_DEPTH = 2.0
-HUB_R, ARM_L, TIP_R = 5.5, 17.5, 2.75      # MG996R double-arm horn (hobby_parts)
-HS_D, HS_R = 1.6, 15.0                     # horn arm screws: M2 self-tapping, drilled pilot 1.6, outermost arm hole r 15
-WASHER_D = 9.0                             # what-if: M3 x 12 centre screw through a 3.4 hole + DIN 9021 washer OD 9
+# --- clamped horn joints (round 2): centre screw + washer clamps link and horn onto the spline -------------
+HS_D, HS_LEN = 1.6, 5.0       # anti-rotation screws through the horn arms: M2 self-tapping, drilled pilot 1.6,
+                              # ~5 mm engaged (M2x8 through the 2.8 mm horn) - assumption
+HS_R = {"MG996R": 15.0, "SG90": 7.0}       # arm hole used (outermost on the MG996R double arm, inner on the SG90)
+WASHER_D = {"MG996R": 9.0, "SG90": 6.0}    # DIN 9021 washers specified for M3x16 / M2x12 clamp screws
 
 
-def r_pocket(x):
-    """Half width of the double-arm horn pocket at distance x from the axis (hull of discs, +0.5 clearance)."""
-    rh, rt = HUB_R + 0.25, TIP_R + 0.25
+def clamp_caps(kind, t_floor):
+    """Allowable moments of a clamped horn joint (washer pull-through over the floor + arm screws, interlayer shear).
+
+    cap_t: transverse (about the link's y axis, along the horn arms); cap_T: torsion (about the arm axis, pivot on the
+    hub edge). The two paths are summed (PETG is ductile; both are bounded by the same allowable)."""
+    s = MG996R if kind == "MG996R" else SG90
+    a = allow_mpa(True, True)
+    wash = math.pi * WASHER_D[kind] * t_floor
+    arm = math.pi * HS_D * min(t_floor, HS_LEN)
+    hub, arm_l, r = s.horn_d / 2, s.horn_arm_len, HS_R[kind]
+    if s.horn_arms == 2:
+        cap_T = a * (wash + 2 * arm) * hub
+        cap_t = a * (wash * arm_l + arm * (r + arm_l))
+    else:   # single arm: weak direction pivots on the hub's far edge, the other on the arm tip
+        cap_T = a * (wash + arm) * hub
+        cap_t = min(a * (wash * hub + arm * (r + hub)), a * (wash * arm_l + arm * (arm_l - r)))
+    return cap_t, cap_T
+
+
+def check_util(name, u, sf_req, info=False):
+    """Record a utilisation-type check (u = demand / allowable capacity) as an equivalent interlayer shear stress."""
+    return check(name, allow_mpa(True, True) * u, True, sf_req, shear=True, info=info)
+
+
+def pocket_half_w(s, x):
+    """Half width of the horn pocket at distance x along the arm (hull of discs, +0.5 clearance + HOLE_COMP)."""
+    c = 0.5 + HOLE_COMP
+    rh, rt = (s.horn_d + c) / 2, (s.horn_tip_d + c) / 2
     x = abs(x)
-    return max(rh - (rh - rt) * x / ARM_L, 0.0) if x <= ARM_L else (math.sqrt(max(rt ** 2 - (x - ARM_L) ** 2, 0)))
+    if x <= s.horn_arm_len:
+        return rh - (rh - rt) * x / s.horn_arm_len
+    return math.sqrt(max(rt ** 2 - (x - s.horn_arm_len) ** 2, 0.0))
 
-
-def oop_section(T, half_w, kind, x=0.0, slot_w=0.0, win_w=0.0):
-    """Out-of-plane bending (about the link y axis, stress along x varies with z). Returns (I, c)."""
-    if kind == "pocket":
-        wp = 2 * r_pocket(x)
+# --- generic flat link on an MG996R double-arm horn, round 2 (upper link / forearm) -----------------------
+def link_oop(T, half_w, x=None, cut_w=0.0, horn=MG996R):
+    """Out-of-plane I and c (stress along x varies with z). x given -> section over the horn pocket."""
+    if x is not None:
+        wp = 2 * pocket_half_w(horn, x)
         rects = [(2 * half_w - wp, T, T / 2), (wp, T - HORN_DEPTH, HORN_DEPTH + (T - HORN_DEPTH) / 2)]
-    elif kind == "slot":
-        rects = [(2 * half_w - slot_w, T, T / 2)]
-    elif kind == "window":
-        rects = [(2 * half_w - win_w, T, T / 2)]
     else:
-        rects = [(2 * half_w, T, T / 2)]
+        rects = [(2 * half_w - cut_w, T, T / 2)]
     A, zb, I = comp_section(rects)
     return I, max(zb, T - zb)
 
 
-def inplane_I(T, half_w, cut_w=0.0):
-    return T * ((2 * half_w) ** 3 - cut_w ** 3) / 12.0
-
-
-def link_checks(P):
-    """P: dict of link parameters. Adds rows to `cases`/`advisory`; returns data for the what-if."""
-    T, HW = P["T"], P["HALF_W"]
+def link_checks(job, P, far, far_name, far_stall, far_holes, far_lig, far_pilot, far_screw_L, far_levers, M_win,
+                win_w, k, horn_name, li, joint, cad):
+    T, HW = P.T, P.HALF_W
     t_floor = T - HORN_DEPTH
-    li = P["link_index"]
-    J = P["joint"]
-    pts = {"horn": (J, li, (HS_R + ARM_L, 2 * HUB_R)),
-           "x15": ((J, 15.0, 0.0), li, None),
-           "slot": ((J, P["LIGHT"][0], 0.0), li, None),
-           "far": ((J, P["L"], 0.0), li, P["far_levers"]),
-           "farrow": ((J, P["far_row_x"], 0.0), li, None)}
+    row_x = P.L + far_holes[0][0]           # the tab-pilot row nearer the horn
+    cap_t, cap_T = clamp_caps("MG996R", t_floor)
+    pts = {"horn": (joint, li, (cap_t, cap_T)), "x15": ((joint, 15.0, 0.0), li, None), "x30": ((joint, 30.0, 0.0), li, None),
+           "row": ((joint, row_x, 0.0), li, None), "far": ((joint, P.L, 0.0), li, far_levers)}
     SW = {m: sweep(pts, m) for m in ("yaw", "hand")}
     for m in SW:
-        print(f"{m:4s} sweep: " + "; ".join(f"{n} T={o['T']:.0f} Mt={o['Mt']:.0f} Fs={o['Fs']:.1f}" for n, o in SW[m].items()))
-    w_oop = weight_oop_nmm(P["k"], Y_HORN[P["horn_name"]])
-    w_in = weight_inplane_nmm(P["k"])
-    print(f"weight beyond the horn: in-plane {w_in:.0f} N.mm (horizontal), out-of-plane {w_oop:.0f} N.mm (pose independent)")
-
-    # 1. horn stall through the slot walls
-    F_arm = STALL_MG996R_NMM / (2 * (ARM_L + TIP_R - 2.5))
-    check(f"{P['horn_name']} stall 1000 N.mm: horn-slot wall bearing", bearing(F_arm, 5.0, HORN_DEPTH), False, SF_STATIC)
-    # 2. in-plane bending (strong axis) - bounded by the horn servo stall
-    x0, x1, sw_ = P["LIGHT"]
-    check(f"stall 1000 N.mm: in-plane bending at lightening slot (Kt 2)",
-          bend(STALL_MG996R_NMM, inplane_I(T, HW, sw_), HW), False, SF_STATIC, Kt=2.0)
-    check(f"stall: in-plane bending at the {P['far_name']} window, M {P['M_win']:.0f} (Kt 2.5)",
-          bend(P["M_win"], inplane_I(T, HW, P["WIN_W"]), HW), False, SF_STATIC, Kt=2.5)
-    check(f"weight x2 (sustained): in-plane bending at slot (Kt 2)",
-          bend(DYN * w_in, inplane_I(T, HW, sw_), HW), False, SF_SUSTAINED, Kt=2.0)
-    # 3. far servo stall reaction into its tab pilots (vertical pilots: bearing and tear-out are in-plane)
-    Fs = max(servo_screw_forces(P["far_stall"], P["far_holes"]))
-    check(f"{P['far_name']} stall: tab-pilot bearing", bearing(Fs, P["far_pilot"], T), False, SF_STATIC)
-    check(f"{P['far_name']} stall: pilot-to-window ligament {P['far_lig']:.2f} tear-out (full F toward window)",
-          tearout(Fs, P["far_lig"], T), False, SF_STATIC, shear=True)
-    # 4. horn joint: link held on the horn only by its arm screws (centre screw head bears on the horn)
-    check(f"weight x2 (sustained): horn arm-screw pull-out (floor {t_floor:.0f}, torsion lever {HUB_R})",
-          pullout(DYN * abs(w_oop) / (2 * HUB_R), HS_D, t_floor), True, SF_SUSTAINED, shear=True)
+        print(f"{m:4s} sweep: " + "; ".join(f"{n} T={o['T']:.0f} Mt={o['Mt']:.0f}" for n, o in SW[m].items()))
+    w_in, w_oop = weight_inplane_nmm(k), weight_oop_nmm(k, Y_HORN[horn_name])
+    print(f"weight beyond the {horn_name} horn: in-plane {w_in:.0f} N.mm (arm straight, horizontal), out-of-plane {w_oop:.0f}")
+    I15, c15 = link_oop(T, HW, 15.0)
+    If, cf = link_oop(T, HW)
+    n_row = 2 if len(far_holes) == 4 else 1          # pilots in the row nearer the horn
+    Ir, cr = link_oop(T, HW, cut_w=n_row * (far_pilot + HOLE_COMP))
+    Iw, cw = link_oop(T, HW, cut_w=win_w)
+    print(f"sections: oop I x15 {I15:.0f}, full {If:.0f}, pilot row {Ir:.0f}, window {Iw:.0f} (CAD {cad})")
+    # 1. horn stall through the pocket walls (still 2 mm deep)
+    s = MG996R
+    F_arm = STALL_MG996R_NMM / (2 * (s.horn_arm_len + s.horn_tip_d / 2 - 2.5))
+    check(f"{horn_name} stall 1000 N.mm: horn-pocket wall bearing", bearing(F_arm, 5.0, HORN_DEPTH), False, SF_STATIC)
+    # 2. in-plane bending (strong axis), bounded by the horn-servo stall
+    Iin = lambda cut: T * ((2 * HW) ** 3 - cut ** 3) / 12.0
+    check("stall 1000 N.mm: in-plane bending, full section x30", bend(STALL_MG996R_NMM, Iin(0.0), HW), False, SF_STATIC)
+    check(f"stall: in-plane bending at the {far_name} window, M {M_win:.0f} (Kt 2.5)", bend(M_win, Iin(win_w), HW), False,
+          SF_STATIC, Kt=2.5)
+    check("weight x2 (sustained): in-plane bending, full section", bend(DYN * w_in, Iin(0.0), HW), False, SF_SUSTAINED)
+    # 3. far servo stall into its tab pilots (vertical pilots: in-plane bearing and tear-out)
+    Fs = max(servo_screw_forces(far_stall, far_holes))
+    check(f"{far_name} stall: tab-pilot bearing", bearing(Fs, far_pilot, T), False, SF_STATIC)
+    check(f"{far_name} stall: pilot-to-window ligament {far_lig:.2f} tear-out (full F toward the window)",
+          tearout(Fs, far_lig, T), False, SF_STATIC, shear=True)
+    # 4. clamped horn joint
+    check_util(f"weight x2 (sustained): clamped {horn_name}-horn joint (torsion)", DYN * abs(w_oop) / cap_T, SF_SUSTAINED)
     for m, lbl in (("yaw", "yaw-stall sweep"), ("hand", "hand push 5 N")):
-        check(f"{lbl}: horn arm-screw pull-out (floor {t_floor:.0f})", pullout(SW[m]["horn"]["Fs"], HS_D, t_floor),
-              True, SF_STATIC, shear=True)
-    # 5. out-of-plane bending of the plate (weak axis; flat print -> stress along the layers)
-    Ip, cp = oop_section(T, HW, "pocket", 15.0)
-    Is, cs = oop_section(T, HW, "slot", slot_w=sw_)
-    If, cf = oop_section(T, HW, "full")
+        check_util(f"{lbl}: clamped {horn_name}-horn joint (D9 washer + arm screws, floor {t_floor:.0f})",
+                   SW[m]["horn"]["Fs"], SF_STATIC)
+    # 5. out-of-plane bending and torsion of the plate (along the layers; torsion conservatively as interlayer shear)
     for m, lbl, req in (("w", "weight x2 (sustained)", SF_SUSTAINED), ("yaw", "yaw-stall sweep", SF_STATIC),
                         ("hand", "hand push 5 N", SF_STATIC)):
-        Mx15 = DYN * abs(w_oop) if m == "w" else SW[m]["x15"]["Mt"]
-        Msl = DYN * abs(w_oop) if m == "w" else SW[m]["slot"]["Mt"]
-        Mfr = DYN * abs(w_oop) if m == "w" else SW[m]["farrow"]["Mt"]
-        check(f"{lbl}: out-of-plane bending x15 over the pocket (Kt 2 arm-screw hole)", bend(Mx15, Ip, cp), False, req, Kt=2.0)
-        check(f"{lbl}: out-of-plane bending at the lightening slot x{x0:.0f} (Kt 2)", bend(Msl, Is, cs), False, req, Kt=2.0)
-        check(f"{lbl}: out-of-plane bending at the {P['far_name']} screw row x{P['far_row_x']:.1f} (Kt 2)",
-              bend(Mfr, If * P["row_I_ratio"], cf), False, req, Kt=2.0)
+        M = (lambda n: DYN * abs(w_oop)) if m == "w" else (lambda n, m=m: SW[m][n]["Mt"])
+        check(f"{lbl}: out-of-plane bending x15 over the pocket (Kt 2 arm-screw hole)", bend(M("x15"), I15, c15), False, req,
+              Kt=2.0)
+        check(f"{lbl}: out-of-plane bending x30, full section", bend(M("x30"), If, cf), False, req)
+        check(f"{lbl}: out-of-plane bending at the {far_name} pilot row x{row_x:.1f} (Kt 2)", bend(M("row"), Ir, cr), False,
+              req, Kt=2.0)
         if m != "w":
-            check(f"{lbl}: plate torsion at the slot (2 rails, Z shear)",
-                  torsion_thin(SW[m]["slot"]["T"], [((2 * HW - sw_) / 2, T)] * 2), True, req, shear=True)
-            check(f"{lbl}: {P['far_name']} tab screws pull-out", pullout(SW[m]["far"]["Fs"], P["far_pilot"], T),
-                  True, req, shear=True)
-            Iw, cw = oop_section(T, HW, "window", win_w=P["WIN_W"])
-            Mw = SW[m]["farrow"]["Mt"]
-            check(f"{lbl}: {P['far_name']} window rails alone, servo case ignored (Kt 2.5)", bend(Mw, Iw, cw), False, req,
-                  Kt=2.5, info=True)
-    return SW, pts
+            check(f"{lbl}: plate torsion, full width (Z shear)", torsion_thin(SW[m]["x30"]["T"], [(2 * HW, T)]), True, req,
+                  shear=True)
+            check(f"{lbl}: {far_name} tab screws pull-out (L {far_screw_L:.0f})",
+                  pullout(SW[m]["far"]["Fs"], far_pilot, far_screw_L), True, req, shear=True)
+            check(f"{lbl}: {far_name} window rails alone, servo case ignored (Kt 2.5)", bend(SW[m]["row"]["Mt"], Iw, cw),
+                  False, req, Kt=2.5, info=True)
+    return SW
 
-
-def link_whatif(P, T_new, clamp=True, slot=True):
-    """Re-run the governing checks for a thicker plate and/or a centre-screw clamp at the horn."""
-    T, HW = T_new, P["HALF_W"]
-    tf = T - HORN_DEPTH
-    a = allow_mpa(True, True)
-    cap_T = a * ((math.pi * WASHER_D * tf if clamp else 0) + 2 * math.pi * HS_D * tf) * HUB_R
-    cap_t = a * ((math.pi * WASHER_D * tf * ARM_L if clamp else 0) + math.pi * HS_D * tf * (HS_R + ARM_L))
-    li, J = P["link_index"], P["joint"]
-    pts = {"horn": (J, li, (cap_t, cap_T)), "x15": ((J, 15.0, 0.0), li, None),
-           "slot": ((J, P["LIGHT"][0], 0.0), li, None), "farrow": ((J, P["far_row_x"], 0.0), li, None),
-           "far": ((J, P["L"], 0.0), li, P["far_levers"])}
-    rows = []
-    for m in ("yaw", "hand"):
-        S = sweep(pts, m)
-        Ip, cp = oop_section(T, HW, "pocket", 15.0)
-        rows.append((f"{m}: horn joint{' (clamped)' if clamp else ''}", 1.0 / S["horn"]["Fs"]))
-        rows.append((f"{m}: x15 over pocket (Kt2)", allow_mpa(False) / (2 * bend(S["x15"]["Mt"], Ip, cp))))
-        if slot:
-            Is, cs = oop_section(T, HW, "slot", slot_w=P["LIGHT"][2])
-            rows.append((f"{m}: lightening slot (Kt2)", allow_mpa(False) / (2 * bend(S["slot"]["Mt"], Is, cs))))
-            rows.append((f"{m}: slot torsion", allow_mpa(True, True) /
-                         torsion_thin(S["slot"]["T"], [((2 * HW - P["LIGHT"][2]) / 2, T)] * 2)))
-        else:
-            If, cf = oop_section(T, HW, "full")
-            rows.append((f"{m}: x{P['LIGHT'][0]:.0f} no slot (Kt1)", allow_mpa(False) / bend(S["slot"]["Mt"], If, cf)))
-            rows.append((f"{m}: torsion full width", allow_mpa(True, True) / torsion_thin(S["slot"]["T"], [(2 * HW, T)])))
-        If, cf = oop_section(T, HW, "full")
-        rows.append((f"{m}: {P['far_name']} screw row (Kt2)",
-                     allow_mpa(False) / (2 * bend(S["farrow"]["Mt"], If * P["row_I_ratio"], cf))))
-        rows.append((f"{m}: {P['far_name']} tab screws pull-out", allow_mpa(True, True) / pullout(S["far"]["Fs"], P["far_pilot"], T)))
-    return rows
-
-# --- 20261025-arm-upper-link: parameters copied from model.py --------------------------------------
-P = dict(T=6.0, HALF_W=17.0, L=100.0, LIGHT=(26.0, 56.0, 14.0), WIN_W=20.1, link_index=0, joint="S", k=1,
-         horn_name="shoulder", far_name="elbow MG996R", far_stall=STALL_MG996R_NMM,
-         far_holes=[(-34.4, 5.0), (-34.4, -5.0), (14.1, 5.0), (14.1, -5.0)], far_pilot=2.6, far_lig=2.40,
-         far_row_x=100.0 - 34.4, far_levers=(2 * 48.5, 2 * 14.85), row_I_ratio=523.0 / 612.0, M_win=STALL_MG996R_NMM)
-# CAD cross-check (sections of design()): out-of-plane Iyy x14.5 549, slot 360, full 612, x66 523, window 250;
-# in-plane Izz slot 18280, window 15592.
-print(f"oop I x15 {oop_section(6, 17, 'pocket', 15.0)[0]:.0f} (CAD x14.5 549); slot {oop_section(6, 17, 'slot', slot_w=14)[0]:.0f} (CAD 360);"
-      f" in-plane slot {inplane_I(6, 17, 14):.0f} (CAD 18280), window {inplane_I(6, 17, 20.1):.0f} (CAD 15592)")
-SW, pts = link_checks(P)
+# --- 20261025-arm-upper-link (round 2) -------------------------------------------------------------------
+P = UL
+_c = P.CLR + HOLE_COMP
+WIN_W = MG996R.width + _c
+PILOT = MG996R.screw_pilot_d                     # printed pilot (CAD +0.2)
+LIG = (MG996R.hole_dx / 2 - 10.15) - (PILOT + HOLE_COMP) / 2 - (MG996R.shaft_from_end + _c / 2)   # CAD ligament
+SW = link_checks("20261025-arm-upper-link", P, "E", "elbow MG996R", STALL_MG996R_NMM,
+                 [(-34.4, 5.0), (-34.4, -5.0), (14.1, 5.0), (14.1, -5.0)], LIG, PILOT, min(P.T, 7.0),
+                 (2 * MG996R.hole_dx, 2 * (MG996R.hole_dy / 2 + MG996R.width / 2)), STALL_MG996R_NMM, WIN_W,
+                 1, "shoulder", 0, "S", "x15 2597, x30 2830, x65.6 2363, window 1138")
 worst, fails = report("20261025-arm-upper-link")
-for lbl, Tn, clamp, slot in (("A: T 6->9, no lightening slot, centre-screw clamp", 9.0, True, False),
-                             ("B: T 6->10, no lightening slot, centre-screw clamp", 10.0, True, False)):
-    rows = link_whatif(P, Tn, clamp, slot)
-    print(f"\nWHAT-IF {lbl}:")
-    for n, sf in rows:
-        print(f"  {n:40s} SF {sf:5.2f} {'OK' if sf >= 3 else 'FAIL'}")
-    print(f"  what-if lowest SF {min(sf for _, sf in rows):.2f}")

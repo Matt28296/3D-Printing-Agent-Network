@@ -5,7 +5,8 @@ Design frame = assembly/base frame (Z = 0 is the base top-plate top; the cradle 
 into three bosses whose ends are at Z = -10). The board sits pins-DOWN with its PCB on two
 end ledges, so female jumper wires can push onto every pin: nothing in the frame passes
 under the two pin rows. Printed upright (Z = -20 on the bed); every ledge rises from the bed.
-Screws: 3 × M3×12 from below, heads in 6 mm counterbores, 4 mm clamp + ~8 mm into the bosses.
+Screws: 3 × M3×10 from below, heads in 6 mm counterbores: 4 mm clamp + 6 mm into the 6 mm-deep boss pilots
+(an M3×12 would bottom out 2 mm into undrilled plate; DFM round 2).
 """
 from build123d import Align, Box, Cylinder, Pos
 from cadlib import HOLE_COMP_DEFAULT, to_bed

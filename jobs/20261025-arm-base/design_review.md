@@ -1,41 +1,49 @@
 VERDICT: FAIL
 
-# DFM review: 20261025-arm-base
+# DFM review (round 2): 20261025-arm-base
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), tools/hobby_parts.py, assembly_plan.md, library/lessons.md (no entries yet).
-Outputs are current: re-running `build()` gives 89961.0 mm³, the same as geometry.json (89961.03 mm³).
-No measured library values exist yet, so the skill defaults apply (hole compensation +0.2 mm, PETG softening point about 70 °C).
+Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), tools/hobby_parts.py (round 2), cradle and ring model.py and spec.md, assembly_plan.md, library/lessons.md (no entries).
+Outputs are current: `build()` gives 89697.2 mm³, matching geometry.json (89697.17 mm³). The renders are newer than model.py.
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits bed with 5 mm margin | PASS | 110 × 104 × 40 mm; geometry.json `fits_bed: true` |
-| 2 | Single watertight solid, min Z = 0 | PASS | geometry.json `solids: 1`, `watertight: true`, `min_z_mm: 0.0` |
-| 3 | Orientation matches brief | PASS | Printed upside down with the top plate on the bed: bottom.png shows the window, pilots and cable slot on the bed face, and iso.png shows the open side up |
-| 4 | Load paths along layers | PASS | Top-plate loads are in-plane. A tab-screw pull-out pushes the Ø6.5 bosses into the plate, so the boss-to-plate layers are in compression |
-| 5 | Bed contact | PASS | 10381.5 mm² (mesh_check). PETG, so no warping concern |
-| 6 | Overhangs ≤45°, bridges ≤10 mm | PASS | `overhang_pct` 0.0. Widest bridge 1.21 mm (ring-pilot notch at z 5). The USB opening has a 45° roof pointing up (right.png). The jack is a teardrop pointing +Z in print (geometry.json arc 270° at (−53.5, 28, 20)) |
-| 7 | Walls ≥1.8 mm, none <0.9 mm | PASS | WALL 3.0, PLATE_T 4.0. Servo bosses (6.5 − 2.6)/2 = 1.95, cradle bosses (7 − 2.6)/2 = 2.2, pillars (8 − 3.4)/2 = 2.3. `thin_wall_warnings` is empty |
-| 8 | Fit holes use HOLE_COMP; horizontal holes teardrop | **FAIL** | model.py has no `HOLE_COMP` (grep finds no `HOLE_COMP` or `comp(`). Spec §3 sets the servo window at 41.1 × 20.1 **+0.3/−0**, the pilots at Ø2.6 **±0.1** and the jack at Ø11.4 **+0.3/−0**. With the default 0.2 mm undersize the print comes out at about 40.9 × 19.9 (0.2 total clearance instead of 0.4, against the "drops in without force" acceptance criterion), Ø2.4 pilots (outside ±0.1) and a Ø11.2 jack hole. The horizontal holes themselves are fine |
-| 9 | Bottom edges chamfered | **FAIL** | `build()` returns `to_bed(Rot(180,0,0) * design())` with no `chamfer_bottom`. The bed face holds the servo window and the 7 pilot entries, so an elephant's-foot lip forms right at the window the servo drops into |
-| 10 | Internal corners on load paths filleted | PASS (advisory) | The plate-to-wall and window corners are sharp, but the loads are low (1000 N·mm stall spread over 4 screws, 48.5 mm pattern) |
-| 11 | Fasteners per §4 | PASS (notes) | Self-tapping into PETG is acceptable for a few assemblies. Servo grip 10 mm (plate 4 + boss 6), ring grip 4 mm, cradle pilots blind 6 mm. See notes 3 to 5 |
-| 12 | Critical dims are named parameters | **FAIL** | The window clearance is a literal (`servo_mount_cutter(SERVO, PLATE_T + SERVO_BOSS_L, clearance=0.4)`), not a named parameter with a source. BX/BY/H/JACK_D/PILOT/SERVO are named |
-| 13 | Service temp ≥20 °C below softening | PASS | 40 °C against PETG at about 70 °C (material-selection). The brief says "~80 °C"; correct it to about 70 °C |
-| 14 | lessons.md | N/A | library/lessons.md has no entries |
+| 1 | Fits bed with 5 mm margin | PASS | 110 × 104 × 40 mm; `fits_bed: true` |
+| 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, min Z 0 |
+| 3 | Orientation matches brief | PASS | Upside down with the top plate on the bed (bottom.png, iso.png) |
+| 4 | Load paths | PASS | Unchanged from round 1. Plate loads are in-plane, and tab-screw pull-out puts the boss-to-plate layers in compression |
+| 5 | Bed contact | PASS | 10208.3 mm² |
+| 6 | Overhangs / bridges | PASS | `overhang_pct` 0.0 and `bridges` is empty. The jack is a teardrop (geometry.json Ø11.6, axis X). The USB opening has a 45° roof (right.png) |
+| 7 | Walls | PASS | Servo bosses (6.5 − 2.8)/2 = 1.85, cradle bosses (7 − 2.8)/2 = 2.1, pillars (8 − 3.6)/2 = 2.2, window-to-pilot ligament 24.25 − 20.65 − 1.4 = 2.2. `thin_wall_warnings` is empty |
+| 8 | HOLE_COMP / horizontal holes | PASS | `HOLE_COMP = HOLE_COMP_DEFAULT` (0.2, sourced) is applied to every hole. geometry.json gives pilots Ø2.8, pillars Ø3.6 and jack Ø11.6. `servo_mount_cutter(..., hole_comp=HOLE_COMP)` makes the window 41.3 × 20.3 in CAD, which prints at about 41.1 × 20.1 (spec §3) |
+| 9 | Bottom edges chamfered | PASS (note) | `chamfer_plane_edges(outer, 0.0, 0.4)` chamfers the bed-face outline. The window and pilot mouths on the bed are not chamfered, so rely on `elefant_foot_compensation` 0.2 there |
+| 10 | Internal corners | PASS (advisory) | Unchanged; low loads |
+| 11 | Fasteners | **FAIL** | Spec §2 calls for "3 × M3×12 for the cradle (from below, heads in counterbores)". The cradle's counterbores seat the heads at Z −14, so the screw tip reaches Z −2. This base's cradle pilots are blind, Ø2.8 from Z −11 to **−4** (`CRADLE_BOSS_L + 1` cylinder ending at the plate underside), so each screw would drive 2 mm into unpiloted plate. Only 2 mm of plate would remain under the bed face, so the screw bottoms out before the head clamps, or raises a bump on the top face |
+| 12 | Critical dims named | **FAIL** | Round-1 fix 3 is still open: the window clearance is still the literal `servo_mount_cutter(SERVO, ..., clearance=0.4, ...)` and not a named, sourced parameter. Spec §3's 41.1 × 20.1 window depends on it |
+| 13 | Service temperature | PASS | 40 °C against PETG at about 70 °C. The brief now says about 70 °C |
+| 14 | lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | inputs/ is empty |
 
 ## Required fixes
 
-1. **Add `HOLE_COMP = 0.2` (default; replace it with `hole_comp_mm` from library/materials.csv once measured) and apply it to every fitted hole** (rule §3, checklist 8). Use window clearance `CLR + HOLE_COMP` (0.4 becomes 0.6 modelled), servo pilots via `replace(SERVO, screw_pilot_d=2.6 + HOLE_COMP)`, `PILOT = comp(2.6)` and `JACK_D = comp(11.4)`. Evidence: spec §3 tolerances −0 and ±0.1 against the 0.2 mm default undersize.
-2. **Chamfer the bed edges**: `chamfer_bottom(to_bed(Rot(180, 0, 0) * design()), 0.4)` (rule §2 and §6, checklist 9). This also gives the servo window mouth a lead-in.
-3. **Make the window clearance a named parameter** (`CLR = 0.4  # fdm-design-rules default, hobby_parts`) (rule §7, checklist 12).
+1. **Make the cradle screw length agree with the pilot depth** (rule §4, checklist 11). Either change spec §2 (and the cradle spec and assembly plan) to **M3×10**, which puts the tip at Z −4 and engages the full 6 mm pilot, or deepen these pilots to Z −2. The second option leaves only 2 mm of plate under the bed face, so M3×10 is the better choice.
+2. **Name the window clearance**: add `CLR = 0.4  # printed, fdm-design-rules default` and pass `clearance=CLR` (rule §7, checklist 12).
 
-## Notes (not blocking, fix while you are in there)
+## Round 1 → round 2
 
-1. The cable slot (16 × 8 at x −40, y −40) clips the corner pillar at (−49.5, −46.5). Slot corner (−48, −44) is 2.9 mm from the pillar centre (r 4). The dark wedge in the slot in bottom.png shows it. This leaves 1.2 mm between the slot and the Ø3.4 desk-screw hole at plate level. Move the slot to about (−36, −38).
-2. The ring pilot at 270° (0, −48) breaks 0.3 mm into the −Y inner wall: hole edge at y −49.3 against the wall at −49.0 (geometry.json centroid z 2.5 instead of 2.0 for the other two). The ring tab there also overhangs the base's outer face by 0.5 mm (ring bbox y min −52.5 against base ±52.0). Change `RING_PILOT_R` and the ring's `TAB_R` together to 47.
-3. The desk-screw holes run through the full 40 mm pillar, so a desk screw has to be at least 50 mm long. State this in the BOM, or counterbore the holes from the top.
-4. The Ø2.6 MG996R pilot assumes an M3-class screw. The tab screws in servo bags are often Ø2.3 to 2.6 self-tappers, which barely bite in a pilot that prints at about Ø2.4. Measure the screw and set `screw_pilot_d` to about 0.8 × its major diameter. Confirm on the arm-fit-test coupon.
-5. Cross-part: the cradle's 3 × M3×8 screws pass through the 6 mm cradle into these 6 mm cradle bosses, which leaves only 2 mm of thread engagement. The fix belongs in the cradle (see its review).
+| Round-1 finding | Status | How I checked |
+|---|---|---|
+| No HOLE_COMP (window, pilots, jack) | Closed | model.py `HOLE_COMP`. geometry.json hole diameters 2.8 / 3.6 / 11.6. hobby_parts adds `hole_comp` to the window |
+| No bottom chamfer | Closed | `chamfer_plane_edges` on the blank (outline only, see item 9) |
+| Window clearance literal | **Open** | model.py still passes `clearance=0.4` |
+| Cable slot clipped the corner pillar | Closed | Slot is 14 × 8 at (−40, −36). Its nearest corner (−47, −40) is 6.96 mm from the pillar centre (−49.5, −46.5), so 2.96 mm clear of r 4. It is also outside the ring (nearest corner r 45.97 > R_OUT 44). bottom.png shows no wedge |
+| Ring pilot into the wall / ring tab past the edge | Closed | Pilots are at r 47.5, and the 270° pilot edge is at y −48.9 against the wall at −49.0, so it no longer cuts the wall. The model.py comment says "1 mm off the inner wall", but it is actually 0.1 mm. The ring tab reaches y −52.0 = the base edge |
+| Desk screw length | Closed | Spec now says M3×50 (or #4 × 2") |
+| Cradle 2 mm engagement | Replaced | Now an overshoot (item 11) |
+
+## Notes
+
+1. The MG996R tab-screw pilot (printed Ø2.6) is still unverified against the actual servo-bag screw. Check it on the arm-fit-test coupon.
+2. The ring screws are now M3×6, giving 3 mm of engagement in the 4 mm plate. That is acceptable, because the ring loads its tabs in compression and shear, not pull-out.
+3. Advisory (toolsmith): `tools/cad_build.py`'s hole measurement still errors on turntable, upper-link, forearm, gripper-base and gripper-jaw.
