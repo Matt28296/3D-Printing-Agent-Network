@@ -135,8 +135,18 @@ both("lip under the nut plate: top Z_A - 5.2, 1.0 proud (|y| 38-39), 1.0 face, t
 both("end stops: inner faces x 108 and 129 (21.0 CAD, as the recess), 1.0 proud, up to Z_A + 5.2",
      lambda s: solid(107.9, s * 38.5, Z) and not solid(108.1, s * 38.5, Z) and not solid(128.9, s * 38.5, Z)
      and solid(129.1, s * 38.5, Z) and solid(107, s * 38.5, Z + 5.1) and not solid(107, s * 38.5, Z + 5.3)
-     and solid(130, s * 38.95, Z) and not solid(130, s * 39.05, Z) and not solid(106.4, s * 38.5, Z)
-     and not solid(130.6, s * 38.5, Z))
+     and solid(130, s * 38.95, Z) and not solid(130, s * 39.05, Z))
+# round 6 (strength round 5's FIX): STOP_W 1.5 -> 2.0, inner faces unchanged, so the stops span x 106-108 and 129-131
+both("round 6: STOP_W 2.0: rear stop x 106-108, front stop x 129-131 (1.0 proud, Z_A - 5.7 .. + 5.2)",
+     lambda s: ns["STOP_W"] == 2.0 and solid(106.1, s * 38.5, Z) and not solid(105.9, s * 38.5, Z)
+     and solid(130.9, s * 38.5, Z) and not solid(131.1, s * 38.5, Z)
+     and all(solid(x, s * 38.95, z) for x in (106.1, 107.9, 129.1, 130.9) for z in (Z - 5.6, Z, Z + 5.1)))
+# the front stop ends at x 131, where the r6 corner fillet's face is at |y| 37.66 (the stop starts at |y| 37): no gap
+both("round 6: front stop joins the r6 corner fillet: solid from the fillet face out to |y| 39 at x 130.95",
+     lambda s: all(solid(130.95, s * y, z) for y in (37.0, 37.5, 37.7, 38.0, 38.5, 38.95) for z in (Z - 5.6, Z, Z + 5.1)))
+both("round 6: lip, stops and seat stay 4.0 inboard of the links (|y| 43): nothing at |y| > 39 from x 105 to 132",
+     lambda s: not any(solid(x, s * y, Z + dz) for x in (105.5, 106.1, 107, 107.9, 129.1, 130, 130.9, 131.5)
+                       for y in (39.05, 40.0, 42.9) for dz in (-6.5, -5.6, 0.0, 5.1)))
 both("nut plate's space clear: x 108.05-128.95, |y| 38.05-40, Z_A - 5.15 .. + 5.15 (plate rests at Z_A - 5.2 .. + 4.8)",
      lambda s: not any(solid(x, s * y, Z + dz) for x in (108.05, 112, 118, 124, 128.95) for y in (38.05, 39.0, 39.95)
                        for dz in (-5.15, -2.0, 0.0, 3.0, 5.15)))

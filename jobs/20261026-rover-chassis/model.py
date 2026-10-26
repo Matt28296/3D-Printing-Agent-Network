@@ -41,6 +41,9 @@ nut slot is deleted. It left a 3.4 mm PETG web between the plates that the yaw a
 bottom edge (45° underside) and an end stop at each end locate it, so nothing is cut into the wall and
 nothing relies on friction to keep it in place. A Ø9 washer goes under the wall nut, outside, and the
 idler's hub starts 5.2 mm further out (rover_frame.IDLER_HUB_Y0, |y| 43.7).
+
+Round 6 (strength round 5's fix, approved by the user; nothing else changed): the nut plate's end stops widen from
+1.5 to 2.0 along x (STOP_W) with their inner faces still at x 108 and 129, so they now span x 106-108 and 129-131.
 """
 import sys
 from pathlib import Path
@@ -117,7 +120,8 @@ LIP_DZ = PLATE_RECESS_Z       # 5.2: lip top face at Z_A - 5.2, level with the r
 LIP_OUT = 1.0                 # lip and stops stand 1.0 proud of the outer face (|y| 38-39, half the plate's 2 mm): the Ø9
 #                               washer (|y| 40-40.8) clears them, and they stay 4 mm inboard of the links (|y| 43)
 LIP_FACE = 1.0                # lip: 1.0 vertical front face below its top, then a 45° underside back into the wall
-STOP_W = 1.5                  # end stops along x (x 106.5-108 and 129-130.5), from the lip up to Z_A + 5.2
+STOP_W = 2.0                  # end stops along x (x 106-108 and 129-131), from the lip up to Z_A + 5.2 (round 6: 1.5 -> 2.0,
+#                               strength round 5 FIX: rear stop root SF 2.75 -> 4.88 at a reverse stall)
 assert NUT_PLATE[0] <= NUT_PLATE_X[1] - NUT_PLATE_X[0] - 0.4, "the nut plate must drop in between its end stops"
 BATT_X0 = 22.0                # battery holder from x 22 (77 mm standard, up to 80 for protected cells)
 BATT_LEN = BATT_2X18650_LONG.length
