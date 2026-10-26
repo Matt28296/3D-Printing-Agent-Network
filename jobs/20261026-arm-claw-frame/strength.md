@@ -1,173 +1,221 @@
 VERDICT: FAIL
 
-# Strength check: 20261026-arm-claw-frame (round 1)
+# Strength check: 20261026-arm-claw-frame (round 2)
 
-strength-analyst · 2026-10-26 · `python3 strength_calc.py` (plain python3; reads `claw_frame.py`, this job's `model.py`,
-`tools/hobby_parts.py` and the claw jobs' `geometry.json`)
+strength-analyst (independent review of the round-2 geometry) · 2026-10-26 ·
+`python3 jobs/20261026-arm-claw-frame/strength_calc.py` (plain python3: reads `claw_frame.py`, this job's `model.py`,
+`tools/cadlib.py` and `tools/hobby_parts.py` with `ast`, so no build123d is needed)
 
-The whole claw and the camera hang on the wrist horn through the **20 mm-wide tail of the wrist plate behind the
-bulkhead** (x −8…4, y ±10). That tail contains the horn hub pocket and the clamp hole, and it fails in bending and torsion:
-SF 0.84 under the 10 N USB-cable tug, 1.43 under the yaw-stall sweep, 2.67 under the 5 N hand push. The 4 mm floor
-under the clamp washer also fails under the tug (2.26), and so do the servo-window corners (2.10). Everything else
-passes. The changes under **Required changes** pass every row, computed in the script's what-if lines.
+The round-1 fixes are in and they work: the 20 mm tail is gone, and the window corners are relieved. Four things fail now:
+
+1. **The rail wall** fails worst: **SF 0.65**. Round 2 changed it from a block back to the bulkhead into a 4 mm wall. The
+   jaws react the finger moment as a couple at the ends of each rack, so rack B pushes the wall backwards at one end. With
+   the jaws open, that end is the wall's free corner. The wall's rack-side root is sharp, and its bending stress runs
+   across the layers. With one jaw blocked it gives SF 0.65 (open) and 1.55 (closed); every full-close grip gives 1.30
+   (cyclic). The brief's "≈0.9 MPa" spreads the push over all 64 mm of wall; at the end of a cocked rack it acts on about
+   8 mm.
+2. **The wrist clamp.** A 10 N USB tug at the plug, 91.6 mm above the horn face, bends the joint across the shaft with
+   896 N·mm. The M2 clamp screw then carries 249 N, giving washer bearing SF 2.39 and floor punching SF 2.98. The added
+   desk-crash case on the camera (13 N, SYS-11) gives 2.12 and 2.65.
+3. **The bulkhead.** Under the same tug along +x, its root above the pad gives 2.70 at the sharp back corner. If the
+   tug's twist arrives at one top screw (port off-centre), the strips beside the servo window give 1.32.
+4. **The MG90S tab-pilot strips.** The user decided to keep them (26 Oct). Their rows are below, in their own table, as
+   the coordinator asked.
+
+## Round-1 fixes: made?
+
+| Round-1 required change | Round 2 | Made? |
+|---|---|---|
+| Full-width wrist plate behind the bulkhead (REAR_HALF 32), 2 mm pad over x −8…4, clamp floor ≥ 6 | Full-width plate; pad PAD_T 2.3 over x −8…3.5; floor 6.3 | Yes. The clamp is M2 × 12 + Ø6 washer, not M2 × 14: 4.6 mm into the spline, as every horn clamp has since deep review 01 S2 |
+| Window's lower corners relieved (r ≥ 1.5 or Ø3 dog-bones) | Ø3 teardrop reliefs (RELIEF_D 3) | Yes: Kt 2.5 → 1.5 at the window's lower corners |
+| Re-run the assembly check for the wider plate | `assembly_check.json`: wrist −90…+90 collision-free, no hits | Yes |
 
 ## Load cases
 
-Claw servo: MG90S, 216 N·mm stall at 6 V. Pinion pitch radius 9 gives 24 N into the racks: all of it on one jaw when an
-off-centre object blocks that jaw first, or 12 N per jaw when both touch. Mass beyond the wrist horn is 172 g with the
-Brio (see the torque section), plus a 50 g payload.
+The MG90S stalls at 216 N·mm (6 V). Through the 20-tooth pinion (pitch radius 10) that is **21.6 N on one rack** when
+an off-centre object stops one jaw, or **10.8 N per jaw** when both jaws touch a free object. The designer's
+10.8 N is correct as the free-object share.
 
-| # | Case | Load | Point and direction | Type, SF req |
+| # | Case | Load | Point, direction | Type, SF req |
 |---|---|---|---|---|
-| 1 | Wrist stall through the horn pocket | 216 N·mm (MG90S) | pocket walls, bearing | short-term, 3 |
-| 2 | Claw-servo stall reaction | 216 N·mm about claw x | 2 tab screws (horizontal pilots) in the bulkhead | short-term, 3 |
-| 3 | One jaw blocked: shaft load | 24 N + 8.7 N separating, 13.4 mm in front of the tab face | servo tabs → bulkhead | short-term, 3 |
-| 4 | Rack B thrust couple (one jaw blocked) | finger moment 1194 N·mm → 31.2 N at each rack end | lower rail face | short-term, 3 |
-| 5 | Claw + camera + payload weight ×3 | 222 g × 3 g, CoG 35 mm outboard of the back face | wrist joint and tail, any direction in the arm plane | cyclic, 4 |
-| 6 | Yaw-stall sweep (arm review) | fingertip force F = 1000/R, capped where a servo backdrives | wrist horn: T ≤ 58, Mt ≤ 650 N·mm | short-term, 3 |
-| 7 | Hand push (arm review) | 5 N out of the arm plane at the fingertip | wrist horn: Mt 381 N·mm | short-term, 3 |
-| 8 | **USB-cable tug (added)** | 10 N, any direction, at the Brio's end (−3.3, ±51, 64.2) | wrist joint, tail, bulkhead via the cover screws | short-term, 3 |
-| 9 | Camera + mount + cover weight ×3 along x (added) | 2.4 N at the top screws | bulkhead root and window | cyclic, 4 |
+| 1 | Stall, one jaw blocked | 21.6 N on the grip face 3 mm from the tip (spec). Each rack takes it as a couple at its ends: R = 21.6 × 52.75 / span = 20.1 N (span 56.5, jaws closed) to 27.5 N (span 41.4, jaws 44 mm open: the rack's end is past the frame's edge) | Rack B: forward on the cover at one end, backward on the rail wall at the other | Short-term, 3 |
+| 2 | Stall, both jaws, every full-close grip | 10.8 N per jaw: half of case 1 | As 1 | Cyclic, 4 |
+| 3 | **Crash** (required): fingertips hit the desk and back-drive the wrist | 13 N at a fingertip, any direction in the arm plane (claw x-y). This is SYS-11's upper bound for the shoulder and elbow push. 13 × 83 = 1084 N·mm = 5 × the wrist's stall, the top of SYS-11's 3–5 × range, so the wrist's back-drive doesn't cap it lower | The lower finger is always pushed **towards closing**, which reverses its rack's couple | Short-term, 3 |
+| 4 | Added: the claw opens against an obstacle | 21.6 N on one finger's outer face. Foreseeable (an internal grip, or a release inside a container); the firmware limits squeezes only on closing moves | Reversed couple, as case 3 | Short-term, 3 |
+| 5 | USB cable tug (spec) | 10 N any direction at the right-angle plug's cable exit, 8 mm behind the camera's back, mid-height: G (−18.8, y_port, 91.6). The port position is unmeasured (01 S5), so y_port is anywhere within ±45 | Via the mount's 2 M3 screws into the bulkhead top, then through the wrist joint | Short-term, 3 |
+| 6 | Added: the camera hits the desk (SYS-11: first contact in 37 % of crash poses) | 13 N along claw y at the Brio's end face (z 79.6). Almost no torque about the wrist axis, so nothing back-drives | Wrist joint, across the shaft | Short-term, 3 |
+| 7 | Camera mass and inertia, moving start/stop | The firmware ramps at 250 °/s² to 66.7 °/s. At the camera this gives 2.37 m/s² tangential (yaw, shoulder and elbow together) plus 1.73 m/s² centripetal; with ×2 for servo tracking, ≤ 0.84 g dynamic. The spec's ×3 on the weight (1 g + 2 g) covers it, so ×3 is used: camera package 86 g, end effector 224 g (solid) | Bulkhead, wrist joint | Cyclic, 4 |
+| 8 | SYS-04 overhung moment (spec) | 108 / 124 N·mm (0 / 50 g, `torque_budget.json`) × 1.3 moving | Wrist joint: clamp preload | Sustained, 4 |
+| 9 | Handling and assembly | 5 N at the fingertip, any direction (spec; covered by case 3). M2 clamp snug, 100 N. Tab screws snug, 100 N, plus thread forming | Joint, tab pilots | Short-term 3 / sustained 4 |
+| 10 | Claw-servo reaction | 216 N·mm about its shaft. One jaw blocked: 21.6 N + 7.9 N on the shaft, 17.6 mm in front of the tabs | Tab screws, window | Short-term, 3 |
+| 11 | Added, as in the jaw and cover reports: yaw stall at a fingertip | 7.1 N out of the arm plane, the largest out-of-plane part of a base-yaw stall (1079 / (2 × 76)). It acts along the wrist axis, 83.35 mm from it | Wrist joint: 592 N·mm across the shaft, plus a 7.1 N pull | Short-term, 3 |
 
-The wrist servo (MG90S) cannot hold more than its 216 N·mm stall about its own axis (claw z). So a tug's moment about
-that axis is capped at 216 N·mm. The other two components go through the clamped horn joint and are not capped.
+There is no drop case in this load set.
 
 ## Build direction and critical sections
 
-The frame prints back face down, so layers lie in planes z = const. Wrist-plate bending runs along the layers. Bulkhead
-bending (stress along z) runs across them. Torsion and pull-out are conservatively taken as interlayer shear, as in the
-arm jobs.
+The frame prints back face down, so its layers are z = const. Wrist-plate bending runs along the layers. The bulkhead and
+the rail wall bend about their roots with the stress along z, across the layers. Pull-out and punching are taken as
+interlayer shear.
 
-- **Tail at x 0**, through the clamp hole and the hub pocket: 20 × 6, minus the pocket (2 deep) and the Ø2.6 hole.
-  A 93.8 mm², I 262 mm⁴ (CAD 93.6 / 261), Z 81 mm³. Kt 2 (hole). Torsion uses the thin-strip J of the grooved
-  section, 798 mm⁴.
-- **Clamped wrist-horn joint**: M2×12 with a Ø6 washer from the front face, plus 1 arm screw, over a 4 mm floor. Same
-  model as the arm jobs: capacity 3028 N·mm transverse and 2149 N·mm torsion at the interlayer allowable.
-- **Bulkhead**: root above the rail, 6 × 64, Z 384 mm³. Beside the servo window the strips are 15.2 + 25.9 wide, Z 247
-  (CAD 247; 221 through the tab pilots). Window and rail-top corners are sharp, Kt 2.5.
-- **Claw-servo tab pilots**: Ø1.5 printed, along x through the 6 mm bulkhead. Ligament to the window is 1.60 mm.
+- **Rail wall:** x 18.35–22.35 (4 thick), z 6–17.75, y ±32, loaded on its front face. Its front root corner (z 6) is
+  sharp, Kt 2.5; the r 2 fillet is on the back, the compression side. The push acts at the wall's mid-height (lever
+  5.9). It spreads at 45° to the root: b_eff = 2 + 5.9 + min(5.9, distance to the wall's end).
+- **Wrist joint:** the frame rocks on the hub edge of the MG90S horn (r 3.6, as SYS-04). The M2 clamp takes M/3.6 once
+  that exceeds its 100 N preload. The Ø6 washer (OD 6, printed hole 2.4) bears on 23.8 mm² of pad over a 6.3 mm floor;
+  punching area π × 6 × 6.3. Torque goes through the horn's single arm (r 3.6–16.1 × 1.6, triangular contact).
+- **Bulkhead root:** z 8.3, where the pad's top meets the bulkhead's back face. 64 × 6.5; the sharp back corner gives
+  Kt 2.5.
+- **Window strips:** at the window's lower corner, through the Ø3.2 relief, −y 13.3 × 6.5 and +y 24.3 × 6.5 (Kt 1.5).
+  Each carries its own top screw's x-force over 27.65 mm, plus its width share of the moment of the force above the
+  bulkhead top.
+- **Tab-pilot strips (from the CAD dimensions):** 1.35 mm from the lead-end pilot (y 9.7) to the lead notch, 1.45 mm
+  from the far pilot (y −19.4) to the window. Both print about 0.2 wider, at 1.55 and 1.65.
 
 ## Assumptions
 
-- Masses come from the `geometry.json` volumes at solid PETG density (1.27 g/cm³), as in the arm jobs. Part CoGs are
-  the build123d centres of mass of each `design()`.
-- USB tug: 10 N at the camera's end, mid height, in every direction (3° grid). The cover is screwed on and is much
-  stiffer than the bulkhead. It reacts the camera's moment as a z-couple between the top screws and the front plate.
-  The bulkhead takes the x-shear at its top, plus the twist about the wrist axis (≤ 216, capped by the servo), as
-  opposite forces at the two top screws on the narrow strip.
-- Shaft load: the servo is held by its 2 tab screws alone. The case bearing in the window is ignored. Screws are M2×8
-  self-tapping through the 2.5 mm tab, 5.5 mm engaged.
-- The friction of clamped joints is ignored. The servo's own output bushing carries 25.5 N radial at 13 mm when one jaw
-  is blocked. That is not a printed-part check, but note it: the MG90S is a micro servo.
+- The camera loads reach the frame through the 2 top M3 screws, and the **bulkhead takes all of their moment**. The
+  cover's portal path (top wall → lip → tie → lower piece → M2.5 screws) is about 2.5 × softer and would take about 30 %.
+  With that share the bulkhead root gives 3.86, as a what-if line in the script.
+- The rack cocks in its 0.25 mm gaps, so its end force lands within about 2 mm of its end.
+- The wrist's back-drive torque is unmeasured. Case 3 uses the arm's push (13 N) instead.
+- Tab-pilot strips: thread forming from an assumed 0.04 N·m forming torque (μ 0.25) gives p = 4.6 MPa. A 100 N snug
+  clamp adds 1.7 MPa through the 30° flanks. The hoop stress at the pilot edge is taken as Lamé's peak for a ring as thin
+  as the strip (conservative); the mean across the strip, p·r/w, is the lower bound.
+- Friction in clamped joints is ignored.
+- Service temperature is 40 °C against PETG softening at about 70 °C: OK. That holds only while no stall lasts more than
+  a few seconds. The sketch eases off 2 s after a closing squeeze, but **not after an opening move that stalls**. A
+  stalled MG90S (≈4 W) can heat this bulkhead towards its softening point within minutes (SYS-11).
 
 ## Allowables and sources
 
-`library/materials.csv` has no measured row and there is no printed-specimen datasheet, so these are the strength-checks
-**placeholder** PETG values. NEEDS_TEST is the best verdict possible even after the changes.
+`library/materials.csv` has no measured row and there is no datasheet in `inputs/`. These are the strength-checks
+**placeholder** PETG values, so NEEDS_TEST is the best possible verdict.
 
 | Quantity | Value | Source |
 |---|---|---|
-| Tension/bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
-| Tension/bending across the layers (Z) | 12.5 MPa | placeholder × 0.5 |
-| Shear in-plane / interlayer | 12.5 / 6.25 MPa | 0.5 × the normal value (Tresca), as in the arm jobs |
-| Bearing, compression | 25 MPa | in-plane value |
-| Kt | 2.5 sharp internal corner or window corner, 2 hole, 1.5 filleted (r ≥ 0.25 h) | skill |
-
-Required SF is 3 for short-term loads and 4 for cyclic or sustained loads. Service temperature is 40 °C against PETG
-softening at about 70 °C: OK.
+| Along the layers (XY) | 25 MPa | Skill placeholder, PETG |
+| Across the layers (Z) | 12.5 MPa | 0.5 × in-plane (skill) |
+| Interlayer shear | 6.25 MPa | 0.5 × 12.5 (Tresca), as the arm and claw round-1 checks |
+| Bearing, compression | 25 MPa | In-plane value |
+| Kt | 2.5 sharp internal corner; 1.5 for r ≥ 0.25 h; 1.7 for r/h 0.15–0.25 | Skill; the last is a Peterson-based interpolation |
 
 ## Results (copied from `python3 strength_calc.py`)
 
-"Z shear" rows that combine bending and torsion (or the two moments at the clamped joint) are utilisation rows. The
-stress column is 6.25 × utilisation, and SF = 1/utilisation.
+| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 1 | USB tug 10 N at the plug (z 91.6), across the shaft: washer bearing (M_t 896 N·mm → screw 249 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 10.48 | 25.00 | 2.39 | 3 | **FAIL** |
+| 2 | USB tug 10 N at the plug (z 91.6), across the shaft: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 2.10 | 6.25 | 2.98 | 3 | **FAIL** |
+| 3 | Added: camera hits the desk, 13 N at its end (z 79.6): washer bearing (M_t 1009 N·mm → screw 280 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 11.80 | 25.00 | 2.12 | 3 | **FAIL** |
+| 4 | Added: camera hits the desk, 13 N at its end (z 79.6): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 2.36 | 6.25 | 2.65 | 3 | **FAIL** |
+| 5 | Crash: 13 N in the arm plane at the fingertip (z ≤ 33.2): washer bearing (M_t 406 N·mm → screw 113 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.75 | 25.00 | 5.26 | 3 | OK |
+| 6 | Crash: 13 N in the arm plane at the fingertip (z ≤ 33.2): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.95 | 6.25 | 6.58 | 3 | OK |
+| 7 | Weight ×3 incl. the 250 °/s² ramp (cyclic): 3 × the 50 g overhung moment: washer bearing (M_t 372 N·mm → screw 103 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.35 | 25.00 | 5.75 | 4 | OK |
+| 8 | Weight ×3 incl. the 250 °/s² ramp (cyclic): 3 × the 50 g overhung moment: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.87 | 6.25 | 7.18 | 4 | OK |
+| 9 | SYS-04 overhung moment, 50 g, ×1.3 moving (sustained): washer bearing (M_t 161 N·mm → screw 100 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.21 | 25.00 | 5.94 | 4 | OK |
+| 10 | SYS-04 overhung moment, 50 g, ×1.3 moving (sustained): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.84 | 6.25 | 7.42 | 4 | OK |
+| 11 | Wrist stall 216 N·mm (cyclic): horn arm on the pocket wall | Arm flank r 3.6–16.1 × 1.6 (mean, resultant at r 11.9) | XY | 0.91 | 25.00 | 27.62 | 4 | OK |
+| 12 | Crash: 13 N at the fingertip x 83.3 back-drives the wrist (1084 N·mm, 5 × stall: the top of SYS-11's 3–5 ×): horn arm on the pocket wall | Arm flank r 3.6–16.1 × 1.6 (mean, resultant at r 11.9) | XY | 4.54 | 25.00 | 5.51 | 3 | OK |
+| 13 | Stall, one jaw blocked, jaws 44 open: rack B's +y end at the rail's end, R 27.5 N | Rail wall root, front (sharp, Kt 2.5): b_eff 7.9, t 4.0, lever 5.9 | Z | 19.24 | 12.50 | **0.65** | 3 | **FAIL** |
+| 14 | Stall, one jaw blocked, jaws closed: rack B's +y end at y 25.1, R 20.1 N | Rail wall root, front (sharp, Kt 2.5): b_eff 13.8, t 4.0, lever 5.9 | Z | 8.07 | 12.50 | 1.55 | 3 | **FAIL** |
+| 15 | Stall, both jaws (cyclic), jaws 44 open: R 13.8 N at the rail's end | Rail wall root, front (sharp, Kt 2.5): b_eff 7.9, t 4.0, lever 5.9 | Z | 9.62 | 12.50 | 1.30 | 4 | **FAIL** |
+| 16 | Crash 13 N pushes jaw B shut: rack B's −y end on the rail at y −31.4, R 12.8 N | Rail wall root, front (sharp, Kt 2.5): b_eff 8.5, t 4.0, lever 5.9 | Z | 8.34 | 12.50 | 1.50 | 3 | **FAIL** |
+| 17 | Added: opening against an obstacle, jaw B: rack B's −y end at y −31.4, R 20.1 N | Rail wall root, front (sharp, Kt 2.5): b_eff 8.5, t 4.0, lever 5.9 | Z | 13.12 | 12.50 | 0.95 | 3 | **FAIL** |
+| 18 | USB tug 10 N along +x at the plug: bulkhead root above the pad | 64 × 6.5 at z 8.3, back corner Kt 2.5 | Z | 4.62 | 12.50 | 2.70 | 3 | **FAIL** |
+| 19 | Camera package 86 g ×3 along x (cyclic): bulkhead root above the pad | As above | Z | 1.00 | 12.50 | 12.44 | 4 | OK |
+| 20 | USB tug 10 N along x, port at y −45 (twist 450 N·mm): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +15.9 N | Z | 9.50 | 12.50 | 1.32 | 3 | **FAIL** |
+| 21 | USB tug 10 N along x, port at y −45 (twist 450 N·mm): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force −5.9 N | Z | 3.88 | 12.50 | 3.22 | 3 | OK |
+| 22 | USB tug 10 N along x, port at y +45 (twist 450 N·mm): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force −8.4 N | Z | 6.15 | 12.50 | 2.03 | 3 | **FAIL** |
+| 23 | USB tug 10 N along x, port at y +45 (twist 450 N·mm): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +18.4 N | Z | 6.90 | 12.50 | 1.81 | 3 | **FAIL** |
+| 24 | Camera ×3 along x (cyclic): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.0 N | Z | 0.87 | 12.50 | 14.32 | 4 | OK |
+| 25 | Camera ×3 along x (cyclic): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.6 N | Z | 0.83 | 12.50 | 15.06 | 4 | OK |
+| 26 | One jaw blocked: tab screw pull-out 13 N (M2, 5.5 engaged) | Thread shear cylinder | Z shear | 0.38 | 6.25 | 16.53 | 3 | OK |
+| 27 | USB tug 10 N along x at the plug: M3 × 18 pull-out from the bulkhead top, 66 N per screw | M3, 11.5 engaged | Z shear | 0.61 | 6.25 | 10.21 | 3 | OK |
+| 28 | Stall, one jaw blocked: rack B pushes the cover's lower piece forward (27.5 N at z 11): M2.5 pull-out 101 N | M2.5, 7 engaged, 1.75 mm skins | Z shear | 1.83 | 6.25 | 3.41 | 3 | OK |
+| 29 | Added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: washer bearing (M_t 592 N·mm → screw 171 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 7.22 | 25.00 | 3.46 | 3 | OK |
+| 30 | Added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 1.44 | 6.25 | 4.33 | 3 | OK |
 
-| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
-|---|---|---|---|---|---|---|---|
-| 1 | wrist stall 216 N.mm: horn-pocket wall bearing | XY | 1.91 | 25.00 | 13.06 | 3 | OK |
-| 2 | weight x3 (cyclic): clamped wrist-horn joint | Z shear | 0.82 | 6.25 | 7.60 | 4 | OK |
-| 3 | weight x3 (cyclic): tail x 0 bending (Kt 2 clamp hole) + torsion | Z shear | 2.24 | 6.25 | 2.79 | 4 | **FAIL** |
-| 4 | yaw-stall sweep: clamped wrist-horn joint (D6 washer + arm screw, floor 4) | Z shear | 1.49 | 6.25 | 4.19 | 3 | OK |
-| 5 | yaw-stall sweep: tail x 0 (20 wide) bending (Kt 2 clamp hole) + torsion | Z shear | 4.38 | 6.25 | 1.43 | 3 | **FAIL** |
-| 6 | hand push 5 N: clamped wrist-horn joint (D6 washer + arm screw, floor 4) | Z shear | 0.79 | 6.25 | 7.95 | 3 | OK |
-| 7 | hand push 5 N: tail x 0 (20 wide) bending (Kt 2 clamp hole) + torsion | Z shear | 2.34 | 6.25 | 2.67 | 3 | **FAIL** |
-| 8 | USB tug 10 N, worst direction: clamped wrist-horn joint | Z shear | 2.76 | 6.25 | 2.26 | 3 | **FAIL** |
-| 9 | USB tug 10 N, worst direction: tail x 0 bending (Kt 2) + torsion | Z shear | 7.42 | 6.25 | 0.84 | 3 | **FAIL** |
-| 10 | claw stall 216 N.mm: tab-pilot bearing (compression) | XY | 1.14 | 25.00 | 22.01 | 3 | OK |
-| 11 | claw stall: pilot-to-window ligament 1.60 tear-out, full F toward the window (Z shear) | Z shear | 0.49 | 6.25 | 12.80 | 3 | OK |
-| 12 | one jaw blocked: tab screw pull-out, 20.5 N (M2x8, L 5.5, Z shear) | Z shear | 0.79 | 6.25 | 7.91 | 3 | OK |
-| 13 | one jaw blocked: bulkhead root above the rail, tab push (Z, Kt 2.5) | Z | 2.23 | 12.50 | 5.60 | 3 | OK |
-| 14 | rack B back thrust 31.2 N on the rail face (3 mm contact x rack height) | XY | 1.54 | 25.00 | 16.23 | 3 | OK |
-| 15 | camera + mount + cover weight x3 along x (cyclic): bulkhead root above the rail (Z, Kt 2.5) | Z | 0.49 | 12.50 | 25.65 | 4 | OK |
-| 16 | camera + mount + cover weight x3 along x (cyclic): bulkhead at the window corners (Z, Kt 2.5) | Z | 0.67 | 12.50 | 18.78 | 4 | OK |
-| 17 | USB tug 10 N along x at the top screws: bulkhead root above the rail (Z, Kt 2.5) | Z | 1.69 | 12.50 | 7.38 | 3 | OK |
-| 18 | USB tug 10 N along x at the top screws + twist 216 on the narrow strip: bulkhead at the window corners (Z, Kt 2.5) | Z | 5.96 | 12.50 | 2.10 | 3 | **FAIL** |
-| 19 | rack thrust 31.2 N on the front plate next to a front screw: M3x12 pull-out (L 9) | Z shear | 0.44 | 6.25 | 14.16 | 3 | OK |
-| 20 | USB tug tips the camera mount back over the cover's rear edge: top screw pull-out 37 N (M3x18, L 11.5) | Z shear | 0.41 | 6.25 | 15.26 | 3 | OK |
+**Lowest SF: 0.65 (required 3), the rail wall's root at its end. One jaw blocked, jaws open.**
 
-**Lowest SF 0.84 (required 3): USB tug, tail at x 0 (bending + torsion).**
+Information rows (not in the verdict):
+
+| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 31 | Info: proof test, horn in a vice, one jaw blocked: 1736 N·mm through the pocket | As above | XY | 7.27 | 25.00 | 3.44 | 3 | OK |
+| 32 | Info: same tug with the port at the centre: −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +3.8 N | Z | 4.12 | 12.50 | 3.04 | 3 | OK |
+| 33 | Info: same tug with the port at the centre: +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +6.2 N | Z | 3.95 | 12.50 | 3.17 | 3 | OK |
+
+With the USB port within ±10 mm of the centre, the window strips give 2.35 (what-if line).
+
+### MG90S tab-pilot strips (user decision, 26 Oct: strips kept, first-print check in spec §8)
+
+These rows use the real MG90S geometry (`tools/hobby_parts.py`) and the strips' CAD widths. They don't decide the
+verdict, which fails on the rows above. On their own they would: at the pilot's edge, the hand calculation can't show
+the sustained SF of 4. The first-print check is therefore the acceptance, not a formality.
+
+| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 34 | Screw driving, M2 × 8 snug (100 N) + thread forming (0.04 N·m), sustained: lead-end pilot to the lead notch | Strip 1.35 CAD / 1.55 printed; hoop stress at the pilot edge (Lamé peak), p 6.3 MPa | Z | 7.80 | 12.50 | 1.60 | 4 | **FAIL** |
+| 35 | Same, mean hoop stress across the strip (p r / w): lead-end pilot to the lead notch | 1.55 printed | Z | 3.05 | 12.50 | 4.10 | 4 | OK |
+| 36 | One jaw blocked: tab screw pulled with 13 N, its flank pressure added (short-term): lead-end pilot to the lead notch | Lamé peak, p 6.5 MPa | Z | 8.07 | 12.50 | 1.55 | 3 | **FAIL** |
+| 37 | Screw driving, M2 × 8 snug (100 N) + thread forming (0.04 N·m), sustained: far-end pilot to the window | Strip 1.45 CAD / 1.65 printed; hoop stress at the pilot edge (Lamé peak), p 6.3 MPa | Z | 7.66 | 12.50 | 1.63 | 4 | **FAIL** |
+| 38 | Same, mean hoop stress across the strip (p r / w): far-end pilot to the window | 1.65 printed | Z | 2.86 | 12.50 | 4.36 | 4 | OK |
+| 39 | One jaw blocked: tab screw pulled with 13 N, its flank pressure added (short-term): far-end pilot to the window | Lamé peak, p 6.5 MPa | Z | 7.93 | 12.50 | 1.58 | 3 | **FAIL** |
+| 40 | One jaw blocked: the case's end bears on the window's end (21.6 N): far-end pilot to the window | Bridge over the pilot, span 1.7, depth 1.65 | Z | 0.14 | 12.50 | 90.72 | 3 | OK |
+| 41 | Claw stall reaction 216 N·mm: 7.4 N per tab screw along z (the strips lie beside this path) | Pilot wall bearing Ø1.5 × 5.5 | XY | 0.90 | 25.00 | 27.79 | 3 | OK |
+
+What this means:
+
+- The servo's own reactions barely load the strips (rows 40 and 41).
+- **Driving the screw** is the case that matters. Its hoop stress runs along z, across the layers, so a split would open
+  along a layer line from the pilot to the window or notch. The narrower strip, 1.35 mm at the lead end, is the one to
+  watch.
+- The pass criterion in §8 (no whitening, no crack) matches this failure mode.
+- Drive the screws with dry threads and stop at the first firm resistance. A 0.06 N·m driver limit, or two fingers on a
+  small screwdriver, keeps the clamp near the 100 N assumed here.
+- There is no drop case in this load set.
 
 ## Required changes (each computed in the script's what-if lines)
 
-1. **Wrist plate behind the bulkhead (x −8…4): full width and 8 mm thick.** Set REAR_HALF 10 → 32 (no tail cutout),
-   and add a 2 mm raised pad on the front face over x −8…4, so the floor under the clamp washer goes from 4 to 6 mm. Use
-   an M2×14 clamp screw instead of M2×12. T_W and the rack-B track stay at 6, so nothing else in the claw moves. The pad
-   sits under the claw servo's body (z ≥ 16.5) and the back face stays where it is, so it clears.
-   - Tail: weight ×3 SF 2.79 → 22.8, sweeps 1.41 → 10.9, USB tug 0.84 → 6.97.
-   - Clamped joint: USB tug 2.26 → 3.24, sweeps → 5.78.
-   - Full width without the pad gives tail 3.94 but leaves the joint at 2.26, so both parts of the change are needed.
-2. **Relieve the servo window's lower corners**: r ≥ 1.5 corner fillets, or Ø3 dog-bone reliefs so the MG90S still drops
-   in. That takes Kt from 2.5 to 1.5. Row 18 (USB tug + twist at the window corners) goes from 2.10 to 3.50.
-3. Re-run `assembly_check.py`. The wider plate sweeps a radius of 33 mm about the wrist axis at z 0…8. That is 2.6 mm
-   clear of the wrist servo's case top, but check it.
+1. **Rail wall** (`claw_frame.GUIDE_T`, shared with the cover's lip): any of these.
+   - GUIDE_T 4 → 10 with the sharp root kept: SF 4.06; 5.95 under the opening stall.
+   - GUIDE_T 8 plus an r 2 fillet at the front root, with a 2.5 × 45° chamfer along each rack's rear back edge to clear
+     it: 4.33.
+   - The block back to the bulkhead (x 10–22.35): 6.19.
+   - GUIDE_T 8 with a sharp root is not enough: 2.60.
+   - The rail stays below the claw servo's case (z ≤ 17.75 against 21.15), so all three fit.
+2. **Wrist clamp:** an Ø8 washer instead of Ø6. Bearing 4.08 and punching 3.53 under the camera crash; 4.59 and 3.98
+   under the tug. An Ø8 washer reaches x 4, past the bulkhead's back face at 3.5. Either relieve the bulkhead's back face
+   to 0.6 mm deep over y ±4, or file the washer flat at x 3.4. A 7 mm floor raises punching to 3.92.
+3. **Bulkhead root:** an r 1.5 fillet where the pad meets the bulkhead's back face. Kt 2.5 → 1.7 gives 3.98. At the
+   washer's height it stops at x 3.12, which clears the washer at x ≤ 3.
+4. **Window strips:** either structure or a system change.
+   - **Structure:** a 6 mm rib behind each strip's outer edge (y −32…−26 and 26…32), 10 mm deep (x −6.5…3.5), from the
+     pad to the bulkhead top: SF 3.87. An 8 mm rib gives 4.89; 6 × 8 mm gives 3.04. The ribs clear the claw servo
+     (y −16.9…5.9), the clamp and the top screws.
+   - **System:** tie the USB cable to the frame close to the wrist axis with a slack loop to the plug (SYS-10), and change
+     the spec's tug point from "at the camera" to "at the tie". That is an Architect decision. Measuring the port alone
+     isn't enough: within ±10 mm of the centre the strips still give 2.35.
+5. Re-run this script and `assembly_check.py` after the changes. The rail and lip feed into the cover (separate report).
 
-The frame also carries the cover. The cover and jaw changes (separate reports) change the loads here only slightly.
-Re-run this script after any change to `claw_frame.py`.
+## Proof test
 
-## Static servo torques, arm straight out horizontally (camera fitted), and payload rating
+The spec's §8 test (7.5 N pushes at the fingertips) loads none of the governing items: the rail wall, the clamp washer
+and the window strips. **Replace it with this**, valid once the changes above pass:
 
-From the arm model with the claw-v2 end effector:
+> **Proof test.** Claw fully assembled with the camera, wrist horn clamped in a vice, servo powered and holding.
+> 1. Jaws at 30 mm: pull jaw B's fingertip (3 mm from the tip) away from jaw A with **32 N** (3.3 kg on a luggage scale,
+>    1.5 × the one-jaw stall force), 10 s. Then push it towards jaw A with **32 N** (1.5 × the opening stall; 20 N,
+>    1.5 × the 13 N crash, if the Architect drops that case), 10 s. Repeat with the jaws closed, pulling only. At 30 mm a
+>    slipping servo can't run the rack out of mesh.
+> 2. **15 N** (1.5 kg) on the Brio's USB plug, 10 s each along +x (towards the fingers), ±y and ±z.
+> 3. **20 N** (1.5 × the 13 N desk hit) on the end face of the Brio, along its length, 10 s each way.
+> 4. 7.5 N at the fingertips, sideways (±z) then ±y, 1 min each.
+>
+> Pass:
+> - no crack or whitening at the rail wall's root (along it and at its ends), the horn pocket, the clamp washer's seat,
+>   the bulkhead root, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
+> - the frame doesn't lift off the horn;
+> - the fingertips return to within 0.5 mm.
 
-- Fingertip 76.15 mm in front of the wrist axis.
-- 172 g beyond the wrist horn: claw parts 70.4 g, camera mount 11.2 g, claw MG90S 13.4 g, Brio 63 g + 1/4" screw 4 g,
-  screws 6 g, horns 4 g.
-- CoG 8.3 mm in front of the wrist axis. The Brio's CoG is 3.3 mm behind the wrist axis and 64 mm outboard of the claw's
-  back face.
-- The wrist servo is now an MG90S (13.4 g).
-
-| Payload | Shoulder MG996R (stall 1000) | Elbow MG996R (stall 1000) | Wrist MG90S (stall 216) |
-|---|---|---|---|
-| 0 g | 495 N·mm (49 %) | 193 (19 %) | 14 (6 %) |
-| 20 g | 547 (55 %) | 226 (23 %) | 29 (13 %) |
-| 50 g | 625 (63 %) | 275 (27 %) | 51 (24 %) |
-| *without the camera:* 0 / 20 / 50 g | 352 / 405 / 483 (35 / 40 / 48 %) | 128 / 160 / 209 | 17 / 32 / 55 |
-
-The Architect's estimate was 420 / 471 / 548 N·mm. These figures are about 75 N·mm higher, because the end effector
-comes to 172 g, not ≈148 g. The printed parts are counted at solid density (81.6 g including the camera mount), and the
-wrist servo is now 4.4 g heavier.
-
-**Payload rating.** Rule used: static shoulder torque at full horizontal reach ≤ 50 % of stall, so the ×2 dynamic factor
-used in all the arm checks stays within the stall torque. The old gripper arm ran at 41 % with 50 g. With the Brio
-fitted the shoulder is already at 49 % with no payload at full reach (266 mm from the shoulder axis).
-
-- **Without the camera: 50 g** (48 %).
-- **With the camera: 20 g, carried with the fingertip within ≈240 mm of the shoulder axis horizontally**. 50 g only
-  within ≈210 mm. At full reach with the camera, carry nothing and move slowly.
-
-The elbow (≤ 27 %) and wrist (≤ 24 %) have ample margin. The recommended claw changes add mass, so re-run this table
-after the redesign.
-
-## Proof test (after the changes; replaces the spec §8 test)
-
-Claw fully assembled with the camera, wrist horn clamped in a vice.
-
-1. 7.5 N (≈0.75 kg on a luggage scale) at the fingertips: sideways (±z), then up and down (±y), 1 min each. This is
-   1.5 × the hand push.
-2. **15 N (1.5 kg) on the Brio's USB plug end**, 1 min each: along the jaw travel (claw ±y), then away from the wrist
-   (claw +z). This is 1.5 × the cable tug.
-
-Pass:
-
-- no cracks or whitening at the horn pocket, the clamp hole, the plate behind the bulkhead, the bulkhead root, the servo
-  window corners or any screw pilot;
-- the frame does not lift off the horn;
-- the fingertips return to within 0.5 mm.
+Keep the screw-strip check that §8 already has.
