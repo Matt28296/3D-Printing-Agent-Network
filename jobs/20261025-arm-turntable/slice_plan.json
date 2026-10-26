@@ -3,15 +3,19 @@
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
  "overrides": {
+  "layer_height": 0.2,
   "perimeters": 5,
   "top_solid_layers": 5,
-  "bottom_solid_layers": 5,
+  "bottom_solid_layers": 30,
+  "bottom_solid_min_thickness": 6.0,
   "fill_density": "40%",
   "fill_pattern": "gyroid",
-  "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "aligned",
+  "support_material": 0,
+  "brim_width": 0
  },
  "model": "part.stl",
  "copies": 1,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; perimeters/solid layers/infill raised to print_requirements.json (load path walls), gyroid for isotropic infill, 0.2 mm elephant-foot compensation paired with the 0.4 mm bottom chamfer."
+ "rationale": "SLICE round 1 for the round-5 design (replaces the old round-4 plan, which had 5 bottom layers). Profiles: stock MK3S printer, 0.20mm QUALITY @MK3 and Prusament PETG from config/printer.json; filament_type PETG = print_requirements, spec 6 and the brief. Temperatures stay in the filament profile (240/250 C nozzle, 85/90 C bed, fan 30-50 %: inside 230-250 / 80-90 and the skill's PETG range), so they are not overridden. No library rows (materials.csv, lessons.md empty): no flow, temperature or xy compensation overrides. Requirements: perimeters 5 (min 5), top 5 (min 5), bottom_solid_layers 30 and bottom_solid_min_thickness 6.0 (min 30 / 6.0), fill 40 % gyroid (min 40, equals gyroid), layer 0.2 (max 0.2). With a 0.2 mm first layer and 0.2 mm layers, 30 bottom layers are exactly 6.0 mm: the Ø96 disk prints on its underside, so its bottom 6 mm is solid and the 4 x M2 x 8 anti-rotation self-tappers, drilled 6 mm deep through the disc horn's holes anywhere in r 4-13, bite solid plastic over their 5.2 mm (brief round 5, strength round 5's 6.51 / 5.06 rows; with 5 layers it would be SF 2.61). The 7 mm upright gets 5 perimeters a side (4.5 mm of its 7) and the 4 mm gussets are all perimeter, so the upright sections strength checked across the layers are near solid. Elephant-foot 0.2 pairs with the 0.4 mm bed chamfer and keeps the disk underside, which seats on the Ø25 disc horn and runs 0.4 mm over the ring, flat and true. Seam: aligned (stock, stated): seams go to corners, so they land in the window's and lead notches' corners and the upright-gusset corners, not on the window's 0.2 mm/side clearance faces or the shoulder servo's flat tab face; the disk's outline has no corner, so its seam lines up in one vertical line on the rim, which touches nothing (the ring bears on the underside). Supports off: mesh_check 0 % overhang, no bridges; the window roof and notch tops are 45 degrees and the pilots are teardrops. No brim: 7105 mm2 of bed contact, PETG barely warps; a brim would fill the bed chamfer. Copies 1 (spec 7), one plate, limit 8 h."
 }

@@ -23,13 +23,15 @@
     "profiles/filament/Prusament_PETG.ini": "28725504aab173ab3e568c4d6076fb7d7e0d30179a052c41ef78802952e6713f"
   },
   "overrides": {
+    "layer_height": 0.2,
     "perimeters": 4,
     "top_solid_layers": 5,
     "bottom_solid_layers": 5,
     "fill_density": "40%",
     "fill_pattern": "gyroid",
-    "layer_height": 0.2,
     "elefant_foot_compensation": 0.2,
+    "seam_position": "aligned",
+    "support_material": 0,
     "brim_type": "outer_only",
     "brim_width": 5
   },
