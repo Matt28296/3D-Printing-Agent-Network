@@ -1,91 +1,95 @@
-VERDICT: FAIL
+VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-arm-claw-frame (round 2)
+# Strength check: 20261026-arm-claw-frame (round 3)
 
-strength-analyst (independent review of the round-2 geometry) · 2026-10-26 ·
-`python3 jobs/20261026-arm-claw-frame/strength_calc.py` (plain python3: reads `claw_frame.py`, this job's `model.py`,
-`tools/cadlib.py` and `tools/hobby_parts.py` with `ast`, so no build123d is needed)
+strength-analyst (independent review of the round-3 geometry) · 2026-10-26 ·
+`python3 jobs/20261026-arm-claw-frame/strength_calc.py` (plain python3, run from the project root: reads `claw_frame.py`,
+this job's `model.py`, `tools/cadlib.py`, `tools/hobby_parts.py` and the assembly's `torque_budget.json`; no build123d)
 
-The round-1 fixes are in and they work: the 20 mm tail is gone, and the window corners are relieved. Four things fail now:
+Every round-2 failure is fixed as built, and every row passes. The verdict is NEEDS_TEST only because the allowables
+are placeholders.
 
-1. **The rail wall** fails worst: **SF 0.65**. Round 2 changed it from a block back to the bulkhead into a 4 mm wall. The
-   jaws react the finger moment as a couple at the ends of each rack, so rack B pushes the wall backwards at one end. With
-   the jaws open, that end is the wall's free corner. The wall's rack-side root is sharp, and its bending stress runs
-   across the layers. With one jaw blocked it gives SF 0.65 (open) and 1.55 (closed); every full-close grip gives 1.30
-   (cyclic). The brief's "≈0.9 MPa" spreads the push over all 64 mm of wall; at the end of a cocked rack it acts on about
-   8 mm.
-2. **The wrist clamp.** A 10 N USB tug at the plug, 91.6 mm above the horn face, bends the joint across the shaft with
-   896 N·mm. The M2 clamp screw then carries 249 N, giving washer bearing SF 2.39 and floor punching SF 2.98. The added
-   desk-crash case on the camera (13 N, SYS-11) gives 2.12 and 2.65.
-3. **The bulkhead.** Under the same tug along +x, its root above the pad gives 2.70 at the sharp back corner. If the
-   tug's twist arrives at one top screw (port off-centre), the strips beside the servo window give 1.32.
-4. **The MG90S tab-pilot strips.** The user decided to keep them (26 Oct). Their rows are below, in their own table, as
-   the coordinator asked.
+**Lowest SF: 3.03.** It is a new row: the cover's top M3 screws pulling out of the bulkhead top (M3 × 10, no camera
+mount) when the claw opens against an obstacle on jaw B. The cover analysis (round 3, FAIL) found that push leaving the
+cover through its top joint. The cover's required fix, an anchored second-tie post, removes this row. It adds one M3
+pilot to this frame's rail block, which leaves the block's root at 5.93.
 
-## Round-1 fixes: made?
+**Lowest SF of the frame's own load cases: 3.53.** Floor punching under the Ø8 washer when the camera hits the desk,
+exactly as the designer predicted.
 
-| Round-1 required change | Round 2 | Made? |
+The MG90S tab-pilot strips are unchanged and stay a user-accepted deviation, with the first-print check in spec §8.
+Their rows are in their own table.
+
+## Round-2 fixes: made?
+
+| Round-2 required change | Round 3 as built | Made? |
 |---|---|---|
-| Full-width wrist plate behind the bulkhead (REAR_HALF 32), 2 mm pad over x −8…4, clamp floor ≥ 6 | Full-width plate; pad PAD_T 2.3 over x −8…3.5; floor 6.3 | Yes. The clamp is M2 × 12 + Ø6 washer, not M2 × 14: 4.6 mm into the spline, as every horn clamp has since deep review 01 S2 |
-| Window's lower corners relieved (r ≥ 1.5 or Ø3 dog-bones) | Ø3 teardrop reliefs (RELIEF_D 3) | Yes: Kt 2.5 → 1.5 at the window's lower corners |
-| Re-run the assembly check for the wider plate | `assembly_check.json`: wrist −90…+90 collision-free, no hits | Yes |
+| 1. Rail wall → GUIDE_T 10, 8 + r 2 fillet, or a block back to the bulkhead | Block x 10–22.35, z 6–17.75, merged into the bulkhead's front face (RAIL_X0 = X_B) | Yes: 6.31 at its end, sharp root (row 15). Opening against an obstacle 9.26 / 11.02 |
+| 2. Wrist clamp: Ø8 washer, bulkhead relieved to let it down | Ø8 × 0.8 (DIN 9021 M2.5, bore 2.7); Ø9 relief 1.0 into the bulkhead from the pad's top; floor 6.3 kept | Yes: bearing 3.97, punching **3.53** (rows 3–4). See the fit note on the relief below |
+| 3. r 1.5 fillet at the pad / bulkhead back | r 1.5 full width, interrupted by the relief over \|y\| ≤ 4 | Yes. With the ribs it is no longer near the governing fibre: 55 (row 25). The relief's sharp foot gives 131 (row 26) |
+| 4. Window strips: 6 × 10 ribs behind the strips' outer edges | Ribs y ±(26…32), x −6.5…3.5, pad to bulkhead top | Yes: 3.87 (row 34) |
+| Front M2.5 pull-out (row 28) | M2.5 × 16 in 14 mm pilots, 11 engaged | Yes: 4.98 (row 41) |
 
 ## Load cases
 
-The MG90S stalls at 216 N·mm (6 V). Through the 20-tooth pinion (pitch radius 10) that is **21.6 N on one rack** when
-an off-centre object stops one jaw, or **10.8 N per jaw** when both jaws touch a free object. The designer's
-10.8 N is correct as the free-object share.
-
 | # | Case | Load | Point, direction | Type, SF req |
 |---|---|---|---|---|
-| 1 | Stall, one jaw blocked | 21.6 N on the grip face 3 mm from the tip (spec). Each rack takes it as a couple at its ends: R = 21.6 × 52.75 / span = 20.1 N (span 56.5, jaws closed) to 27.5 N (span 41.4, jaws 44 mm open: the rack's end is past the frame's edge) | Rack B: forward on the cover at one end, backward on the rail wall at the other | Short-term, 3 |
-| 2 | Stall, both jaws, every full-close grip | 10.8 N per jaw: half of case 1 | As 1 | Cyclic, 4 |
-| 3 | **Crash** (required): fingertips hit the desk and back-drive the wrist | 13 N at a fingertip, any direction in the arm plane (claw x-y). This is SYS-11's upper bound for the shoulder and elbow push. 13 × 83 = 1084 N·mm = 5 × the wrist's stall, the top of SYS-11's 3–5 × range, so the wrist's back-drive doesn't cap it lower | The lower finger is always pushed **towards closing**, which reverses its rack's couple | Short-term, 3 |
-| 4 | Added: the claw opens against an obstacle | 21.6 N on one finger's outer face. Foreseeable (an internal grip, or a release inside a container); the firmware limits squeezes only on closing moves | Reversed couple, as case 3 | Short-term, 3 |
-| 5 | USB cable tug (spec) | 10 N any direction at the right-angle plug's cable exit, 8 mm behind the camera's back, mid-height: G (−18.8, y_port, 91.6). The port position is unmeasured (01 S5), so y_port is anywhere within ±45 | Via the mount's 2 M3 screws into the bulkhead top, then through the wrist joint | Short-term, 3 |
-| 6 | Added: the camera hits the desk (SYS-11: first contact in 37 % of crash poses) | 13 N along claw y at the Brio's end face (z 79.6). Almost no torque about the wrist axis, so nothing back-drives | Wrist joint, across the shaft | Short-term, 3 |
-| 7 | Camera mass and inertia, moving start/stop | The firmware ramps at 250 °/s² to 66.7 °/s. At the camera this gives 2.37 m/s² tangential (yaw, shoulder and elbow together) plus 1.73 m/s² centripetal; with ×2 for servo tracking, ≤ 0.84 g dynamic. The spec's ×3 on the weight (1 g + 2 g) covers it, so ×3 is used: camera package 86 g, end effector 224 g (solid) | Bulkhead, wrist joint | Cyclic, 4 |
-| 8 | SYS-04 overhung moment (spec) | 108 / 124 N·mm (0 / 50 g, `torque_budget.json`) × 1.3 moving | Wrist joint: clamp preload | Sustained, 4 |
-| 9 | Handling and assembly | 5 N at the fingertip, any direction (spec; covered by case 3). M2 clamp snug, 100 N. Tab screws snug, 100 N, plus thread forming | Joint, tab pilots | Short-term 3 / sustained 4 |
-| 10 | Claw-servo reaction | 216 N·mm about its shaft. One jaw blocked: 21.6 N + 7.9 N on the shaft, 17.6 mm in front of the tabs | Tab screws, window | Short-term, 3 |
-| 11 | Added, as in the jaw and cover reports: yaw stall at a fingertip | 7.1 N out of the arm plane, the largest out-of-plane part of a base-yaw stall (1079 / (2 × 76)). It acts along the wrist axis, 83.35 mm from it | Wrist joint: 592 N·mm across the shaft, plus a 7.1 N pull | Short-term, 3 |
+| 1 | Stall, one jaw blocked | 21.6 N, 3 mm from the tip. Rack-end couple R = 21.6 × 51.75 / span: 19.8 N (closed) to 27.0 N (open) | Rack B back on the rail block at one end | Short-term, 3 |
+| 2 | Stall, both jaws, every full-close grip | Half of 1 | As 1 | Cyclic, 4 |
+| 3 | Crash (required) | 13 N at a fingertip in the arm plane, finger pushed shut (reversed couple) | Rail block at rack B's −y end; wrist joint | Short-term, 3 |
+| 4 | Opening against an obstacle (Architect: stays a design case) | 21.6 N on a finger's outer face, reversed | As 3; and on the cover (new rows 39–40) | Short-term, 3 |
+| 5 | USB cable tug (spec) | 10 N, any direction, at the right-angle plug, G (−18.8, y_port, 91.6). y_port anywhere within ±45 | 2 top M3 → bulkhead → wrist joint | Short-term, 3 |
+| 6 | Camera hits the desk (SYS-11) | 13 N along claw y at the Brio's end face (z 79.6) | Wrist joint | Short-term, 3 |
+| 7 | Weight ×3 incl. the ramp | 3 × the 50 g overhung moment, **133 N·mm** (torque_budget round 3; was 124). Camera package 86 g | Wrist joint, bulkhead | Cyclic, 4 |
+| 8 | SYS-04 overhung moment | 133 × 1.3 = 173 N·mm | Clamp preload | Sustained, 4 |
+| 9 | Yaw stall at a fingertip | 7.1 N along the wrist axis at x 83.35 | Wrist joint (+ 7.1 N pull) | Short-term, 3 |
+| 10 | Claw-servo reaction, handling | 216 N·mm about the shaft; tab screws snug; 5 N handling (covered by 3) | Tab pilots | Short-term 3 / sustained 4 |
 
-There is no drop case in this load set.
+The end effector is now 253.9 g solid / 233.6 g sliced (torque_budget.json). The wrist rows read the overhung moments
+from that file. There is no drop case in this load set.
 
-## Build direction and critical sections
+## Build direction and critical sections (as built)
 
-The frame prints back face down, so its layers are z = const. Wrist-plate bending runs along the layers. The bulkhead and
-the rail wall bend about their roots with the stress along z, across the layers. Pull-out and punching are taken as
-interlayer shear.
+The frame prints back face down: its layers are z = const. Wrist-plate bending runs along the layers. The bulkhead, the
+ribs and the rail block bend about horizontal roots, with their stress along z, across the layers. Pull-out and punching
+are interlayer shear.
 
-- **Rail wall:** x 18.35–22.35 (4 thick), z 6–17.75, y ±32, loaded on its front face. Its front root corner (z 6) is
-  sharp, Kt 2.5; the r 2 fillet is on the back, the compression side. The push acts at the wall's mid-height (lever
-  5.9). It spreads at 45° to the root: b_eff = 2 + 5.9 + min(5.9, distance to the wall's end).
-- **Wrist joint:** the frame rocks on the hub edge of the MG90S horn (r 3.6, as SYS-04). The M2 clamp takes M/3.6 once
-  that exceeds its 100 N preload. The Ø6 washer (OD 6, printed hole 2.4) bears on 23.8 mm² of pad over a 6.3 mm floor;
-  punching area π × 6 × 6.3. Torque goes through the horn's single arm (r 3.6–16.1 × 1.6, triangular contact).
-- **Bulkhead root:** z 8.3, where the pad's top meets the bulkhead's back face. 64 × 6.5; the sharp back corner gives
-  Kt 2.5.
-- **Window strips:** at the window's lower corner, through the Ø3.2 relief, −y 13.3 × 6.5 and +y 24.3 × 6.5 (Kt 1.5).
-  Each carries its own top screw's x-force over 27.65 mm, plus its width share of the moment of the force above the
-  bulkhead top.
-- **Tab-pilot strips (from the CAD dimensions):** 1.35 mm from the lead-end pilot (y 9.7) to the lead notch, 1.45 mm
-  from the far pilot (y −19.4) to the window. Both print about 0.2 wider, at 1.55 and 1.65.
+- **Rail block** (x 10–22.35 × z 6–17.75, full width).
+  - Checked as a cantilever off the wrist plate, 12.35 deep, with a sharp rack-side root (Kt 2.5) and a 45° spread from
+    a 2 mm patch at the cocked rack's end.
+  - Its merge with the bulkhead's front face is ignored, which is conservative.
+  - The 14 mm front M2.5 pilots now run 1.5 mm under the root at y ±24 (x 20.85–22.35, top z 4.1). At the block's +y
+    end the root's spread reaches the pilot's edge, so 1.0 mm comes off b_eff (row 21: 5.53).
+- **Bulkhead root** (probed sections).
+  - At z 8.3–17.7 the plate-top section includes the rail block (A ≈ 1320–1373 mm²). Above z 17.75 it is bulkhead +
+    ribs (A 532).
+  - With the block counted, the rib roots at z 8.3 give 19.7 (row 24). With it ignored, as the designer did, 4.63
+    (row 23).
+  - The re-entrant corner moves to the block's top at the bulkhead's front face (z 17.75, sharp): 11.69 for a tug
+    along −x (row 27).
+  - Above the block the ribs run on smooth. A port off-centre twists the bulkhead; the ribs take it as opposed bending
+    (open-section warping, L_c 32 mm): 7.66 (row 28).
+  - The ribs' moment reaches the horn by torsion of plate + bulkhead + block: 24 (row 30).
+- **Window strips:** each strip plus its 6 × 10 rib at the window's lower corner (Ø3 relief, Kt 1.5).
+- **Wrist clamp.** The washer (Ø8, bore 2.7: 44.5 mm²) bears on the pad. The 6.3 floor punches on π × 8 × 6.3. The Ø9
+  relief starts on the pad's top face, so the seat and the floor are whole.
+- **Tab-pilot strips:** from the CAD (1.35 / 1.45; printed 1.55 / 1.65), unchanged.
 
 ## Assumptions
 
-- The camera loads reach the frame through the 2 top M3 screws, and the **bulkhead takes all of their moment**. The
-  cover's portal path (top wall → lip → tie → lower piece → M2.5 screws) is about 2.5 × softer and would take about 30 %.
-  With that share the bulkhead root gives 3.86, as a what-if line in the script.
-- The rack cocks in its 0.25 mm gaps, so its end force lands within about 2 mm of its end.
-- The wrist's back-drive torque is unmeasured. Case 3 uses the arm's push (13 N) instead.
-- Tab-pilot strips: thread forming from an assumed 0.04 N·m forming torque (μ 0.25) gives p = 4.6 MPa. A 100 N snug
-  clamp adds 1.7 MPa through the 30° flanks. The hoop stress at the pilot edge is taken as Lamé's peak for a ring as thin
-  as the strip (conservative); the mean across the strip, p·r/w, is the lower bound.
-- Friction in clamped joints is ignored.
-- Service temperature is 40 °C against PETG softening at about 70 °C: OK. That holds only while no stall lasts more than
-  a few seconds. The sketch eases off 2 s after a closing squeeze, but **not after an opening move that stalls**. A
-  stalled MG90S (≈4 W) can heat this bulkhead towards its softening point within minutes (SYS-11).
+- The camera loads reach the frame through the 2 top M3 screws, and the bulkhead + ribs take their moment. The cover's
+  portal is ignored.
+- Rack ends land within 2 mm of their ends (they cock in 0.25 gaps).
+- New rows 39–40 bound the cover's top joint under its reversed rack-B push: all of the overturning moment
+  R × (50 − 17.2) = 886 N·mm as M3 tension against the bulkhead's rear edge (lever 3.25). The cover's global model
+  gives 1.46–1.23 for its own top wall in the same event (cover report).
+- The pad / bulkhead fillet r 1.5 at h 6.5: Kt 1.7. The relief's foot, the rib roots and the block-top corner are sharp
+  (2.5).
+- **Fit, not strength.** The relief's printed radius is 4.40. The washer is radius 4.0 plus 0.35 radial play on the M2
+  in its 2.7 bore, so the margin is 0.05 mm. A washer pushed hard against the bulkhead side can ride on the relief's
+  edge. Seat it centred (BUILD_GUIDE §4) and check it lies flat before tightening.
+- Service temperature is 40 °C against PETG softening at about 70 °C: OK while stalls stay short (the sketch eases off
+  after closing squeezes, not after an opening stall: SYS-11).
 
 ## Allowables and sources
 
@@ -94,128 +98,126 @@ interlayer shear.
 
 | Quantity | Value | Source |
 |---|---|---|
-| Along the layers (XY) | 25 MPa | Skill placeholder, PETG |
-| Across the layers (Z) | 12.5 MPa | 0.5 × in-plane (skill) |
-| Interlayer shear | 6.25 MPa | 0.5 × 12.5 (Tresca), as the arm and claw round-1 checks |
-| Bearing, compression | 25 MPa | In-plane value |
-| Kt | 2.5 sharp internal corner; 1.5 for r ≥ 0.25 h; 1.7 for r/h 0.15–0.25 | Skill; the last is a Peterson-based interpolation |
+| Along the layers | 25 MPa | Skill placeholder, PETG |
+| Across the layers | 12.5 MPa | 0.5 × in-plane |
+| Interlayer shear | 6.25 MPa | 0.5 × 12.5 |
+| Bearing | 25 MPa | In-plane value |
+| Kt | 2.5 sharp; 1.5 for r ≥ 0.25 h; 1.7 for r/h 0.15–0.25 | Skill; the 1.7 is a Peterson-based interpolation |
 
 ## Results (copied from `python3 strength_calc.py`)
 
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
-| 1 | USB tug 10 N at the plug (z 91.6), across the shaft: washer bearing (M_t 896 N·mm → screw 249 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 10.48 | 25.00 | 2.39 | 3 | **FAIL** |
-| 2 | USB tug 10 N at the plug (z 91.6), across the shaft: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 2.10 | 6.25 | 2.98 | 3 | **FAIL** |
-| 3 | Added: camera hits the desk, 13 N at its end (z 79.6): washer bearing (M_t 1009 N·mm → screw 280 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 11.80 | 25.00 | 2.12 | 3 | **FAIL** |
-| 4 | Added: camera hits the desk, 13 N at its end (z 79.6): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 2.36 | 6.25 | 2.65 | 3 | **FAIL** |
-| 5 | Crash: 13 N in the arm plane at the fingertip (z ≤ 33.2): washer bearing (M_t 406 N·mm → screw 113 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.75 | 25.00 | 5.26 | 3 | OK |
-| 6 | Crash: 13 N in the arm plane at the fingertip (z ≤ 33.2): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.95 | 6.25 | 6.58 | 3 | OK |
-| 7 | Weight ×3 incl. the 250 °/s² ramp (cyclic): 3 × the 50 g overhung moment: washer bearing (M_t 372 N·mm → screw 103 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.35 | 25.00 | 5.75 | 4 | OK |
-| 8 | Weight ×3 incl. the 250 °/s² ramp (cyclic): 3 × the 50 g overhung moment: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.87 | 6.25 | 7.18 | 4 | OK |
-| 9 | SYS-04 overhung moment, 50 g, ×1.3 moving (sustained): washer bearing (M_t 161 N·mm → screw 100 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 4.21 | 25.00 | 5.94 | 4 | OK |
-| 10 | SYS-04 overhung moment, 50 g, ×1.3 moving (sustained): floor punching under the washer | Ø6 × 6.3 floor | Z shear | 0.84 | 6.25 | 7.42 | 4 | OK |
-| 11 | Wrist stall 216 N·mm (cyclic): horn arm on the pocket wall | Arm flank r 3.6–16.1 × 1.6 (mean, resultant at r 11.9) | XY | 0.91 | 25.00 | 27.62 | 4 | OK |
-| 12 | Crash: 13 N at the fingertip x 83.3 back-drives the wrist (1084 N·mm, 5 × stall: the top of SYS-11's 3–5 ×): horn arm on the pocket wall | Arm flank r 3.6–16.1 × 1.6 (mean, resultant at r 11.9) | XY | 4.54 | 25.00 | 5.51 | 3 | OK |
-| 13 | Stall, one jaw blocked, jaws 44 open: rack B's +y end at the rail's end, R 27.5 N | Rail wall root, front (sharp, Kt 2.5): b_eff 7.9, t 4.0, lever 5.9 | Z | 19.24 | 12.50 | **0.65** | 3 | **FAIL** |
-| 14 | Stall, one jaw blocked, jaws closed: rack B's +y end at y 25.1, R 20.1 N | Rail wall root, front (sharp, Kt 2.5): b_eff 13.8, t 4.0, lever 5.9 | Z | 8.07 | 12.50 | 1.55 | 3 | **FAIL** |
-| 15 | Stall, both jaws (cyclic), jaws 44 open: R 13.8 N at the rail's end | Rail wall root, front (sharp, Kt 2.5): b_eff 7.9, t 4.0, lever 5.9 | Z | 9.62 | 12.50 | 1.30 | 4 | **FAIL** |
-| 16 | Crash 13 N pushes jaw B shut: rack B's −y end on the rail at y −31.4, R 12.8 N | Rail wall root, front (sharp, Kt 2.5): b_eff 8.5, t 4.0, lever 5.9 | Z | 8.34 | 12.50 | 1.50 | 3 | **FAIL** |
-| 17 | Added: opening against an obstacle, jaw B: rack B's −y end at y −31.4, R 20.1 N | Rail wall root, front (sharp, Kt 2.5): b_eff 8.5, t 4.0, lever 5.9 | Z | 13.12 | 12.50 | 0.95 | 3 | **FAIL** |
-| 18 | USB tug 10 N along +x at the plug: bulkhead root above the pad | 64 × 6.5 at z 8.3, back corner Kt 2.5 | Z | 4.62 | 12.50 | 2.70 | 3 | **FAIL** |
-| 19 | Camera package 86 g ×3 along x (cyclic): bulkhead root above the pad | As above | Z | 1.00 | 12.50 | 12.44 | 4 | OK |
-| 20 | USB tug 10 N along x, port at y −45 (twist 450 N·mm): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +15.9 N | Z | 9.50 | 12.50 | 1.32 | 3 | **FAIL** |
-| 21 | USB tug 10 N along x, port at y −45 (twist 450 N·mm): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force −5.9 N | Z | 3.88 | 12.50 | 3.22 | 3 | OK |
-| 22 | USB tug 10 N along x, port at y +45 (twist 450 N·mm): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force −8.4 N | Z | 6.15 | 12.50 | 2.03 | 3 | **FAIL** |
-| 23 | USB tug 10 N along x, port at y +45 (twist 450 N·mm): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +18.4 N | Z | 6.90 | 12.50 | 1.81 | 3 | **FAIL** |
-| 24 | Camera ×3 along x (cyclic): −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.0 N | Z | 0.87 | 12.50 | 14.32 | 4 | OK |
-| 25 | Camera ×3 along x (cyclic): +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.6 N | Z | 0.83 | 12.50 | 15.06 | 4 | OK |
-| 26 | One jaw blocked: tab screw pull-out 13 N (M2, 5.5 engaged) | Thread shear cylinder | Z shear | 0.38 | 6.25 | 16.53 | 3 | OK |
-| 27 | USB tug 10 N along x at the plug: M3 × 18 pull-out from the bulkhead top, 66 N per screw | M3, 11.5 engaged | Z shear | 0.61 | 6.25 | 10.21 | 3 | OK |
-| 28 | Stall, one jaw blocked: rack B pushes the cover's lower piece forward (27.5 N at z 11): M2.5 pull-out 101 N | M2.5, 7 engaged, 1.75 mm skins | Z shear | 1.83 | 6.25 | 3.41 | 3 | OK |
-| 29 | Added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: washer bearing (M_t 592 N·mm → screw 171 N) | Ø6 washer on the pad, 23.8 mm² | Z comp | 7.22 | 25.00 | 3.46 | 3 | OK |
-| 30 | Added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: floor punching under the washer | Ø6 × 6.3 floor | Z shear | 1.44 | 6.25 | 4.33 | 3 | OK |
+| 1 | USB tug 10 N at the plug (z 91.6), across the shaft: washer bearing (M_t 896 N.mm -> screw 249 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 5.59 | 25.00 | 4.47 | 3 | OK |
+| 2 | USB tug 10 N at the plug (z 91.6), across the shaft: floor punching under the washer | Ø8 x 6.3 floor | Z shear | 1.57 | 6.25 | 3.98 | 3 | OK |
+| 3 | added: camera hits the desk, 13 N at its end (z 79.6): washer bearing (M_t 1009 N.mm -> screw 280 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 6.29 | 25.00 | 3.97 | 3 | OK |
+| 4 | added: camera hits the desk, 13 N at its end (z 79.6): floor punching under the washer | Ø8 x 6.3 floor | Z shear | 1.77 | 6.25 | 3.53 | 3 | OK |
+| 5 | crash: 13 N in the arm plane at the fingertip (z <= 33.2): washer bearing (M_t 406 N.mm -> screw 113 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 2.53 | 25.00 | 9.87 | 3 | OK |
+| 6 | crash: 13 N in the arm plane at the fingertip (z <= 33.2): floor punching under the washer | Ø8 x 6.3 floor | Z shear | 0.71 | 6.25 | 8.77 | 3 | OK |
+| 7 | weight x3 incl. the 250 deg/s2 ramp (cyclic): 3 x the 50 g overhung moment (133 N.mm, torque_budget round 3): washer bearing (M_t 399 N.mm -> screw 111 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 2.49 | 25.00 | 10.05 | 4 | OK |
+| 8 | weight x3 incl. the 250 deg/s2 ramp (cyclic): 3 x the 50 g overhung moment (133 N.mm, torque_budget round 3): floor punching under the washer | Ø8 x 6.3 floor | Z shear | 0.70 | 6.25 | 8.93 | 4 | OK |
+| 9 | SYS-04 overhung moment, 50 g, x1.3 moving (sustained): washer bearing (M_t 173 N.mm -> screw 100 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 2.25 | 25.00 | 11.13 | 4 | OK |
+| 10 | SYS-04 overhung moment, 50 g, x1.3 moving (sustained): floor punching under the washer | Ø8 x 6.3 floor | Z shear | 0.63 | 6.25 | 9.90 | 4 | OK |
+| 11 | added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: washer bearing (M_t 592 N.mm -> screw 171 N) | Ø8 x 0.8 washer on the pad, 44.5 mm2 (its Ø2.7 bore) | Z comp | 3.85 | 25.00 | 6.49 | 3 | OK |
+| 12 | added: yaw stall 7.1 N along the wrist axis at the fingertip (x 83.3), pulling the claw off the horn: floor punching under the washer | Ø8 x 6.3 floor | Z shear | 1.08 | 6.25 | 5.77 | 3 | OK |
+| 13 | wrist stall 216 N.mm (cyclic): horn arm on the pocket wall | arm flank r 3.6..16.1 x 1.6 (mean, resultant at r 11.9) | XY | 0.91 | 25.00 | 27.62 | 4 | OK |
+| 14 | crash: 13 N at the fingertip x 83.3 back-drives the wrist (1084 N.mm, 5 x stall: the top of SYS-11's 3-5 x): horn arm on the pocket wall | arm flank r 3.6..16.1 x 1.6 (mean, resultant at r 11.9) | XY | 4.54 | 25.00 | 5.51 | 3 | OK |
+| 15 | stall, one jaw blocked, jaws 44 open: rack B's +y end at the block's end, R 27.0 N | rail block root, rack side (sharp, Kt 2.5): b_eff 7.9, depth 12.35, lever 5.9 | Z | 1.98 | 12.50 | 6.31 | 3 | OK |
+| 16 | stall, one jaw blocked, jaws closed: rack B's +y end at y 25.1, R 19.8 N | rail block root, rack side (sharp, Kt 2.5): b_eff 13.8, depth 12.35, lever 5.9 | Z | 0.83 | 12.50 | 15.05 | 3 | OK |
+| 17 | stall, both jaws (cyclic), jaws 44 open: R 13.5 N at the block's end | rail block root, rack side (sharp, Kt 2.5): b_eff 7.9, depth 12.35, lever 5.9 | Z | 0.99 | 12.50 | 12.62 | 4 | OK |
+| 18 | crash 13 N pushes jaw B shut: rack B's -y end on the block at y -31.4, R 12.6 N | rail block root, rack side (sharp, Kt 2.5): b_eff 8.5, depth 12.35, lever 5.9 | Z | 0.86 | 12.50 | 14.54 | 3 | OK |
+| 19 | added: opening against an obstacle, jaw B: rack B's -y end at y -31.4, R 19.8 N | rail block root, rack side (sharp, Kt 2.5): b_eff 8.5, depth 12.35, lever 5.9 | Z | 1.35 | 12.50 | 9.26 | 3 | OK |
+| 20 | added: opening against an obstacle, jaw B, jaws 44 open: rack B's -y end at y -9.4, R 27.0 N | rail block root, rack side (sharp, Kt 2.5): b_eff 13.8, depth 12.35, lever 5.9 | Z | 1.13 | 12.50 | 11.02 | 3 | OK |
+| 21 | new path: the same (jaws 44 open, R 27.0 N) where the 14 mm front pilot passes 1.9 under the root (x 20.85..22.35, y 24) | rail block root less the pilot's 1.0 mm overlap (sharp, Kt 2.5): b_eff 6.9, depth 12.35, lever 5.9 | Z | 2.26 | 12.50 | 5.53 | 3 | OK |
+| 22 | new path: rack B pressed down on the plate over a front pilot (separating 7.9 N + pitch 8.5 N, all on the skin) | skin 1.9 over Ø2.2, b 12 (rack face), simply supported | XY | 1.24 | 25.00 | 20.09 | 3 | OK |
+| 23 | USB tug 10 N along x at the plug (+x): rib roots on the pad (z 8.3), rail block ignored | bulkhead + 2 ribs 6 x 10: A 532, I 8804, centroid x 4.90; rib back x -6.5, sharp Kt 2.5 | Z | 2.70 | 12.50 | 4.63 | 3 | OK |
+| 24 | USB tug 10 N along x at the plug (+x): rib roots on the pad (z 8.3), as built (the rail block is in the section) | + block 64 x 12.35: A 1326 (probed 1373), I 59432, centroid x 11.62; Kt 2.5 | Z | 0.64 | 12.50 | 19.68 | 3 | OK |
+| 25 | USB tug 10 N along x at the plug (+x): pad / bulkhead r 1.5 fillet (z 8.3, x 3.5), rail block ignored | bulkhead + ribs, Kt 1.7 (r/h 0.23) | Z | 0.23 | 12.50 | 55.38 | 3 | OK |
+| 26 | USB tug 10 N along x at the plug (+x): washer relief's foot (z 8.3, x 4.5), sharp, rail block ignored | bulkhead + ribs, Kt 2.5 | Z | 0.10 | 12.50 | 131.11 | 3 | OK |
+| 27 | USB tug 10 N along x at the plug (-x): rail block's top meets the bulkhead's front face (z 17.75, sharp) | bulkhead + ribs above the block, front face x 10.0, Kt 2.5 | Z | 1.07 | 12.50 | 11.69 | 3 | OK |
+| 28 | USB tug 10 N along x at the plug (+x), port at y +-45: rib back above the block (z 17.75), bending + the twist's warping | global 739 N.mm on bulkhead + ribs, + rib flange 184 N.mm (L_c 32), Kt 1 (smooth) | Z | 1.63 | 12.50 | 7.66 | 3 | OK |
+| 29 | camera package 86 g x3 along x (cyclic): rib roots, rail block ignored | as above | Z | 0.59 | 12.50 | 21.32 | 4 | OK |
+| 30 | new path: USB tug 10 N along x at the plug: the ribs' moment carried to the horn as torsion of plate + bulkhead + block (half each side) | J 9590 mm4, plate 6 thick | Z shear | 0.26 | 6.25 | 23.98 | 3 | OK |
+| 31 | USB tug 10 N along x, port at y -45 (twist 450 N.mm): -y strip + its rib | 13.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +15.9 N | Z | 2.73 | 12.50 | 4.57 | 3 | OK |
+| 32 | USB tug 10 N along x, port at y -45 (twist 450 N.mm): +y strip + its rib | 24.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force -5.9 N | Z | 1.82 | 12.50 | 6.88 | 3 | OK |
+| 33 | USB tug 10 N along x, port at y +45 (twist 450 N.mm): -y strip + its rib | 13.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force -8.4 N | Z | 1.77 | 12.50 | 7.07 | 3 | OK |
+| 34 | USB tug 10 N along x, port at y +45 (twist 450 N.mm): +y strip + its rib | 24.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +18.4 N | Z | 3.23 | 12.50 | 3.87 | 3 | OK |
+| 35 | camera x3 along x (cyclic): -y strip + its rib | 13.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.0 N | Z | 0.25 | 12.50 | 49.80 | 4 | OK |
+| 36 | camera x3 along x (cyclic): +y strip + its rib | 24.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +1.6 N | Z | 0.39 | 12.50 | 32.19 | 4 | OK |
+| 37 | one jaw blocked: tab screw pull-out 14 N (M2, 5.5 engaged) | thread shear cylinder | Z shear | 0.40 | 6.25 | 15.64 | 3 | OK |
+| 38 | USB tug 10 N along x at the plug: M3 x 18 pull-out from the bulkhead top, 66 N per screw | M3, 11.5 engaged | Z shear | 0.61 | 6.25 | 10.21 | 3 | OK |
+| 39 | new path: opening stall on jaw B, jaws open (27.0 N on the cover's upper piece): the cover's overturning moment 886 N.mm on its top screws, 136 N each (M3 x 10, no camera; the cover's anchored-post fix removes it) | M3, 7.0 engaged | Z shear | 2.07 | 6.25 | 3.03 | 3 | OK |
+| 40 | new path: opening stall on jaw B, jaws open (27.0 N on the cover's upper piece): the cover's overturning moment 886 N.mm on its top screws, 136 N each (M3 x 18 with the camera mount; the cover's anchored-post fix removes it) | M3, 11.5 engaged | Z shear | 1.26 | 6.25 | 4.97 | 3 | OK |
+| 41 | stall, one jaw blocked: rack B pushes the cover's lower piece forward (27.0 N at z 12.1): M2.5 pull-out 108 N (one screw) | M2.5 x 16, 11 engaged (14 mm pilot), 1.9 mm skins | Z shear | 1.25 | 6.25 | 4.98 | 3 | OK |
 
-**Lowest SF: 0.65 (required 3), the rail wall's root at its end. One jaw blocked, jaws open.**
+**Lowest SF: 3.03 (required 3), row 39.** That is the cover's top screws (M3 × 10, 7 engaged) under the cover's
+reversed rack-B push; 4.97 with the camera mount's M3 × 18. The cover's required fix removes the row.
+
+Of the frame's own cases, the lowest is **3.53**: floor punching under the Ø8 washer, camera hits the desk (row 4).
 
 Information rows (not in the verdict):
 
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
-| 31 | Info: proof test, horn in a vice, one jaw blocked: 1736 N·mm through the pocket | As above | XY | 7.27 | 25.00 | 3.44 | 3 | OK |
-| 32 | Info: same tug with the port at the centre: −y strip | 13.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +3.8 N | Z | 4.12 | 12.50 | 3.04 | 3 | OK |
-| 33 | Info: same tug with the port at the centre: +y strip | 24.3 × 6.5 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +6.2 N | Z | 3.95 | 12.50 | 3.17 | 3 | OK |
-
-With the USB port within ±10 mm of the centre, the window strips give 2.35 (what-if line).
+| 42 | info: proof test, horn in a vice, one jaw blocked: 1736 N.mm through the pocket | as above | XY | 7.27 | 25.00 | 3.44 | 3 | OK |
+| 43 | info: same tug with the port at the centre: -y strip + its rib | 13.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +3.8 N | Z | 1.18 | 12.50 | 10.56 | 3 | OK |
+| 44 | info: same tug with the port at the centre: +y strip + its rib | 24.3 x 6.5 + rib 6 x 10 at the window's lower corner (Ø3 relief, Kt 1.5), screw force +6.2 N | Z | 1.85 | 12.50 | 6.77 | 3 | OK |
 
 ### MG90S tab-pilot strips (user decision, 26 Oct: strips kept, first-print check in spec §8)
 
-These rows use the real MG90S geometry (`tools/hobby_parts.py`) and the strips' CAD widths. They don't decide the
-verdict, which fails on the rows above. On their own they would: at the pilot's edge, the hand calculation can't show
-the sustained SF of 4. The first-print check is therefore the acceptance, not a formality.
+These are unchanged from round 2 and are not in the verdict: the user accepted the deviation. At the pilot's edge (Lamé
+peak) the hand calculation can't show the sustained SF of 4. On the mean hoop stress it can (4.10 / 4.36). The
+first-print screw-strip check is the acceptance.
 
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
-| 34 | Screw driving, M2 × 8 snug (100 N) + thread forming (0.04 N·m), sustained: lead-end pilot to the lead notch | Strip 1.35 CAD / 1.55 printed; hoop stress at the pilot edge (Lamé peak), p 6.3 MPa | Z | 7.80 | 12.50 | 1.60 | 4 | **FAIL** |
-| 35 | Same, mean hoop stress across the strip (p r / w): lead-end pilot to the lead notch | 1.55 printed | Z | 3.05 | 12.50 | 4.10 | 4 | OK |
-| 36 | One jaw blocked: tab screw pulled with 13 N, its flank pressure added (short-term): lead-end pilot to the lead notch | Lamé peak, p 6.5 MPa | Z | 8.07 | 12.50 | 1.55 | 3 | **FAIL** |
-| 37 | Screw driving, M2 × 8 snug (100 N) + thread forming (0.04 N·m), sustained: far-end pilot to the window | Strip 1.45 CAD / 1.65 printed; hoop stress at the pilot edge (Lamé peak), p 6.3 MPa | Z | 7.66 | 12.50 | 1.63 | 4 | **FAIL** |
-| 38 | Same, mean hoop stress across the strip (p r / w): far-end pilot to the window | 1.65 printed | Z | 2.86 | 12.50 | 4.36 | 4 | OK |
-| 39 | One jaw blocked: tab screw pulled with 13 N, its flank pressure added (short-term): far-end pilot to the window | Lamé peak, p 6.5 MPa | Z | 7.93 | 12.50 | 1.58 | 3 | **FAIL** |
-| 40 | One jaw blocked: the case's end bears on the window's end (21.6 N): far-end pilot to the window | Bridge over the pilot, span 1.7, depth 1.65 | Z | 0.14 | 12.50 | 90.72 | 3 | OK |
-| 41 | Claw stall reaction 216 N·mm: 7.4 N per tab screw along z (the strips lie beside this path) | Pilot wall bearing Ø1.5 × 5.5 | XY | 0.90 | 25.00 | 27.79 | 3 | OK |
+| 45 | screw driving, M2 x 8 snug (100 N) + thread forming (0.04 N.m), sustained: lead-end pilot to the lead notch | strip 1.35 CAD / 1.55 printed; hoop stress at the pilot edge (Lame peak), p 6.3 MPa | Z | 7.80 | 12.50 | 1.60 | 4 | **FAIL** |
+| 46 | same, mean hoop stress across the strip (p r / w): lead-end pilot to the lead notch | 1.55 printed | Z | 3.05 | 12.50 | 4.10 | 4 | OK |
+| 47 | one jaw blocked: tab screw pulled with 14 N, its flank pressure added (short-term): lead-end pilot to the lead notch | Lame peak, p 6.5 MPa | Z | 8.09 | 12.50 | 1.55 | 3 | **FAIL** |
+| 48 | screw driving, M2 x 8 snug (100 N) + thread forming (0.04 N.m), sustained: far-end pilot to the window | strip 1.45 CAD / 1.65 printed; hoop stress at the pilot edge (Lame peak), p 6.3 MPa | Z | 7.66 | 12.50 | 1.63 | 4 | **FAIL** |
+| 49 | same, mean hoop stress across the strip (p r / w): far-end pilot to the window | 1.65 printed | Z | 2.86 | 12.50 | 4.36 | 4 | OK |
+| 50 | one jaw blocked: tab screw pulled with 14 N, its flank pressure added (short-term): far-end pilot to the window | Lame peak, p 6.5 MPa | Z | 7.95 | 12.50 | 1.57 | 3 | **FAIL** |
+| 51 | one jaw blocked: the case's end bears on the window's end (21.6 N): far-end pilot to the window | bridge over the pilot, span 1.7, depth 1.65 | Z | 0.14 | 12.50 | 90.72 | 3 | OK |
+| 52 | claw stall reaction 216 N.mm: 7.4 N per tab screw along z (the strips lie beside this path) | pilot wall bearing Ø1.5 x 5.5 | XY | 0.90 | 25.00 | 27.79 | 3 | OK |
 
-What this means:
+Drive the tab screws with dry threads and stop at the first firm resistance (≈ 0.06 N·m), as in round 2.
 
-- The servo's own reactions barely load the strips (rows 40 and 41).
-- **Driving the screw** is the case that matters. Its hoop stress runs along z, across the layers, so a split would open
-  along a layer line from the pilot to the window or notch. The narrower strip, 1.35 mm at the lead end, is the one to
-  watch.
-- The pass criterion in §8 (no whitening, no crack) matches this failure mode.
-- Drive the screws with dry threads and stop at the first firm resistance. A 0.06 N·m driver limit, or two fingers on a
-  small screwdriver, keeps the clamp near the 100 N assumed here.
-- There is no drop case in this load set.
+## What-if lines (in the script)
 
-## Required changes (each computed in the script's what-if lines)
+| Item | Result |
+|---|---|
+| Wrist clamp, camera desk hit | Ø6 2.01 · **Ø8 3.53 (as built)** · Ø8 on a 7.0 floor 3.92 · Ø10 on 7.0 4.91 |
+| Rail block depth, one jaw blocked, jaws open | 4 → 0.66 · 8 → 2.65 · **12.35 → 6.31 (as built)** |
+| The cover fix's M3 pilot (Ø2.7 at x 18.35, y 28) in the rail block | Block root 5.93 |
+| Window strips | no ribs 1.32 · 6 × 8 3.04 · **6 × 10 3.87 (as built)** · 8 × 10 4.89 |
 
-1. **Rail wall** (`claw_frame.GUIDE_T`, shared with the cover's lip): any of these.
-   - GUIDE_T 4 → 10 with the sharp root kept: SF 4.06; 5.95 under the opening stall.
-   - GUIDE_T 8 plus an r 2 fillet at the front root, with a 2.5 × 45° chamfer along each rack's rear back edge to clear
-     it: 4.33.
-   - The block back to the bulkhead (x 10–22.35): 6.19.
-   - GUIDE_T 8 with a sharp root is not enough: 2.60.
-   - The rail stays below the claw servo's case (z ≤ 17.75 against 21.15), so all three fit.
-2. **Wrist clamp:** an Ø8 washer instead of Ø6. Bearing 4.08 and punching 3.53 under the camera crash; 4.59 and 3.98
-   under the tug. An Ø8 washer reaches x 4, past the bulkhead's back face at 3.5. Either relieve the bulkhead's back face
-   to 0.6 mm deep over y ±4, or file the washer flat at x 3.4. A 7 mm floor raises punching to 3.92.
-3. **Bulkhead root:** an r 1.5 fillet where the pad meets the bulkhead's back face. Kt 2.5 → 1.7 gives 3.98. At the
-   washer's height it stops at x 3.12, which clears the washer at x ≤ 3.
-4. **Window strips:** either structure or a system change.
-   - **Structure:** a 6 mm rib behind each strip's outer edge (y −32…−26 and 26…32), 10 mm deep (x −6.5…3.5), from the
-     pad to the bulkhead top: SF 3.87. An 8 mm rib gives 4.89; 6 × 8 mm gives 3.04. The ribs clear the claw servo
-     (y −16.9…5.9), the clamp and the top screws.
-   - **System:** tie the USB cable to the frame close to the wrist axis with a slack loop to the plug (SYS-10), and change
-     the spec's tug point from "at the camera" to "at the tie". That is an Architect decision. Measuring the port alone
-     isn't enough: within ±10 mm of the centre the strips still give 2.35.
-5. Re-run this script and `assembly_check.py` after the changes. The rail and lip feed into the cover (separate report).
+## Required changes
 
-## Proof test
+None for the frame's own load cases.
 
-The spec's §8 test (7.5 N pushes at the fingertips) loads none of the governing items: the rail wall, the clamp washer
-and the window strips. **Replace it with this**, valid once the changes above pass:
+The cover's required fix adds one feature here: a **Ø2.7 CAD × 14** M3 pilot in the rail block's top at
+**(x 18.35, y 28)**, for the anchor M3 × 45 through the cover's second-tie post. It is 2.65 mm from the block's front
+face and from its +y end, and clear of the 14 mm front M2.5 pilot (x ≥ 20.85, y 22.9–25.1). With it:
+- the block's rack-side root gives 5.93;
+- rows 39–40 fall away;
+- the frame's lowest becomes 3.53.
 
-> **Proof test.** Claw fully assembled with the camera, wrist horn clamped in a vice, servo powered and holding.
-> 1. Jaws at 30 mm: pull jaw B's fingertip (3 mm from the tip) away from jaw A with **32 N** (3.3 kg on a luggage scale,
->    1.5 × the one-jaw stall force), 10 s. Then push it towards jaw A with **32 N** (1.5 × the opening stall; 20 N,
->    1.5 × the 13 N crash, if the Architect drops that case), 10 s. Repeat with the jaws closed, pulling only. At 30 mm a
->    slipping servo can't run the rack out of mesh.
-> 2. **15 N** (1.5 kg) on the Brio's USB plug, 10 s each along +x (towards the fingers), ±y and ±z.
-> 3. **20 N** (1.5 × the 13 N desk hit) on the end face of the Brio, along its length, 10 s each way.
-> 4. 7.5 N at the fingertips, sideways (±z) then ±y, 1 min each.
->
-> Pass:
-> - no crack or whitening at the rail wall's root (along it and at its ends), the horn pocket, the clamp washer's seat,
->   the bulkhead root, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
-> - the frame doesn't lift off the horn;
-> - the fingertips return to within 0.5 mm.
+## Proof test (spec §8)
 
-Keep the screw-strip check that §8 already has.
+It still matches. The loads are 1.5 × the design loads:
+- 32 N one-jaw pull and opening push;
+- 15 N on the USB plug;
+- 20 N on the Brio's end;
+- 7.5 N at the fingertips.
+
+They load every governing item here: the washer and floor (camera end push 20 N: 1.5 × the 13 N), the rail block, the
+ribs and the window strips (USB plug 15 N along x).
+
+Update the pass criteria's wording to the round-3 geometry:
+- "the rail wall's root (along it and at its ends)" → **"the rail block's rack-side root (along it and at its +y
+  end)"**;
+- add **"the rib roots on the pad and the washer relief's foot"**;
+- add **"the washer lies flat on the pad, not on the relief's edge"**.
+
+Run the 32 N opening push (step 1) only after the cover's fix: on the as-built cover it would crack the cover's top wall
+(cover report). Keep the screw-strip check that §8 already has.

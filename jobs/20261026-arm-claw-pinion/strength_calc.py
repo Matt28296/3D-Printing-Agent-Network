@@ -1,4 +1,4 @@
-"""Strength check, round 2: jobs/20261026-arm-claw-pinion (20-tooth module-1 pinion on the claw MG90S).
+"""Strength check, round 3: jobs/20261026-arm-claw-pinion (20-tooth module-1 pinion; face 12, backlash 0.1 / 0.7).
 
 Run from the project root:  python3 jobs/20261026-arm-claw-pinion/strength_calc.py
 Plain python3 (no build123d): the parameters are read from claw_frame.py, this job's model.py and
@@ -10,12 +10,11 @@ no measured row), so NEEDS_TEST is the best verdict possible. The pinion prints 
 pocket bearing run along the layers.
 
 Tooth stress, two methods:
-  * "Lewis tip" (the designer's method): the whole normal load on one tooth at its tip, no fillet factor, the
-    full 10 mm face. Reproduces the designer's SF 3.25.
+  * "Lewis tip" (information): the whole normal load on one tooth at its tip, no fillet factor, the full face.
   * "AGMA-type" (used for the verdict): the whole normal load on one tooth at the highest point of single-tooth
     contact (HPSTC, contact ratio 1.52), Dolan-Broghamer fillet factor Kf at the critical section, and the face
-    width that can actually carry load: 10 - 0.25 (the rack's axial float in its guides) - 0.3 (the rack's bed
-    chamfer at the same end as the pinion's 0.25 chamfer) = 9.45 mm.
+    width that can actually carry load: FACE_W 12 - 0.25 (the rack's axial float in its guides) - 0.25 (the bed
+    chamfers of both parts, at the same end) = 11.5 mm.
 """
 import ast
 import math
@@ -277,11 +276,11 @@ print(f"stall {T_STALL:.0f} N.mm -> {T_STALL / C.R_P:.1f} N tangential on one ra
       f"both jaws), normal {W_ONE:.2f} N; effective face width {B_EFF:.2f} mm")
 
 s_lw, t_lw, _, _ = pinion_tooth(W_ONE, C.FACE_W, at="tip", kf=False)
-row("designer's method (info): one jaw blocked, Lewis tip load, no Kf, full face 10", f"tooth root chord {t_lw:.2f}",
+row(f"info: one jaw blocked, Lewis tip load, no Kf, full face {C.FACE_W:.0f}", f"tooth root chord {t_lw:.2f}",
     "XY", s_lw, ALLOW_XY, SF_SHORT, INFO)
 s, t, K, r = pinion_tooth(W_ONE, C.FACE_W)
-row("info: one jaw blocked, HPSTC + Kf, full face 10", f"fillet chord {t:.2f}, Kf {K:.2f}", "XY", s, ALLOW_XY, SF_SHORT,
-    INFO)
+row(f"info: one jaw blocked, HPSTC + Kf, full face {C.FACE_W:.0f}", f"fillet chord {t:.2f}, Kf {K:.2f}", "XY", s, ALLOW_XY,
+    SF_SHORT, INFO)
 s, t, K, r = pinion_tooth(W_ONE, B_EFF)
 row(f"stall, one jaw blocked (or opening against an obstacle): {T_STALL / C.R_P:.1f} N on one mesh", f"tooth fillet: "
     f"HPSTC r {r:.2f}, chord {t:.2f}, Kf {K:.2f}, face {B_EFF:.2f}", "XY", s, ALLOW_XY, SF_SHORT)
@@ -325,6 +324,12 @@ A_washer = math.pi / 4 * (6.0 ** 2 - hole_printed ** 2)
 row(f"assembly: M2 x 12 snug, {PRELOAD_M2:.0f} N, on the Ø6 washer (sustained)", f"washer annulus {A_washer:.1f} mm2 on "
     f"the {C.PINION_FLOOR} floor", "XY", PRELOAD_M2 / A_washer, BEARING, SF_CYCLIC)
 p_max = A_washer * BEARING / SF_CYCLIC
+# round 3: the counterbore is 3.7 deep (floor 6.3 kept), so the stall torque reaches the front of the teeth through the
+# ring between the Ø6.4 counterbore and the root circle over the front 3.7 mm (torsion of a tube)
+r_cb = (P.CB_D + P.HOLE_COMP) / 2
+J_ring = math.pi / 2 * (r_root ** 4 - r_cb ** 4)
+row(f"new path: stall torque {T_STALL:.0f} N.mm through the ring beside the 3.7 mm counterbore (cyclic)",
+    f"tube r {r_cb:.1f}..{r_root:.2f}, J {J_ring:.0f} mm4", "XY shear", T_STALL * r_root / J_ring, SHEAR_XY, SF_CYCLIC)
 
 # rack pry (jaw B pushed sideways): rack tooth tips bottom on the pinion's root lands before the flanks wedge
 ratio = jaw_pry_ratio()
@@ -350,10 +355,10 @@ for name, F in (("yaw stall", F_YAW_Z), ("hand push", F_HAND)):
         s, ALLOW_XY, SF_SHORT, INFO)
 # the mating rack teeth (jaw job), same method, for reference
 s, t, K = rack_tooth(W_ONE, B_EFF)
-row("info (jaw job): rack tooth, one jaw blocked, HPSTC + Kf, face 9.45", f"root width {t:.2f}, Kf {K:.2f}", "XY", s,
-    ALLOW_XY, SF_SHORT, INFO)
+row(f"info (jaw job): rack tooth, one jaw blocked, HPSTC + Kf, face {B_EFF:.2f}", f"root width {t:.2f}, Kf {K:.2f}", "XY",
+    s, ALLOW_XY, SF_SHORT, INFO)
 s, t, K = rack_tooth(W_ONE, C.FACE_W, at="tip", kf=False)
-row("info (jaw job): rack tooth, one jaw blocked, Lewis tip, no Kf, face 10 (the designer's method)", f"width {t:.2f}",
+row(f"info (jaw job): rack tooth, one jaw blocked, Lewis tip, no Kf, face {C.FACE_W:.0f}", f"width {t:.2f}",
     "XY", s, ALLOW_XY, SF_SHORT, INFO)
 # advisory: jaws forced by hand with the servo powered: it back-drives at an unmeasured 2-4 x stall
 for k in (2.0, 4.0):
@@ -382,14 +387,15 @@ fails = [r for r in ROWS if r[5] < r[6]]
 print("VERDICT (calculation):", "FAIL" if fails else "NEEDS_TEST (placeholder allowables)")
 
 # ---------------------------------------------------------------- what-if lines for the required change
-print("\nWhat-if (one jaw blocked, AGMA-type, effective face = FACE_W - 0.55; the rack teeth with the same split):")
-cands = [("as drawn: backlash 0.20 / 0.50, face 10", dict(), dict()),
-         ("backlash split 0.10 / 0.60 (total 0.35)", dict(backlash=0.10), dict(backlash=0.60)),
-         ("backlash split 0.00 / 0.70 (total 0.35)", dict(backlash=0.0), dict(backlash=0.70)),
-         ("face 12, backlash 0.20 / 0.50", dict(face=12.0), dict(face=12.0)),
-         ("face 12, backlash 0.00 / 0.70", dict(face=12.0, backlash=0.0), dict(face=12.0, backlash=0.70)),
-         ("z 22 (r_p 11), backlash 0.20 / 0.50", dict(z=22), dict(rp=11.0)),
-         ("z 24 (r_p 12), backlash 0.20 / 0.50", dict(z=24), dict(rp=12.0)),
+print("\nWhat-if (one jaw blocked, AGMA-type, effective face = FACE_W - 0.5; the rack teeth with the same split; a row with "
+      "no face given uses FACE_W):")
+cands = [("as drawn (round 3): backlash 0.10 / 0.70, face 12", dict(), dict()),
+         ("round 2 for reference: face 10, backlash 0.20 / 0.50", dict(face=10.0, backlash=0.20), dict(backlash=0.50)),
+         ("face 12, backlash 0.10 / 0.60 (total 0.35)", dict(backlash=0.10), dict(backlash=0.60)),
+         ("face 12, backlash 0.00 / 0.70 (total 0.35)", dict(backlash=0.0), dict(backlash=0.70)),
+         ("face 12, backlash 0.20 / 0.50", dict(face=12.0, backlash=0.20), dict(face=12.0, backlash=0.50)),
+         ("face 12, z 22 (r_p 11), backlash 0.10 / 0.70", dict(z=22), dict(rp=11.0)),
+         ("face 12, z 24 (r_p 12), backlash 0.10 / 0.70", dict(z=24), dict(rp=12.0)),
          ("face 12, backlash 0.10 / 0.70 (total 0.40)", dict(face=12.0, backlash=0.10), dict(face=12.0, backlash=0.70)),
          ("face 12, backlash 0.10 / 0.80 (total 0.45)", dict(face=12.0, backlash=0.10), dict(face=12.0, backlash=0.80)),
          ("face 12, backlash 0.20 / 0.70 (total 0.45)", dict(face=12.0, backlash=0.20), dict(face=12.0, backlash=0.70)),
