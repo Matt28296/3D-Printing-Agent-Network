@@ -14,6 +14,7 @@ Flat, back face (wrist horn pocket) on the bed, 0.4 mm bed chamfer. The layers a
   - The lead notch has a 45° top (round 3, DFM fix 1), as the turntable's `_notch_tops()`. It runs from the notch end (y 7.5, z 29.45) up to the window wall (y 6.1, z 30.85), so the notch has no flat ceiling.
   - The front M2.5 pilots are flat-topped teardrops, with 1.9 mm of skin under rack B's track.
   - The rail block, the ribs, the Ø9 washer relief and the cover's anchor pilot (round 4) are all vertical-walled.
+  - The V-groove in the rail block's top (round 5) opens upward: its 45° flanks face up, so it has no overhang and no bridge. Its bottom 0.25 (z 16.95–17.2) will not print open: the first layer there is a 0.3 mm slot at its mid-height. The cover's ridge is cut flat at z 17.25 to stay above it.
 - **Layer check** of part.stl (0.2 mm layers on a 0.04 mm raster, each compared with the layer below grown 0.3 mm): the only unsupported patches are the pocket ceiling (z 2.1), the front pilots' flats (z 4.1, 0.91 mm between 45° flanks), the 0.17 mm flats where the pilot slots pass their teardrops (z 28.1), and the window roof's two-sided flat (z 40.7). There is nothing at the lead notch any more: round 2 had a 1.4 mm one-sided ledge at z 29.45.
 
 ### Load paths and the layers (DFM fix 2: the rail is named here)
@@ -55,7 +56,8 @@ The rail is a block, not round 2's 4 mm wall (strength fix 1). Its front root is
 | Wrist clamp floor | 6.3 | ±0.2 | M2 × 12 + **Ø8 × 0.8 washer**: 12 − 0.8 − 6.3 − 0.6 = 4.3 mm into the spline | — | deep review 01 S2; strength round 2 fix 2 |
 | **Washer relief** | Ø9.0 CAD (Ø8 washer + 0.4 a side + HOLE_COMP), 1.0 into the bulkhead | +0.3 | the washer passes the bulkhead | HOLE_COMP | strength round 2 fix 2 |
 | **Front M2.5 pilots** | Ø2.2 CAD, **14 deep** | +0.2 | M2.5 × 16 through the 5 mm front plate: 11 engaged | HOLE_COMP | cover strength round 2 (row 22) |
-| **Cover anchor M3 pilot (round 4)** | Ø2.7 CAD (Ø2.5 printed), **14 deep**, vertical, in the rail block's top at **(x 18.35, y 28)**, z 3.75…17.75 | +0.2 | M3 × 45 socket head through the cover's second-tie post: 11.25 engaged | HOLE_COMP | cover strength round 3 required change; frame strength round 3 |
+| **Cover anchor M3 pilot (round 4)** | Ø2.7 CAD (Ø2.5 printed), **14 deep**, vertical, in the rail block's top at **(x 18.35, y 28)**, z 3.75…17.75 | +0.2 | M3 × 45 socket head + Ø7 × 0.5 washer through the cover's second-tie post: 10.75 engaged | HOLE_COMP | cover strength round 3 required change; frame strength round 3 |
+| **V-groove (round 5)** | 90°, **0.8 deep** on x 15.25: x **14.45…16.05** at the block top (z 17.75), bottom z 16.95; **y 23.5…32**, open at +y; 0.95 of block to the anchor pilot at the top | ±0.1 | the cover's ridge, 0.1 clear per flank (horizontal) in CAD; the layer corners take that up in print | — | cover strength round 4 required change; `VSEAT_*` in claw_frame.py |
 
 Printed targets:
 - MG90S window +0.4 side / +0.2 end; wrist horn pocket +0.5.
@@ -84,8 +86,8 @@ The strength-analyst's `strength_calc.py` what-if lines, re-run on the round-3 p
 The frame's lowest predicted SF is **3.53**: floor punching under the Ø8 washer when the camera hits the desk (13 N at its end). The tab-pilot rows are unchanged: user decision, spec §8 screw-strip check.
 
 ## Parameters exposed by model.py
-- model.py: HOLE_COMP, CLR, END_CLR, TOP_PILOT_DEPTH, FRONT_PILOT_DEPTH, BED_CHAMFER, RELIEF_D, BACK_FILLET, WASHER_RELIEF_D, RIB_W, RIB_D, SERVO_LOC.
-- shared, in claw_frame.py: ANCHOR_XY, ANCHOR_PILOT_DEPTH (round 4), T_W, PAD_T, ZS, X_B, BULK_T, X_REAR, HALF_Y, RAIL_IN, RAIL_X0, RAIL_X1, X_F0, WINDOW_ROOF, TOP_SCREWS, FRONT_SCREWS, M3_PILOT, M25_PILOT, WRIST_WASHER_OD, WRIST_WASHER_T.
+- model.py: HOLE_COMP, CLR, END_CLR, TOP_PILOT_DEPTH, FRONT_PILOT_DEPTH, BED_CHAMFER, RELIEF_D, BACK_FILLET, WASHER_RELIEF_D, RIB_W, RIB_D, GROOVE_Y (round 5), SERVO_LOC.
+- shared, in claw_frame.py: ANCHOR_XY, ANCHOR_PILOT_DEPTH (round 4), VSEAT_D, VSEAT_XC, VSEAT_Y0, VSEAT_CLR (round 5), T_W, PAD_T, ZS, X_B, BULK_T, X_REAR, HALF_Y, RAIL_IN, RAIL_X0, RAIL_X1, X_F0, WINDOW_ROOF, TOP_SCREWS, FRONT_SCREWS, M3_PILOT, M25_PILOT, WRIST_WASHER_OD, WRIST_WASHER_T.
 
 ## Risks
 - **The wrist clamp screw sits under the claw servo:** BUILD_GUIDE §4 fits it first.
@@ -107,3 +109,11 @@ The frame's lowest predicted SF is **3.53**: floor punching under the Ø8 washer
 - **Fit.** The cover's post foot and its top wall's underside are 30.75 apart, the same as the block top (z 17.75) and the bulkhead top (z 48.5) here: zero nominal gap. BUILD_GUIDE §4 step 9 has the dry-fit check (0.1 mm feeler) before the M3 is driven.
 - **Checks.** `cad_checks.py` (19 checks, exit 0) adds the anchor pilot (`measure_holes`: Ø2.7, vertical, at (18.35, 28)), its depth and floor, the block's walls round it, and its clearance to the front pilot. mesh_check: overhang 1.4 %, bed contact 2534.7 mm², widest bridge 7.9 mm, thin walls 0, as before.
 - **Mass.** −0.08 cm³: 46.4 cm³.
+
+## Round 5 (2026-10-26: the cover's strength round 4 required change). User-approved
+- **Why.** The cover's anchor held its post's foot in x only by the preload's friction (fdm-design-rules §4); with the preload gone the cover fell to SF 1.37. The fix holds the foot by geometry: a ridge under it in a groove here.
+- **Change (model.py `_groove()`):** a **90° V-groove, 0.8 deep**, along y in the rail block's top: x 14.45…16.05 at z 17.75, bottom z 16.95 on x 15.25, **y 23.5…32**, open through the block's +y end. Its numbers are shared with the cover through `VSEAT_*` in `claw_frame.py`. The Ø2.7 × 14 anchor pilot at (18.35, 28) is unchanged; 0.95 mm of block stays between the groove and the pilot at the top, widening 1 mm per mm downward.
+- **Printing (wrist plate down, so the groove opens upward).** No overhang (both flanks face up at 45°) and no bridge. Sliced at layer mid-heights, the groove is 0.3 / 0.7 / 1.1 / 1.5 mm wide at z 17.1 / 17.3 / 17.5 / 17.7 (sections of part.stl). The 0.3 mm slot at its first layer will not print open, so the printed bottom is about z 17.2. **The groove's geometry is unchanged for this:** a flat floor wide enough to print would widen the mouth past the post's back face (x 14.35) or into the 0.9 mm minimum wall to the pilot. The cover's ridge is cut flat at z 17.25 instead (cover brief, round 5). The layer-top corners at z 17.4, 17.6 and 17.8 are where the ridge bears.
+- **Checks.** `cad_checks.py` (21 checks, exit 0) adds the groove (flanks probed ±0.05 at z 17.1 / 17.4 / 17.7 and y 23.6 / 28 / 31.9, bottom, closed −y end, open +y end) and the 0.95 mm wall to the pilot. mesh_check: overhang 1.4 %, bed contact 2534.7 mm², widest bridge 7.9 mm, thin walls 0, as round 4. Overall size and holes unchanged.
+- **Strength (strength.md, round 5).** The groove's flank bearing 3.61 (proof 2.85, req 2); the block in front of the groove in interlayer shear 6.66; M3 pull-out 4.22 on the preload (sustained, 10.75 engaged with the washer), 3.42 with the preload + wedge + lift. The frame's lowest stays 3.03 (the top-screw bound) and 3.53 for its own cases.
+- **Mass.** −0.005 cm³: **46.39 cm³**.

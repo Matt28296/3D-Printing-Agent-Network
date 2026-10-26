@@ -133,7 +133,17 @@ TIE2_Y = (HALF_Y - 8.0, HALF_Y)
 # SF 1.23): the second tie's post is 8 thick (x 14.35..22.35) and stands on the frame's rail block (z ZS - RAIL_IN
 # = 17.75), held by ONE vertical M3 x 45 socket head through the top wall, lip and post into a 14 mm pilot in the block.
 ANCHOR_XY = (RAIL_X1 - GUIDE_T / 2, HALF_Y - 4.0)   # (18.35, 28): mid-post; 2.65 to the block's front face and +y end
-ANCHOR_PILOT_DEPTH = 14.0      # M3 x 45: 33.75 through the cover (z 17.75..51.5), 11.25 engaged in the block
+ANCHOR_PILOT_DEPTH = 14.0      # M3 x 45 + Ø7 x 0.5 washer: 33.75 + 0.5 over the block top, 10.75 engaged in the block
+# V-seat (claw round 5, cover strength round 4: the anchor held the post's foot in x only by the preload's friction,
+# against fdm-design-rules §4): a 90° V-groove along y in the rail block's top and a matching ridge under the post's foot
+# hold the foot in x by geometry; the M3 x 45 holds the 45° flank's lift in tension, so no preload is relied on.
+# Groove: x 14.45..16.05 at the block top (z 17.75), VSEAT_D deep (bottom z 16.95), y 23.5..32 (open at +y).
+# Ridge: the same 90° V raised VSEAT_CLR (0.1 per flank, horizontal), so the foot's flats stand VSEAT_CLR over the block.
+VSEAT_D = 0.8                  # groove depth / the ridge's virtual height (90° V: half-width = depth)
+VSEAT_XC = LIP_X0 + 0.1 + VSEAT_D   # 15.25: groove / ridge centre line (ridge base 0.1 inside the post's back face)
+VSEAT_Y0 = TIE2_Y[0] - 0.5     # 23.5: the groove's closed -y end (the ridge starts at y 24 with a 45° lead-in)
+VSEAT_CLR = 0.1                # per flank, horizontal; also the foot's flats over the block top
+ANCHOR_WASHER = (7.0, 0.5)     # ISO 7089 M3 washer under the M3 x 45's head (as on the MG996R tab screws)
 # cover screws: two M3 down into the bulkhead top, two M2.5 back into the wrist plate's front edge
 TOP_SCREWS = [(X_B - BULK_T / 2, -23.0), (X_B - BULK_T / 2, 14.0)]   # (x, y), clear of the servo window
 FRONT_SCREWS = [(-24.0, T_W / 2), (24.0, T_W / 2)]                  # (y, z)

@@ -10,6 +10,11 @@ face (x = 10) with the shaft on the claw axis (y 0, z ZS). Rack B rides on the w
 face, backed by the lower rail. The cover screws on top (2 x M3 into the bulkhead top) and at
 the front (2 x M2.5 into the wrist plate's front edge).
 
+Round 5 (cover strength round 4: the anchor held the post's foot in x only by preload friction): a 90° V-groove, 0.8
+deep, along y in the rail block's top (x 14.45..16.05 at z 17.75, y 23.5..32, open at +y); the cover's post has the
+matching ridge, so the foot is held in x by geometry and the M3 x 45 only holds the flank's lift. 0.95 mm of block stays
+between the groove and the anchor pilot at the top. The pilot is unchanged.
+
 Round 4 (claw strength round 3, the cover's required fix): one Ø2.5 printed (Ø2.7 CAD) x 14 M3 pilot, vertical, in
 the rail block's top at ANCHOR_XY (18.35, 28) for the M3 x 45 that anchors the cover's second-tie post on the block.
 It is 2.65 mm from the block's front face and its +y end; the block's rack-side root keeps SF 5.93 (frame strength).
@@ -45,8 +50,8 @@ from cadlib import HOLE_COMP_DEFAULT, teardrop_cutter, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
 from claw_frame import (ANCHOR_PILOT_DEPTH, ANCHOR_XY, BULK_T, FRONT_SCREWS, HALF_Y, M3_PILOT, M25_PILOT, PAD_T, RAIL_IN, RAIL_X0,  # noqa: E402
-                        RAIL_X1, SERVO, T_W, TOP_SCREWS, WINDOW_ROOF, WRIST_HORN, WRIST_WASHER_OD, X_B, X_F0, X_REAR,
-                        Z_TOP0, ZS)
+                        RAIL_X1, SERVO, T_W, TOP_SCREWS, VSEAT_D, VSEAT_XC, VSEAT_Y0, WINDOW_ROOF, WRIST_HORN,
+                        WRIST_WASHER_OD, X_B, X_F0, X_REAR, Z_TOP0, ZS)
 
 from hobby_parts import _body_x0, _teardrop_z, chamfer_plane_edges, horn_pocket_cutter, servo_mount_cutter  # noqa: E402
 
@@ -61,6 +66,10 @@ RELIEF_D = 3.0                 # teardrop reliefs at the window's lower corners 
 BACK_FILLET = 1.5              # pad top / bulkhead back face, full width (strength fix 3: Kt 2.5 -> 1.7)
 WASHER_RELIEF_D = WRIST_WASHER_OD + 2 * 0.4 + HOLE_COMP   # 9.0: the Ø8 washer goes down past the bulkhead's back face
 RIB_W, RIB_D = 6.0, 10.0       # ribs behind the bulkhead's outer edges: y +-(26..32), x -6.5..3.5 (strength fix 4)
+# V-groove for the cover's post (round 5; VSEAT_* in claw_frame.py): 90°, 0.8 deep, x 14.45..16.05 at the block top,
+# y 23.5..32, open at +y. It opens upward in print (45° flanks facing up: no overhang, no bridge). Its bottom 0.25
+# (z 16.95..17.2: a 0.3 mm slot at the first layer's mid-height) will not print open; the cover's ridge stops above it.
+GROOVE_Y = (VSEAT_Y0, HALF_Y + 1.0)   # through the block's +y end
 # claw servo frame in G: shaft along +x at (X_B, 0, ZS); servo +x (long side) along +y,
 # servo +y (width) along +z
 SERVO_LOC = Location(Plane(origin=(X_B, 0, ZS), x_dir=(0, 1, 0), z_dir=(1, 0, 0)))
@@ -131,6 +140,19 @@ def _ribs():
             + _box(xb - RIB_D, xb + 0.01, HALF_Y - RIB_W, HALF_Y, z0, Z_TOP0))
 
 
+def _groove():
+    """90° V-groove along y in the rail block's top (claw round 5): apex at z_blk - VSEAT_D on x VSEAT_XC, flanks at
+    45°, from y VSEAT_Y0 out through the block's +y end. The cutter rises 0.5 over the block top so its mouth is clean."""
+    z_blk = ZS - RAIL_IN
+    za, h = z_blk - VSEAT_D, VSEAT_D + 0.5
+    pts = [(VSEAT_XC, za), (VSEAT_XC + h, za + h), (VSEAT_XC - h, za + h)]
+    with BuildPart() as bp:
+        with BuildSketch(Plane.XZ.offset(-GROOVE_Y[1])):   # Plane.XZ's normal is -y: sketch on y = y1, extrude to y0
+            Polygon(*pts, align=None)
+        extrude(amount=GROOVE_Y[1] - GROOVE_Y[0])
+    return bp.part
+
+
 def design():
     plate = _box(X_REAR, X_F0, -HALF_Y, HALF_Y, 0, T_W)                      # full width (strength fix 1)
     plate = chamfer_plane_edges(plate, 0.0, BED_CHAMFER)                     # back face goes on the bed
@@ -155,6 +177,7 @@ def design():
     z_blk = ZS - RAIL_IN                                                       # vertical in print, so a plain hole
     f -= Pos(ANCHOR_XY[0], ANCHOR_XY[1], z_blk - ANCHOR_PILOT_DEPTH) * Cylinder(
         d / 2, ANCHOR_PILOT_DEPTH + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    f -= _groove()                                                             # V-seat for the cover's post (round 5)
     d = M25_PILOT + HOLE_COMP
     for (y, z) in FRONT_SCREWS:                                                # cover front screws: flat-top teardrops
         td = teardrop_cutter(d, 2 * FRONT_PILOT_DEPTH, axis="X", center=(X_F0, y, z))

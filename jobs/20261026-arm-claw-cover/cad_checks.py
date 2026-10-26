@@ -10,7 +10,7 @@ from pathlib import Path
 
 JOB = Path(__file__).resolve().parent
 sys.path.insert(0, str(JOB.parents[1] / "tools"))
-from build123d import Vector  # noqa: E402
+from build123d import Align, Box, Pos, Vector  # noqa: E402
 from cadlib import bbox, measure_holes  # noqa: E402
 
 ns = runpy.run_path(str(JOB / "model.py"), run_name="model")
@@ -56,17 +56,36 @@ check("first tie: post x 14.35..22.35 + web, y -32..-24, |z - 27.25| <= 8", soli
 check("second tie: 8 mm post x 14.35..22.35 (claw strength round 3: 4 -> 8) + web, full at y 24..32",
       solid(14.4, 25, 20) and not solid(14.3, 25, 20) and solid(22.3, 25, 20) and solid(16, 31.9, 30)
       and solid(30, 24.1, 19.4) and solid(30, 24.1, 35.1) and not solid(30, 28, 35.4) and not solid(30, 28, 19.1))
-check("second tie's post stands on the rail block: foot z 17.75 over y 24..32 (was 19.25)",
-      all(solid(x, y, 17.8) and not solid(x, y, 17.7) for x in (14.4, 16.0, 22.3) for y in (24.1, 26.0, 31.9)),
-      "probes x 14.4-22.3, y 24.1-31.9")
-check("post's 45° underside: from the foot at y 24 to the lip at y 5 (2.5 over the claw servo's case at y 5.9)",
-      solid(16, 15, 26.85) and not solid(16, 15, 26.65) and solid(16, 5.9, 35.95) and not solid(16, 5.9, 35.75)
-      and solid(16, 5.1, 36.8) and not solid(16, 4.9, 36.7), "z = 17.75 + (24 - y)")
+check("second tie's post foot flats z 17.85 over y 24..32, 0.1 over the rail block (round 5; round 4 17.75)",
+      all(solid(x, y, 17.9) and not solid(x, y, 17.8) for x in (14.4, 16.2, 22.3) for y in (24.1, 26.0, 31.9)),
+      "probes x 14.4 / 16.2-22.3 (beside the ridge), y 24.1-31.9")
+check("post's 45° underside: from the foot at y 24 to the lip at y 5.1 (2.6 over the claw servo's case at y 5.9)",
+      solid(16, 15, 26.95) and not solid(16, 15, 26.75) and solid(16, 5.9, 36.05) and not solid(16, 5.9, 35.85)
+      and solid(16, 5.2, 36.8) and not solid(16, 4.9, 36.7), "z = 17.85 + (24 - y)")
+zt, za, xc = ns["RIDGE_TIP_Z"], ns["RIDGE_APEX_Z"], ns["VSEAT_XC"]
+check("V-ridge under the foot (round 5): 90° V, virtual apex z 17.05 (0.8 under the flats) on x 15.25, base x "
+      "14.45..16.05, tip cut flat at z 17.25 (0.4 wide), full from y 24.6 to 32, 45° lead-in from y 24",
+      abs(za - 17.05) < 1e-9 and abs(zt - 17.25) < 1e-9 and abs(xc - 15.25) < 1e-9
+      and all(solid(xc + s * (z - za - 0.05), y, z) and not solid(xc + s * (z - za + 0.05), y, z)
+              for s in (-1, 1) for z in (17.3, 17.55, 17.8) for y in (24.8, 28.0, 31.9))
+      and solid(xc, 28, 17.3) and not solid(xc, 28, 17.2) and solid(xc - 0.15, 31.9, 17.3) and not solid(xc, 32.1, 17.5)
+      and solid(xc, 24.3, 17.6) and not solid(xc, 24.3, 17.5) and solid(xc, 24.65, 17.3) and not solid(xc, 24.5, 17.3)
+      and not solid(xc, 23.9, 17.8), "flanks probed ±0.05 at z 17.3 / 17.55 / 17.8, y 24.8 / 28 / 31.9")
+fr = runpy.run_path(str(JOB.parent / "20261026-arm-claw-frame" / "model.py"), run_name="model")["design"]()
+seat = Pos(13.5, 22.5, 16.5) * Box(4, 10.5, 2, align=(Align.MIN,) * 3)     # x 13.5..17.5, y 22.5..33, z 16.5..18.5
+ov = d & fr
+ov_v = sum(s.volume for s in ov.solids()) if ov else 0.0
+gap_fl = (d & seat).distance_to(fr & seat)
+check("ridge in the frame's V-groove as fitted: no overlap with the frame; 0.1 clear per flank horizontal (0.071 normal), "
+      "flats 0.1 over the block, flat tip 0.3 over the groove's bottom", ov_v < 1e-6 and abs(gap_fl - 0.1 / 2 ** 0.5) < 0.002,
+      f"overlap {ov_v:.4f} mm3, min gap {gap_fl:.4f}")
 ax, ay = ns["ANCHOR_XY"]
 anc = [h for h in holes if abs(h["diameter"] - 3.6) < 0.01 and abs(h["point_on_axis"][0] - ax) < 0.01
        and abs(h["point_on_axis"][2] - (ay + 32)) < 0.01]
-check("anchor hole Ø3.4 + HOLE_COMP = Ø3.6 at (18.35, 28), vertical through the top wall, lip and post (teardrop +y)",
-      len(anc) == 1 and all(not solid(ax, ay, z) for z in (17.8, 25, 36, 40, 49, 51.4))
+check("anchor hole Ø3.4 + HOLE_COMP = Ø3.6 at (18.35, 28), vertical through the top wall, lip and post z 17.85..51.5 "
+      "(teardrop +y); its edge 0.5 from the ridge's base",
+      len(anc) == 1 and all(not solid(ax, ay, z) for z in (17.9, 25, 36, 40, 49, 51.4))
+      and not solid(16.6, ay, 25) and solid(16.5, ay, 25)
       and not solid(ax, ay + 2.4, 30) and solid(ax, ay + 2.7, 30) and not solid(ax + 1.75, ay, 30) and solid(ax + 1.85, ay, 30)
       and not solid(ax, ay - 1.75, 30) and solid(ax, ay - 1.85, 30), f"{[h['arc_deg'] for h in anc]}")
 check("walls round the anchor hole: 2.2 to the post's faces, 1.45 at the teardrop's tip to y 32",
