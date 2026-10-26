@@ -26,3 +26,9 @@ SERVO, HOLE_COMP, L, T, HALF_W, X0, X1, CORNER_R, CLR, BED_CHAMFER
 ## Risks
 - Horn-slot bridge 10.6 mm (DFM round 1) → printed front-face down, pocket opens upward
 - Sideways loads (strength round 1) → T 6→10, lightening slot removed, centre-screw clamp
+
+## Round 3 (2026-10-26: deep reviews 01 B1/S2/S3/S4, 03 SYS-04)
+- **Lead notches (B1).** The elbow MG996R goes in from the front face, case bottom first; `lead="notch"` cuts a 4.4 × 2.0 mm (printed) notch at both case ends through the 10 mm plate. Printed ligament to the nearest Ø2.6 pilot: 2.05 mm. The plate prints flat, so the notches are vertical cuts (no overhang).
+- **Fasteners:** shoulder clamp M3 × 14 + Ø9 × 0.8 washer (8 mm floor: 4.6 mm into the spline, S2); 2 × M2 × 6 through the horn arms (S4); elbow tab screws 4 × M3 × 12 + Ø7 washers, 9 mm engaged (S3).
+- **Loads (SYS-04):** the camera and the round-3 claw put 239 N·mm (278 with 50 g) across the shoulder shaft and 161 / 188 N·mm across the elbow shaft in every pose (spec §4).
+- measure_holes: 4 × Ø2.8 elbow tab pilots, Ø3.6 clamp hole.

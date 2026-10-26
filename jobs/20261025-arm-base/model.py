@@ -4,6 +4,10 @@ Design frame = assembly frame (see ../20261025-robot-arm-assembly/assembly_plan.
 origin on the base-servo shaft axis at the top-plate top surface, Z up, desk at Z = -40.
 Printed upside down (top plate on the bed), so every opening in a wall gets a
 45° roof pointing at the desk side, which faces up in print.
+
+Round 3 (deep review 01 B1): the servo window has a lead notch at each case end (4.4 x 2.0 mm
+printed, through the 4 mm top plate only), so the MG996R's lead root can pass when the servo
+goes in case bottom first; 2.0 mm printed ligament to the nearest tab pilot.
 """
 from build123d import Align, Box, Cylinder, Pos, Rot
 from cadlib import HOLE_COMP_DEFAULT, teardrop_cutter, to_bed
@@ -61,6 +65,10 @@ def design():
 
     # servo window + tab pilot holes (through plate and bosses)
     part -= servo_mount_cutter(SERVO, PLATE_T + SERVO_BOSS_L, clearance=SERVO_CLR, hole_comp=HOLE_COMP)
+    # lead notches at both case ends (deep review 01 B1), through the 4 mm plate only: below the plate the
+    # ribbon passes between the bosses, which stand >= 3 mm off the centreline at the case end
+    notch = servo_mount_cutter(SERVO, PLATE_T, clearance=SERVO_CLR, hole_comp=HOLE_COMP, lead="notch")
+    part -= notch & Pos(0, 0, -PLATE_T - 0.01) * Box(BX, BY, PLATE_T + 1.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
 
     # turntable-ring tab pilots
     import math

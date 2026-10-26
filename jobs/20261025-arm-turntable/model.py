@@ -1,11 +1,14 @@
 """Turntable: Ø96 × 8 disk on the base-yaw horn, with the shoulder upright holding the shoulder MG996R.
 
-Design frame = assembly frame at yaw 0 (see assembly_plan.md). The base servo's double-arm
-horn sits FLAT on the disk underside (Z = 16.5, the bed face, so no bridged pocket); an M3
-centre screw + washer from the top clamps disk and horn onto the spline, and two small screws
-drilled through the horn's arm holes stop it turning. The shoulder servo hangs through the
-upright (tabs on its +Y face, shaft +Y, body HORIZONTAL along X, centred on the yaw axis, so the
-shoulder axis sits at X = +10.15): its tab screws sit beside the window, clear of the 45° roof.
+Design frame = assembly frame at yaw 0 (see assembly_plan.md). The base servo's round Ø25 DISC
+horn sits FLAT on the disk underside (Z = 16.5, the bed face, so no bridged pocket; deep review
+03 SYS-05: the disc supports the disk ±12.5 mm in every direction, the double arm only on its
+Ø11 hub across the arms); an M3 × 14 socket-head centre screw + Ø9 washer from the top clamps
+disk and horn onto the spline, and two M2 × 6 self-tappers drilled through two of the disc's
+holes stop it turning. The shoulder servo hangs through the upright (tabs on its +Y face, shaft
++Y, body HORIZONTAL along X, centred on the yaw axis, so the shoulder axis sits at X = +10.15):
+its tab screws sit beside the window, clear of the 45° roof. The window has a lead notch at
+each case end (deep review 01 B1) with a 45° top, because it is a hole in a standing wall.
 Printed disk-down.
 """
 from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Plane, Polygon, Pos, extrude
@@ -38,6 +41,24 @@ def shoulder_frame():
     return Location(Plane(origin=(XS, UP_Y, ZS), x_dir=(1, 0, 0), z_dir=(0, 1, 0)))
 
 
+def _notch_tops():
+    """45° tops over the two lead notches, in the servo frame (servo -y = world +Z = up in print).
+    servo_mount_cutter(lead="notch") cuts each notch nw wide, from the case end to `reach` beyond it;
+    this adds a right triangle on its upper side so the notch has no flat ceiling."""
+    s = SERVO
+    nw = s.lead_notch_w + HOLE_COMP
+    reach = s.lead_notch_reach + HOLE_COMP / 2
+    tops = None
+    for xe, e in ((s.shaft_from_end, 1), (-(s.length - s.shaft_from_end), -1)):
+        tri = [(xe, -nw / 2 + 0.01), (xe + e * reach, -nw / 2 + 0.01), (xe, -nw / 2 - reach)]
+        with BuildPart() as g:
+            with BuildSketch(Plane.XY.offset(-UP_T - 1)):
+                Polygon(*tri, align=None)
+            extrude(amount=UP_T + 2)
+        tops = g.part if tops is None else tops + g.part
+    return tops
+
+
 def _yz_prism(pts, x0, width):
     """Extrude a polygon given in (Y, Z) from X = x0 by `width` in +X."""
     with BuildPart() as g:
@@ -66,9 +87,11 @@ def design():
                           sx * GUSSET_X - GUSSET_T / 2, GUSSET_T)
     # base-horn clamp screw hole (M3 + washer from the top), no pocket
     part -= Pos(0, 0, Z0) * horn_pocket_cutter(SERVO, depth=0, link_t=DISK_T + 2, hole_comp=HOLE_COMP)
-    # shoulder servo window (roof up: servo −y = world +Z), teardrop pilots pointing up, through the upright
-    part -= shoulder_frame() * servo_mount_cutter(SERVO, UP_T, clearance=CLR, roof="-y", through=UP_T * 2 + 2,
-                                                  hole_comp=HOLE_COMP, pilot_teardrop="-y")
+    # shoulder servo window (roof up: servo −y = world +Z), teardrop pilots pointing up, through the upright;
+    # lead notches at both case ends with 45° tops (deep review 01 B1)
+    part -= shoulder_frame() * (servo_mount_cutter(SERVO, UP_T, clearance=CLR, roof="-y", through=UP_T * 2 + 2,
+                                                   hole_comp=HOLE_COMP, pilot_teardrop="-y", lead="notch")
+                                + _notch_tops())
     return part
 
 

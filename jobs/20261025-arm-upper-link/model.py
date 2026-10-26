@@ -8,6 +8,8 @@ screw + washer from the front face clamps link and horn onto the spline. The elb
 through a window at x = 100, tabs on the front face (z = T), shaft +z.
 In-plane (gravity) bending runs about the 34 mm-deep section; sideways loads (yaw stall, a hand
 push) bend the 10 mm thickness, which is why there is no lightening slot (strength round 1).
+Round 3 (deep review 01 B1): the elbow window has a lead notch (4.4 × 2.0 mm printed) at each
+case end, so the lead root passes when the servo goes in case bottom first from the front.
 """
 from build123d import Pos, Rot
 from cadlib import HOLE_COMP_DEFAULT, to_bed
@@ -29,7 +31,8 @@ def design():
     link = rounded_plate(X0, X1, -HALF_W, HALF_W, T, r=CORNER_R)
     link = chamfer_plane_edges(link, T, BED_CHAMFER)                     # front face goes on the bed
     link -= horn_pocket_cutter(SERVO, link_t=T, hole_comp=HOLE_COMP)    # shoulder horn, back face
-    link -= Pos(L, 0, T) * servo_mount_cutter(SERVO, T, clearance=CLR, through=T * 2 + 2, hole_comp=HOLE_COMP)
+    link -= Pos(L, 0, T) * servo_mount_cutter(SERVO, T, clearance=CLR, through=T * 2 + 2, hole_comp=HOLE_COMP,
+                                              lead="notch")       # lead notch at both case ends (review 01 B1)
     return link
 
 

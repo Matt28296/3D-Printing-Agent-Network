@@ -1,5 +1,7 @@
 """Turntable support ring: screws to the base top plate and catches the turntable when the
-arm tips, so the base-yaw servo shaft isn't the only thing carrying the arm's moment.
+arm tips, so the base-yaw servo shaft isn't the only thing carrying the arm's moment. Round 3
+(deep review 03 SYS-05): 0.4 mm running gap, PTFE tape on the top face, so it works as a
+bearing under the arm's overturning moment instead of only after a knock.
 
 Design frame = assembly frame; the ring sits on the base top plate (Z = 0).
 Printed as modelled (tabs on the bed).
@@ -14,8 +16,10 @@ from hobby_parts import MG996R, horn_face_z
 HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (default, fdm-design-rules)
 R_IN, R_OUT = 41.0, 44.0      # inside the base-servo tabs (r <= 38.4); 0.75 mm clear of the tab-screw heads
 TURNTABLE_Z = horn_face_z(MG996R)   # 16.5: turntable underside (the base horn sits flat on it, no pocket)
-RUN_GAP = 1.5                 # running gap to the turntable; sand the ring top if it rubs
-H = TURNTABLE_Z - RUN_GAP     # 15.0
+RUN_GAP = 0.4                 # running gap to the turntable (deep review 03 SYS-05: 1.5 -> 0.4, so the ring
+                              # catches the disk after 0.5° of tilt instead of 1.95°); PTFE tape on the ring
+                              # top (≈0.1 mm) leaves ≈0.3; sand to an even gap if it rubs
+H = TURNTABLE_Z - RUN_GAP     # 16.1
 TAB_R, TAB_ANG = 47.5, (30.0, 150.0, 270.0)   # must match the base's ring pilots
 TAB_D, TAB_T, TAB_HOLE = 9.0, 3.0, 3.4        # tab Ø9 reaches r 52.0 = base edge; M3 clearance (printed)
 

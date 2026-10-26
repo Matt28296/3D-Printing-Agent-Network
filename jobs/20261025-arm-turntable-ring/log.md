@@ -12,3 +12,4 @@
 - 2026-10-26T01:29:19+00:00 · print-ops-lead · wrote preflight.md · ok
 - 2026-10-26T01:29:19+00:00 · head-orchestrator · stage -> AWAITING_APPROVAL (DESIGN, SLICE gates pass) · ok
 - 2026-10-26T06:55:40Z · strength-analyst · round 4 (claw v2 + Brio): strength_calc.py takes the end effector from the claw jobs (172 g, fingertip 76.15, MG90S wrist), rerun; strength.md gets a Round 4 section; lowest SF 3.39 (unchanged); USB-tug advisory 6.03 · NEEDS_TEST
+- 2026-10-26T10:25Z · design-lead · round 3 (03 SYS-05): running gap 1.5 -> 0.4 mm (H 16.1) + PTFE tape: the ring now shares the overturning moment. Ring CAD changed: the job reopens for DFM and strength; spec and brief updated; built, mesh-checked, rendered · ok

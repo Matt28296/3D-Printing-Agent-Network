@@ -9,7 +9,7 @@ PETG. Tough, low creep compared with PLA (the arm holds servo load for hours), p
 Flat, tabs on the bed. Compression in the wall runs across layers but in pure compression (layer bonding not loaded in tension).
 
 ## Concept
-Ring (r 41–44, 15 mm tall) screwed to the base top plate under the turntable. A 1.5 mm running gap means it only touches when the arm tips, so the base servo's output bearing is not the only thing resisting a knock.
+Ring (r 41–44, 16.1 mm tall since round 3) screwed to the base top plate under the turntable. A 0.4 mm running gap with PTFE tape (round 3; was 1.5) lets it share the arm's overturning moment with the base servo's output bearings.
 
 ## Critical dimensions
 | Feature | Nominal (mm) | Tolerance | Fit | Compensation | Source |
@@ -24,3 +24,8 @@ HOLE_COMP, R_IN, R_OUT, TURNTABLE_Z, RUN_GAP, H, TAB_R, TAB_ANG, TAB_D, TAB_T, T
 
 ## Risks
 - Ring rubs the turntable if the base servo sits low → 1.5 mm gap, sand to fit
+
+## Round 3 (2026-10-26: deep review 03 SYS-05)
+- **Running gap 1.5 → 0.4 mm** (H 15.0 → 16.1), with one layer of PTFE tape on the top face (≈0.3 mm left). The ring now works as a bearing: it catches the disk after 0.5° of tilt (was 1.95°, a 9.3 mm drop at full reach) and shares the arm's overturning moment (up to ≈19 N on its top at r 44, spec §4). Friction with PTFE ≈85 N·mm against the yaw servo's 1000 N·mm.
+- **Fit:** sand the top to an even gap (feeler gauge at 8 points), because the servo shaft and the ring now share the load; a second layer of tape where the gap is big. The gap depends on the MG996R's horn-face height (16.5 mm above the top plate, nominal): measure it.
+- This changes the ring's CAD (height), so the job reopens for DFM and strength.

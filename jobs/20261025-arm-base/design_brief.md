@@ -28,3 +28,11 @@ HOLE_COMP, SERVO_CLR, BED_CHAMFER, BX, BY, H, WALL, PLATE_T, CORNER_R, PILLAR_D,
 ## Risks
 - Wall openings printed as overhangs → 45° roofs / teardrop pointing up in print
 - Self-tapping pilots crack the plate → servo screw bosses lengthen the grip to 10 mm; PETG is tough
+
+## Round 3 (2026-10-26: deep reviews 01 B1/S3, 03 SYS-05/SYS-09/SYS-12)
+- **Lead notches (B1).** The MG996R goes in from above, case bottom first, and its lead root crosses the 4 mm top plate: `servo_mount_cutter(lead="notch")` cuts a 4.4 × 2.0 mm (printed) notch at each case end (the MG996R's lead end is unverified), clipped to the top plate only. Below the plate the ribbon passes between the Ø6.5 bosses, which stand ≥ 3 mm off the centreline at the case end. Printed ligament from a notch to the nearest Ø2.6 pilot: 2.05 mm (the cutter's check); window end to pilot 2.4 mm. A vertical cut through the bed layer: no overhang.
+- **Tab screws (S3):** 4 × M3 × 12 pan-head self-tapping + Ø7 washers, grommets and eyelets left out: 9 mm engaged in the 10 mm plate + boss.
+- **Turntable on a disc horn, ring 0.4 mm under it (SYS-05):** the base now sees the arm's overturning moment through the ring and its 3 screws as well as through the servo tabs (spec §4: 692–832 N·mm arm straight out with the camera).
+- **Build order (SYS-09):** built and wired upside down on the bench, screwed down last; the extension junctions sit outside the cable slot.
+- **Stability (SYS-12):** with the round-3 claw and camera the robot is ≈0.70 kg; free-standing it tips with the arm out (SF 0.34–0.48), so the desk screws stay required, or a 200 × 200 × 0.4 kg board (SF ≥ 2.2) or 1.2 kg of ballast (SF 1.5).
+- measure_holes: 10 × Ø2.8 (4 servo, 3 ring, 3 cradle pilots), 4 × Ø3.6 desk holes, the Ø11.6 jack teardrop.
