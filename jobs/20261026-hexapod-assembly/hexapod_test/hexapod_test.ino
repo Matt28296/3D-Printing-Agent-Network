@@ -25,13 +25,15 @@ const float L_C = 32.0f;                  // coxa axis -> femur axis (radial)
 const float L_F = 45.0f;                  // femur axis -> knee axis
 const float L_T = 70.0f;                  // knee axis -> foot tip
 const float Y_F = -13.5f;                 // femur servo tab plane, sideways from the coxa line (coxa bracket y)
-const float Z_F = 17.0f;                  // femur axis below the coxa bracket's back face (T_C + 12)
+const float Z_F = 20.0f;                  // femur axis below the coxa bracket's back face (T_C 8 + 12; round 3)
 const float T_F = 7.0f;                   // femur plate
 const float T_T = 7.0f;                   // tibia plate
-const float LB = 9.4f;                    // servo tab plane -> next link's back face (MG90S, horn 2 mm deep in its pocket)
+const float LB = 12.6f;                   // servo tab plane -> next link's back face (MG90S own spec, deep review 01-B2)
+const float TAB_T = 2.5f;                 // MG90S mounting-tab thickness (the tibia servo is reversed: tabs on the femur's back face)
+const float PLATE_GAP = 4.1f;             // bottom-plate underside -> coxa bracket's back face (coxa servos reversed, round 3)
 const float MOUNT_DEG[6] = {40, 90, 140, -40, -90, -140};   // each leg's outward direction (LEG_MOUNTS), X forward, Y left
-const float NEUTRAL_FEMUR = 0.0f;         // neutral stance, this sketch's angles: 0 = femur level, + = up
-const float NEUTRAL_TIBIA = 0.0f;         //   0 = tibia square to the femur (vertical), + = foot outward
+const float NEUTRAL_FEMUR = -4.7f;        // walking stance, this sketch's angles: 0 = femur level, + = up
+const float NEUTRAL_TIBIA = -14.0f;       //   0 = tibia square to the femur (vertical), + = foot outward; tucked 18.7° in (deep review 05 SYS-1)
 // ================================================================================================
 
 // Gait: tripods {LF, LR, RM} and {LM, RF, RR}. Each foot moves back in a straight line on the ground,
@@ -55,8 +57,8 @@ int TRIM[18] = {0};                       // degrees, from 't' commands
 // Left and right coxae are mirrored; adjust any joint that moves the wrong way.
 int DIR[18] = { +1, +1, +1,  +1, +1, +1,  +1, +1, +1,
                 -1, +1, +1,  -1, +1, +1,  -1, +1, +1 };
-const int MAX_COXA = 30;                  // keeps neighbours within the 70° the assembly check allows
-const int FEMUR_MIN = -70, FEMUR_MAX = 90;   // assembly check: the femur is clear from -70° to +90°
+const int MAX_COXA = 30;                  // keeps neighbours within the 60° the round-3 assembly check allows
+const int FEMUR_MIN = -70, FEMUR_MAX = 80;   // round 4: the wider bottom plate meets a femur raised past 80° with the coxa at ±30°
 const int TIBIA_MIN = -80, TIBIA_MAX = 90;   // assembly check: -170°..0° in its frame = -80°..+90° here
 const int CAL_PIN = 34;                   // o: the measured board's channel 15, jumpered here
 const int VBAT_PIN = 35;                  // ADC1, input-only: 100k from the switched LiPo +, 33k to GND, 100 nF across the 33k
@@ -86,7 +88,7 @@ void neutralFoot() {
   float f = NEUTRAL_FEMUR * RAD, ft = (NEUTRAL_FEMUR + NEUTRAL_TIBIA - 90.0f) * RAD;
   footR0 = L_C + L_F * cosf(f) + L_T * cosf(ft);
   footH0 = -Z_F + L_F * sinf(f) + L_T * sinf(ft);       // negative: below the coxa bracket's back face
-  footSide = Y_F + 2 * LB + T_F + T_T / 2;              // 15.8 mm: the legs are rotated copies, not mirrored
+  footSide = Y_F + 2 * LB - TAB_T + T_T / 2;            // 12.7 mm: the legs are rotated copies, not mirrored
 }
 
 // Inverse kinematics: foot moved by (dx, dy, dz) mm in body axes (X forward, Y left, Z up) from its neutral
@@ -219,7 +221,7 @@ void setup() {
   pinMode(CAL_PIN, INPUT);
   neutralFoot();
   standStaggered();
-  Serial.printf("hexapod_test ready: c s t p w x o   (body underside %.1f mm above the ground)\n", LB - footH0);
+  Serial.printf("hexapod_test ready: c s t p w x o   (body underside %.1f mm above the ground)\n", PLATE_GAP - footH0);
   checkBattery();
 }
 

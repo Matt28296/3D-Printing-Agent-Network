@@ -1,58 +1,95 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review, round 2: 20261026-rover-chassis
+# DFM review, round 3: 20261026-rover-chassis
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/{iso,top,front,right,bottom}.png, print_requirements.json, rover_frame.py, tools/hobby_parts.py (N20_100RPM), tools/cadlib.py, assembly_check.py/json, round-1 design_review.md and strength.md. library/lessons.md and materials.csv are empty, so the fdm-design-rules defaults apply (HOLE_COMP +0.2).
-Outputs are current: a fresh in-memory `build()` gives 115 008.31 mm³ and 154 × 76 × 40, identical to geometry.json. That still holds after the architect's 05:46Z update (idler bolts M3 × 35, class 12.9; in model.py only the docstring changed). Also read: assembly BUILD_GUIDE.md.
-Extra evidence: probe scripts using build123d slab sections and `is_inside` point tests on `design()`. They work in the world frame; print z = world z − 8.68.
+Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, cad_checks.py, renders/{iso,front,right,top,bottom}.png (regenerated with tools/render.py), print_requirements.json, slice_plan.json, round-2 design_review.md and strength.md, rover_frame.py, tools/hobby_parts.py (N20_100RPM, POLOLU_HUB_1996), assembly_plan.md, assembly_check.json, BUILD_GUIDE.md, deep reviews 04 and 01 (S9–S13), sprocket design_brief.md (concept C). library/lessons.md and materials.csv have no rows, so the fdm-design-rules defaults apply (HOLE_COMP +0.2).
+
+Outputs are current: a fresh in-memory `build()` gives 131 834.40 mm³ and 154 × 92 × 40, identical to geometry.json. `mesh_check.check()` re-run in memory is identical to mesh_check.json (file not rewritten). `cad_checks.py`: all 39 checks pass.
+
+Extra evidence:
+- `is_inside` probes on `design()` (world frame; print z = world z − 8.68).
+- A layer-by-layer support analysis of part.stl. It ray-casts a 0.1 mm grid at 0.2 mm layers and flags cells with no solid within 0.275 mm in the layer below.
+- Close-up renders of the nacelle, trough and buttress (scratchpad).
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Bed fit, 5 mm margin | PASS | 154.0 × 76.0 × 40.0, fits_bed true, margin 5 |
-| 2 | One watertight solid, min Z 0 | PASS | solids 1, watertight true, min_z 0 |
-| 3 | Orientation | PASS | Floor down, open top up, as the brief says (iso.png, front.png) |
-| 4 | Load paths vs layers | PASS (justified) | The wheel-bolt, journal and drop moments load the wall roots across the layers. The brief says so and answers with 4.5 mm walls, Ø20 bosses, the 30 × 24 idler block and 3 mm floor fillets |
-| 5 | Bed contact | PASS | 11 362 mm² (mesh_check). PETG on the smooth PEI sheet needs a glue release layer in preflight (material-selection) |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | **FAIL** | (a) **The idler-slot roof floats.** The flat roof at Z_A + 1.8 (x 116.7–123.3, \|y\| 32–35.4) is bounded by the two teardrop tips (0.75 mm each side), the tub interior and the nut slot. Slab sections at +0.05, +0.2, +0.4 and +0.6 mm above it each show a separate solid of 22.5 to 26.2 mm², with the empty slot below (point tests empty from z 18.98 to 22.38). It joins the wall only at +0.74 mm, the tip height. mesh_check calls it a bridge (z 13.8, span 3.4, length 6.51), but no side of it is anchored for about 4 layers. (b) **The cradle cheeks overhang.** The cheeks (x ±6.3–8.3) and rear-stop posts start on a cradle only ±7.0 wide (CRADLE_HALF_X), leaving flat 1.3 mm ledges 25.0 and 1.7 mm long (mesh_check z 6.99, span 1.3, 4 of each). Point tests are empty under x 7.2–8.2. The rest of the 390.7 mm² overhang area is anchored flat roofs: tie tunnels (4.0 × 14.0) and nut traps (3.46, plus the idler's 11.46; see R2) |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS | WALL 4.5, FLOOR_T 2.5, column wall (8 − 2.8)/2 = 2.6, CHEEK_T 2.0. The tie-tunnel roof is 1.0 mm and not structural. thin_wall_warnings is empty |
-| 8 | HOLE_COMP, teardrops | PASS | HOLE_COMP is applied everywhere: journal 10.7, bolts 3.6, pilots 2.8, switch 6.4 and sensors 16.6 (geometry.json), nut AF 6.0. Every wall hole is a teardrop pointing up, including the slot ends at l.148–149 (right.png, front.png) |
-| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(outer, FLOOR_Z, 0.4)` l.98; bottom.png shows the bevel |
-| 10 | Internal corners on load paths | **FAIL** | The floor fillets are done (3 mm 45° strips, l.103–106). But the Ø20 road-wheel bosses, the idler block and the journal boss meet the wall's inner face at sharp 90° corners (l.111, l.127–131). That 6 → 4.5 mm step is on the wheel-bolt, idler and journal load paths. Round-1 fix 8 and the strength round-1 boss fix (r 2, Kt 1.5) both asked for fillets there |
-| 11 | Fasteners (§4) | **FAIL** | The nut traps pass: 5.5 + 0.3 = 5.8 AF printed (6.0 CAD), 2.6 deep for a 2.4 mm nut, flats up so the roof bridges 3.46. But **the idler is held in its slot only by bolt preload in PETG**, which §4 says not to rely on. The bare Ø5.5 head bears on about 5.5 mm² beside the Ø3.6 slot, and the nut on about 7 mm² of the nut-slot floor, because the slot band removes the rest. Strength round 1 (advisory) gave friction SF 2.0 at stall with 100 N of residual preload. Lid self-tappers: see R1 |
-| 12 | Spec §3 dims are named parameters | PASS | AXLE_DX 120, IDLER_SLOT 4 and Z_A 20.68 (rover_frame). Journal HUB_D 10 + JOURNAL_CLR 0.5 + HOLE_COMP = Ø10.7 CAD (Ø10.5 printed), WALL 4.5 + JOURNAL_BOSS 1.5 = 6 long. NUT_AF 5.5 + NUT_CLR 0.3 = 5.8, NUT_DEPTH 2.6. All commented |
-| 13 | Service temp ≥ 20 °C below softening | PASS | 40 °C against about 70 °C for PETG. Note: config/printer.json `materials_on_hand` is empty, and spec §6 defers the PETG check to slicing |
+| 1 | Bed fit, 5 mm margin | PASS | 154.0 × 92.0 × 40.0 (nacelles to \|y\| 46); fits_bed true, margin 5. With the margin, 164 × 102 on 250 × 210 |
+| 2 | One watertight solid, min Z 0 | PASS | solids 1, watertight true, min_z 0.0 (geometry.json and the fresh build) |
+| 3 | Orientation | PASS | Floor down, open top up, as the brief says. iso.png and front.png show the tub; top.png and bottom.png show the housings and nacelles at the rear of each side wall |
+| 4 | Load paths vs layers | PASS (justified) | The brief justifies the wall-root moments across the layers: 4.5 walls, Ø26 bosses with r1.5 rims, BOSS_IN 5.5, 3 mm floor fillets, 1.5 strips. The round-3 paths run in the layer plane: the housing and nacelle are cantilevers along Y; the gearbox torque bears on 45° pocket faces; the jack-screw thrust is horizontal. Insert pull-out runs along Z, but each Ø10 column is merged full height into the walls: the rear pair into the corners, the front pair into the side wall, idler block and buttress (§1 "wide base"). Each sees 3.2 N per screw (lid spec §4) |
+| 5 | Bed contact | PASS | 11 540.5 mm² (mesh_check). PETG is not a warping material. Use a glue release layer on smooth PEI (preflight) |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS (note) | overhang_pct 0.62 (377.9 mm²), all flat ceilings: tie-tunnel roofs (z 5.8, 4.0 span), idler-slot hull roofs (z 14.55, 8.0 between the 45° teardrop flanks), nut-trap roofs (z 15.0, 3.46, and the 11.46 × 2.6 idler nut slot). Largest bridge 8.0 mm. All other down-facing faces are exactly 45° (1 389.6 mm² at 45 ± 1°): pocket roofs, nacelle undersides, teardrops, strips. Layer analysis: no floating island anywhere. The only new unsupported start is the nacelle's bottom edge: at print z ≈ 1.2, a 0.3 × 3.7 mm strand hangs from the housing face, reaching 3.8 mm; every later layer stays inside the 45° allowance (R2) |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS (note) | WALL 4.5, FLOOR_T 2.5. Nacelle 2.0 normal to its faces (2.83 per layer; cad_checks). Housing round the pocket: 11.2 − 8.06 = 3.14 at the side vertices, 3.94 under, 4.44 over. Trough cheeks 4.06 and 5.46 (probes at y 20, 28, 32). Jack pilot: 2.0 to the buttress inner face, 2.52 above its tip. Insert columns: ≥ 3.0 round each Ø4.0 hole (probe at 5° steps). The skin is the one wall under 1.8: 1.00 mm (probe y 45.0–46.0), two lines. It is above 0.9, its thickness is fixed by the stack-up (gearbox face 45.0, thrust washer 46.0–46.5, hub 46.5), and it carries only axial thrust (R3). thin_wall_warnings empty |
+| 8 | HOLE_COMP, teardrops | PASS | HOLE_COMP (l.44) on every fit (geometry.json, cad_checks): bolts Ø3.6, skin hole Ø4.7, jack pilots Ø2.8, sensors Ø16.6, nut AF 6.0 (l.135), pocket 12.4 × 10.4 (GB_CLR + HOLE_COMP, l.54–56). Insert holes Ø4.0 have no compensation on purpose: §4 maker's size, stated in spec §3 (R4). Horizontal holes point up (arc 270° in geometry.json; right.png; close-ups): bolt holes, slot ends, skin hole, jack pilots and sensor holes are teardrops (l.252, 259, 264, 269, 278). The pocket is a 45° diamond; the tunnel and nut traps are flat-top |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(outer, FLOOR_Z, 0.4)` (l.203) runs on the tub, both housings and their strips before any cut. bottom.png shows the bevel round the outline and the housings. The strap slots, cut after it, are clearance slots |
+| 10 | Internal corners on load paths | PASS (note) | Filleted or stripped: floor 3 mm 45° strips (l.207–211); road-wheel bosses with r1.5 rims (l.183), a 1.5 × 45° collar over the top half (l.184–186) and strips below (l.187–188); idler block (l.229–233); cradle (l.218–221); housing (l.155–158). Two new roots are sharp, both lightly loaded (R1): the jack-screw buttress (probes empty at (108.15, 27.85, Z_A) and at its front, rear and inner base edges) and the nacelle-to-housing joint. My estimate for the buttress at the 29.8 N reverse stall: ≈ 0.8 MPa nominal, in the layer plane, ≤ 2.7 MPa if only the 4 mm band at the thread carries it; × Kt 3 ≤ 8.2 against 25 MPa. Its base takes almost none: it is a 9.5 mm cantilever against a 2.6 mm path to the idler block. The nacelle root sees ≈ 0.6 MPa at the 5 cm corner (59.5 N × 3 mm on the diamond ring, Z ≈ 300 mm³) |
+| 11 | Fasteners (§4) | PASS | Nut traps: 5.8 AF printed (nominal + 0.3) × 2.6 for a 2.4 nut, flats up. Washers under every axle-bolt head: ISO 7089 on the road wheels, DIN 9021 on the idlers (spec §2). The idler is held by a positive stop (jack screw), not by PETG preload. Inserts: Ø4.0 hole (§4: 4.0–4.2); Ø10 boss ≥ 2 × the ≈ 4.6 mm OD of a typical M3 × 5.7 insert (spec §2 gives no OD); 6.5 deep for 5.7 (0.8 mm melt sump). The jack screw self-taps a Ø2.6 pilot with 6.5 mm of thread and is only turned to re-tension (brief risk) |
+| 12 | Spec §3 dims are named parameters | PASS | AXLE_DX, IDLER_SLOT, Z_A, MOTOR_FACE_Y 45.0, SKIN 1.0, HOUSING_OUT 4.0, BOSS_IN 5.5 come from rover_frame.py, commented. Also commented in model.py: POCKET_HX/HY 6.2/5.2 (l.55–56), NACELLE_R with its assert (l.59–61), BOSS_HOLE_D (l.65), BOLT_D, NUT_AF/CLR/DEPTH (l.47–48), JACK_PILOT 2.6 and JACK_Y 25.4 (l.81–82), INSERT_D/INSERT_DEPTH 4.0/6.5 (l.76). Every value matches spec §3, and cad_checks.py proves each one |
+| 13 | Service temp ≥ 20 °C below softening | PASS | 40 °C against ≈ 70 °C for PETG. config/printer.json `materials_on_hand` is empty; confirm PETG at slicing (spec §6) |
 | 14 | Lessons | N/A | library/lessons.md has no entries |
-| 15 | FreeCAD reference | N/A | inputs/ is empty |
-| 16 | Fits and assembly (cross-part, carried from round 1) | PASS (notes) | The round-1 cross-part items are closed: the idler head clears the moved columns at both slot ends (head edge at x 113.25 against the column at x ≤ 104, and x 126.75 against the front wall at 130.5); the face screws are gone; the tie has a tunnel; the columns are joined. Bolt lengths: M3 × 45 reaches y 77, where the wheel stack needs 75.5; M3 × 35 reaches y 67, where the idler stack needs 63. The sprocket-hub vs N20-bushing clash is fixed in the sprocket job. assembly_check.py places its axle bolt at y 12.9–57.9 with no head; the real bolts have the head at y 29–32 and the shank from y 32, so the reported "clear" doesn't cover them. I checked them by hand above (R4) |
+| 15 | FreeCAD reference | N/A | No inputs/ folder |
+| 16 | Fits and assembly (cross-part) | PASS | Pocket 12.2 × 10.2 printed on a 12 × 10 gearbox, 0.1 a side, a §3 locating fit. Skin hole Ø4.5 printed over the Ø4 × 0.8 boss. The can and the gearbox sit 0.1 off the same V planes, so the zip tie lowers the motor ≤ 0.14 mm without tilting it. assembly_check.json: 154 bodies, 0 collisions, no exemptions; nacelle 1.5 mm and housing 1.0 mm from the links; 11 mm gearbox and 9/10 mm shafts fit; jack screw has 6.5 mm in the buttress at every slot position, socket outside, key path clear; 2.0 / 4.2 mm of thread past the nylocs, wall nuts engaged |
 
 ## Required fixes
 
-1. **Make the idler slot a true hull of its two teardrops (rule §2, overhangs and bridges).** At l.150, raise the slot box's top from Z_A + r (1.8 above the axle) to the tip height Z_A + r·√2 (2.55). The roof then becomes one 8 mm bridge, anchored on both 45° flanks, instead of a floating 22.5 to 26.2 mm² patch (slab sections in item 6). The bolt also gains 1.05 mm of headroom, so roof sag can't bind the slide (spec §8: "idler bolts slide the full ±4 mm"). The nut slot (top at +3.0) is unaffected.
-2. **Stand the cradle cheeks and rear-stop posts on the cradle (rule §2, overhangs).** Raise CRADLE_HALF_X from 7.0 to 8.3 (= MOTOR.gb_w/2 + 0.3 + CHEEK_T), or run the cheeks and posts down to the floor. Today 1.3 mm of each cheek's 2.0 mm base hangs in the air (mesh_check z 6.99, span 1.3 × 25.0 and × 1.7, four of each), so the cheek that holds the motor against its reaction torque joins the cradle along only 0.7 mm. The tie tunnel, at ±(CRADLE_HALF_X + CHEEK_T + 2), still exits both sides.
-3. **Fillet the boss-to-wall joins (rule §2, internal corners on load paths and abrupt thickness changes).** Add r 1.5 fillets, or 1.5 × 45° strips like the floor ones, where the Ø20 road-wheel bosses, the 30 × 24 idler block and the journal boss meet the wall's inner face (l.111, l.127–131). This finishes round-1 fix 8. The strength round-1 boss check assumed these fillets (Kt 1.5 instead of 2).
-4. **Stop relying on preload to hold the idler (rule §4).**
-   - (a) Add a positive stop that holds the idler bolt against at least 2 × 14.9 ≈ 30 N rearward without friction: for example, a jack screw bearing on the bolt from behind, or ratchet steps in the slot.
-   - (b) Add an M3 DIN 9021 washer (Ø9) under each idler-bolt head to the spec §2 fastener list. A bare Ø5.5 head bears on about 5.5 mm² beside the slot today, and on about 3 mm² once fix 1 raises the roof; a Ø9 washer gives about 26 mm². The nut side (about 7 mm² today, about 4 mm² after fix 1) can't take a washer, which is why (a) is needed.
-   - (c) Add "idler bolt not slid in its slot (pen mark)" to spec §8 proof test (2), as strength round 1 proposed.
-   - BUILD_GUIDE step 6 currently locks the slot by friction ("tighten the idler bolt's nut (inside) to lock the slot"), which is exactly what §4 rules out. That step also calls the inside part the nut; it is the head.
+None.
 
-## Round 1 fixes checked
+## Round 2 fixes checked
 
-1. Join the lid columns to the walls: **done.** The columns overlap the side walls by 0.5 mm (a 4.2 mm neck at x 97.9–102.1) and the rear wall by 2.5 mm, and the probe finds solid all the way from column to wall at z 20 and z 40 for all four. The joins aren't filleted, which is acceptable at the column SF of 190 or more found in strength round 1.
-2. Idler travel ±4: **done.** The front columns moved to x 100.
-3. Flat cantilevers under the bosses: **done.** The bosses and the idler block run to the floor, and the z 4.5 / 5.52 shelves are gone from mesh_check.
-4. Teardrop idler slot: **partly done.** The ends are teardrops, but the flat roof sits below the tips (fix 1).
-5. Zip tie: **done.** A 4.0 × 2.0 tunnel with a 1.0 mm roof (bridge 4.0 × 14.0). It is smaller than suggested but takes ties up to 3.6 × 1.2 mm; name that width in the spec.
-6. Motor screw heads vs the sprocket hub: **superseded.** There are no face screws now.
-7. M3 × 45 road-wheel bolts: **done** (spec §2).
-8. Load-path fillets: **partly done.** The floor fillets are in, but the boss joins are still sharp (fix 3).
+1. **Idler slot hull up to the teardrop tips: done.**
+   - The box top is now Z_A + r·√2 = Z_A + 2.55 (l.265–266), so the bolt has 1.05 mm of headroom.
+   - mesh_check now shows one 8.0 × 7.4 bridge per side at z 14.55, anchored on both 45° flanks. The layer analysis reaches 3.9 mm, half the span.
+   - The floating 22–26 mm² patch is gone.
+2. **Cheeks standing on the cradle: done, by a different route.**
+   - The trough walls are the cradle block itself: CRADLE_HALF_X 12.1 from the floor (l.217), 4.06 / 5.46 thick.
+   - The rear-stop posts are gone; the motor is located by its face.
+   - mesh_check has no z 6.99 ledges, and the layer analysis finds nothing unsupported in the cradle.
+3. **Fillets where the bosses meet the wall: done.**
+   - The Ø26 bosses have 1.5 × 45° collars and strips (cad_checks "45° collar at the wall").
+   - The idler block has strips along its top and at the front wall.
+   - The journal boss is gone.
+4. **Idler positive stop: done.**
+   - (a) An M3 × 20 jack screw in a buttress bears on the bolt head. assembly_check finds it clear at both slot ends, with 6.5 mm of thread.
+   - (b) The DIN 9021 washer is in spec §2 and the BOM.
+   - (c) Pen marks are in spec §8, tests 1 and 2.
+   - The BUILD_GUIDE now says the inside part is the head (step 3), and tensions with the jack screw, snugging the head only "to keep the bolt square" (step 8).
+
+Round-2 recommendations:
+- R1 (inserts): done.
+- R2 (11.46 mm idler nut-slot roof): unchanged, and still prints. It is anchored along its inner edge and both ends; the layer analysis reaches 2.4 mm.
+- R3 (toggle): moved to the lid; cad_checks finds no switch hole.
+- R4 (assembly_check): rewritten with heads, shanks and no exemptions.
+- R5 (slice plan): still open; see the note below.
+
+## Printing notes vs print_requirements.json
+
+The brief's printing notes:
+- floor on the bed;
+- a 0.4 bed chamfer.
+
+print_requirements.json asks for:
+- PETG;
+- 5 perimeters;
+- 5 top and 5 bottom layers;
+- 30 % gyroid;
+- layers ≤ 0.2;
+- 230–250 °C nozzle, 80–90 °C bed;
+- ≤ 12 h.
+
+Nothing in the brief contradicts these. elefant_foot_compensation is not required here; the profile and the plan both set 0.2, and no fit sits at the first layer. The requirements are consistent with the brief and the strength basis.
+
+## Note for slicing (not a DFM item)
+
+slice_plan.json overrides `perimeters` 4 and `fill_density` 25 %, against the required minimums of 5 and 30 %. The validator will fail it at SLICE, so the slicing-lead must raise both before slicing. The requirements themselves are right.
 
 ## Recommendations (not blocking)
 
-- R1. Lid fastening (§4). The lid comes off for every battery charge (the cells come out of the holder to charge) and every idler re-tension. That is more than the "few times" §4 allows for self-tappers in PETG. Heat-set M3 inserts need Ø4.0–4.2 holes, and COLUMN_D should go from 8 to 10 so the boss is at least 2 × the insert OD (this was round-1 R3).
-- R2. The idler nut slot's roof bridges 11.46 mm (x 114.27–125.73) at its opening in the outer face. It is anchored along its inner edge, so it will print, but check on the first print that the nut still slides the full slot.
-- R3. Mini toggle: check that your switch's bushing still leaves room for its nut through the 4.5 mm wall. If it doesn't, counterbore the wall from the inside to about 2.5 mm thick around the hole.
-- R4. In assembly_check.py, model the axle bolts as a head at y 29–32 plus a shank from y 32 to 77 (wheels) or 67 (idlers). For the motor, accept only the shaft-in-bore overlap instead of skipping the whole motor/sprocket pair (see the sprocket review).
-- R5. slice_plan.json still overrides perimeters to 4, below the print_requirements minimum of 5. The slicing-lead should update it before SLICE.
+- **R1. Buttress and nacelle roots.**
+  - For consistency with the rest of the tub, add 1.5 × 45° strips at the buttress's vertical corner with the idler-block face (x 108, |y| 28) and along its front-face base (x 108, |y| 22–28).
+  - Tell strength round 3 that both roots are sharp (use Kt ≈ 3).
+  - Also tell it that the jack screw has 6.5 mm of thread in the buttress at |y| 25.4, not the 11 mm through the idler block that strength round 2 sized (SF 10.9).
+- **R2. Nacelle underside.** The nacelle's V bottom starts in mid-air at print z 1.11. Its first layer is a 0.3 × 3.7 mm strand hung from the housing face. It will print, but may droop a little. Look at the nacelle underside on the first print: any droop comes out of the 1.5 mm link clearance (assembly_check `nacelle_to_links_min_mm`).
+- **R3. Skin.** Ask strength round 3 to check the 1.0 mm skin in plate bending under an inward push on the Ø7 thrust-washer ring. That is the 3 N skid-steer side load of spec §4; my rough estimate is 1–2 MPa. Build step 6 already backs the skin with the gearbox face while the hub is set.
+- **R4. Insert holes.** Ø4.0 in CAD with no compensation prints at about Ø3.8, by the project's own +0.2 default. That is fine for heat-setting, but spec §3 gives "Ø4.0 ±0.1". Either model Ø4.2 so it prints about 4.0, inside §4's 4.0–4.2, or state the expected printed size in the spec so inspection doesn't reject it.

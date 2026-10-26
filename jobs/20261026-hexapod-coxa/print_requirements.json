@@ -5,13 +5,13 @@
   "perimeters": 4,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
-  "fill_density": 50
+  "fill_density": 100
  },
  "max": {
   "layer_height": 0.2
  },
  "equals": {
-  "fill_pattern": "gyroid"
+  "fill_pattern": "rectilinear"
  },
  "nozzle_temp_c": [
   230,

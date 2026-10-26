@@ -1,0 +1,12 @@
+key,listing,retailer,url,pack_qty,pack_price,currency,price_cad_per_pack,unit_price_cad,date_checked,confidence,notes
+m3ft50,"M3 × 50 socket head, class 12.9 alloy, fully threaded, pack of 10",Amazon.ca (typical),https://www.amazon.ca/,10,12.00,CAD,12.00,1.2000,2026-10-26,estimate,"Estimate: a fully threaded 12.9 listing exists on Amazon.ca (Sutemribor, 55 pcs) but its price could not be read"
+m3ft40,"M3 × 40 socket head, class 12.9 alloy, fully threaded, pack of 10",Amazon.ca (typical),https://www.amazon.ca/,10,11.00,CAD,11.00,1.1000,2026-10-26,estimate,Estimate
+m3washer.din9021,"M3 penny washers Ø9 × 0.8 (DIN 9021), pack of 50",Hardware store / Amazon.ca (typical),,50,5.00,CAD,5.00,0.1000,2026-10-26,estimate,Estimate
+m17,"M1.7 × 5 self-tapping servo horn screws, pack of 100",Amazon.ca / AliExpress (typical),,100,7.00,CAD,7.00,0.0700,2026-10-26,estimate,Estimate. Many servo bags already include one horn screw each
+woodscrew,"#4 × 2 in wood screws, small pack",Hardware store (typical),,25,4.00,CAD,4.00,0.1600,2026-10-26,estimate,Estimate. Or 2 small C-clamps
+thumbscrew,"1/4""-20 × 5/16"" knurled thumb screw",Camera or hardware store (typical),,1,3.00,CAD,3.00,3.0000,2026-10-26,estimate,Estimate
+flatbar,"14-gauge (1.9 mm) steel strip or sheet, small piece",Princess Auto / Home Depot (typical),,1,12.00,CAD,12.00,12.0000,2026-10-26,estimate,Estimate. Two 21 × 10 and two 14 × 8 mm plates are cut from it
+petg.generic,"Sunlu PETG 1.75 mm, 1 kg (price shown ""and up"")",Canada Computers,https://www.canadacomputers.com/en/1207/filaments,1,14.99,CAD,14.99,14.9900,2026-10-26,medium,"Seen on the category page, 26 Oct 2026; colour options may cost more"
+consumables.foamtape,Scotch-Mount double-sided mounting tape 1 × 60 in,Princess Auto,,1,9.99,CAD,9.99,9.9900,2026-10-26,estimate,From prices_b
+m3nut,"M3 hex nuts DIN 934, pack of 50",Hardware store / Amazon.ca (typical),,50,3.00,CAD,3.00,0.0600,2026-10-26,estimate,Estimate
+m2washer,"M2 flat washers, pack of 100",Hardware store / Amazon.ca (typical),,100,4.00,CAD,4.00,0.0400,2026-10-26,estimate,Estimate

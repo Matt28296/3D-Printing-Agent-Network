@@ -1,6 +1,6 @@
 # Tracked rover: build guide
 
-Robot 2 of 3. Skid-steer tank with printed tracks on steel pins, 2 × N20 gear motors, TB6612FNG driver, ESP32, 2 × 18650 cells, HC-SR04 distance sensor. About 160 × 142 × 60 mm, 0.6 kg, ~170 mm/s. **Drop rating: 5 cm onto a hard floor.** It is not built to survive a fall off a desk.
+Robot 2 of 3. Skid-steer tank with printed tracks on steel pins, 2 × N20 gear motors, TB6612FNG driver, ESP32, 2 × 18650 cells, HC-SR04 distance sensor. About 160 × 155 × 73 mm, 0.65 kg, about 145 mm/s on a straight run. **Drop rating: 5 cm onto a hard floor.** It is not built to survive a fall off a desk.
 
 ## 1. Bill of materials
 
@@ -12,30 +12,45 @@ Robot 2 of 3. Skid-steer tank with printed tracks on steel pins, 2 × N20 gear m
 | Drive sprocket | `20261026-rover-sprocket` | 2 | 1 |
 | Idler | `20261026-rover-idler` | 2 | 1 |
 | Road wheel | `20261026-rover-wheel` | 4 | 1 |
-| Track link | `20261026-rover-track-link` | 34 | **2** (68 links) |
+| Track link | `20261026-rover-track-link` | 34 (put the 2 spares on one plate) | **2** (68 links + 2 spare) |
 
-Print times and filament: see `README.md` next to this file.
+Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 
 ### Bought
 | Qty | Item | Notes |
 |---|---|---|
-| 2 | N20 gear motor, 6 V, 100 rpm, metal gearbox (GA12-N20), 3 mm D-shaft 10 mm long | the gearbox length varies with the ratio; measure yours |
+| 2 | N20 (GA12) gear motor: 6 V, 100 rpm (≈150:1), **LP or MP winding** (stall ≤ 0.7 A at 6 V), 9 mm metal gearbox, 3 mm D-shaft 9–10 mm long. For example, Pololu 150:1 Micro Metal Gearmotor LP or MP 6 V | An 11 mm gearbox also fits. Don't use an HP winding: it overloads the driver and the printed parts. Measure each motor's stall torque before the proof tests (chassis `spec.md` §8) |
+| 1 | Pololu #1996 universal aluminium mounting hub for a 3 mm shaft, M3 holes (2-pack, with set screws) | One hub per sprocket. Its M3 set screw goes on the shaft's flat |
+| 8 | M3 × 12 socket or button head screws | Sprocket disc to hub, 4 per side |
+| 4 | M3 × 50 socket head cap screws, class 12.9, **fully threaded** | Road-wheel axles, head inside the tub. An ordinary ISO 4762 screw this long has only 18 mm of thread and never reaches the wall nut, so buy ones sold as fully threaded |
+| 2 | M3 × 40 socket head cap screws, class 12.9, **fully threaded** | Idler axles, head inside the tub |
+| 2 | M3 × 20 set screws, flat point (DIN 913) | Idler jack screws. Each cuts its own thread in the chassis |
+| 6 | M3 nuts (DIN 934) | One in each wall nut trap |
+| 6 | M3 nyloc nuts (DIN 985) | Outside each wheel and idler |
+| 26 | M3 washers (ISO 7089, Ø7 × 0.5) | 12 for the running faces (one each side of every wheel and idler), 4 under the road-wheel bolt heads, 8 under the hub screws, 2 as thrust washers on the motor shafts |
+| 2 | M3 penny washers (DIN 9021, Ø9 × 0.8) | Under the idler bolt heads |
+| 4 + 4 | M3 heat-set inserts (M3 × 5.7, for a Ø4.0 hole) + M3 × 8 screws | Lid columns. The lid comes off for every charge |
+| 68 (+2 spare) | Ø2 × 24 mm steel dowel pins (ISO 2338 / 8734), or 2 mm silver-steel rod cut to 23.5 mm and deburred | Track pins: gripped by each link's outer knuckles, running free in the next link's centre knuckle |
 | 1 | TB6612FNG motor-driver carrier (Pololu-size, with headers) | |
-| 1 | ESP32 DevKit (38-pin DevKitC or 30-pin DOIT), headers soldered pins down | |
-| 1 | 170-point mini breadboard, adhesive back | carries the TB6612 |
-| 2 | 18650 Li-ion cells, **protected** (or a 2S BMS) | charge them outside the rover |
-| 1 | 2 × 18650 series holder with leads (77 × 41 × 21 mm) | |
-| 1 | MP1584 (or similar) buck module, set to **5.0 V before connecting** | feeds the ESP32 and the HC-SR04 |
-| 1 | MTS-102 mini toggle switch (6 mm threaded bushing, Ø6.4 hole) | main power, in the rear wall |
+| 1 | ESP32 DevKit, headers soldered pins down: 38-pin DevKitC (54.4 × 27.9 mm) or 30-pin DOIT DevKit V1 (51.8 × 28.2 mm) | Boards shorter than about 49.5 mm don't reach the seat's ledge |
+| 1 | 170-point mini breadboard, adhesive back | Carries the TB6612 |
+| 2 | 18650 Li-ion cells: **protected** cells (about 70 mm long), or unprotected cells with a 2S BMS | Charge them outside the rover |
+| 1 | 2 × 18650 series holder with leads, made for the cells you chose. Protected cells need a long holder; up to 80 × 41 × 21 mm fits | |
+| (1) | 2S BMS | Only with unprotected cells |
+| 1 | Two-bay Li-ion charger | |
+| 1 | MP1584 (or similar) buck module, 22 × 17 × 4 mm, set to **5.0 V before connecting** | Feeds the ESP32 and the HC-SR04. It goes under the lid, on foam tape |
+| 1 | MTS-102 mini toggle switch (M6 × 0.75 bushing, at least 6 mm of thread) | Main power, on the lid, lever up |
 | 1 | HC-SR04 ultrasonic sensor | 1 kΩ + 2 kΩ resistors for its ECHO line (5 V → 3.3 V) |
-| 1 | 100 µF electrolytic capacitor | across the TB6612's VM and GND |
-| 4 | M3 × 45 bolts (pan or socket head) | road-wheel axles, head inside the tub |
-| 2 | M3 × 35 bolts | idler axles, head inside the tub |
-| 6 + 6 + 12 | M3 nuts, M3 nyloc nuts, M3 washers | a nut in each wall trap, a washer each side of every wheel/idler, a nyloc outside |
-| 4 | M3 × 10 self-tapping screws | lid |
-| 2 | M2 × 4 set screws (or M2 × 6 self-tappers) | sprocket grub screws |
-| 68 (+2 spare) | Ø2 × 24 mm steel dowel pins (ISO 2338 / 8734), or 2 mm silver-steel rod cut to 23.5 mm and deburred | track pins: gripped by each link's outer knuckles, running free in the next link's centre knuckle |
-| — | 2 zip ties (motors), 2 small zip ties (ESP32), 1 velcro strap (20 mm), jumper wires, 22 AWG wire | |
+| 1 | 100 µF electrolytic capacitor, 16 V or more | Across the TB6612's VM and GND |
+| — | Zip ties: 2 at most 3.6 mm wide (motors), 2 at most 2.5 mm wide (ESP32), 1 for the lid's tie bar. 1 velcro strap (20 mm), jumper wires, 22 AWG wire, heat-shrink, double-sided foam tape, hot glue, medium threadlocker | |
+
+### Tools
+- 1.5 mm hex key, ball end, long arm: jack screws and hub set screws
+- 2.5 mm hex key
+- Soldering iron, which also sets the inserts
+- Small vice or parallel pliers: track pins
+- Multimeter: setting the buck
+- Kitchen scale and a 50 mm arm: motor stall torque
 
 ### Bought: battery monitor and power protection
 | Qty | Item | Notes |
@@ -74,14 +89,77 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
 
 ## 3. Assembly
 
-1. **Track chains.** Chain 34 links per side: a link's centre knuckle goes between the next link's two outer knuckles, grousers all facing out. Press a Ø2 steel pin through outer knuckle, centre knuckle and outer knuckle with a small vice or parallel pliers until it sits flush on both sides. The outer knuckles grip it and the centre knuckle runs free, so nothing needs gluing. Check every hinge flexes freely to about 40° both ways before moving on.
-2. **Chassis hardware.** Press an M3 nut into each of the 4 road-wheel nut traps and the 2 idler nut slots on the outside of the walls. Push the bolts in from the inside, head inside: M3 × 45 for the road wheels, M3 × 35 for the idlers. Tighten the road-wheel bolts. Leave the idler bolts loose for now.
-3. **Motors.** Solder leads to the motor terminals first. Drop each N20 into its cradle from above: gearbox between the cheeks, shaft pointing into the wall's journal, gearbox face against the journal boss, the can's end cap against the rear stop. Pull a zip tie through the tunnel under the cradle and round the can, and tighten it.
-4. **Wheels.** On each bolt: washer, road wheel (or idler, hub towards the wall), washer, nyloc nut. Tighten the nyloc until the wheel has about 0.3 mm end play and still spins freely.
-5. **Sprockets.** From outside, slide each sprocket's Ø10 hub into the wall's journal and press its D-bore onto the N20 shaft, lining the flat up first, until the hub stops 0.5 mm short of the gearbox face. The hub should turn freely in the journal. Tighten the M2 set screw onto the shaft's flat through the gap between the wall and the track.
-6. **Tracks.** Wrap each 34-link loop round its sprocket, road wheels and idler, then join it with the last pin. Push the idler forward until the top run sags about 3–5 mm between sprocket and idler, then tighten the idler bolt's nut (inside) to lock the slot.
-7. **Power.** Strap the battery holder to the floor with the velcro through the floor slots. Fit the toggle switch through the rear wall (nut outside). Fit the HC-SR04 behind the front wall with its transducers through the holes; a dab of hot glue holds the board.
-8. **Lid.** Stick the mini breadboard on the front of the lid and push the TB6612 into it. Stick the buck module under the lid. Seat the ESP32 pins-down on its ledges and fix it with two small zip ties through the slots at its ends, across the pin-free ends of the board (never across the pin rows). Bring the motor, battery and sensor leads up through the cable hole and wire per section 2. Screw the lid on (4 × M3 × 10).
+**Before you start**
+- **Check the bought parts against section 1:**
+  - the axle bolts are threaded right up to the head;
+  - each motor's gearbox is 9 or 11 mm long and its shaft 9–10 mm;
+  - the hub's four holes sit 5.5–6.85 mm from its centre, which is the range the sprocket's slots cover.
+- **Test-fit a motor in the chassis pocket.** The gearbox should slide in with light friction. If it binds, scrape the pocket's 45° faces lightly.
+- **Test a short chain first.** Make a 5-link test chain from the first plate of links and do the track-link proof tests (its `spec.md` §8) before printing the second plate.
+
+1. **Track chains.**
+   - Chain 34 links per side: a link's centre knuckle goes between the next link's two outer knuckles, grousers all facing out.
+   - Press a Ø2 steel pin through outer knuckle, centre knuckle and outer knuckle with a small vice or parallel pliers, until it sits flush on both sides. The outer knuckles grip it and the centre knuckle runs free, so nothing needs gluing.
+   - Check every hinge flexes freely to about 40° both ways.
+   - Leave each loop open (one pin out) for step 8.
+2. **Inserts.** Set an M3 heat-set insert in each of the four lid columns with the soldering iron (about 230 °C for PETG). Press it in square and flush with the column top, and let it cool.
+3. **Axle bolts.** Fit these first: later, a road-wheel bolt needs the battery out and an idler bolt needs the sensor out.
+   - Press an M3 nut into each of the 4 road-wheel nut traps and the 2 idler slots in the outer face of the walls, flats up.
+   - From inside the tub, push each bolt through the wall and screw it through its nut until the head sits on its washer on the boss face:
+     - road wheels: M3 × 50, with an M3 washer under the head;
+     - idlers: M3 × 40, with the Ø9 penny washer under the head.
+   - The part inside the tub is the bolt's **head**; the nut is outside.
+   - Tighten the road-wheel bolts (2.5 mm key). Leave the idler bolts finger-tight, at the rear end of their slots.
+4. **Jack screws.** From behind, screw an M3 × 20 set screw into the hole in each idler buttress: the block behind the idler slot, inside the tub. Turn it with the 1.5 mm key until its tip touches the idler bolt head. It cuts its own thread in the first few turns.
+5. **Motors.**
+   - Solder leads at least 150 mm long to each N20 and heat-shrink the joints.
+   - Turn the motor so its gearbox is a diamond, with a corner up. Lower it into its V-trough from above, the shaft pointing out through the wall. The gearbox fits the pocket only this way up.
+   - Slide it outward along the trough until the gearbox face stops on the skin at the end of the pocket. The shaft and its bearing boss come out through the hole in the skin.
+   - Pull a zip tie (at most 3.6 mm wide) through the tunnel under the trough and round the can. Lay the motor leads under the tie for strain relief.
+   - Put the tie's head beside the can, not on top, because the toggle hangs above the right-hand motor. Tighten it.
+6. **Hubs and sprockets.**
+   - On each shaft: an M3 washer (the thrust washer), then the aluminium hub.
+   - Push the motor outward, so the gearbox face is against the skin, and slide the hub in until it just touches the washer. The washer must still turn.
+   - Turn the shaft so its flat faces the hub's set screw. Put a drop of medium threadlocker on the set screw and tighten it on the flat (1.5 mm key).
+   - Bolt the sprocket disc to the hub through the slots: 4 × M3 × 12, each with a washer. The shaft end centres the disc in its middle hole.
+   - Tighten the screws evenly (2.5 mm key) and spin the sprocket: it should run true.
+7. **Wheels and idlers.** On each road-wheel bolt: washer, road wheel (hub towards the wall), washer, nyloc. Tighten the nyloc until the wheel has about 0.3 mm of end play and still spins freely. Fit each idler on its bolt the same way.
+8. **Tracks.**
+   - Back each jack screw off a few turns and push the idler to the rear of its slot.
+   - Wrap each 34-link loop round its sprocket, road wheels and idler, grousers out. Close it with the last pin at the front of the idler, where nothing is in the way. Back up the inner outer knuckle with a small block while you press.
+   - Tension each track with its jack screw. Turn it in until the top run sags 3–5 mm midway between the sprocket and the first road wheel; the top run rests on the road wheels, so read the sag in that 40 mm span. Don't go tighter, because tension costs drive torque.
+   - Snug each idler bolt head (2.5 mm key, from inside the tub), just enough to keep the bolt square. The jack screw holds the tension.
+   - Draw a pen line across each slot nut and the edge of its slot.
+9. **Sensor.**
+   - Bend the HC-SR04's four pins 90° towards the rear.
+   - Solder leads at least 150 mm long to the pins and heat-shrink them. If section 2 puts the ECHO divider in the lead, solder it in now.
+   - Fit the board behind the front wall with its transducers through the holes. A dab of hot glue each side holds it.
+10. **Battery.** Strap the battery holder to the floor with the velcro through the two floor slots, with the overlap under the floor.
+11. **Lid.**
+    - Stick the mini breadboard on the front of the lid and push the TB6612 into it. Stick the buck under the lid, beneath the breadboard, on foam tape.
+    - Fit the toggle through its hole, lever up, with a nut each side of the deck. If the bushing is too short for both nuts, leave the inner nut off.
+    - Push the jumpers onto the ESP32's pins. Then seat it pins-down on its ledges and fix it with two small zip ties through the slots at its ends: across the pin-free ends of the board, never across the pin rows.
+    - Fold the ESP32's wires flat towards the cable slots, one layer deep. There are 5 mm between the jumper housings and the battery holder, and 3.5 mm over the strap.
+    - Bring the motor, battery and sensor leads up through the two cable slots and zip-tie the bundle to the bar between them. Leave at least 150 mm of slack below, so the lid can lie beside the rover.
+    - Wire per section 2, then screw the lid on: 4 × M3 × 8 into the inserts.
+12. **Proof tests.** Measure each motor's stall torque first (chassis `spec.md` §8, test 2). Then do each part's `spec.md` §8 proof tests, then the system tests in this job's `spec.md` §8.
+
+**Service**
+- **Charging.** Undo the 4 lid screws and lift the lid aside on its leads. Take the cells out and charge them in the two-bay charger.
+- **Re-tensioning.**
+  - Take the lid off. The sensor and the idler bolt heads stay as they are.
+  - Turn each jack screw in with the 1.5 mm ball-end key, from above and behind, within 25° of the screw's axis. It slides the snug idler bolt forward.
+  - To slacken a track, back its jack screw off and push the idler back.
+- **Track wear.** When the idler reaches the front of its slot, take one link out. The idler goes back 5 mm, to near the middle of its slot.
+- **Opening a track or replacing a link.**
+  - Turn the track so the joint is at the front of the idler.
+  - Back up the inner outer knuckle with a small block, and drift the pin inward with a Ø2 punch or press it with a small clamp.
+- **Replacing a motor.**
+  1. Take the lid off. Slacken the track and walk the chain off the sprocket.
+  2. Take off the sprocket disc (4 screws). Loosen the hub's set screw and pull off the hub and the thrust washer.
+  3. Cut the zip tie and unplug the leads at the breadboard.
+  4. Slide the motor inward along its trough until the gearbox leaves the pocket, then lift it out.
+- **Replacing an axle bolt.** A road-wheel bolt needs the battery out, and an idler bolt needs the sensor out.
 
 ## 4. First drive
 
@@ -100,7 +178,7 @@ Flash `rover_test/rover_test.ino` (Arduino IDE, board "ESP32 Dev Module" on the 
 - **Sensor fault:** in autonomous mode, an HC-SR04 that gives no echo pulse at all (a loose wire) stops the rover instead of reading as "clear".
 - The motor PWM runs at 20 kHz, above hearing.
 
-Then do the proof tests in each part's `spec.md` §8 and record them in `inspection.md`: track chain under 4.5 kg, wheel bolt under 3 kg, motor stalls, and drops from 5 cm.
+Then do the proof tests in each part's `spec.md` §8 and record them in `inspection.md`: track chain under 4.5 kg, wheel bolt under 5 kg at the rim centre, motor stalls, and drops from 5 cm.
 
 ## 5. Safety
 

@@ -381,6 +381,16 @@ function placeTracks() {
 // hexapod: tripod walk in place
 function stepGait(dt) {
   const g = cfg.gait; state.phase = (state.phase + dt / g.period) % 1;
+  if (g.frames) {   // keyframes per leg: [coxa, femur, tibia] node angles (deg) over one cycle, e.g. from an IK gait
+    const n = g.frames[0].length, u = state.phase * n, i = Math.floor(u) % n, k = (i + 1) % n, a = u - Math.floor(u);
+    g.legs.forEach((leg, li) => {
+      const A = g.frames[li][i], B = g.frames[li][k], v = A.map((x, m) => x + (B[m] - x) * a);
+      if (!leg.objs) { leg.objs = {}; for (const key of ['coxa', 'femur', 'tibia']) leg.objs[key] = model.getObjectByName(leg[key]); }
+      ['coxa', 'femur', 'tibia'].forEach((key, m) => { const o = leg.objs[key]; if (o) o.rotation.z = deg(v[m]); });
+      if (leg.show) joints.forEach((j, m) => { j.value = Math.round(v[m] * j.sign); j.input.value = j.value; j.out.textContent = `${j.value}°`; });
+    });
+    return;
+  }
   for (const leg of g.legs) {
     const ph = (state.phase + (leg.tripod ? 0.5 : 0)) % 1;
     let c, f, t;

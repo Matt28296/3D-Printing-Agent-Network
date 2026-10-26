@@ -9,8 +9,8 @@
     -38.0,
     0.0
   ],
-  "volume_mm3": 31862.5,
-  "area_mm2": 23498.55,
+  "volume_mm3": 31376.89,
+  "area_mm2": 23369.19,
   "solids": 1,
   "holes": [
     {
@@ -22,7 +22,7 @@
       ],
       "point_on_axis": [
         -13.0,
-        -30.0,
+        -32.5,
         1.5
       ],
       "arc_deg": 355.0
@@ -36,35 +36,21 @@
       ],
       "point_on_axis": [
         -13.0,
-        30.0,
+        32.5,
         1.5
       ],
       "arc_deg": 355.0
     },
     {
-      "diameter": 10.2,
+      "diameter": 6.4,
       "axis": [
         0.0,
         0.0,
         1.0
       ],
       "point_on_axis": [
-        76.0,
         0.0,
-        1.5
-      ],
-      "arc_deg": 355.0
-    },
-    {
-      "diameter": 3.6,
-      "axis": [
-        0.0,
-        0.0,
-        1.0
-      ],
-      "point_on_axis": [
-        100.0,
-        -30.0,
+        -23.0,
         1.5
       ],
       "arc_deg": 355.0
@@ -77,8 +63,22 @@
         1.0
       ],
       "point_on_axis": [
-        100.0,
-        30.0,
+        102.0,
+        -32.5,
+        1.5
+      ],
+      "arc_deg": 355.0
+    },
+    {
+      "diameter": 3.6,
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        102.0,
+        32.5,
         1.5
       ],
       "arc_deg": 355.0
@@ -86,7 +86,7 @@
   ],
   "min_z_mm": 0.0,
   "watertight": true,
-  "mesh_faces": 3476,
+  "mesh_faces": 4540,
   "fits_bed": true,
   "bed_mm": [
     250,

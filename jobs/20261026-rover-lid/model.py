@@ -2,9 +2,14 @@
 
 On top: an ESP32 DevKit seat (38- or 30-pin, pins DOWN through a window into the tub, so female
 jumpers fit every pin; the PCB rests on end ledges and is held by a zip tie), a flat area for a
-170-point mini breadboard carrying the TB6612FNG motor driver (adhesive back), and a cable hole.
+170-point mini breadboard carrying the TB6612FNG motor driver (adhesive back), the power toggle
+switch (lever up) in the rear corner, and two cable slots either side of a zip-tie bar.
 Design frame = rover world frame; the lid's underside is the chassis top (Z = TOP_Z).
 Printed flat, underside on the bed; the seat rises from the top face.
+Round 3 (deep review 04 S-06, S-09, S-10): screws moved to the chassis's new insert columns
+(-13, ±32.5) and (102, ±32.5); MTS-102 toggle moved here from the rear wall (its lever stuck out
+20 mm behind the tracks); the Ø10 cable hole became two 10 × 10.5 slots with a 3 mm tie bar
+between them, so the wire bundle can be tied to the lid (strain relief).
 """
 import sys
 from pathlib import Path
@@ -13,7 +18,7 @@ from build123d import Align, Axis, Box, Cylinder, Pos, fillet
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-rover-assembly"))
-from rover_frame import HALF_W_OUT, TOP_Z, X_FRONT_OUT, X_REAR_OUT  # noqa: E402
+from rover_frame import HALF_W_OUT, LID_SCREWS, TOP_Z, X_FRONT_OUT, X_REAR_OUT  # noqa: E402
 
 from hobby_parts import ESP32_DEVKIT_30, ESP32_DEVKIT_38, MINI_BREADBOARD, chamfer_plane_edges  # noqa: E402
 
@@ -21,7 +26,7 @@ from hobby_parts import ESP32_DEVKIT_30, ESP32_DEVKIT_38, MINI_BREADBOARD, chamf
 HOLE_COMP = HOLE_COMP_DEFAULT
 T = 3.0
 CORNER_R = 6.0
-SCREWS = [(-13.0, 30.0), (-13.0, -30.0), (100.0, 30.0), (100.0, -30.0)]   # = chassis COLUMNS (round 2)
+SCREWS = LID_SCREWS        # = chassis COLUMNS: (-13, ±32.5), (102, ±32.5); M3 × 8 into heat-set inserts
 SCREW_D = 3.4
 BOARDS = (ESP32_DEVKIT_38, ESP32_DEVKIT_30)
 USB_END_X = 14.0          # both boards' USB end (rear), so a cable reaches over the rear
@@ -36,7 +41,11 @@ END_LEDGE = 2.4           # full-width ledge at each end, outside the pin housin
 TIE_SLOT = (3.2, 1.8)     # zip-tie slots beside the board (x, y)
 TIE_FROM_END = 1.2        # ties cross the board 1.2 mm from its ends, where there are no pins (DFM round 1)
 BB_X0 = 84.0              # mini breadboard area (47 × 35) starts here
-CABLE_HOLE = (76.0, 0.0, 10.0)    # x, y, Ø: motor, battery and sensor leads up from the tub
+CABLE_X = (71.0, 81.0)    # two cable slots (motor, battery and sensor leads up from the tub) ...
+CABLE_Y = (1.5, 12.0)     # ... at |y| 1.5-12, either side of a 3 mm zip-tie bar
+CABLE_R = 2.0             # slot corner radius
+SWITCH = (0.0, -23.0)     # MTS-102 mini toggle, lever up: M6 bushing through the deck, a nut each side
+SWITCH_D = 6.2            # printed hole for the M6 bushing
 BED_CHAMFER = 0.4
 
 
@@ -66,12 +75,18 @@ def design():
         for s in (-1, 1):
             yc = s * (HALF + RAIL_W + 1.5 + TIE_SLOT[1] / 2)
             lid -= _box(xm - TIE_SLOT[0] / 2, xm + TIE_SLOT[0] / 2, yc - TIE_SLOT[1] / 2, yc + TIE_SLOT[1] / 2, z0 - 1, z1 + 1)
-    # screws, cable hole
+    # screws, toggle switch, cable slots either side of the tie bar
     for (x, y) in SCREWS:
         lid -= Pos(x, y, z0 - 1) * Cylinder((SCREW_D + HOLE_COMP) / 2, T + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    cx, cy, cd = CABLE_HOLE
-    lid -= Pos(cx, cy, z0 - 1) * Cylinder((cd + HOLE_COMP) / 2, T + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    assert BB_X0 + MINI_BREADBOARD.length <= X_FRONT_OUT - 3 and cx + cd / 2 < BB_X0
+    sx_, sy_ = SWITCH
+    lid -= Pos(sx_, sy_, z0 - 1) * Cylinder((SWITCH_D + HOLE_COMP) / 2, T + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for s in (-1, 1):
+        y0, y1 = sorted((s * CABLE_Y[0], s * CABLE_Y[1]))
+        c = HOLE_COMP / 2      # every slot edge prints ~0.1 inward
+        slot = _box(CABLE_X[0] - c, CABLE_X[1] + c, y0 - c, y1 + c, z0 - 1, z1 + 1)
+        slot = fillet(slot.edges().filter_by(Axis.Z), radius=CABLE_R)
+        lid -= slot
+    assert BB_X0 + MINI_BREADBOARD.length <= X_FRONT_OUT - 3 and CABLE_X[1] < BB_X0 and CABLE_X[0] > xb
     return lid
 
 
