@@ -35,7 +35,7 @@ mounts = ns["LEG_MOUNTS"]
 pil = [-(22.8 - 5.9) + 22.8 / 2 - 27.8 / 2, -(22.8 - 5.9) + 22.8 / 2 + 27.8 / 2]   # -19.4, 8.4 (servo x)
 
 # ---- CHECKS: one line per critical dimension in design_brief.md -----------------
-check("overall size 154.8 × 138.8 × 46.0", all(abs(a - b) < 0.05 for a, b in zip(size, [154.8, 138.8, 46.0])), size)
+check("overall size 166.1 × 146.8 × 46.0", all(abs(a - b) < 0.05 for a, b in zip(size, [166.1, 146.8, 46.0])), size)
 check("plate T_BODY 6.0 (strength round 1)", solid(0, 0, 0.1) and solid(0, 0, 5.9) and not solid(0, 0, 6.1), "probe at the centre")
 ok_w = all(not solid(*w(mx, my, a, u, v), zm) for (mx, my, a) in mounts for (u, v) in ((-17.05, 6.35), (6.05, -6.35), (-5.5, 0)))
 ok_e = all(solid(*w(mx, my, a, u, v), zm) for (mx, my, a) in mounts for (u, v) in ((-17.15, 0), (6.15, 0), (-5.5, 6.45)))
@@ -46,10 +46,14 @@ ok_p = all(not solid(*w(mx, my, a, u, dv), zm) and solid(*w(mx, my, a, u, dv * 1
 check("tab-screw clearance holes Ø2.2 + HOLE_COMP (M2 machine screws), 12", ok_p, "±1.15 void, ±1.27 solid")
 lig = min(math.dist((-17.1, 0), (pil[0], 0)), math.dist((6.1, 0), (pil[1], 0))) - 1.2
 check("ligament window → clearance hole >= 1.0 CAD", lig >= 1.0 - 1e-6, round(lig, 2))
+ok_s = all(solid(*w(mx, my, a, 6.15, v), zm) and solid(*w(mx, my, a, 17.35, v), zm) and not solid(*w(mx, my, a, 17.45, v), zm)
+           for (mx, my, a) in mounts for v in (-3.0, 0.0, 3.0))
+check("strip outside each window's outboard end 11.3 deep (MARGIN 8, strength round 3)", ok_s,
+      "u 6.1 → 17.4 at v 0, ±3 on all six mounts")
 cols = [h for h in holes if abs(h["diameter"] - 2.8) < 0.01]
-check("4 columns Ø8 at (±36, ±25) with Ø2.6 + HOLE_COMP pilots", len(cols) == 4 and sorted(
+check("4 columns Ø10 at (±36, ±25) with Ø2.6 + HOLE_COMP pilots", len(cols) == 4 and sorted(
       (round(h["point_on_axis"][0]), round(h["point_on_axis"][1])) for h in cols) == [(-36, -25), (-36, 25), (36, -25), (36, 25)]
-      and solid(36 + 3.9, 25, 30) and not solid(36 + 4.1, 25, 30), [h["point_on_axis"][:2] for h in cols])
+      and solid(36 + 4.9, 25, 30) and not solid(36 + 5.1, 25, 30), [h["point_on_axis"][:2] for h in cols])
 check("column height 40 above the plate top", solid(36, 25 + 3, T + 39.9) and not solid(36, 25 + 3, T + 40.1), "top at z 46")
 tie = [w(mx, my, a, *ns["TIE_UV"]) for (mx, my, a) in mounts]
 check("SYS-5 tie slots beside each window", all(not solid(x, y, zm) for x, y in tie), [tuple(round(c, 1) for c in t) for t in tie])

@@ -10,6 +10,9 @@ Round 3 (deep review 2026-10-26, strength round 1):
     head and washer on the underside, washer and nut on the tab inside the body.
   - Middle legs at y ±56 and columns at (±36, ±25) (hex_frame.py): clear of the tabs now on the plate top.
   - SYS-5: a 3.2 × 1.8 tie slot beside each window, on the side the femur and tibia leads come up.
+Round 4 (strength round 3): MARGIN 8 (the strip outside each window's outboard end, which the reversed servo's
+outboard tab screw pulls up in the drop) and Ø10 columns (robot lifted by the deck and tipped on its side).
+The tab screws become M2 × 14 with Nyloc nuts, driven snug (assembly BUILD_GUIDE).
 
 Design frame: hexapod body frame with the plate's UNDERSIDE at Z = 0 (in the assembled robot it sits at
 hex_frame.STANCE_Z_PU). Outline = convex hull of the six windows and their pilots, plus a margin.
@@ -32,8 +35,10 @@ HOLE_COMP = HOLE_COMP_DEFAULT    # +0.2 on every hole (fdm-design-rules default;
 CLR, END_CLR = 0.4, 0.2          # coxa servo window side / end clearance (printed)
 LEAD = "none"                    # B1 option 2: the servo is reversed, its lead never crosses the plate
 TAB_SCREW_CLEAR = 2.2            # strength round 1: M2 machine screw clearance, printed (2.4 in CAD), slotted 0.4 outward
-MARGIN = 4.0                     # plate beyond each pilot / window
-COLUMN_D, COLUMN_PILOT, PILOT_DEPTH = 8.0, 2.6, 10.0
+MARGIN = 8.0                     # plate beyond each pilot / window. Strength round 3: 4 -> 8, so the strip outside each
+                                 # window's outboard end is 11.3 deep (was 7.3; drop SF 2.03 -> 3.37 at the outboard screw)
+COLUMN_D, COLUMN_PILOT, PILOT_DEPTH = 10.0, 2.6, 10.0   # strength round 3: Ø8 -> Ø10 (robot lifted by the deck, tipped 90°:
+                                                        # SF 2.29 -> 3.68)
 COLUMN_FILLET = 1.5              # root fillet (DFM round 1: the columns got 10 mm longer)
 STRAP = (3.0, 22.0)              # velcro slot w (y) × l (x), either side of the LiPo
 TIE_SLOT = (3.2, 1.8)            # SYS-5: lead tie slot, along × across the servo axis

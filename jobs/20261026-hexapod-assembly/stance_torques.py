@@ -27,6 +27,7 @@ MASS_G = {   # robot mass (g): the strength reviews' basis, and round 3 (new vol
     "strength round 1 basis (683 g)": 683.0,
     "round 3, printed estimate (812 g)": 812.0,
     "round 3, solid parts, upper bound (877 g)": 877.0,
+    "round 4, strength round 3's itemised mass with the round-4 changes (906 g)": 906.0,
 }
 STANCES = {
     "SYS-1: tibias tucked 15° (femur -3.0, tibia -12.0)": (-3.0, -12.0),

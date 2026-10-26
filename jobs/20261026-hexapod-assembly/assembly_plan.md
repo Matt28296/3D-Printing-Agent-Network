@@ -2,6 +2,9 @@
 
 Robot 3 of 3 (after the arm and the rover). Architect: Claude, 2026-10-26. Round 3: design-lead, 2026-10-26, after the
 deep review (`docs/reviews/2026-10-26-deep-review/01-bought-parts.md`, `05-hexapod-system.md`) and strength round 1.
+Round 4: design-lead, 2026-10-26, with the user-approved fixes from DFM and strength round 3: the coxa bracket gets a 45°
+roof on its lead notch and prints solid (100 % infill); the bottom plate gets `MARGIN` 8, Ø10 columns, and coxa tab screws
+M2 × 14 with Nyloc nuts, driven snug.
 The user chose the ESP32 and left servos, power and material to the designer.
 
 ## Decisions
@@ -72,13 +75,16 @@ Peak static torque of any planted leg, N·mm (% of the 216 N·mm stall), femur /
 | 812 g | **Strength** | 73 / 73 | **83 (38 %) / 86 (40 %)** | **87 (40 %) / 98 (45 %)** |
 | 877 g (round 3, solid parts) | SYS-1 | 95 / 64 | 104 (48 %) / 80 (37 %) | 108 (50 %) / 92 (43 %) |
 | 877 g | **Strength** | 79 / 79 | **89 (41 %) / 93 (43 %)** | **94 (43 %) / 106 (49 %)** |
+| **906 g (round 4)** | SYS-1 | 98 / 66 | 107 (50 %) / 82 (38 %) | 111 (52 %) / 95 (44 %) |
+| **906 g** | **Strength** | 82 / 82 | **92 (43 %) / 96 (44 %)** | **97 (45 %) / 109 (51 %)** |
 | 683 g | Servo centre (femur 0, tibia 0), for reference | 123 / 0 | 128 (59 %) / 20 | 130 (60 %) / 27 |
 
 **Chosen: the strength review's tuck at the same body height, femur −4.7°, tibia −14.0°** (`hex_frame.NEUTRAL_FEMUR/TIBIA`).
 It has the lower peak at both strides and every mass, it balances femur and knee when standing, and it bends the coxa shaft
-less (194 against 207 N·mm at 812 g). Walk at **30 mm** stride: 40 % of stall at the round-3 mass; the ×2 walking factor
-stays under stall. Above the ~⅓-of-stall guideline, so watch the femur case temperature (assembly `spec.md` §8). If they run
-hot, the review's options stand: 3.5 kg·cm-class micro servos (check the fit), or lighter parts.
+less (194 against 207 N·mm at 812 g; 216 against 231 at 906 g). Walk at **30 mm** stride: 44 % of stall at the round-4
+mass (906 g; 40 % at round 3's 812 g); the ×2 walking factor stays under stall (192 of 216 N·mm). At 40 mm the ×2 knee
+torque would reach stall (218 N·mm). Above the ~⅓-of-stall guideline, so watch the femur case temperature (assembly
+`spec.md` §8). If they run hot, the review's options stand: 3.5 kg·cm-class micro servos (check the fit), or lighter parts.
 
 Joint ranges in the gait (firmware angles), all inside the servo travel with ±20° of trim and inside the free sweeps:
 
@@ -91,23 +97,27 @@ Joint ranges in the gait (firmware angles), all inside the servo travel with ±2
 
 | Part | Qty | Solid volume (cm³) | Solid g (PETG 1.27) |
 |---|---|---|---|
-| Bottom plate | 1 | 111.7 | 141.9 |
+| Bottom plate | 1 | 132.0 (round 3: 111.7) | 167.7 |
 | Deck | 1 | 35.3 | 44.8 |
-| Coxa bracket | 6 | 23.3 | 29.6 each, 177.7 |
+| Coxa bracket (printed solid) | 6 | 23.3 | 29.6 each, 177.6 |
 | Femur | 6 | 6.0 | 7.6 each, 45.4 |
 | Tibia | 6 | 7.0 | 8.9 each, 53.5 |
-| **Printed, solid** | | | **463** (round 2: 304) |
+| **Printed, solid** | | | **489** (round 3: 463; round 2: 304) |
 
-Robot: **812 g** with the deep review's printed fraction (0.76 of solid) and its bought list plus round 3's nuts, washers,
-switch and six more servo extensions; **877 g** on the strength review's basis (solid parts). Round 2 was 662–683 g. The strength
-set's coxa brackets add 116 g and the 6 mm bottom plate 46 g: every walking and servo load rises by 19–28 %, but the drop cases
-are set by the servos' back-drive cap, not by mass.
+Robot, round 4: **906 g**, strength round 3's itemised estimate (the coxa and bottom-plate `strength.md`). It counts 840 g for
+round 3 (334 g printed, through a slicer-like layer model calibrated on the round-2 slices, + 506 g bought, itemised from
+`BUILD_GUIDE.md` §1), then the round-4 changes: solid coxae +53 g (31.0 g each instead of 22.1), `MARGIN` 8 +10.6 g and the
+Ø10 columns. With every printed part solid it would be about 1.0 kg (489 + 506 g).
+Round 3's 812–877 g used the deep review's printed fraction (0.76 of solid) or solid parts with a lighter bought list; round 2
+was 662–683 g. Against round 2 every walking and servo load rises by 33–37 %, but the drop cases are set by the servos'
+back-drive cap, not by mass.
 
 ## Assembly check (`assembly_check.py` → `assembly_check.json`, `assembly_hexapod.png`)
 
 Bodies: both plates, 6 × (coxa, femur, tibia, 3 MG90S with gear boss, tab-screw hardware, horn clamp screws), LiPo, **UBEC
 (50 × 10 × 20 on its side at y 22.5–32.5, x ±25, beside the LiPo)**, main switch body, ESP32 with jumper housings and bend
-zone, 2 × PCA9685. Collision = overlap > 1 mm³.
+zone, 2 × PCA9685. Collision = overlap > 1 mm³. Round 4 re-run (bottom plate with `MARGIN` 8 and Ø10 columns; coxa tab
+hardware M2 × 14, washer and a 3.0 mm Nyloc): **clean**, and every result below is unchanged.
 
 | Pose | Result |
 |---|---|
@@ -124,6 +134,19 @@ zone, 2 × PCA9685. Collision = overlap > 1 mm³.
 | Tibia, firmware angle (femur +30°) | −80° … +90° |
 
 `MAX_COXA` 30 still keeps neighbours inside the 60° the check allows; the gait itself needs ≤ 33°.
+
+**Round 4: the wider plate against a raised femur** (a probe beyond the check, which sweeps the femur at coxa 0 only).
+- The plate's edge now sits 17.4 mm out from each coxa axis (was 13.4).
+- Over both gaits, the coxa sweep and the femur's −70 … +90° at coxa 0, every leg keeps ≥ 4.1 mm from the plate: the
+  bracket gap governs.
+- Up to femur 80° every leg keeps ≥ 1.8 mm anywhere within the sketch's coxa limit of ±30° (`MAX_COXA`).
+- Above 80°, with the coxa swung towards that limit, a raised femur meets the edge:
+  - middle legs: femur 85° at coxa −30° (0.6 mm³ of overlap); femur 90° from coxa −25° (0.6 mm³) to −30° (26 mm³),
+    and at +30° (4.4 mm³);
+  - corner legs: only femur 90° at coxa +30° (0.3 mm³).
+- Round 3's plate cleared all of these. The gait never comes near: its femur stays ≤ 22.7°, or ≤ 43° with ±20° of trim.
+- If a pose ever needs the femur above 80° with the coxa swung, lower the sketch's `FEMUR_MAX` to 80. The sketch is not
+  changed in round 4.
 
 ## Firmware: neutral-stance constants (for `hexapod_test.ino`)
 
@@ -156,9 +179,10 @@ Two formulas outside that block change with the reversed tibia servo (tell that 
 | Tibia back face → femur front face | 3.1 mm (femur clamp washer + head 2.1 at the femur axis) |
 | Tibia-servo case (behind the femur) → coxa bracket | ≥ 3.3 mm over the gait, ≥ 0.76 mm over the femur's −70…+90° |
 | Coxa servo case top inside the body | 21 mm above the plate top (deck underside at 40) |
-| Corner coxa inner tab + nut → column (r 4, fillet r 5.5) | 3.4 mm / 2.2 mm |
-| UBEC → LiPo / middle coxa servo's inner nut | 5 mm (strap between) / 1.6 mm |
-| Coxa tab screws (M2 × 12, washer, plate 6, tab 2.5, washer, nut) | 1.3 mm of thread past the nut |
+| Corner coxa inner tab, and its washer + Nyloc → Ø10 column (round 4; r 5, fillet foot r 6.5) | 2.7 mm from the column; the tab 1.2 mm from the fillet foot |
+| LiPo between the Ø10 columns' fillet feet (y ±18.5) | 37.0 mm for the 35 mm pack: 1 mm a side |
+| UBEC → LiPo / middle coxa servo's inner Nyloc | 5 mm (strap between) / 1.6 mm |
+| Coxa tab screws (M2 × 14, washer, plate 6, tab 2.5, washer, Nyloc 3.0) | 1.9 mm of thread past the Nyloc; the tip 5.2 mm above the tab |
 | Femur-servo tab screws (M2 × 10) | 7.5 mm into the 10 mm plate |
 | Tibia-servo tab screws (M2 × 8, from behind) | 5.5 mm into the 7 mm femur, tip 1.5 mm short of its front face |
 
@@ -176,8 +200,9 @@ Two formulas outside that block change with the reversed tibia servo (tell that 
 
 | # | Piece | Status |
 |---|---|---|
-| 1–4 | bottom plate, deck, coxa, femur | round 3 modelled, built, mesh-checked, `cad_checks.py` pass, assembly-checked; DFM and strength review next |
-| 5 | tibia | geometry unchanged; docs updated (loads, proof test, clamp torque) |
+| 1, 3 | bottom plate, coxa | round 4 (the round-3 reviewers' fixes) modelled, built, mesh-checked, `cad_checks.py` pass, assembly-checked; fresh DFM and strength reviews next |
+| 2, 4 | deck, femur | round 3: DFM PASS, strength NEEDS_TEST (proof tests in each spec §8) |
+| 5 | tibia | geometry unchanged since round 2; round 3: DFM PASS, strength NEEDS_TEST |
 
 Open, for other owners: the channel map and wiring table (lead routing "up the deck edge beside each leg" through the deck's
 notches; the femur leads probably need extensions, 05 SYS-4); the UBEC's size (the check allows 50 × 10 × 20 on its side; an

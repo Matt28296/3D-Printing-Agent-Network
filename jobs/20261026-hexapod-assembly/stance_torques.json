@@ -679,6 +679,232 @@
      }
     }
    }
+  },
+  "round 4, strength round 3's itemised mass with the round-4 changes (906 g)": {
+   "SYS-1: tibias tucked 15\u00b0 (femur -3.0, tibia -12.0)": {
+    "femur_s": -3.0,
+    "tibia_s": -12.0,
+    "body_underside_mm": 94.1,
+    "six_legs": {
+     "femur": 39.7,
+     "knee": 26.8,
+     "coxa_bending": 89.1
+    },
+    "neutral_tripod": {
+     "femur": 97.7,
+     "knee": 66.0,
+     "coxa_bending": 219.2,
+     "share": 0.41
+    },
+    "gait_30mm": {
+     "femur": 107.2,
+     "knee": 82.3,
+     "coxa_bending": 227.0,
+     "share": 0.415,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -14.7,
+       14.0
+      ],
+      "femur": [
+       -9.1,
+       24.4
+      ],
+      "tibia": [
+       -36.2,
+       -3.4
+      ]
+     }
+    },
+    "gait_40mm": {
+     "femur": 111.4,
+     "knee": 94.9,
+     "coxa_bending": 230.7,
+     "share": 0.416,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -19.4,
+       18.2
+      ],
+      "femur": [
+       -11.6,
+       24.4
+      ],
+      "tibia": [
+       -36.8,
+       0.3
+      ]
+     }
+    }
+   },
+   "strength: tibia 18.7\u00b0 in, same height (femur -4.7, tibia -14.0)": {
+    "femur_s": -4.7,
+    "tibia_s": -14.0,
+    "body_underside_mm": 94.1,
+    "six_legs": {
+     "femur": 33.2,
+     "knee": 33.2,
+     "coxa_bending": 82.8
+    },
+    "neutral_tripod": {
+     "femur": 81.8,
+     "knee": 81.9,
+     "coxa_bending": 203.9,
+     "share": 0.411
+    },
+    "gait_30mm": {
+     "femur": 92.2,
+     "knee": 95.8,
+     "coxa_bending": 212.5,
+     "share": 0.416,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -15.9,
+       15.0
+      ],
+      "femur": [
+       -12.0,
+       22.7
+      ],
+      "tibia": [
+       -38.5,
+       -6.4
+      ]
+     }
+    },
+    "gait_40mm": {
+     "femur": 96.8,
+     "knee": 109.1,
+     "coxa_bending": 216.5,
+     "share": 0.417,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -21.0,
+       19.5
+      ],
+      "femur": [
+       -14.9,
+       22.7
+      ],
+      "tibia": [
+       -38.9,
+       -3.0
+      ]
+     }
+    }
+   },
+   "strength as written: femur 0, tibia -18.7 (body 3.7 mm lower)": {
+    "femur_s": 0.0,
+    "tibia_s": -18.7,
+    "body_underside_mm": 90.4,
+    "six_legs": {
+     "femur": 33.4,
+     "knee": 33.2,
+     "coxa_bending": 83.0
+    },
+    "neutral_tripod": {
+     "femur": 82.3,
+     "knee": 81.9,
+     "coxa_bending": 204.4,
+     "share": 0.411
+    },
+    "gait_30mm": {
+     "femur": 92.7,
+     "knee": 96.7,
+     "coxa_bending": 213.0,
+     "share": 0.416,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -15.9,
+       14.9
+      ],
+      "femur": [
+       -7.5,
+       28.7
+      ],
+      "tibia": [
+       -42.7,
+       -10.9
+      ]
+     }
+    },
+    "gait_40mm": {
+     "femur": 97.3,
+     "knee": 110.3,
+     "coxa_bending": 217.0,
+     "share": 0.417,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -21.0,
+       19.4
+      ],
+      "femur": [
+       -10.6,
+       28.7
+      ],
+      "tibia": [
+       -43.2,
+       -7.5
+      ]
+     }
+    }
+   },
+   "servo centre (femur 0, tibia 0)": {
+    "femur_s": 0.0,
+    "tibia_s": 0.0,
+    "body_underside_mm": 94.1,
+    "six_legs": {
+     "femur": 66.7,
+     "knee": 0.0,
+     "coxa_bending": 115.6
+    },
+    "neutral_tripod": {
+     "femur": 163.0,
+     "knee": 0.0,
+     "coxa_bending": 282.6,
+     "share": 0.407
+    },
+    "gait_30mm": {
+     "femur": 169.6,
+     "knee": 25.9,
+     "coxa_bending": 288.1,
+     "share": 0.411,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -11.2,
+       10.9
+      ],
+      "femur": [
+       -1.6,
+       26.2
+      ],
+      "tibia": [
+       -23.6,
+       12.7
+      ]
+     }
+    },
+    "gait_40mm": {
+     "femur": 172.8,
+     "knee": 35.7,
+     "coxa_bending": 290.9,
+     "share": 0.412,
+     "ranges_sketch_deg": {
+      "coxa": [
+       -14.9,
+       14.3
+      ],
+      "femur": [
+       -3.0,
+       26.2
+      ],
+      "tibia": [
+       -24.5,
+       17.9
+      ]
+     }
+    }
+   }
   }
  }
 }

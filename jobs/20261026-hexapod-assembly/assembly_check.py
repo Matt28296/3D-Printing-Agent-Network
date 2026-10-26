@@ -40,6 +40,10 @@ UBEC_BOX = (50.0, 10.0, 20.0)     # on its side: length (x) × thickness (y) × 
                                   # (Hobbywing UBEC 5A Air 50 × 17 × 10; hobby_parts UBEC_6V_5A 45 × 20 × 9)
 UBEC_AT = (0.0, 22.5)             # x centre, y of its LiPo-side face (left side; the strap slot ends at y 21.5)
 SWITCH_BODY = (18.0, 13.0, 24.0)  # 12 mm toggle body below the deck (x, y, depth)
+# Coxa tab screws (strength round 3: Nyloc nuts, driven snug): M2 × 14 from below, Ø5 × 0.3 washers, M2 Nyloc on the tab.
+# The Nyloc is modelled 3.0 mm tall (DIN 985 M2 is a little less); M2 × 12 would end level with its top, short of the
+# nylon ring, so the screw is M2 × 14.
+TAB_SCREW_L, TAB_WASHER_T, NYLOC_H = 14.0, 0.3, 3.0
 JOBS = {"bottom": "20261026-hexapod-body-bottom", "top": "20261026-hexapod-body-top",
         "coxa": "20261026-hexapod-coxa", "femur": "20261026-hexapod-femur", "tibia": "20261026-hexapod-tibia"}
 
@@ -78,11 +82,12 @@ def hardware():
     """Bought fasteners, each in the frame it moves with."""
     t = H.TAB_T
     hw = {}
-    # coxa servos (reversed, in S0): M2 × 12 from below: washer + head under the plate (servo z 8.5 .. 10.4),
-    # washer + nut on the tab (servo z 0 .. -1.9), tip 1.3 mm beyond the nut
+    # coxa servos (reversed, in S0): M2 × 14 from below: washer + head under the plate (servo z 8.5 .. 10.4),
+    # washer + Nyloc on the tab (servo z 0 .. -3.3), tip 1.9 mm beyond the Nyloc (servo z -5.2)
     c = None
+    nut_top, tip = -(TAB_WASHER_T + NYLOC_H), H.S0_Z + TAB_WASHER_T - TAB_SCREW_L
     for x in pilots():
-        part = cyl(5.0, H.S0_Z, H.S0_Z + 1.9, x) + cyl(5.0, 0.0, -1.9, x) + cyl(2.0, -1.9, -3.2, x)
+        part = cyl(5.0, H.S0_Z, H.S0_Z + 1.9, x) + cyl(5.0, 0.0, nut_top, x) + cyl(2.0, nut_top, tip, x)
         c = part if c is None else c + part
     hw["coxa_tab_hw"] = c
     # femur servo (normal, in S1): self-tapping M2 × 10 heads on the tabs; the outboard pilot is moved 1.3 mm
@@ -168,6 +173,9 @@ def main():
         "mounts": {"coxa": H.COXA_MOUNT, "femur servo": H.FEMUR_MOUNT, "tibia servo": H.TIBIA_MOUNT},
         "LB": H.LB, "Z_F": H.Z_F, "S0_above_plate_underside": H.S0_Z, "plate_gap_to_bracket": round(H.PLATE_GAP, 2),
         "foot_side_mm": round(H.FOOT_SIDE, 2), "leg_mounts": H.LEG_MOUNTS, "columns": H.COLUMNS,
+        "coxa_tab_stack": {"screw": f"M2 x {TAB_SCREW_L:.0f}", "nyloc_h_mm": NYLOC_H,
+                           "thread_past_nyloc_mm": round(TAB_SCREW_L - TAB_WASHER_T - H.T_BODY - H.TAB_T
+                                                         - TAB_WASHER_T - NYLOC_H, 2)},
         "ubec_box_xyz": [UBEC_AT[0] - UBEC_BOX[0] / 2, UBEC_AT[0] + UBEC_BOX[0] / 2, UBEC_AT[1],
                          UBEC_AT[1] + UBEC_BOX[1], 0.0, UBEC_BOX[2]]}}
 

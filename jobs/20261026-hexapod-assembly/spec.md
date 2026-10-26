@@ -7,13 +7,13 @@ A six-legged walker for indoor floors: 18 MG90S servos (3 per leg), ESP32 + 2 ×
 
 ## 2. Envelope and interfaces
 - Size standing (walking stance): 276 × 290 × 160 mm; bottom plate's underside 94.1 mm above the ground; lowest point (coxa brackets) 49.0 mm.
-- Mass: ≈ 812 g (877 g with solid printed parts).
+- Mass: ≈ 906 g (round 4: strength round 3's itemised estimate with the solid coxa brackets, `MARGIN` 8 and Ø10 columns; round 3 was 812–877 g).
 - Printed parts and their jobs: `assembly_plan.md` "Printed pieces". Shared frames and numbers: `hex_frame.py`.
 - Servo mounting (deep review B1):
   - coxa and tibia servos reversed (tabs on the plate's far face);
   - femur servos in the normal way, with a lead notch and the outboard pilot moved 1.3 mm. The builder files that tab's slit to 2.1 mm.
 - Fasteners: as `BUILD_GUIDE.md` §1.
-  - Coxa tabs: M2 × 12 machine screws with washers and nuts.
+  - Coxa tabs: M2 × 14 machine screws with washers and Nyloc nuts, driven snug (≤ 0.045 N·m; strength round 3).
   - Femur-servo tabs: M2 × 10 self-tapping.
   - Tibia-servo tabs: M2 × 8 self-tapping.
   - Horn clamps: M2 × 12 + Ø6 washer (femur, tibia) and M2 × 12–14 + Ø10 × 1 penny washer (coxa), all driven snug (≈ 0.05 N·m).
@@ -29,13 +29,13 @@ A six-legged walker for indoor floors: 18 MG90S servos (3 per leg), ESP32 + 2 ×
 | Servo windows (all 18) | 23.2 × 12.8 CAD (≈ 23.0 × 12.6 printed) for a 22.8 × 12.2 MG90S | +0.3/−0 | 0.1 end / 0.2 side clearance |
 
 ## 4. Loads
-Robot-level loads the part specs are checked against (strength round 1): robot 662–683 g (round-3 geometry: 812–877 g, which raises every walking and servo load by 19–28 %); a tripod's lone-side leg carries 41–43 % → **2.90 N** sustained at its foot, **5.80 N** walking (×2); foot scrub µ 0.5; servo stalls 216 N·mm; a 3 N sideways shove; a 20 cm drop, capped at **19.2 N** per foot by the femur and knee servos back-driving. Servo torques in the walking stance: `assembly_plan.md` "Stance" (peak 87 / 98 N·mm femur / knee at 40 mm stride and 812 g; 83 / 86 at 30 mm).
+Robot-level loads the part specs are checked against (strength round 1): robot 662–683 g (round-3 geometry: 812–877 g, which raises every walking and servo load by 19–28 %; round 4: 906 g, by 33–37 %); a tripod's lone-side leg carries 41–43 % → **2.90 N** sustained at its foot, **5.80 N** walking (×2); foot scrub µ 0.5; servo stalls 216 N·mm; a 3 N sideways shove; a 20 cm drop, capped at **19.2 N** per foot by the femur and knee servos back-driving. Servo torques in the walking stance: `assembly_plan.md` "Stance" (peak 97 / 109 N·mm femur / knee at 40 mm stride and 906 g; 92 / 96 at 30 mm. At 812 g: 87 / 98 and 83 / 86).
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Standing on a tripod | 2.90 (683 g) – 3.32 (812 g) per lone foot | foot tip, up | sustained | minutes |
-| Walking | 5.80 – 6.6 per foot | foot tip, up | cyclic | 10–15 min per charge |
-| Coxa shaft bending (each leg hangs on its coxa servo) | 194 N·mm at 812 g in the walking stance | coxa horn | cyclic | — |
+| Standing on a tripod | 2.90 (683 g) – 3.71 (906 g) per lone foot | foot tip, up | sustained | minutes |
+| Walking | 5.80 – 7.4 per foot | foot tip, up | cyclic | 10–15 min per charge |
+| Coxa shaft bending (each leg hangs on its coxa servo) | 216 N·mm at 906 g in the walking stance (194 at 812 g) | coxa horn | cyclic | — |
 | 20 cm drop | 19.2 per foot (servo back-drive cap) | feet | short-term | — |
 
 ## 5. Environment
