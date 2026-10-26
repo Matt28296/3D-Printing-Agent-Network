@@ -1,0 +1,28 @@
+{
+  "bbox_mm": [
+    53.05,
+    25.0,
+    33.75
+  ],
+  "bbox_min_mm": [
+    -9.0,
+    -18.0,
+    0.0
+  ],
+  "volume_mm3": 7153.19,
+  "area_mm2": 4580.57,
+  "solids": 1,
+  "holes": {
+    "error": "type NoneType doesn't define __round__ method"
+  },
+  "min_z_mm": 0.0,
+  "watertight": true,
+  "mesh_faces": 3874,
+  "fits_bed": true,
+  "bed_mm": [
+    250,
+    210,
+    210
+  ],
+  "margin_mm": 5.0
+}

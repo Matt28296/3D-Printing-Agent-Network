@@ -1,0 +1,40 @@
+{
+  "overhang_limit_deg": 45.0,
+  "overhang_area_mm2": 22.1,
+  "overhang_pct": 0.08,
+  "bed_contact_area_mm2": 11270.9,
+  "bridges": [
+    {
+      "z_mm": 4.0,
+      "span_mm": 2.2,
+      "length_mm": 3.6,
+      "area_mm2": 5.5
+    },
+    {
+      "z_mm": 4.0,
+      "span_mm": 2.2,
+      "length_mm": 3.6,
+      "area_mm2": 5.5
+    },
+    {
+      "z_mm": 4.0,
+      "span_mm": 2.2,
+      "length_mm": 3.6,
+      "area_mm2": 5.5
+    },
+    {
+      "z_mm": 4.0,
+      "span_mm": 2.2,
+      "length_mm": 3.6,
+      "area_mm2": 5.5
+    }
+  ],
+  "thin_wall_warnings": [],
+  "bbox_mm": [
+    130.0,
+    104.0,
+    8.0
+  ],
+  "fits_bed": true,
+  "watertight": true
+}

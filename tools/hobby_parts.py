@@ -391,3 +391,21 @@ KCD11_SWITCH_CUTOUT = (15.0, 10.0)    # mini rocker switch panel cut-out (w, h)
 __all__ += ["GearMotorSpec", "N20_100RPM", "gearmotor_dummy", "gearmotor_wall_cutter", "d_shaft_bore_cutter",
             "BoxSpec", "BATT_2X18650", "TB6612_CARRIER", "MINI_BREADBOARD", "MP1584_BUCK", "HCSR04",
             "HCSR04_TX_D", "HCSR04_TX_DX", "KCD11_SWITCH_CUTOUT"]
+
+
+# ----------------------------------------------------------------------------------------
+# Hexapod parts. Nominal: measure yours.
+# ----------------------------------------------------------------------------------------
+
+# TowerPro MG90S: SG90 body size with metal gears; ~2.2 kg·cm at 6 V. Same horn sizes as the SG90.
+# Kept at the SG90 body dimensions the arm parts were reviewed with (makers list 22.5-22.8 × 12-12.2):
+# measure yours and use replace(MG90S, length=..., width=...) if it differs by more than 0.3 mm.
+MG90S = replace(SG90, name="MG90S", stall_torque_nmm=216.0, mass_g=13.4)
+
+PCA9685_BOARD = BoxSpec("PCA9685 16-ch servo driver", 62.5, 25.4, 12.0, 9.0,
+                        "4 × Ø2.5 mounting holes at 56 × 19 mm; servo headers along one long edge")
+LIPO_2S_1000 = BoxSpec("2S 1000 mAh LiPo", 70.0, 35.0, 18.0, 65.0, "XT30 or JST lead; charge with a balance charger")
+UBEC_6V_5A = BoxSpec("6 V 5 A UBEC (switching BEC)", 45.0, 20.0, 9.0, 15.0, "set to 6 V; feeds the servo rail")
+PCA9685_HOLES = (56.0, 19.0)
+
+__all__ += ["MG90S", "PCA9685_BOARD", "LIPO_2S_1000", "UBEC_6V_5A", "PCA9685_HOLES"]
