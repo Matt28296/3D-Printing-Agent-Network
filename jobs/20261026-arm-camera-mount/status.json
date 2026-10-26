@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-arm-camera-mount",
-  "stage": "DESIGN",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 1,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 2: DFM PASS; strength NEEDS_TEST, lowest SF 4.53; proof test in spec \u00a78 to be raised to 15 N plus a twist pull)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 1.42 h, 12.9 g, 5 mm brim; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:55:03+00:00"
+  "updated": "2026-10-26T15:59:41+00:00"
 }

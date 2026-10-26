@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-base",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 5: DFM PASS; strength NEEDS_TEST, lowest SF 3.41)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 8.66 h, 119.5 g, solid plate and pads (20 bottom / 18 top layers); validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T15:43:10+00:00"
+  "updated": "2026-10-26T15:59:41+00:00"
 }

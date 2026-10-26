@@ -1,6 +1,6 @@
 {
   "job_id": "20261025-arm-turntable",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 5: DFM PASS; strength NEEDS_TEST, lowest SF 3.26; slice with 30 bottom solid layers)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 6.87 h, 105.3 g, 30 bottom solid layers; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T15:43:10+00:00"
+  "updated": "2026-10-26T15:59:41+00:00"
 }
