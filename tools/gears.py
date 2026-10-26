@@ -42,8 +42,14 @@ def _inv(a: float) -> float:
 
 def gear_outline(m: float, z: int, pressure_deg: float = 20.0, backlash: float = 0.1,
                  phase_deg: float = 0.0, flank_pts: int = 10, tip_pts: int = 3,
-                 root_pts: int = 4) -> list[tuple[float, float]]:
-    """Closed CCW outline (x, y) of an involute spur gear."""
+                 root_pts: int = 4, root_fillet: float = 0.0,
+                 fillet_pts: int = 5) -> list[tuple[float, float]]:
+    """Closed CCW outline (x, y) of an involute spur gear.
+
+    root_fillet > 0 rounds each tooth-root corner with an arc of that radius, tangent to the
+    flank and to the root circle (a sharp root is a stress raiser; 0.25-0.38 m is usual). The
+    arc stays inside the 0.25 m tip-clearance band, so a standard rack or gear still clears it.
+    """
     if z < 6:
         raise ValueError("fewer than 6 teeth is not a usable gear")
     if m < 0.5:
@@ -70,11 +76,38 @@ def gear_outline(m: float, z: int, pressure_deg: float = 20.0, backlash: float =
     def P(r, t):
         pts.append((r * math.cos(t), r * math.sin(t)))
 
+    h0 = half_angle(r0)
+    rho = float(root_fillet)
+    if rho > 0:
+        if rho > 0.4 * m:
+            raise ValueError("root_fillet over 0.4 m would reach the mating tooth tips")
+        big_r = rf + rho                              # fillet centres, tangent to the root circle
+        d_ang = math.asin(rho / big_r)                # centre angle off the flank line
+        r_t = math.sqrt(big_r ** 2 - rho ** 2)        # where the arc meets the (radial) flank
+        if r_t > r0:
+            raise ValueError("root_fillet is longer than the radial flank: lower it")
+        if pitch - 2 * h0 - 2 * d_ang <= 0:
+            raise ValueError("root fillets overlap in the tooth gap: lower root_fillet")
+
+        def arc(theta_flank: float, side: int) -> list[tuple[float, float]]:
+            """Fillet points from the flank tangent point to the root tangent point (side +1:
+            trailing flank, arc runs CCW into the gap) or the reverse (side -1)."""
+            phi = theta_flank + side * d_ang
+            cx, cy = big_r * math.cos(phi), big_r * math.sin(phi)
+            tx, ty = r_t * math.cos(theta_flank), r_t * math.sin(theta_flank)
+            a0 = math.atan2(ty - cy, tx - cx)
+            a1 = phi + math.pi
+            da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi      # short way round
+            seq = [(cx + rho * math.cos(a0 + da * i / fillet_pts), cy + rho * math.sin(a0 + da * i / fillet_pts))
+                   for i in range(fillet_pts + 1)]
+            return seq if side > 0 else list(reversed(seq))
+    else:
+        r_t = rf
+
     for k in range(z):
         c = ph + k * pitch
-        h0 = half_angle(r0)
         if rf < rb:                       # radial flank below the base circle
-            P(rf, c - h0)
+            P(r_t, c - h0)
         for r in radii:                   # leading (right) flank, going outwards
             P(r, c - half_angle(r))
         ha = half_angle(ra)
@@ -82,27 +115,39 @@ def gear_outline(m: float, z: int, pressure_deg: float = 20.0, backlash: float =
             P(ra, c - ha + 2 * ha * i / tip_pts)
         for r in reversed(radii):         # trailing (left) flank, going inwards
             P(r, c + half_angle(r))
-        if rf < rb:
-            P(rf, c + h0)
         gap0, gap1 = c + h0, c + pitch - h0
-        for i in range(1, root_pts):      # root land
-            P(rf, gap0 + (gap1 - gap0) * i / root_pts)
+        if rho > 0:
+            pts.extend(arc(gap0, +1))                       # trailing-flank fillet, ends on the root circle
+            g0, g1 = gap0 + d_ang, gap1 - d_ang
+            for i in range(1, root_pts):  # root land between the fillets
+                P(rf, g0 + (g1 - g0) * i / root_pts)
+            pts.extend(arc(gap1, -1)[:-1])                  # next tooth's leading fillet (its flank point comes next)
+        else:
+            if rf < rb:
+                P(rf, c + h0)
+            for i in range(1, root_pts):  # root land
+                P(rf, gap0 + (gap1 - gap0) * i / root_pts)
     return pts
 
 
 def spur_gear(m: float, z: int, width: float, pressure_deg: float = 20.0, backlash: float = 0.1,
-              phase_deg: float = 0.0) -> Part:
+              phase_deg: float = 0.0, root_fillet: float = 0.0) -> Part:
     """Spur gear blank (no bore): axis +Z, z 0..width."""
     with BuildPart() as bp:
         with BuildSketch(Plane.XY):
-            Polygon(*gear_outline(m, z, pressure_deg, backlash, phase_deg), align=None)
+            Polygon(*gear_outline(m, z, pressure_deg, backlash, phase_deg, root_fillet=root_fillet), align=None)
         extrude(amount=width)
     return bp.part
 
 
 def rack_outline(m: float, x0: float, x1: float, back: float, pressure_deg: float = 20.0,
-                 backlash: float = 0.1, phase: float = 0.0) -> list[tuple[float, float]]:
-    """Closed outline of a rack from x0 to x1 (teeth clipped at the ends)."""
+                 backlash: float = 0.1, phase: float = 0.0, root_fillet: float = 0.0,
+                 fillet_pts: int = 5) -> list[tuple[float, float]]:
+    """Closed outline of a rack from x0 to x1 (teeth clipped at the ends).
+
+    root_fillet > 0 rounds each root corner (flank to root land) with an arc of that radius.
+    The arc stays below the depth a standard mating tooth tip reaches (1.0 m), so it is clear
+    of the pinion for root_fillet up to about 0.38 m."""
     a = math.radians(pressure_deg)
     p = math.pi * m
     hw = (math.pi * m / 2.0 - backlash / 2.0) / 2.0     # half tooth width on the pitch line
@@ -113,10 +158,36 @@ def rack_outline(m: float, x0: float, x1: float, back: float, pressure_deg: floa
     yb = yr - back
     k0 = math.floor((x0 - phase) / p) - 1
     k1 = math.ceil((x1 - phase) / p) + 1
+    rho = float(root_fillet)
+    fil: list[tuple[float, float]] = []                 # trailing-corner fillet for a tooth at x = 0
+    if rho > 0:
+        half_beta = (math.pi / 2 + a) / 2               # half the gap-side angle at the root corner
+        tdist = rho / math.tan(half_beta)
+        if tdist * math.cos(a) > 0.25 * m + 0.002 * m:
+            raise ValueError("root_fillet would rise above the 0.25 m tip clearance: lower it")
+        if 2 * tdist >= p - 2 * wr:
+            raise ValueError("root fillets overlap on the root land: lower root_fillet")
+        qx, qy = wr, yr
+        uf, ur = (-math.sin(a), math.cos(a)), (1.0, 0.0)
+        bx, by = uf[0] + ur[0], uf[1] + ur[1]
+        bn = math.hypot(bx, by)
+        dc = rho / math.sin(half_beta)
+        cx, cy = qx + dc * bx / bn, qy + dc * by / bn
+        tfx, tfy = qx + tdist * uf[0], qy + tdist * uf[1]
+        trx, try_ = qx + tdist, qy
+        a0, a1 = math.atan2(tfy - cy, tfx - cx), math.atan2(try_ - cy, trx - cx)
+        da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+        fil = [(cx + rho * math.cos(a0 + da * i / fillet_pts), cy + rho * math.sin(a0 + da * i / fillet_pts))
+               for i in range(fillet_pts + 1)]
     prof: list[tuple[float, float]] = []                # left to right along the top
     for k in range(k0, k1 + 1):
         c = phase + k * p
-        prof += [(c - wr, yr), (c - wt, yt), (c + wt, yt), (c + wr, yr)]
+        if rho > 0:
+            prof += [(c - x, y) for (x, y) in reversed(fil)]    # leading corner (mirror image)
+            prof += [(c - wt, yt), (c + wt, yt)]
+            prof += [(c + x, y) for (x, y) in fil]              # trailing corner
+        else:
+            prof += [(c - wr, yr), (c - wt, yt), (c + wt, yt), (c + wr, yr)]
 
     def y_at(x: float) -> float:                          # profile height at x (piecewise linear)
         for (xa, ya), (xb, yb_) in zip(prof, prof[1:]):
@@ -128,11 +199,11 @@ def rack_outline(m: float, x0: float, x1: float, back: float, pressure_deg: floa
 
 
 def rack_bar(m: float, x0: float, x1: float, width: float, back: float, pressure_deg: float = 20.0,
-             backlash: float = 0.1, phase: float = 0.0) -> Part:
+             backlash: float = 0.1, phase: float = 0.0, root_fillet: float = 0.0) -> Part:
     """Rack bar (profile in XY, extruded z 0..width)."""
     with BuildPart() as bp:
         with BuildSketch(Plane.XY):
-            Polygon(*rack_outline(m, x0, x1, back, pressure_deg, backlash, phase), align=None)
+            Polygon(*rack_outline(m, x0, x1, back, pressure_deg, backlash, phase, root_fillet=root_fillet), align=None)
         extrude(amount=width)
     return bp.part
 
