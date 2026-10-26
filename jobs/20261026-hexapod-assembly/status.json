@@ -1,14 +1,14 @@
 {
   "job_id": "20261026-hexapod-assembly",
-  "stage": "SPEC",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
     "DESIGN": 0,
     "SLICE": 0
   },
   "gates": {
-    "SPEC": null,
-    "DESIGN": null,
+    "SPEC": "pass",
+    "DESIGN": "round 3: frames, stance, IK gait and assembly check clean; system spec written",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T01:42:06+00:00"
+  "updated": "2026-10-26T07:56:16+00:00"
 }

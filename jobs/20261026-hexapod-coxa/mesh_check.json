@@ -1,8 +1,8 @@
 {
   "overhang_limit_deg": 45.0,
-  "overhang_area_mm2": 128.6,
-  "overhang_pct": 2.66,
-  "bed_contact_area_mm2": 788.6,
+  "overhang_area_mm2": 145.5,
+  "overhang_pct": 1.77,
+  "bed_contact_area_mm2": 1205.1,
   "bridges": [
     {
       "z_mm": 2.0,
@@ -11,29 +11,35 @@
       "area_mm2": 117.6
     },
     {
-      "z_mm": 4.99,
-      "span_mm": 3.0,
-      "length_mm": 3.0,
-      "area_mm2": 1.9
+      "z_mm": 22.2,
+      "span_mm": 1.41,
+      "length_mm": 10.0,
+      "area_mm2": 14.1
     },
     {
-      "z_mm": 17.85,
-      "span_mm": 0.17,
-      "length_mm": 4.5,
-      "area_mm2": 0.8
+      "z_mm": 7.99,
+      "span_mm": 0.5,
+      "length_mm": 0.5,
+      "area_mm2": 0.1
     },
     {
-      "z_mm": 17.85,
+      "z_mm": 20.85,
       "span_mm": 0.17,
-      "length_mm": 4.5,
-      "area_mm2": 0.8
+      "length_mm": 10.0,
+      "area_mm2": 1.8
+    },
+    {
+      "z_mm": 20.85,
+      "span_mm": 0.17,
+      "length_mm": 10.0,
+      "area_mm2": 1.8
     }
   ],
   "thin_wall_warnings": [],
   "bbox_mm": [
-    53.05,
-    25.0,
-    37.75
+    60.1,
+    30.5,
+    41.0
   ],
   "fits_bed": true,
   "watertight": true

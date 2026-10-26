@@ -6,3 +6,5 @@
 - 2026-10-26T05:22Z · architect · round 2: spec/brief updated for DFM round-1 fixes (Z_F +4, gusset, hub fillet, M2x10, columns at ±40 x ±25, 40 mm tall); model rebuilt, mesh + assembly check OK · ok
 - 2026-10-26T05:48:04Z · dfm-reviewer · round 2 design_review.md · PASS
 - 2026-10-26T06:29Z · strength-analyst · wrote strength.md · NEEDS_TEST
+- 2026-10-26T07:50Z · design-lead (round 3) · screw holes follow the columns (±36, ±25), SYS-4 lead notches + tie slots (6), SYS-10 Ø12 switch hole, cable slots from one parameter; UBEC text moved off the deck; spec + brief rewritten; built, rendered, mesh_check, cad_checks 8/8, assembly check clean · ok
+- 2026-10-26T07:56Z · architect (as head-orchestrator) · status.json: stage DESIGN, DESIGN iterations 1; round 3 merged into robot-arm-test-build, fresh DFM and strength reviews next · ok
