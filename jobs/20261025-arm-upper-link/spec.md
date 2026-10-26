@@ -49,7 +49,6 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, M
 ## 8. Acceptance criteria (measurable)
 - [ ] Elbow MG996R goes into the window from the front face, case bottom first, with its lead through an end notch; tab screws bite
 - [ ] Horn seats flat
-- [ ] **Proof test:** (1) Shoulder horn in a vice (horn clamped in its slot), 1 kg at the elbow axis for 1 min: deflection at the elbow < 2 mm, no permanent set. (2) Same clamping, 21 N (≈2.1 kg) sideways (out of the link plane) at the elbow axis for 1 min each way, then 7.5 N sideways at the end of a 185 mm lever bolted to the elbow tab holes. Pass: no cracks at the pocket, no lift of the link off the horn, no permanent set.
-
+- [ ] **Proof test (links strength round 4, at the 1079 N·mm datasheet stall):** (1) Shoulder horn in a vice (horn clamped in its slot), 1 kg at the elbow axis for 1 min: deflection at the elbow < 2 mm, no permanent set. (2) Same clamping, with the link plate vertical and the elbow MG996R fitted with its 4 tab screws as built. Screw a flat bar to the elbow horn in place of the forearm, and set it at 60° to the link in the link's plane. Push 16 N (≈1.6 kg on a luggage scale) along the elbow shaft, square to the plate, at 175 mm from the elbow axis, 1 min each way. Pass: no cracks or whitening at the window corners and rails, the lead notches, the tab pilots or the horn pocket; the MG996R tabs don't lift; the link doesn't lift off the horn; the bar end comes back to within 1 mm of where it started.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

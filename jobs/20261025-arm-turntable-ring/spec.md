@@ -45,7 +45,6 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, M
 ## 8. Acceptance criteria (measurable)
 - [ ] With the PTFE tape on, the turntable runs 0.3–0.4 mm above the ring all round (feeler gauge at 8 points) and turns freely through ±90° (sand the ring top where it rubs)
 - [ ] With the arm straight out, the disk rests on the ring at the far side and the arm still yaws smoothly at `b` commands
-- [ ] **Proof test:** Covered by the base proof test (50 N on the turntable rim, 1 min at each of 4 positions 90° apart). Pass: no cracks in the tabs or the ring wall, no crushing of the ring top (the running gap still clears), and the turntable then turns freely through ±90° with no rubbing.
-
+- [ ] **Proof test (links strength round 4, at the 1079 N·mm datasheet stall):** Covered by the base proof test (77 N, ≈8 kg, straight down on the turntable rim, 1 min at each of 4 positions 90° apart, servo unpowered). Pass: no cracks in the tabs or the ring wall, no crushing of the ring top (the running gap still clears), the washers still tight under the screw heads, and the turntable then turns freely through ±90° with no rubbing.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

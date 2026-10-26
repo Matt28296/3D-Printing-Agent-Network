@@ -18,3 +18,4 @@
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
 - 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 2.26 against 4 sustained; fix: a Ø7 washer, 4.72)
 - 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok
+- 2026-10-26T13:06Z · architect · spec §8: proof test replaced with links strength round 4's version (loads that reach the governing rows) · ok
