@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-hexapod-body-bottom",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 3,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 in review (approved by the user after the third failure): MARGIN 8, Nyloc tab nuts (M2 \u00d7 14), \u00d810 columns",
+    "DESIGN": "pass (round 4: DFM PASS; strength NEEDS_TEST, lowest SF 3.09, proof test in spec \u00a78)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:17:15+00:00"
+  "updated": "2026-10-26T11:23:38+00:00"
 }

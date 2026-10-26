@@ -97,7 +97,7 @@ Fit every horn with its servo centred (90°): femur level, tibia perpendicular t
 5. **Body (deck off, LiPo not fitted yet):**
    - Lower each coxa servo into its bottom-plate window from above, **spline first**. Its tabs rest on the plate's top face, its case stands inside the body and its lead points outboard.
    - Fix each tab with an M2 × 14 from below: washer, then the screw up through the plate and the tab, then a washer and a Nyloc nut on the tab inside the body. The thread must come through the Nyloc's nylon ring.
-   - Drive each one **snug, at most 0.045 N·m** above the Nyloc's running torque: run the nut down until both washers just clamp, then stop. Never tighten to a firm stop: the washer under the head bears on only 14 mm² of the plate (strength round 3). The Nyloc holds without preload.
+   - Tighten each one **by feel, not to a torque setting**: run the nut down until both washers just clamp, then stop (about 0.045 N·m above the Nyloc's running torque). Keep the threads dry, no oil. Never tighten to a firm stop: the washer under the head bears on only 14 mm² of the plate (strength round 4). The Nyloc holds without preload.
 6. **Legs (×6), on the bench, off the body.** With the leg on the body, a screwdriver on the femur or tibia clamp screw would run into the neighbouring leg, so do these screws now.
    - **Femur servo into the coxa bracket:** tabs on the **gusset face** of the vertical plate, shaft towards where the femur goes.
      1. Feed the lead's plug through the notch at the window's outboard end.

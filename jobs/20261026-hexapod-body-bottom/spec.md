@@ -15,7 +15,7 @@ Job: 20261026-hexapod-body-bottom · Written by: Architect · Date: 2026-10-26 (
   - Leads: six 3.2 × 1.8 tie slots, one beside each window on the side the leads come up (SYS-5).
   - The coxa bracket's back face is **4.1 mm** below the underside.
 - Fasteners used:
-  - Coxa tabs: 12 × **M2 × 14 pan-head machine screws** from below, each with an M2 washer Ø5 under the head (on the underside) and an M2 washer Ø5 and an **M2 Nyloc nut** (nylon insert, DIN 985) on the tab inside the body. Drive them **snug, at most 0.045 N·m** (strength round 3: the washer bears on 14.2 mm² of the plate's underside); the Nyloc holds the nut without preload. With the Nyloc modelled 3.0 mm tall the thread runs about 1.9 mm past it (M2 × 12 would stop short of its nylon ring).
+  - Coxa tabs: 12 × **M2 × 14 pan-head machine screws** from below, each with an M2 washer Ø5 under the head (on the underside) and an M2 washer Ø5 and an **M2 Nyloc nut** (nylon insert, DIN 985) on the tab inside the body. Drive them **snug, by feel**: run the nut down until both washers just clamp, then stop (about 0.045 N·m above the Nyloc's running torque; dry threads, no oil). Strength round 4: the washer bears on 13.9 mm² of the plate's underside, SF 3.09 at 0.045 N·m and 2.31 with an oiled thread; the Nyloc holds the nut without preload. With the Nyloc modelled 3.0 mm tall the thread runs about 1.9 mm past it (M2 × 12 would stop short of its nylon ring).
   - Top plate: 4 × M3 × 8 self-tapping into the columns.
   - LiPo: 1 velcro strap.
 
@@ -54,7 +54,7 @@ Load cases as strength round 1 re-derived them (`strength.md`, "Load cases"); th
 
 Round-3 mass: 812 g (877 g with solid parts) raises every walking and servo load by 19–28 %; the drop is capped by the servos and does not change.
 
-Round 4: strength round 3 re-checked the reversed mount (rows 1–19) and itemised the robot at 840 g. Its change set (`MARGIN` 8, snug tab screws with Nyloc nuts, Ø10 columns, with the coxa's 100 % infill) was checked at **906 g**: lowest SF 3.22 (tab-screw washer bearing at 0.045 N·m); the strip in the drop 3.37.
+Round 4: strength round 3 re-checked the reversed mount (rows 1–19) and itemised the robot at 840 g. Its change set (`MARGIN` 8, snug tab screws with Nyloc nuts, Ø10 columns, with the coxa's 100 % infill) was checked at **906 g**: lowest SF 3.22 (tab-screw washer bearing at 0.045 N·m); the strip in the drop 3.37. Strength round 4 (independent, on the built round 4 geometry, 907 g): NEEDS_TEST, lowest SF **3.09** (the same washer row: 0.045 N·m gives 112.5 N, and the washer overhangs the window edge by 0.2 mm), strip in the drop 3.37, Ø10 columns 3.67. The §8 proof tests stand as written.
 
 ## 5. Environment
 - Max temperature (°C): 40 (indoor floor; MG90S cases warm under load)

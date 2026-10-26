@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3: frames, stance, IK gait and assembly check clean; system spec written",
+    "DESIGN": "round 4: all five printed parts pass DESIGN (coxa and bottom plate round 4 reviews); build guide tab-screw step reworded (by feel, dry threads)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T07:56:16+00:00"
+  "updated": "2026-10-26T11:23:38+00:00"
 }
