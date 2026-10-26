@@ -26,7 +26,7 @@ Print times and filament: each job's `slice_stats.json` once it is sliced. Round
 | 1 | MP1584 buck module, set to 5.3 V | ESP32 5V/VIN, through the Schottky diode below |
 | 1 | Toggle or rocker switch rated 10 A DC or more | in the battery lead, after the fuse |
 | 1 | 7.5 A blade fuse and an inline fuse holder (18 AWG) | in the LiPo + lead, before the switch |
-| 1 | XT30 female pigtail, 18 AWG leads | from the LiPo's plug to the fuse and switch |
+| 1 | XT30 **male** pigtail, 18 AWG leads (it mates with the LiPo's lead, which carries the female plug; check your pack) | from the LiPo's plug to the fuse and switch |
 | 1 | LiPo voltage alarm (buzzer), 2S | plugs into the balance lead: beeps when a cell runs low. It is the only cut-off for the UBEC, the buck and the ESP32 |
 | 1 + 1 + 1 | 100 kΩ and 33 kΩ resistors (1 %), 100 nF ceramic capacitor | battery voltage divider to GPIO35: the sketch stops walking on a flat pack |
 | 1 | SS14 or 1N5817 Schottky diode | buck OUT+ to the ESP32's 5V pin: USB can't feed back into the LiPo side |
