@@ -22,3 +22,5 @@
 - 2026-10-26T13:41Z · architect (as head-orchestrator) · merged round 5 (3b368bd); cad_checks re-run; status.json: in review · ok
 - 2026-10-26T13:58Z · design-lead + cad-engineer (round 5) · model.py: hub 5.2 mm shorter (part 14.8 tall, hub from |y| 43.7); cad_checks 5/5 · ok
 - 2026-10-26T13:58Z · dfm-reviewer (round 5, independent) · design_review.md · PASS (no overhangs or bridges; hub wall 3.15; 3.6–4.5 mm past the nyloc)
+- 2026-10-26T14:22Z · strength-analyst (round 5, independent) · strength.md, strength_calc.py · NEEDS_TEST (lowest SF 4.19, bore edge with the idler cocked 1.94°)
+- 2026-10-26T14:22Z · architect (as head-orchestrator) · merged; DESIGN pass · ok

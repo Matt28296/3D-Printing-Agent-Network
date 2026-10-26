@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in review: hub 5.2 mm shorter (part 14.8 tall) for the chassis's outer-face nut plate",
+    "DESIGN": "pass (round 5: DFM PASS; strength NEEDS_TEST, lowest SF 4.19); slice waits for the chassis",
     "SLICE": "stale: the round 4 slice (2 per plate, 1.16 h) predates the hub change",
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T13:41:19+00:00"
+  "updated": "2026-10-26T14:22:17+00:00"
 }

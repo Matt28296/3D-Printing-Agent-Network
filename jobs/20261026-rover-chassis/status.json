@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 4,
+    "DESIGN": 5,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in review (user-approved fifth round): nut plate on the wall's outer face, nut slot gone, \u00d89 washer under the nut",
+    "DESIGN": "FAIL round 5 strength on 1 of 70 rows (nut plate's rear end stop root, SF 2.75 at a reverse stall; DFM PASS); fifth failure, escalated to the user: STOP_W 1.5 \u2192 2.0 gives 4.88 (lowest overall 3.01)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
-  "updated": "2026-10-26T13:41:19+00:00"
+  "open_questions": [
+    "Round 5 failed one row: the 1.5 mm end stop the designer added (SF 2.75). STOP_W 2.0 fixes it (4.88; lowest 3.01). Sixth round? (asked of the user)"
+  ],
+  "updated": "2026-10-26T14:22:17+00:00"
 }
