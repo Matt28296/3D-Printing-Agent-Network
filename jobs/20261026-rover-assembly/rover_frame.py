@@ -14,6 +14,9 @@ gearbox face moves from |y| 45 to 44 while the nacelle, thrust washer, hub and t
 A Pololu #1996 aluminium hub on the shaft, outside the skin, carries the sprocket disc on 4 × M3.
 The torque path is metal from the shaft to the sprocket, and the shaft overhang (gearbox face to
 the track plane) is 11 mm with the track plane unchanged.
+Round 5 (chassis strength round 4's fix, approved by the user): the idler's steel nut plate left the
+wall for its outer face, with a Ø9 washer under the wall nut, so the idler's hub starts 5.2 mm further
+out (IDLER_HUB_Y0, |y| 43.7); the track plane and the idler's teeth don't move.
 """
 import math
 
@@ -44,7 +47,7 @@ FLOOR_Z = Z_A - 12.0          # 8.68: chassis underside (ground clearance)
 TOP_Z = FLOOR_Z + 40.0        # 48.68: wall top = lid underside
 Y_T = 55.0                    # track centre plane (left); inner edge at 43
 ROAD_X = (40.0, 80.0)         # road-wheel axles
-HUB_GAP = 0.5                 # rotating idler/wheel hub to the wall (a washer)
+HUB_GAP = 0.5                 # rotating wheel hub to the wall, or idler hub to its wall nut (a washer)
 BOSS_IN = 5.5                 # inward boss at the road-wheel bolts and the idler block: wall + boss = 10
                               # (strength round 2, change 3: nut / hole-edge bearing at the 5 cm corner)
 HUB_D = 10.0                  # idler hub diameter (round bore on its M3 bolt)
@@ -74,22 +77,31 @@ NACELLE_WALL = 2.0            # nacelle walls round the diamond pocket, beyond t
 # because each one must engage the nut trapped in the wall's outer face) -------------------------------
 SCREW_HEAD = (5.5, 3.0)       # DIN 912 / ISO 4762 M3 head: diameter, height
 WASHER = (7.0, 0.5)           # ISO 7089 M3 washer: outside diameter, thickness
-WASHER_WIDE = (9.0, 0.8)      # DIN 9021 M3 washer (under each idler-bolt head, on its steel head plate)
-NUT = (5.5, 2.4)              # DIN 934 M3 nut: across flats, height (wall trap)
+WASHER_WIDE = (9.0, 0.8)      # DIN 9021 M3 washer: under each idler-bolt head on its head plate and, since round 5,
+#                               under each idler wall nut on its nut plate
+NUT = (5.5, 2.4)              # DIN 934 M3 nut: across flats, height (road-wheel wall traps; the idler nuts sit outside the
+#                               wall on their nut plates since round 5)
 NYLOC = (5.5, 4.0)            # DIN 985 M3 nyloc nut
 THREAD_PAST_NYLOC = 1.5       # minimum bolt thread standing out of each nyloc
 ROAD_BOLT_L = 50.0            # road wheels: head on a washer on the boss face (y 27.5) .. tip y 77.5
 IDLER_BOLT_L = 40.0           # idlers: head on a DIN 9021 washer on the head plate (y 27.2) .. tip y 67.2
 HUB_SCREW_L = 12.0            # sprocket to hub: through the 7 mm disc under a washer, 4.5 mm into the hub
 
-# --- idler clamp plates (round 4, strength round 3 change 1): made from 2 mm steel (14-gauge 1.9 mm, or metric 2 mm,
-# flat bar or strip), so the yaw moment on each idler bolt bears on steel footprints instead of a Ø9 washer edge ----
-PLATE_T = 2.0                 # plate thickness = depth of the head-plate recess = extra depth of the idler nut slot
+# --- idler clamp plates (round 4, strength round 3 change 1; round 5, chassis strength round 4's fix): made from 2 mm
+# steel (14-gauge 1.9 mm, or metric 2 mm, flat bar or strip), so the yaw moment on each idler bolt bears on steel
+# footprints instead of a Ø9 washer edge. Round 5: the nut plate left the wall (its 9 × 15 × 4.6 slot is gone), so the
+# PETG between the plates is the full 8.0 mm from the head-plate recess (|y| 30) to the wall's outer face (|y| 38) ----
+PLATE_T = 2.0                 # plate thickness = depth of the head-plate recess
 IDLER_PLATE = (20.6, 10.0)    # head plate (x, z), let into the idler-block face under the DIN 9021 washer: strength's
 #                               21 × 10 fills x 108-129 between the jack buttress and the front 45° strip, so it is cut
 #                               0.4 short to drop into its recess (21.0 CAD between them, about 20.8 printed)
-NUT_PLATE = (14.0, 8.0)       # nut plate (x, z) under the idler's wall nut, in the 9 mm tall nut slot
+NUT_PLATE = (20.6, 10.0)      # nut plate (x, z), round 5: the head plate's twin (was 14 × 8 in the nut slot). It lies flat
+#                               on the wall's outer face (|y| 38-40) at the head plate's x and z, on a printed lip between two
+#                               printed end stops (chassis NUT_PLATE_X), under a DIN 9021 washer and the idler's wall nut
 PLATE_SLOT = (3.4, 12.0)      # slot in both plates: width (z) × overall length (x); the bolt travels ±4.5 in it
+PLATE_SLOT_FROM = 6.0         # the slot runs from 6 to 18 mm along each plate; the 6 mm end goes to the rear (jack side)
+IDLER_HUB_Y0 = HALF_W_OUT + PLATE_T + WASHER_WIDE[1] + NUT[1] + HUB_GAP   # 43.7: idler hub's inner end (round 5; 38.5 before):
+#                               nut plate 38-40, Ø9 washer 40-40.8, wall nut 40.8-43.2, running washer 43.2-43.7
 
 
 def mirror_y(y: float, side: int) -> float:

@@ -116,16 +116,30 @@ both("recess bottom Z_A ± 5.2 (10 mm plate + 0.2 a side), 45° roof up to Z_A +
      lambda s: abs(rz - 5.2) < 1e-9 and not solid(118, s * 29.9, Z - 5.1) and solid(118, s * 29.9, Z - 5.3)
      and not solid(118, s * 29.9, Z + 5.2) and solid(118, s * 29.9, Z + 5.45)
      and not solid(118, s * 28.1, Z + 7.0) and solid(118, s * 28.1, Z + 7.25))
-both("idler nut slot 9 tall (Z_A ± 4.5), PLATE_T deeper: |y| 33.4-38, x 112.5-127.5",
-     lambda s: not solid(113, s * 33.5, Z + 4.4) and solid(113, s * 33.3, Z + 4.4) and not solid(113, s * 34.5, Z - 4.4)
-     and solid(113, s * 34.5, Z - 4.6) and solid(112.4, s * 35, Z) and not solid(112.6, s * 35, Z)
-     and not solid(127.4, s * 35, Z) and solid(127.6, s * 35, Z))
-both("nut-slot roof flat over the nut plate (|y| 33.4-35.4: its top edge bears there), then 45° to the outer face",
-     lambda s: solid(113, s * 33.6, Z + 4.6) and solid(113, s * 35.3, Z + 4.6) and not solid(113, s * 35.3, Z + 4.4)
-     and not solid(113, s * 37.9, Z + 6.9) and solid(113, s * 37.9, Z + 7.1))
-both("PETG web 3.4 thick between the recess and the nut slot (|y| 30-33.4), clamped between the plates",
-     lambda s: solid(113, s * 30.1, Z + 3.5) and solid(113, s * 33.3, Z + 3.5) and solid(126, s * 31.7, Z - 4)
-     and not solid(113, s * 29.9, Z + 3.5) and not solid(113, s * 33.5, Z + 3.5))
+# round 5 (strength round 4's fix): no idler nut slot; the nut plate (the head plate's twin) lies on the outer face
+both("round 5: no idler nut slot: 8.0 mm of solid PETG from the recess floor (|y| 30) to the outer face (38), above and"
+     " below the bolt slot, over the plates' whole footprint",
+     lambda s: all(solid(x, s * y, Z + dz) for x in (108.5, 113, 116, 120, 124, 128.5) for y in (30.1, 32, 34, 36, 37.9)
+                   for dz in (-4.9, -3.5, -2.2, 3.0, 4.5))
+     and not solid(113, s * 29.9, Z + 3.5) and not solid(113, s * 38.1, Z + 3.5))
+both("bolt slot runs through the outer face (|y| 37.9) at x 116-124", lambda s: not solid(116, s * 37.9, Z)
+     and not solid(124, s * 37.9, Z) and not solid(120, s * 37.9, Z + 2.4) and solid(120, s * 37.9, Z + 2.7))
+check("nut plate = the head plate's twin (20.6 × 10 × 2, slot from 6 to 18 mm along), seat = the recess's x and floor",
+      (F.NUT_PLATE, F.IDLER_PLATE, F.PLATE_SLOT_FROM, ns["NUT_PLATE_X"], ns["LIP_DZ"], ns["LIP_OUT"])
+      == ((20.6, 10.0), (20.6, 10.0), 6.0, (108.0, 129.0), 5.2, 1.0),
+      (F.NUT_PLATE, F.PLATE_SLOT_FROM, ns["NUT_PLATE_X"], ns["LIP_DZ"], ns["LIP_OUT"]))
+both("lip under the nut plate: top Z_A - 5.2, 1.0 proud (|y| 38-39), 1.0 face, then 45° back into the wall",
+     lambda s: solid(118, s * 38.5, Z - 5.3) and not solid(118, s * 38.5, Z - 5.1) and solid(118, s * 38.95, Z - 6.1)
+     and not solid(118, s * 39.05, Z - 5.6) and solid(118, s * 38.5, Z - 6.6) and not solid(118, s * 38.5, Z - 6.8)
+     and not solid(118, s * 38.05, Z - 7.3) and solid(107, s * 38.5, Z - 5.5) and solid(130, s * 38.5, Z - 5.5))
+both("end stops: inner faces x 108 and 129 (21.0 CAD, as the recess), 1.0 proud, up to Z_A + 5.2",
+     lambda s: solid(107.9, s * 38.5, Z) and not solid(108.1, s * 38.5, Z) and not solid(128.9, s * 38.5, Z)
+     and solid(129.1, s * 38.5, Z) and solid(107, s * 38.5, Z + 5.1) and not solid(107, s * 38.5, Z + 5.3)
+     and solid(130, s * 38.95, Z) and not solid(130, s * 39.05, Z) and not solid(106.4, s * 38.5, Z)
+     and not solid(130.6, s * 38.5, Z))
+both("nut plate's space clear: x 108.05-128.95, |y| 38.05-40, Z_A - 5.15 .. + 5.15 (plate rests at Z_A - 5.2 .. + 4.8)",
+     lambda s: not any(solid(x, s * y, Z + dz) for x in (108.05, 112, 118, 124, 128.95) for y in (38.05, 39.0, 39.95)
+                       for dz in (-5.15, -2.0, 0.0, 3.0, 5.15)))
 both("idler slot hull up to the teardrop tips (Z_A + 2.55)", lambda s: not solid(120, s * 31, Z + 2.45) and solid(120, s * 31, Z + 2.7))
 both("idler slot ±4 (bolt centres x 116-124)", lambda s: not solid(116, s * 31, Z) and not solid(124, s * 31, Z) and solid(126.5, s * 31, Z))
 both("jack pilot on |y| 25.4 at Z_A through the buttress", lambda s: not solid(105, s * 25.4, Z) and solid(105, s * 25.4, Z + 2.5))

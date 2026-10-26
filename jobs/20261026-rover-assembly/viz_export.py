@@ -4,10 +4,11 @@ viewer config (track path, spinners, parts list, page text).
 Run from the project root:  .venv/bin/python jobs/20261026-rover-assembly/viz_export.py <out_dir>
 Writes <out_dir>/robot.glb and <out_dir>/robot.json. Track links are direct children of the
 root; the viewer moves them along the pitch path (tracks config) and spins the wheels.
-Bought parts sit where assembly_check.py puts them (round 4): N20s rolled 45° with their gearbox
+Bought parts sit where assembly_check.py puts them (round 5): N20s rolled 45° with their gearbox
 faces on the 2 mm skins at |y| 44, Pololu hubs with the sprocket screws, fully threaded axle bolts with
-their head washers, wall nuts and nylocs, the idler jack screws, the idlers' steel head and nut plates,
-the toggle on the lid and the buck under it.
+their head washers, wall nuts and nylocs, the idler jack screws, the idlers' steel head plates (inside,
+in the block-face recesses) and nut plates (outside, on the wall's outer face) with a Ø9 washer under
+each idler wall nut, the toggle on the lid and the buck under it.
 """
 from __future__ import annotations
 
@@ -34,9 +35,11 @@ LABELS = {"chassis": "Chassis (tub)", "lid": "Lid / electronics deck", "sprocket
 QTY = {"chassis": 1, "lid": 1, "sprocket": 2, "idler": 2, "wheel": 4, "link": 70}   # 68 links + 2 spares
 PLATES = {"link": 2, "wheel": 2}   # 35 links per plate; 2 wheels per plate (the slices of 26 Oct 2026)
 PETG = "petg_olive"
-STAMPS = [{"text": "5 of 6 parts: awaiting approval", "kind": "pass"}, {"text": "Chassis strength review running", "kind": "warn"},
+STAMPS = [{"text": "4 of 6 parts: awaiting approval", "kind": "pass"},
+          {"text": "Chassis round 5 and idler: DFM and strength reviews next", "kind": "warn"},
           {"text": "Assembly check clean", "kind": "pass"}]
-RESLICE = ("chassis",)   # its slice_stats.json is from round 2: drop it once its round 4 slice is merged
+RESLICE = ("chassis", "idler")   # stale slice_stats.json (chassis: round 2; idler: before its round 5 hub): drop each once
+#                                  its new slice is merged
 BUCK_X0 = 85.0                  # buck under the lid, x 85-107 (as in assembly_check.py)
 JACK_L = 20.0                   # M3 × 20 set screw (idler jack screw)
 
@@ -61,8 +64,8 @@ def printed(mod):
 
 
 def plate_parts(length, height, slot_dx=0.0):
-    """Idler clamp plate (round 4): length (x) × PLATE_T (y) × height (z), centred, with its slot at x = slot_dx
-    (same shape as assembly_check.py's plate_dummy)."""
+    """Idler clamp plate: length (x) × PLATE_T (y) × height (z), centred, with its slot at x = slot_dx
+    (same shape as assembly_check.py's plate_dummy; round 5: head and nut plates are identical)."""
     w, sl = F.PLATE_SLOT
     cut = Pos(slot_dx, 0, 0) * Box(sl - w, F.PLATE_T + 2, w)
     for sx in (-1, 1):
@@ -116,15 +119,23 @@ def main(out_dir: Path):
     spinners = []
     hub_mesh = [V._mat(V.shape_to_mesh(mounting_hub_dummy(F.HUB, hole_angle_deg=spm.SLOT_ANGLE0)), "shield")]
     wheel_h = wm.RIM_HALF + wm.CONE_RISE + wm.FLANGE_FLAT                 # 16.0: wheel half width
-    y_trap = F.HALF_W_OUT - ch.NUT_DEPTH                                  # wall nut pulled to the trap bottom
+    y_trap = F.HALF_W_OUT - ch.NUT_DEPTH                                  # road-wheel nut pulled to the trap bottom
+    y_nut_washer_idler = F.HALF_W_OUT + F.PLATE_T                         # round 5: Ø9 washer on the outer nut plate
+    y_nut_idler = y_nut_washer_idler + F.WASHER_WIDE[1]                   # idler wall nut on that washer (40.8)
     axle = {"wheel": (F.HALF_W_OUT - F.WALL - F.BOSS_IN - F.WASHER[1], F.ROAD_BOLT_L, F.WASHER, F.Y_T + wheel_h),
             "idler": (ch.IDLER_HEAD_Y1, F.IDLER_BOLT_L, F.WASHER_WIDE, F.Y_T + spm.DISC_HALF)}
-    # idler clamp plates (round 4), fixed to the chassis: head plate in its block-face recess, nut plate in the nut slot
-    x_head_plate = sum(ch.PLATE_RECESS_X) / 2
+    # idler clamp plates (round 5), fixed to the chassis: head plate in its block-face recess, nut plate (its twin) on the
+    # wall's outer face between its end stops; both rest at Z_A - 5.2, slot from 6 to 18 mm along, 6 mm end to the rear
+    x_head_plate, x_nut_plate = sum(ch.PLATE_RECESS_X) / 2, sum(ch.NUT_PLATE_X) / 2
     y_head_plate = F.HALF_W_OUT - F.WALL - F.BOSS_IN + F.PLATE_T / 2
-    y_nut_plate = F.HALF_W_OUT - ch.NUT_SLOT_D + F.PLATE_T / 2
-    head_plate = plate_parts(*F.IDLER_PLATE, slot_dx=F.AXLE_DX - x_head_plate)
-    nut_plate = plate_parts(*F.NUT_PLATE)
+    y_nut_plate = F.HALF_W_OUT + F.PLATE_T / 2
+    z_plate = F.Z_A - ch.PLATE_RECESS_Z + F.IDLER_PLATE[1] / 2
+
+    def slot_dx(length):
+        return F.PLATE_SLOT_FROM + F.PLATE_SLOT[1] / 2 - length / 2
+
+    head_plate = plate_parts(*F.IDLER_PLATE, slot_dx=slot_dx(F.IDLER_PLATE[0]))
+    nut_plate = plate_parts(*F.NUT_PLATE, slot_dx=slot_dx(F.NUT_PLATE[0]))
     for side, tag in ((1, "L"), (-1, "R")):
         out = V.Rx(-90 * side)                        # local +Z -> outward (washers, nuts)
         S.add("n20", V.n20_parts(F.MOTOR), root,
@@ -158,9 +169,18 @@ def main(out_dir: Path):
             S.add(f"washer{hw_od:.0f}", V.washer_parts(3, hw_od, hw_t), root, matrix=V.T(x, side * y_head, F.Z_A) @ out,
                   label="M3 washer (DIN 9021) under the head" if kind == "idler" else "M3 washer under the head",
                   category="hardware")
-            S.add("m3nut", V.nut_parts(3), root, matrix=V.T(x, side * y_trap, F.Z_A) @ out,
-                  label="M3 nut (in the wall trap)", category="hardware")
-            for y_w in (F.HALF_W_OUT, part_out):
+            if kind == "idler":   # round 5: wall nut outside, on a Ø9 washer on the nut plate
+                S.add("washer9", V.washer_parts(3, F.WASHER_WIDE[0], F.WASHER_WIDE[1]), root,
+                      matrix=V.T(x, side * y_nut_washer_idler, F.Z_A) @ out,
+                      label="M3 washer (DIN 9021) under the idler's wall nut, on the nut plate", category="hardware")
+                S.add("m3nut", V.nut_parts(3), root, matrix=V.T(x, side * y_nut_idler, F.Z_A) @ out,
+                      label="M3 nut (idler wall nut, outside the wall)", category="hardware")
+                y_run = y_nut_idler + F.NUT[1]
+            else:
+                S.add("m3nut", V.nut_parts(3), root, matrix=V.T(x, side * y_trap, F.Z_A) @ out,
+                      label="M3 nut (in the wall trap)", category="hardware")
+                y_run = F.HALF_W_OUT
+            for y_w in (y_run, part_out):
                 S.add("washer7", V.washer_parts(3, F.WASHER[0], F.WASHER[1]), root, matrix=V.T(x, side * y_w, F.Z_A) @ out,
                       label="M3 washer", category="hardware")
             S.add("m3nyloc", V.nut_parts(3, nyloc=True), root, matrix=V.T(x, side * (part_out + F.WASHER[1]), F.Z_A) @ out,
@@ -170,12 +190,12 @@ def main(out_dir: Path):
                 S.add("jack", [V.cyl(1.5, 0.0, JACK_L, "black_oxide", axis="x")], root,
                       matrix=V.T(x_tip - JACK_L, side * ch.JACK_Y, F.Z_A), label="M3 × 20 jack screw (idler stop)",
                       category="hardware")
-                S.add("plate_head", head_plate, root, matrix=V.T(x_head_plate, side * y_head_plate, F.Z_A),
-                      label=f"Idler head plate, 2 mm steel {F.IDLER_PLATE[0]:g} × {F.IDLER_PLATE[1]:g} (under the Ø9 washer)",
-                      category="hardware")
-                S.add("plate_nut", nut_plate, root, matrix=V.T(F.AXLE_DX, side * y_nut_plate, F.Z_A),
-                      label=f"Idler nut plate, 2 mm steel {F.NUT_PLATE[0]:g} × {F.NUT_PLATE[1]:g} (under the wall nut)",
-                      category="hardware")
+                S.add("plate_head", head_plate, root, matrix=V.T(x_head_plate, side * y_head_plate, z_plate),
+                      label=f"Idler head plate, 2 mm steel {F.IDLER_PLATE[0]:g} × {F.IDLER_PLATE[1]:g} (inside, under the Ø9 "
+                            "head washer)", category="hardware")
+                S.add("plate_nut", nut_plate, root, matrix=V.T(x_nut_plate, side * y_nut_plate, z_plate),
+                      label=f"Idler nut plate, 2 mm steel {F.NUT_PLATE[0]:g} × {F.NUT_PLATE[1]:g} (outside, on the wall's "
+                            "lip, under the Ø9 washer and wall nut)", category="hardware")
 
     # --- tracks: 34 links per side with their steel pins (placed by the viewer) ----------------
     link_mesh = printed(mods["link"])

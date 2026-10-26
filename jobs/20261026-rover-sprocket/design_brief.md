@@ -47,7 +47,7 @@ The moment is R × the arm, the arm being the gearbox face to the track plane (Y
 - **Inward:** the shaft hub's thrust washer bears on the skin.
 - **Torque and height:** the diamond pocket.
 
-This removes the rear stop and makes 9 or 11 mm gearboxes and 9 or 10 mm shafts all work (assembly_check.json: an 11 mm gearbox is collision-free; both shafts sit 5 mm deep in the hub with ≥ 3.5 mm past the set screw).
+This removes the rear stop, so 9 and 11 mm gearboxes both fit (assembly_check.json: an 11 mm gearbox is collision-free). The shaft must be the specified 10 mm from the gearbox face, at least 9.6 mm (the Architect's decision after strength round 4: a 9 mm shaft reaches only 1.5 mm into the centre hole and fails H5). Since the 2 mm skin (chassis round 4) the face is at |y| 44, so a 10 mm shaft sits 5 mm deep in the hub, 3.5 mm past the set screw and 2.5 mm into the centre hole; the 9.6 mm minimum gives 5, 3.1 and 2.1 mm (assembly_check.json, round 5).
 
 **Assembly with ordinary tools:**
 1. Solder the leads.
@@ -80,4 +80,5 @@ HOLE_COMP, DISC_R, TOOTH_TIP_R, TOOTH_BASE_W, TOOTH_TIP_W, ROOT_CHAMFER, PHASE_D
 ## Risks
 - **Hub hole circle unconfirmed:** the radial slots cover r 5.5–6.85.
 - **Set screw on the wrong side of the shaft:** turn the shaft so the flat faces the set screw before tightening; use threadlocker.
-- **Gearbox radial load at the bushing:** no published N20 rating. The 10 mm overhang is the smallest the layout allows; the stall and drop proof tests cover it.
+- **Gearbox radial load at the bushing:** no published N20 rating. The overhang (10 mm in round 3, 11 mm since the chassis's 2 mm skin) is the smallest the layout allows; the stall and drop proof tests cover it.
+- **Shared model (2026-10-26, chassis round 5):** the idler's hub start, `HUB_Z0_ROUND`, now comes from `rover_frame.IDLER_HUB_Y0` (−11.3, was −16.5), and the docstring and `SHAFT_CLEAR_D` comment state the 10 mm shaft (9.6 mm minimum). The sprocket's own branch (`BORE = "hub"`) is untouched: a rebuild gives a byte-identical part.stl and geometry.json, so its slice and validation stand.
