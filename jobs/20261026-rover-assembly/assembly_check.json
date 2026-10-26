@@ -1,17 +1,165 @@
 {
  "tol_mm3": 0.5,
+ "bodies": 154,
  "collisions": [],
- "expected_contacts": [
-  [
-   "motorL",
-   "sprocketL"
-  ],
-  [
-   "motorR",
-   "sprocketR"
-  ]
+ "exempt_pairs": [],
+ "idler_and_jack_at_slot_ends": "clear",
+ "jack_screw": [
+  {
+   "side": "L",
+   "idler_dx": -4.0,
+   "jack_rear_x": 93.2,
+   "jack_tip_x": 113.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  },
+  {
+   "side": "R",
+   "idler_dx": -4.0,
+   "jack_rear_x": 93.2,
+   "jack_tip_x": 113.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  },
+  {
+   "side": "L",
+   "idler_dx": 0.0,
+   "jack_rear_x": 97.2,
+   "jack_tip_x": 117.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  },
+  {
+   "side": "R",
+   "idler_dx": 0.0,
+   "jack_rear_x": 97.2,
+   "jack_tip_x": 117.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  },
+  {
+   "side": "L",
+   "idler_dx": 4.0,
+   "jack_rear_x": 101.2,
+   "jack_tip_x": 121.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  },
+  {
+   "side": "R",
+   "idler_dx": 4.0,
+   "jack_rear_x": 101.2,
+   "jack_tip_x": 121.2,
+   "thread_in_buttress_mm": 6.5,
+   "socket_outside_buttress": true,
+   "key_path_clear": true
+  }
  ],
- "idler_slot_and_bolts": "clear",
+ "motor_with_11mm_gearbox": "clear",
+ "shaft_variants": {
+  "9 mm shaft": {
+   "shaft_end_y": 54.0,
+   "engaged_in_hub_mm": 5.0,
+   "set_screw_y": 49.0,
+   "shaft_past_set_screw_mm": 3.5
+  },
+  "10 mm shaft": {
+   "shaft_end_y": 55.0,
+   "engaged_in_hub_mm": 5.0,
+   "set_screw_y": 49.0,
+   "shaft_past_set_screw_mm": 4.5
+  }
+ },
+ "axle_bolt_stacks": [
+  {
+   "bolt": "road wheel M3 x 50",
+   "head_underside_y": 27.5,
+   "wall_nut_y": [
+    35.4,
+    37.8
+   ],
+   "part_outer_face_y": 71.0,
+   "nyloc_y": [
+    71.5,
+    75.5
+   ],
+   "tip_y": 77.5,
+   "thread_past_nyloc_mm": 2.0,
+   "ok_past_nyloc": true,
+   "fully_threaded_engages_wall_nut": true,
+   "iso4762_partly_threaded_thread_starts_y": 59.5,
+   "iso4762_would_engage_wall_nut": false
+  },
+  {
+   "bolt": "idler M3 x 40",
+   "head_underside_y": 27.2,
+   "wall_nut_y": [
+    35.4,
+    37.8
+   ],
+   "part_outer_face_y": 58.5,
+   "nyloc_y": [
+    59.0,
+    63.0
+   ],
+   "tip_y": 67.2,
+   "thread_past_nyloc_mm": 4.2,
+   "ok_past_nyloc": true,
+   "fully_threaded_engages_wall_nut": true,
+   "iso4762_partly_threaded_thread_starts_y": 49.2,
+   "iso4762_would_engage_wall_nut": false
+  }
+ ],
+ "hub_screws": {
+  "screw": "M3 x 12",
+  "head_underside_y": 59.0,
+  "tip_y": 47.0,
+  "engaged_in_hub_mm": 4.5,
+  "tip_inside_hub_mm": 0.5,
+  "tip_to_skin_mm": 1.0
+ },
+ "tool_paths": "clear",
+ "shaft_overhang_gearbox_face_to_track_plane_mm": 10.0,
+ "links_inner_edge_y": 43.0,
+ "housing_outer_face_y": 42.0,
+ "link_to_housing_gap_mm": 1.0,
+ "track_to_chassis_clearance_measured": {
+  "L": {
+   "chassis_to_links_min_mm": 1.0,
+   "at": [
+    -9.1,
+    42.0,
+    10.0
+   ],
+   "nacelle_to_links_min_mm": 1.5,
+   "nacelle_at": [
+    -10.9,
+    46.0,
+    20.0
+   ]
+  },
+  "R": {
+   "chassis_to_links_min_mm": 1.0,
+   "at": [
+    -10.4,
+    -42.0,
+    28.4
+   ],
+   "nacelle_to_links_min_mm": 1.5,
+   "nacelle_at": [
+    -10.9,
+    -46.0,
+    20.0
+   ]
+  }
+ },
+ "nacelle_max_radius_mm": 10.91,
+ "links_inner_face_min_radius_mm": 12.39,
  "links_per_side": 34,
  "axle_dx_mm": 120.0,
  "teeth_engaged_in_notches": {
@@ -22,10 +170,27 @@
  },
  "overall_mm": [
   159.8,
-  142.0,
-  60.2
+  155.0,
+  72.7
+ ],
+ "overall_min_max_mm": [
+  [
+   -19.9,
+   -77.5,
+   0.0
+  ],
+  [
+   139.9,
+   77.5,
+   72.7
+  ]
  ],
  "lowest_point_mm": 0.0,
  "track_bottom_mm": 0.0,
- "ground_clearance_mm": 8.68
+ "ground_clearance_mm": 8.68,
+ "battery_holder_mm": [
+  80.0,
+  41.0,
+  21.0
+ ]
 }

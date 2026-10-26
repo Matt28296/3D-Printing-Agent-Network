@@ -5,7 +5,8 @@
   "perimeters": 5,
   "top_solid_layers": 4,
   "bottom_solid_layers": 4,
-  "fill_density": 20
+  "fill_density": 20,
+  "elefant_foot_compensation": 0.2
  },
  "max": {
   "layer_height": 0.2

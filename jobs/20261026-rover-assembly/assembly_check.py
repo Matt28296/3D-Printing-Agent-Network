@@ -1,12 +1,28 @@
-"""Assembly interference check for the tracked rover.
+"""Assembly check for the tracked rover (round 3).
 
-Builds both track loops link by link (34 per side: 13 pins on the bottom run, 5 round the
-idler, 12 on the top run, 4 round the sprocket), places the chassis, lid, sprockets, idlers,
-road wheels and dummies of the motors, battery, HC-SR04, ESP32 (with jumper housings) and
-breadboard, then measures the overlap of every pair of bodies (> TOL mm³ = collision). Also
-checks that every sprocket/idler tooth sits inside a link notch on the wrap.
+Builds both 34-link track loops pin by pin (13 pins on the bottom run, 5 round the idler, 12 on the
+top run, 4 round the sprocket) and places every printed part with the bought parts that meet it:
+- each N20 as the detailed dummy (gearbox, can, end cap, solder tabs, the Ø4 × 0.8 bearing boss and
+  the D-shaft), rolled 45° about its shaft, gearbox face on its skin at |y| 45;
+- the Pololu #1996 hub on the shaft (|y| 46.5-51.5), its thrust washer, and the 4 × M3 × 12 sprocket
+  screws with their washers;
+- the axle bolts as fitted: M3 socket-head screws (class 12.9, fully threaded), head on its washer on
+  the boss face (ISO 7089 for the road wheels, DIN 9021 Ø9 for the idlers), nut in the wall trap,
+  washer, wheel or idler, washer, nyloc; M3 × 50 and M3 × 40;
+- the M3 × 20 jack screws bearing on the idler-bolt heads;
+- the battery holder at 80 mm (the longest allowed) with its velcro strap, the HC-SR04 with its four
+  pins bent back and the leads soldered on, the ESP32 with jumper housings, the breadboard and TB6612,
+  the buck under the lid, the toggle switch on the lid, the heat-set inserts and the lid screws.
+Nothing is exempt: every pair of bodies is intersected, and more than TOL mm³ is a collision. Parts
+that only touch (gearbox face on the skin, shaft in the hub bore, heads on washers) intersect in ~0.
+Screw shanks are Ø2.8 proxies, the jack screw Ø2.7 (it forms its thread in a Ø2.8 CAD pilot) and the
+hub bore Ø3.1, so tessellation can't fake a contact.
+Also checked: tooth engagement; the fastener stacks (thread past each nyloc, wall-nut engagement for
+fully and for partly threaded bolts, hub-screw and jack-screw engagement); the idler and its jack
+screw at both slot ends; a motor with an 11 mm gearbox; a 9 mm shaft; the tool paths for the jack
+screw and the hub set screw.
 
-Run from the project root:  .venv/bin/python jobs/20261026-rover-assembly/assembly_check.py
+Run from the project root:  python jobs/20261026-rover-assembly/assembly_check.py
 """
 from __future__ import annotations
 
@@ -16,6 +32,7 @@ import json
 import math
 import sys
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -24,16 +41,21 @@ import trimesh
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT / "tools"), str(HERE)]
-from build123d import Box, Cylinder, Pos, Rot, export_stl  # noqa: E402
-from hobby_parts import BATT_2X18650, ESP32_DEVKIT_38, MINI_BREADBOARD, gearmotor_dummy  # noqa: E402
+from build123d import Align, Box, Cylinder, Pos, Rot, export_stl  # noqa: E402
+from cadlib import hex_nut_pocket  # noqa: E402
+from hobby_parts import (BATT_2X18650_LONG, ESP32_DEVKIT_38, MINI_BREADBOARD, MP1584_BUCK, TB6612_CARRIER,  # noqa: E402
+                         gearmotor_dummy, mounting_hub_dummy)
 import rover_frame as F  # noqa: E402
 
 TOL = 0.5
-# deliberate contacts, not interference: the N20's D-shaft is a press fit in the sprocket's D-bore
-EXPECTED = [{"motorL", "sprocketL"}, {"motorR", "sprocketR"}]
-BOLT_L = 45.0                 # M3 x 45 axle bolts (road wheels and idlers), head outside the wheel
 JOBS = {"chassis": "20261026-rover-chassis", "lid": "20261026-rover-lid", "sprocket": "20261026-rover-sprocket",
         "idler": "20261026-rover-idler", "wheel": "20261026-rover-wheel", "link": "20261026-rover-track-link"}
+SHANK_D = 2.8                 # screw/bolt shank proxy (M3) in the collision model
+C, MIN = Align.CENTER, Align.MIN
+ISO4762_B = 18.0              # thread length of a partly threaded M3 ISO 4762 screw longer than ~25 mm
+JACK_L = 20.0                 # M3 × 20 set screw (DIN 913)
+JACK_PROXY_D = 2.7            # jack screw in the collision model (it taps its own thread in the Ø2.8 CAD pilot)
+KEY_ANGLE = 25.0              # ball-end hex key: up to 25° off the screw axis
 
 
 def load(job):
@@ -59,6 +81,16 @@ def frame(origin, x_dir, z_dir):
     return m
 
 
+def tr(x=0.0, y=0.0, z=0.0):
+    m = np.eye(4); m[:3, 3] = (x, y, z)
+    return m
+
+
+def ax(x, y, s, outward=True):
+    """Frame on a Y-axis at (x, y, Z_A): +z points outward (+sY) or inward."""
+    return frame((x, y, F.Z_A), (1, 0, 0), (0, s if outward else -s, 0))
+
+
 def track_pins():
     """Pin centres (x, z) round one loop, in travel order."""
     za, rp = F.Z_A, F.RP
@@ -72,22 +104,92 @@ def track_pins():
     return pins
 
 
+# --- bought-part dummies (build123d, each in its own frame) -------------------------------------
+def screw_dummy(length, head=F.SCREW_HEAD):
+    """Socket-head screw: head z 0..k above its underside at z = 0, shank down to z = -length."""
+    hd, hh = head
+    return Cylinder(hd / 2, hh, align=(C, C, MIN)) + Pos(0, 0, -length) * Cylinder(SHANK_D / 2, length + 0.01, align=(C, C, MIN))
+
+
+def washer_dummy(od, t, idd=3.2):
+    return Cylinder(od / 2, t, align=(C, C, MIN)) - Pos(0, 0, -1) * Cylinder(idd / 2, t + 2, align=(C, C, MIN))
+
+
+def nut_dummy(af, h):
+    return hex_nut_pocket(af, h, clearance=0) - Pos(0, 0, -1) * Cylinder(1.5, h + 2, align=(C, C, MIN))
+
+
+def rod_x(x0, x1, y, z, d):
+    return Pos((x0 + x1) / 2, y, z) * Rot(0, 90, 0) * Cylinder(d / 2, abs(x1 - x0))
+
+
+def hcsr04_dummy(hx, sz):
+    """HC-SR04 behind the front wall: PCB x hx-13.3..hx-11.7, transducers to the wall, crystal can,
+    and its 4 header pins bent 90° rearward with the leads soldered on and heat-shrunk (about 10 mm
+    behind the board), the leads then running up behind it."""
+    x_pcb = hx - 12.5 - 0.8
+    s = Pos(x_pcb, 0, sz) * Box(1.6, 45, 20)
+    for sy in (-13.0, 13.0):
+        s += Pos(hx - 12.0 + 6.0, sy, sz) * Rot(0, 90, 0) * Cylinder(8.0, 12.0)
+    x_back, z_edge = x_pcb - 0.8, sz - 10.0
+    s += Pos(x_back - 5.0 + 0.4, 0, z_edge - 1.25) * Box(10.8, 10.2, 3.5)       # pins bent back + solder + heat-shrink
+    s += Pos(x_back - 8.5, 0, (z_edge + 0.5 + sz + 10.0) / 2) * Box(3.0, 10.2, sz + 10.0 - z_edge - 0.5)   # leads up
+    return s
+
+
+def toggle_dummy(x, y, z_top_face, deck_t):
+    """MTS-102 on the lid, lever up: body under the deck, inner nut, bushing, outer nut, lever."""
+    z0 = z_top_face
+    s = Pos(x, y, z0 - 6.0 - 5.0) * Box(13.0, 8.0, 10.0)                    # body, 6 mm below the top face
+    s += Pos(x, y, z0 - 16.0 - 2.0) * Box(8.0, 4.0, 4.0)                    # solder lugs
+    s += Pos(x, y, z0 - deck_t - 2.2) * Cylinder(4.6, 2.2, align=(C, C, MIN))   # inner nut
+    s += Pos(x, y, z0 - 6.0) * Cylinder(3.0, 15.0, align=(C, C, MIN))       # M6 bushing
+    s += Pos(x, y, z0) * Cylinder(4.6, 2.2, align=(C, C, MIN))              # outer nut
+    s += Pos(x, y, z0 + 9.0) * Cylinder(1.3, 12.0, align=(C, C, MIN))       # lever
+    return s
+
+
 def main():
     mods = {k: load(v) for k, v in JOBS.items()}
+    ch, lid, spm, wm, lm = mods["chassis"], mods["lid"], mods["sprocket"], mods["wheel"], mods["link"]
     print("tessellating ...", flush=True)
     M = {k: to_mesh(m.design()) for k, m in mods.items()}
-    M["motor"] = to_mesh(gearmotor_dummy(F.MOTOR))
-    b = BATT_2X18650
+    M["motor"] = to_mesh(gearmotor_dummy(F.MOTOR, detailed=True), tol=0.02)
+    hub = replace(F.HUB, bore=F.HUB.bore + 0.1)
+    M["hub"] = to_mesh(mounting_hub_dummy(hub, hole_angle_deg=spm.SLOT_ANGLE0), tol=0.02)
+    M["thrust_washer"] = to_mesh(washer_dummy(*F.WASHER), tol=0.02)
+    M["hub_screw"] = to_mesh(screw_dummy(F.HUB_SCREW_L), tol=0.02)
+    M["washer"] = to_mesh(washer_dummy(*F.WASHER), tol=0.02)
+    M["washer_wide"] = to_mesh(washer_dummy(*F.WASHER_WIDE), tol=0.02)
+    M["road_bolt"] = to_mesh(screw_dummy(F.ROAD_BOLT_L), tol=0.02)
+    M["idler_bolt"] = to_mesh(screw_dummy(F.IDLER_BOLT_L), tol=0.02)
+    M["nut"] = to_mesh(nut_dummy(*F.NUT), tol=0.02)
+    M["nyloc"] = to_mesh(nut_dummy(*F.NYLOC), tol=0.02)
+    M["insert"] = to_mesh(Cylinder(1.95, 5.7, align=(C, C, MIN)) - Pos(0, 0, -1) * Cylinder(1.5, 8, align=(C, C, MIN)), tol=0.02)
+    M["lid_screw"] = to_mesh(screw_dummy(8.0), tol=0.02)
+
     floor_top = F.FLOOR_Z + F.FLOOR_T
-    x0b = mods["chassis"].BATT_X0
-    M["battery"] = to_mesh(Pos(x0b + b.length / 2, 0, floor_top + b.height / 2 + 0.01) * Box(b.length, b.width - 0.2, b.height))
+    b = BATT_2X18650_LONG
+    x0b = ch.BATT_X0
+    fixed = {}
+    fixed["battery"] = to_mesh(Pos(x0b + b.length / 2, 0, floor_top + b.height / 2 + 0.01) * Box(b.length, b.width - 0.2, b.height))
+    xs = ch.BATT_X0 + ch.BATT_LEN / 2
+    top = floor_top + b.height + 0.02
+    sy_in, sy_out = ch.STRAP_Y - 0.7, ch.STRAP_Y + 0.7      # 1.4 mm strap in the 3 mm floor slot
+    half = [(sy_in, F.FLOOR_Z - 1.5), (sy_out, F.FLOOR_Z - 1.5), (sy_out, floor_top), (b.width / 2 + 1.5, top + 1.5),
+            (0, top + 1.5), (0, top), (b.width / 2, top), (sy_in, floor_top)]   # up the slot, slanting to the holder's top edge
+    from build123d import BuildPart, BuildSketch, Plane, Polygon, extrude
+    strap = None
+    for sy in (1, -1):
+        with BuildPart() as bp:
+            with BuildSketch(Plane.YZ.offset(xs - 10)):
+                Polygon(*[(sy * yy, zz) for yy, zz in half], align=None)
+            extrude(amount=20)
+        strap = bp.part if strap is None else strap + bp.part
+    strap += Pos(xs, 0, F.FLOOR_Z - 0.75) * Box(20, 2 * sy_out, 1.5)                    # under the floor
+    fixed["strap"] = to_mesh(strap)
     hx = F.X_FRONT_OUT - F.WALL
-    sz = mods["chassis"].SENSOR_Z
-    sensor = Pos(hx - 12.5 - 0.8, 0, sz) * Box(1.6, 45, 20)
-    for sy in (-13.0, 13.0):
-        sensor += Pos(hx - 12.0 + 6.0, sy, sz) * Rot(0, 90, 0) * Cylinder(8.0, 12.0)
-    M["hcsr04"] = to_mesh(sensor)
-    lid = mods["lid"]
+    fixed["hcsr04"] = to_mesh(hcsr04_dummy(hx, ch.SENSOR_Z))
     e = ESP32_DEVKIT_38
     zpcb = F.TOP_Z + lid.T + lid.LEDGE_H
     esp = Pos(lid.USB_END_X + e.length / 2, 0, zpcb + e.pcb_t / 2) * Box(e.length, e.width, e.pcb_t)
@@ -95,102 +197,247 @@ def main():
     for sy in (-1, 1):   # header plastic + female jumper housings below each pin row
         esp += Pos(lid.USB_END_X + e.length / 2, sy * (e.width / 2 - 1.3), zpcb - 16.5 / 2) * Box(pins_len, 2.54, 16.5)
     esp += Pos(lid.USB_END_X + 9 + 9, 0, zpcb + e.pcb_t + 1.6) * Box(18, 16, 3.2)
-    M["esp32"] = to_mesh(esp)
+    fixed["esp32"] = to_mesh(esp)
     bb = MINI_BREADBOARD
-    M["breadboard"] = to_mesh(Pos(lid.BB_X0 + bb.length / 2, 0, F.TOP_Z + lid.T + bb.height / 2 + 0.01) * Box(bb.length, bb.width, bb.height))
+    bbx, bbz = lid.BB_X0 + bb.length / 2, F.TOP_Z + lid.T
+    fixed["breadboard"] = to_mesh(Pos(bbx, 0, bbz + bb.height / 2 + 0.01) * Box(bb.length, bb.width, bb.height))
+    tb = TB6612_CARRIER
+    fixed["tb6612"] = to_mesh(Pos(bbx - 11, -4, bbz + bb.height + 0.02 + 2.0) * Box(tb.width, tb.length, 4.0))
+    bk = MP1584_BUCK
+    BUCK_X0 = 85.0
+    fixed["buck"] = to_mesh(Pos(BUCK_X0 + bk.length / 2, 0, F.TOP_Z - bk.height / 2 - 0.01) * Box(bk.length, bk.width, bk.height))
+    sw_x, sw_y = lid.SWITCH
+    fixed["toggle"] = to_mesh(toggle_dummy(sw_x, sw_y, F.TOP_Z + lid.T, lid.T))
 
-    P = {"chassis": np.eye(4), "lid": np.eye(4), "battery": np.eye(4), "hcsr04": np.eye(4), "esp32": np.eye(4),
-         "breadboard": np.eye(4)}
+    P = {"chassis": np.eye(4), "lid": np.eye(4)}
+    for k in fixed:
+        P[k] = np.eye(4)
+    for i, (x, y) in enumerate(F.LID_SCREWS):
+        P[f"insert{i}"] = tr(x, y, F.TOP_Z - 5.7)
+        P[f"lid_screw{i}"] = tr(x, y, F.TOP_Z + lid.T)
+    wheel_h = wm.RIM_HALF + wm.CONE_RISE + wm.FLANGE_FLAT          # 16.0: wheel half width
+    y_head_road = F.HALF_W_OUT - F.WALL - F.BOSS_IN - F.WASHER[1]  # 27.5
+    y_head_idler = ch.IDLER_HEAD_Y1                                # 27.2
+    y_trap = F.HALF_W_OUT - ch.NUT_DEPTH                           # 35.4: nut pulled to the trap bottom
+
+    def axle_group(tag, kind, x, s):
+        """Bolt, head washer, wall nut, washers, part and nyloc on one axle (+ the jack screw for idlers)."""
+        g = {}
+        if kind == "idler":
+            yh, bolt, hw, part_out = y_head_idler, "idler_bolt", "washer_wide", F.Y_T + spm.DISC_HALF
+        else:
+            yh, bolt, hw, part_out = y_head_road, "road_bolt", "washer", F.Y_T + wheel_h
+        g[f"{bolt}{tag}"] = ax(x, s * yh, s, outward=False)
+        g[f"{hw}_head{tag}"] = ax(x, s * yh, s)
+        g[f"nut{tag}"] = ax(x, s * y_trap, s)
+        g[f"washer_in{tag}"] = ax(x, s * F.HALF_W_OUT, s)
+        g[f"{kind}{tag}"] = ax(x, s * F.Y_T, s)
+        g[f"washer_out{tag}"] = ax(x, s * part_out, s)
+        g[f"nyloc{tag}"] = ax(x, s * (part_out + F.WASHER[1]), s)
+        return g
+
+    def jack(x_bolt, s):
+        x_tip = x_bolt - F.SCREW_HEAD[0] / 2 - 0.05
+        return to_mesh(rod_x(x_tip - JACK_L, x_tip, s * ch.JACK_Y, F.Z_A, JACK_PROXY_D), tol=0.02), x_tip
+
+    jack_meshes = {}
     for side, tag in ((1, "L"), (-1, "R")):
-        P[f"motor{tag}"] = frame((0, side * F.MOTOR_FACE_Y, F.Z_A), (1, 0, 0), (0, side, 0))
-        P[f"sprocket{tag}"] = frame((0, side * F.Y_T, F.Z_A), (1, 0, 0), (0, side, 0))
-        P[f"idler{tag}"] = frame((F.AXLE_DX, side * F.Y_T, F.Z_A), (1, 0, 0), (0, side, 0))
+        s = side
+        P[f"motor{tag}"] = frame((0, s * F.MOTOR_FACE_Y, F.Z_A), F.motor_x_dir(s), (0, s, 0))   # rolled 45°
+        P[f"thrust_washer{tag}"] = ax(0, s * (F.MOTOR_FACE_Y + F.SKIN), s)
+        P[f"hub{tag}"] = ax(0, s * F.HUB_Y0, s)
+        P[f"sprocket{tag}"] = ax(0, s * F.Y_T, s)
+        for k in range(F.HUB.n_holes):
+            a = math.radians(spm.SLOT_ANGLE0 + k * 360.0 / F.HUB.n_holes)
+            loc = tr(F.HUB.bolt_circle_r * math.cos(a), F.HUB.bolt_circle_r * math.sin(a), spm.DISC_HALF)
+            P[f"washer_hs{tag}{k}"] = P[f"sprocket{tag}"] @ loc
+            P[f"hub_screw{tag}{k}"] = P[f"sprocket{tag}"] @ loc @ tr(0, 0, F.WASHER[1])
+        P.update(axle_group(f"{tag}i", "idler", F.AXLE_DX, s))
         for i, x in enumerate(F.ROAD_X):
-            P[f"wheel{tag}{i}"] = frame((x, side * F.Y_T, F.Z_A), (1, 0, 0), (0, side, 0))
+            P.update(axle_group(f"{tag}{i}", "wheel", x, s))
+        jack_meshes[f"jack{tag}"], _ = jack(F.AXLE_DX, s)
+        P[f"jack{tag}"] = np.eye(4)
         pins = track_pins()
         for i, (px, pz) in enumerate(pins):
             nx, nz = pins[(i + 1) % len(pins)]
             xd = np.array([nx - px, 0.0, nz - pz])
             zd = np.cross(xd / np.linalg.norm(xd), [0, 1, 0])
-            P[f"link{tag}{i:02d}"] = frame((px, side * F.Y_T, pz), xd, zd)
-    kind = lambda k: ("motor" if k.startswith("motor") else "sprocket" if k.startswith("sprocket") else
-                      "idler" if k.startswith("idler") else "wheel" if k.startswith("wheel") else
-                      "link" if k.startswith("link") else k)
-    placed = {k: M[kind(k)].copy().apply_transform(T) for k, T in P.items()}
+            P[f"link{tag}{i:02d}"] = frame((px, s * F.Y_T, pz), xd, zd)
 
-    hits = []
-    keys = sorted(placed)
-    for a, c in itertools.combinations(keys, 2):
-        ma, mc = placed[a], placed[c]
-        lo = np.maximum(ma.bounds[0], mc.bounds[0]); hi = np.minimum(ma.bounds[1], mc.bounds[1])
-        if np.any(hi - lo <= 0):
-            continue
-        try:
-            v = trimesh.boolean.intersection([ma, mc], engine="manifold").volume
-        except Exception:
-            v = 0.0
-        if v > TOL and {a, c} not in EXPECTED:
-            hits.append((a, c, round(float(v), 2)))
-    print("collisions:", hits or "none")
+    def kind(k):
+        for p in ("washer_wide_head", "washer_head", "washer_in", "washer_out", "washer_hs", "thrust_washer", "hub_screw",
+                  "road_bolt", "idler_bolt", "lid_screw", "insert", "nyloc", "nut", "motor", "hub", "sprocket", "idler",
+                  "wheel", "link", "jack"):
+            if k.startswith(p):
+                return {"washer_wide_head": "washer_wide", "washer_head": "washer", "washer_in": "washer",
+                        "washer_out": "washer", "washer_hs": "washer"}.get(p, p)
+        return k
+    allm = {**M, **fixed, **jack_meshes}
 
-    # idler at both ends of its tension slot, and the M3 x 45 axle bolts (nut trap on the wall's
-    # outer face at |y| = HALF_W_OUT, head beyond the wheel's outer face): chassis vs idler/bolts
-    bolt = to_mesh(Pos(0, 0, -BOLT_L / 2) * Cylinder(1.45, BOLT_L))       # along its own z
-    slot_hits = []
-    for dx in (-F.IDLER_SLOT, F.IDLER_SLOT):
-        for side, tag in ((1, "L"), (-1, "R")):
-            Pi = frame((F.AXLE_DX + dx, side * F.Y_T, F.Z_A), (1, 0, 0), (0, side, 0))
-            Pb = frame((F.AXLE_DX + dx, side * (F.HALF_W_OUT - 2.6 + BOLT_L / 2), F.Z_A), (1, 0, 0), (0, side, 0))
-            for name, mesh_, T_ in (("idler", M["idler"], Pi), ("idler bolt", bolt, Pb)):
-                v = trimesh.boolean.intersection([placed["chassis"], mesh_.copy().apply_transform(T_)],
-                                                 engine="manifold").volume
-                if v > TOL:
-                    slot_hits.append((f"{name}{tag} at slot {dx:+.0f}", "chassis", round(float(v), 2)))
-            v = trimesh.boolean.intersection([M["idler"].copy().apply_transform(Pi), bolt.copy().apply_transform(Pb)],
-                                             engine="manifold").volume
+    def mesh_of(k):
+        return allm[k] if k in fixed or k.startswith("jack") else allm[kind(k)]
+    placed = {k: mesh_of(k).copy().apply_transform(T) for k, T in P.items()}
+
+    def collide(group, others=None, skip=lambda a, c: False):
+        hits = []
+        pairs = itertools.combinations(sorted(group), 2) if others is None else itertools.product(sorted(group), sorted(others))
+        for a, c in pairs:
+            if a == c or skip(a, c):
+                continue
+            ma, mc = group[a], (group if others is None else others)[c]
+            lo = np.maximum(ma.bounds[0], mc.bounds[0]); hi = np.minimum(ma.bounds[1], mc.bounds[1])
+            if np.any(hi - lo <= 0):
+                continue
+            try:
+                v = trimesh.boolean.intersection([ma, mc], engine="manifold").volume
+            except Exception as exc:   # report, never hide
+                hits.append((a, c, f"boolean failed: {exc}"))
+                continue
             if v > TOL:
-                slot_hits.append((f"idler bolt{tag} at slot {dx:+.0f}", f"idler{tag}", round(float(v), 2)))
-    for side, tag in ((1, "L"), (-1, "R")):
-        for i, x in enumerate(F.ROAD_X):
-            Pb = frame((x, side * (F.HALF_W_OUT - 2.6 + BOLT_L / 2), F.Z_A), (1, 0, 0), (0, side, 0))
-            bm = bolt.copy().apply_transform(Pb)
-            for other in ("chassis", f"wheel{tag}{i}"):
-                v = trimesh.boolean.intersection([placed[other], bm], engine="manifold").volume
-                if v > TOL:
-                    slot_hits.append((f"wheel bolt{tag}{i}", other, round(float(v), 2)))
-    print("idler slot ends + axle bolts:", slot_hits or "clear")
+                hits.append((a, c, round(float(v), 2)))
+        return hits
 
-    # tooth engagement: each tooth tip (world) must land inside some link's notch
-    # (link frame: NOTCH_X0 <= x <= P - (KN_R), |y| <= NOTCH_HALF, |z| <= LINK_T/2)
-    lm, spm = mods["link"], mods["sprocket"]
+    print(f"intersecting {len(placed)} bodies ...", flush=True)
+    hits = collide(placed)
+    print("collisions:", hits or "none", flush=True)
+
+    # ---- idler (with its bolt, washers, nuts and jack screw) at both slot ends -------------------------
+    no_links = {k: v for k, v in placed.items() if not k.startswith("link")}
+    slot_hits, jack_rows = [], []
+    for dx in (-F.IDLER_SLOT, 0.0, F.IDLER_SLOT):
+        for side, tag in ((1, "L"), (-1, "R")):
+            jm, x_tip = jack(F.AXLE_DX + dx, side)
+            if dx:
+                g = axle_group(f"{tag}i", "idler", F.AXLE_DX + dx, side)
+                moved = {f"{k}@{dx:+.0f}": mesh_of(k).copy().apply_transform(T) for k, T in g.items()}
+                moved[f"jack{tag}@{dx:+.0f}"] = jm
+                rest = {k: v for k, v in no_links.items() if not (k.endswith(f"{tag}i") or k == f"jack{tag}")}
+                slot_hits += collide(moved, rest)
+            x_rear = x_tip - JACK_L
+            jack_rows.append({"side": tag, "idler_dx": dx, "jack_rear_x": round(x_rear, 2), "jack_tip_x": round(x_tip, 2),
+                              "thread_in_buttress_mm": round(min(x_tip, ch.JACK_X[1]) - max(x_rear, ch.JACK_X[0]), 2),
+                              "socket_outside_buttress": bool(x_rear <= ch.JACK_X[0] + 1e-6)})
+    print("idler + jack screw at both slot ends:", slot_hits or "clear", flush=True)
+
+    # ---- an 11 mm gearbox, and a 9 mm shaft --------------------------------------------------------------
+    long_gb = to_mesh(gearmotor_dummy(replace(F.MOTOR, gb_len=11.0), detailed=True), tol=0.02)
+    var_hits = []
+    for side, tag in ((1, "L"), (-1, "R")):
+        mm = {f"motor_gb11{tag}": long_gb.copy().apply_transform(P[f"motor{tag}"])}
+        var_hits += collide(mm, {k: v for k, v in no_links.items() if k != f"motor{tag}"})
+    shaft = {}
+    for L in (9.0, F.MOTOR.shaft_len):
+        end = F.MOTOR_FACE_Y + L
+        set_y = F.HUB_Y0 + F.HUB.t / 2
+        shaft[f"{L:.0f} mm shaft"] = {"shaft_end_y": end, "engaged_in_hub_mm": round(min(end, F.HUB_Y1) - F.HUB_Y0, 2),
+                                      "set_screw_y": set_y, "shaft_past_set_screw_mm": round(end - (set_y + F.HUB.set_screw / 2), 2)}
+    print("11 mm gearbox:", var_hits or "clear", "| shafts:", shaft, flush=True)
+
+    # ---- fastener stacks -----------------------------------------------------------------------------------
+    stacks = []
+    for name, yh, L, part_out in (("road wheel M3 x %.0f" % F.ROAD_BOLT_L, y_head_road, F.ROAD_BOLT_L, F.Y_T + wheel_h),
+                                  ("idler M3 x %.0f" % F.IDLER_BOLT_L, y_head_idler, F.IDLER_BOLT_L, F.Y_T + spm.DISC_HALF)):
+        tip = yh + L
+        ny0 = part_out + F.WASHER[1]
+        ny1 = ny0 + F.NYLOC[1]
+        stacks.append({"bolt": name, "head_underside_y": round(yh, 2), "wall_nut_y": [y_trap, round(y_trap + F.NUT[1], 2)],
+                       "part_outer_face_y": round(part_out, 2), "nyloc_y": [round(ny0, 2), round(ny1, 2)], "tip_y": round(tip, 2),
+                       "thread_past_nyloc_mm": round(tip - ny1, 2), "ok_past_nyloc": bool(tip - ny1 >= F.THREAD_PAST_NYLOC),
+                       "fully_threaded_engages_wall_nut": bool(yh + 1.0 <= y_trap),
+                       "iso4762_partly_threaded_thread_starts_y": round(tip - ISO4762_B, 2),
+                       "iso4762_would_engage_wall_nut": bool(tip - ISO4762_B <= y_trap)})
+    hs_head = F.Y_T + spm.DISC_HALF + F.WASHER[1]
+    hs_tip = hs_head - F.HUB_SCREW_L
+    hub_screw = {"screw": f"M3 x {F.HUB_SCREW_L:.0f}", "head_underside_y": hs_head, "tip_y": hs_tip,
+                 "engaged_in_hub_mm": round(F.HUB_Y1 - max(hs_tip, F.HUB_Y0), 2),
+                 "tip_inside_hub_mm": round(hs_tip - F.HUB_Y0, 2), "tip_to_skin_mm": round(hs_tip - (F.MOTOR_FACE_Y + F.SKIN), 2)}
+    print("stacks:", json.dumps(stacks), "\nhub screws:", hub_screw, flush=True)
+
+    # ---- tool paths (lid off; track off for the hub set screw) ------------------------------------------
+    lid_off = {k: v for k, v in no_links.items() if k not in ("lid", "esp32", "breadboard", "tb6612", "buck", "toggle")
+               and not k.startswith("lid_screw") and not k.startswith("jack") and not k.endswith(("Li", "Ri"))}
+    # (the idler hardware sits in front of the jack screw and the key goes backwards: leave it out)
+    tool_hits = []
+    a = math.radians(KEY_ANGLE)
+    for row in jack_rows:
+        s = 1 if row["side"] == "L" else -1
+        x0 = row["jack_rear_x"] - 0.3
+        Lk = 110.0
+        d = np.array([-math.cos(a), 0.0, math.sin(a)])
+        c = np.array([x0, s * ch.JACK_Y, F.Z_A]) + d * Lk / 2
+        key = trimesh.creation.cylinder(radius=1.0, height=Lk, sections=24)
+        key.apply_transform(trimesh.geometry.align_vectors([0, 0, 1], d))
+        key.apply_translation(c)
+        hit = collide({f"jack key {row['side']} idler {row['idler_dx']:+.0f}": key}, lid_off)
+        tool_hits += hit
+        row["key_path_clear"] = not hit
+    for side, tag in ((1, "L"), (-1, "R")):
+        r0 = F.HUB.od / 2
+        key = trimesh.creation.cylinder(radius=1.0, height=60.0, sections=24)
+        key.apply_translation((0, side * (F.HUB_Y0 + F.HUB.t / 2), F.Z_A + r0 + 30.0))
+        tool_hits += collide({f"hub set-screw key {tag}": key}, lid_off, skip=lambda a_, c_: c_.startswith("hub"))
+    print("tool paths:", tool_hits or "clear", flush=True)
+
+    # ---- tooth engagement: each tooth tip (world) must land inside some link's notch ---------------------
     engaged = {}
+    keys = sorted(placed)
     for tag, side in (("L", 1), ("R", -1)):
-        for s, xc in (("sprocket", 0.0), ("idler", F.AXLE_DX)):
+        for sname, xc in (("sprocket", 0.0), ("idler", F.AXLE_DX)):
             n_in = 0
             for k in range(F.N_TEETH):
-                th = math.radians(-side * (spm.PHASE_DEG + k * 360.0 / F.N_TEETH))   # world angle (see frames)
+                th = math.radians(-side * (spm.PHASE_DEG + k * 360.0 / F.N_TEETH))
                 tip = np.array([xc + (spm.TOOTH_TIP_R - 0.3) * math.cos(th), side * F.Y_T,
                                 F.Z_A + (spm.TOOTH_TIP_R - 0.3) * math.sin(th), 1.0])
-                for key in keys:
-                    if key.startswith(f"link{tag}"):
-                        q = np.linalg.inv(P[key]) @ tip
-                        if (lm.NOTCH_X0 <= q[0] <= F.P - lm.KN_R and abs(q[1]) <= lm.NOTCH_HALF
-                                and abs(q[2]) <= F.LINK_T / 2):
+                for key_ in keys:
+                    if key_.startswith(f"link{tag}"):
+                        q = np.linalg.inv(P[key_]) @ tip
+                        if (lm.NOTCH_X0 <= q[0] <= F.P - lm.KN_R and abs(q[1]) <= lm.NOTCH_HALF and abs(q[2]) <= F.LINK_T / 2):
                             n_in += 1
                             break
-            engaged[f"{s}{tag}"] = n_in
-    # ground contact and size
-    allm = trimesh.util.concatenate([placed[k] for k in keys])
-    lo, hi = allm.bounds
+            engaged[f"{sname}{tag}"] = n_in
+
+    # ---- measured clearance between each track and the chassis (housing face beside the links, nacelle inside the wrap)
+    clearance = {}
+    chm = placed["chassis"]
+    for side, tag in ((1, "L"), (-1, "R")):
+        lk = trimesh.util.concatenate([placed[k] for k in keys if k.startswith(f"link{tag}")])
+        fmask = np.any(side * chm.triangles[:, :, 1] > F.HALF_W_OUT - 0.1, axis=1)
+        sub = chm.submesh([np.where(fmask)[0]], append=True)
+        pts, _ = trimesh.sample.sample_surface_even(sub, 6000, seed=1)
+        pts = np.vstack([pts, sub.vertices])
+        _, dist, _ = trimesh.proximity.closest_point(lk, pts)
+        i = int(np.argmin(dist))
+        nac = side * pts[:, 1] > F.HALF_W_OUT + F.HOUSING_OUT + 0.05
+        j = int(np.argmin(np.where(nac, dist, np.inf)))
+        clearance[tag] = {"chassis_to_links_min_mm": round(float(dist[i]), 2), "at": [round(float(v), 1) for v in pts[i]],
+                          "nacelle_to_links_min_mm": round(float(dist[j]), 2), "nacelle_at": [round(float(v), 1) for v in pts[j]]}
+    print("track clearance:", clearance, flush=True)
+
+    allmesh = trimesh.util.concatenate([placed[k] for k in keys])
+    lo, hi = allmesh.bounds
     links = trimesh.util.concatenate([placed[k] for k in keys if k.startswith("link")])
-    report = {"tol_mm3": TOL, "collisions": hits, "expected_contacts": [sorted(e) for e in EXPECTED],
-              "idler_slot_and_bolts": slot_hits or "clear", "links_per_side": F.N_LINKS, "axle_dx_mm": F.AXLE_DX,
-              "teeth_engaged_in_notches": engaged,
-              "overall_mm": [round(float(v), 1) for v in hi - lo], "lowest_point_mm": round(float(lo[2]), 2),
-              "track_bottom_mm": round(float(links.bounds[0][2]), 2), "ground_clearance_mm": round(F.FLOOR_Z, 2)}
+    link_in = F.Y_T - F.TRACK_W / 2
+    report = {
+        "tol_mm3": TOL, "bodies": len(placed), "collisions": hits, "exempt_pairs": [],
+        "idler_and_jack_at_slot_ends": slot_hits or "clear", "jack_screw": jack_rows,
+        "motor_with_11mm_gearbox": var_hits or "clear", "shaft_variants": shaft,
+        "axle_bolt_stacks": stacks, "hub_screws": hub_screw, "tool_paths": tool_hits or "clear",
+        "shaft_overhang_gearbox_face_to_track_plane_mm": F.SHAFT_ARM,
+        "links_inner_edge_y": link_in, "housing_outer_face_y": F.HALF_W_OUT + F.HOUSING_OUT,
+        "link_to_housing_gap_mm": round(link_in - (F.HALF_W_OUT + F.HOUSING_OUT), 2),
+        "track_to_chassis_clearance_measured": clearance,
+        "nacelle_max_radius_mm": round(max(math.hypot(x, z) for x, z in F.motor_diamond(
+            ch.POCKET_HX + F.NACELLE_WALL, ch.POCKET_HY + F.NACELLE_WALL)), 2), "links_inner_face_min_radius_mm": round(F.CHORD_IN, 2),
+        "links_per_side": F.N_LINKS, "axle_dx_mm": F.AXLE_DX, "teeth_engaged_in_notches": engaged,
+        "overall_mm": [round(float(v), 1) for v in hi - lo], "overall_min_max_mm": [[round(float(v), 1) for v in lo],
+                                                                                    [round(float(v), 1) for v in hi]],
+        "lowest_point_mm": round(float(lo[2]), 2), "track_bottom_mm": round(float(links.bounds[0][2]), 2),
+        "ground_clearance_mm": round(F.FLOOR_Z, 2), "battery_holder_mm": [b.length, b.width, b.height],
+    }
     (HERE / "assembly_check.json").write_text(json.dumps(report, indent=1))
-    print(json.dumps(report))
-    _render({k: v for k, v in placed.items()}, HERE / "assembly_rover.png")
+    print(json.dumps({k: report[k] for k in ("collisions", "idler_and_jack_at_slot_ends", "motor_with_11mm_gearbox",
+                                             "tool_paths", "teeth_engaged_in_notches", "overall_mm")}))
+    _render(placed, HERE / "assembly_rover.png")
 
 
 def _render(placed, out):
@@ -200,10 +447,11 @@ def _render(placed, out):
     import render as R
     m = trimesh.util.concatenate(list(placed.values()))
     fig, axes = plt.subplots(1, 2, figsize=(14, 7.4), dpi=100)
-    for ax, (vname, (elev, azim)) in zip(axes, (("iso", R.VIEWS["iso"]), ("left side", R.VIEWS["front"]))):
+    for axx, (vname, (elev, azim)) in zip(axes, (("iso", R.VIEWS["iso"]), ("left side", R.VIEWS["front"]))):
         img, _ = R.render_view(m, elev, azim, with_bed=False)
-        ax.imshow(img, interpolation="antialiased"); ax.set_axis_off(); ax.set_title(vname)
-    fig.suptitle("tracked rover · parts + motor/battery/ESP32/sensor dummies", fontsize=13)
+        axx.imshow(img, interpolation="antialiased"); axx.set_axis_off(); axx.set_title(vname)
+    fig.suptitle("tracked rover round 3 · parts, motors on metal hubs, axle hardware, battery/ESP32/sensor/switch dummies",
+                 fontsize=12)
     fig.tight_layout(); fig.savefig(out); plt.close(fig)
 
 

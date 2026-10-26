@@ -329,17 +329,24 @@ class GearMotorSpec:
     face_screw_d: float    # thread size (M1.6)
     stall_torque_nmm: float
     mass_g: float
+    end_cap_len: float = 1.4    # plastic brush cap behind the can (detailed dummy only)
+    end_cap_w: float = 9.0      # its width along x (its height is can_flat - 1.2)
 
 
-# GA12-N20, 6 V, 100 rpm metal gearbox (typical; the gearbox length grows with the ratio).
+# GA12-N20 (N20), 6 V, 100 rpm, about 150:1, LOW- or MEDIUM-power winding (stall <= 0.7 A at 6 V),
+# 9 mm gearbox, 3 mm D-shaft 10 mm long. "N20 6 V 100 rpm" alone does not define one motor: the
+# same label is sold with 150:1 and 298:1 boxes, 9 or 11 mm gearboxes, 9 or 10 mm shafts and
+# high-power windings that stall at 1.6 A (rover deep review 01-S9). Nominal: measure yours.
 N20_100RPM = GearMotorSpec(
-    name="N20 6V 100rpm", gb_w=12.0, gb_h=10.0, gb_len=9.0, can_d=12.0, can_flat=10.0, can_len=15.5,
-    term_len=2.5, shaft_d=3.0, shaft_flat=2.5, shaft_len=10.0, boss_d=4.0, boss_h=0.8,
+    name="N20 6V 100rpm LP/MP (150:1, 9 mm gearbox, 3x10 D-shaft)", gb_w=12.0, gb_h=10.0, gb_len=9.0, can_d=12.0,
+    can_flat=10.0, can_len=15.5, term_len=2.5, shaft_d=3.0, shaft_flat=2.5, shaft_len=10.0, boss_d=4.0, boss_h=0.8,
     face_hole_dx=9.0, face_screw_d=1.6, stall_torque_nmm=130.0, mass_g=10.0)
 
 
-def gearmotor_dummy(m: GearMotorSpec) -> Part:
-    """Approximate N20 solid in its frame (gearbox, can with flats, terminals, boss, shaft)."""
+def gearmotor_dummy(m: GearMotorSpec, detailed: bool = False) -> Part:
+    """Approximate N20 solid in its frame (gearbox, can with flats, terminals, boss, shaft).
+    detailed=True adds the plastic end cap and the two solder tabs with solder blobs, the way
+    the viewer's model has them, for assembly checks that must see the motor's real length."""
     from build123d import Box as _B
     gb = Pos(0, 0, -m.gb_len / 2) * _B(m.gb_w, m.gb_h, m.gb_len)
     can = Pos(0, 0, -m.gb_len - m.can_len / 2) * (Cylinder(m.can_d / 2, m.can_len)
@@ -350,7 +357,58 @@ def gearmotor_dummy(m: GearMotorSpec) -> Part:
     flat_y = m.shaft_flat - m.shaft_d / 2          # D-flat on +Y, like d_shaft_bore_cutter
     shaft = shaft & Pos(0, (flat_y - m.shaft_d / 2) / 2, 0) * _B(m.shaft_d, flat_y + m.shaft_d / 2, m.shaft_len,
                                                                   align=(Align.CENTER, Align.CENTER, Align.MIN))
-    return gb + can + term + boss + shaft
+    out = gb + can + term + boss + shaft
+    if detailed:
+        z_can = -m.gb_len - m.can_len
+        cap_h = m.can_flat - 1.2
+        out = out + Pos(0, 0, z_can - m.end_cap_len / 2) * _B(m.end_cap_w, cap_h, m.end_cap_len + 0.02)
+        tab_l = m.term_len + m.end_cap_len
+        for sx in (-1, 1):
+            out = out + Pos(sx * 2.6, 0, z_can - tab_l / 2) * _B(1.2, 0.4, tab_l + 0.02)
+            out = out + Pos(sx * 2.6, 0, z_can - tab_l + 0.6) * _B(2.0, 2.0, 2.0)     # solder blob + lead end
+    return out
+
+
+@dataclass(frozen=True)
+class MountingHubSpec:
+    """Flat metal hub that clamps a motor shaft with a radial set screw and carries a part on
+    threaded holes. Frame: origin on the shaft axis at the hub's INNER face (motor side),
+    +Z away from the motor, so the hub spans z 0..t. Hole 0 sits on +X; the set screw sits
+    midway between two holes, at mid-thickness."""
+    name: str
+    od: float
+    t: float
+    bore: float
+    n_holes: int
+    hole_thread: float       # thread size of the mounting holes (M3 = 3.0)
+    bolt_circle_r: float     # radius of the mounting-hole circle
+    bolt_circle_r_range: tuple[float, float]   # range a mating part should accept if unconfirmed
+    set_screw: float         # set-screw thread size
+    mass_g: float
+
+
+# Pololu Universal Aluminum Mounting Hub for 3 mm Shaft, M3 Holes (#1996, sold as a 2-pack with
+# two M3 set screws and a 1.5 mm key; https://www.pololu.com/product/1996/specs): 17.5 mm
+# diameter x 5 mm, 3 mm bore, 4 threaded M3 holes, 2.8 g. The hole circle is NOT stated in text;
+# the dimension drawing (https://www.pololu.com/file/0J661/1996-3mm-m3-hub-dimensions.pdf) prints
+# an unlabelled 6.35 [0.25] beside "4xM3", read here as the hole-circle radius (12.7 mm circle).
+# Unconfirmed, so mating parts take radial slots covering r 5.5-6.85.
+POLOLU_HUB_1996 = MountingHubSpec(
+    name="Pololu 1996 universal aluminium hub, 3 mm shaft, M3 holes", od=17.5, t=5.0, bore=3.0, n_holes=4,
+    hole_thread=3.0, bolt_circle_r=6.35, bolt_circle_r_range=(5.5, 6.85), set_screw=3.0, mass_g=2.8)
+
+
+def mounting_hub_dummy(h: MountingHubSpec, hole_angle_deg: float = 0.0) -> Part:
+    """Hub solid in its frame: disc with its bore and the mounting holes at their thread size,
+    so a shaft and the screws sit in it without overlapping it."""
+    import math
+    out = Cylinder(h.od / 2, h.t, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    out = out - Pos(0, 0, -1) * Cylinder(h.bore / 2, h.t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for k in range(h.n_holes):
+        a = math.radians(hole_angle_deg + k * 360.0 / h.n_holes)
+        out = out - Pos(h.bolt_circle_r * math.cos(a), h.bolt_circle_r * math.sin(a), -1) * Cylinder(
+            h.hole_thread / 2, h.t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return out
 
 
 def gearmotor_wall_cutter(m: GearMotorSpec, wall_t: float, hole_comp: float = HOLE_COMP_DEFAULT,
@@ -402,6 +460,10 @@ class BoxSpec:
 
 BATT_2X18650 = BoxSpec("2 × 18650 series holder", 77.0, 41.0, 21.0, 135.0,
                        "holder ~40 g + two cells ~47 g each; use protected cells or a 2S BMS")
+# Holder made for PROTECTED button-top cells (~69.5 mm long): longer than the 65 mm-cell holder.
+# The rover floor takes up to 80 mm (x 22-102), so CAD checks use this as the worst case.
+BATT_2X18650_LONG = BoxSpec("2 × 18650 holder for protected (≈70 mm) cells", 80.0, 41.0, 21.0, 135.0,
+                            "outside length up to 80 mm; measure yours")
 TB6612_CARRIER = BoxSpec("TB6612FNG carrier (Pololu-size)", 20.3, 15.2, 3.0, 2.0)
 MINI_BREADBOARD = BoxSpec("mini breadboard, 170 tie points", 47.0, 35.0, 8.5, 10.0, "adhesive back")
 MP1584_BUCK = BoxSpec("MP1584 buck module", 22.0, 17.0, 4.0, 2.0, "set to 5.0 V before connecting the ESP32")
@@ -411,7 +473,8 @@ HCSR04_TX_D, HCSR04_TX_DX = 16.0, 26.0
 KCD11_SWITCH_CUTOUT = (15.0, 10.0)    # mini rocker switch panel cut-out (w, h)
 
 __all__ += ["GearMotorSpec", "N20_100RPM", "gearmotor_dummy", "gearmotor_wall_cutter", "d_shaft_bore_cutter",
-            "BoxSpec", "BATT_2X18650", "TB6612_CARRIER", "MINI_BREADBOARD", "MP1584_BUCK", "HCSR04",
+            "MountingHubSpec", "POLOLU_HUB_1996", "mounting_hub_dummy",
+            "BoxSpec", "BATT_2X18650", "BATT_2X18650_LONG", "TB6612_CARRIER", "MINI_BREADBOARD", "MP1584_BUCK", "HCSR04",
             "HCSR04_TX_D", "HCSR04_TX_DX", "KCD11_SWITCH_CUTOUT"]
 
 

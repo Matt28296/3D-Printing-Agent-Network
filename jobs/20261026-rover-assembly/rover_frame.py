@@ -3,10 +3,19 @@
 
 World frame: X forward, Y left, Z up. Origin on the ground, midway between the two tracks,
 under the drive-sprocket axis (rear). Left side shown; the right side mirrors in Y.
+
+Round 3 drivetrain (see 20261026-rover-sprocket/design_brief.md): each N20 is rolled 45° about
+its shaft, so its 12 × 10 gearbox section becomes a diamond whose faces are all at 45°. It slides
+from inside the tub along a V-trough into a diamond pocket that runs through the side wall, a
+housing on the wall's outer face and a nacelle that reaches into the track's wrap (inside the
+links, r <= 10.9 against the links' inner faces at r >= 12.39). Its face stops on a 1 mm skin at
+the nacelle's end. A Pololu #1996 aluminium hub on the shaft, outside the skin, carries the
+sprocket disc on 4 × M3. The torque path is metal from the shaft to the sprocket, and the shaft
+overhang (gearbox face to the track plane) is 10 mm with the track plane unchanged.
 """
 import math
 
-from hobby_parts import N20_100RPM
+from hobby_parts import N20_100RPM, POLOLU_HUB_1996
 
 # --- track ------------------------------------------------------------------------------
 P = 10.0                      # link pitch (pin to pin)
@@ -16,7 +25,7 @@ LINK_T = 6.0                  # link thickness; pins on its mid-plane
 GROUSER = 1.5                 # tread bars below the outer face
 TRACK_W = 24.0                # link width (Y)
 N_LINKS = 34                  # per side
-PIN_D = 2.0                   # 2 mm steel rod pins (strength round 1: filament pins bend when a wheel lands on a hinge)
+PIN_D = 2.0                   # 2 mm steel pins (strength round 1: filament pins bend when a wheel lands on a hinge)
 AXLE_DX = (N_LINKS - N_TEETH) * P / 2      # 120: sprocket to idler, nominal
 IDLER_SLOT = 4.0              # ± travel of the idler bolt for track tension
 
@@ -33,15 +42,57 @@ FLOOR_Z = Z_A - 12.0          # 8.68: chassis underside (ground clearance)
 TOP_Z = FLOOR_Z + 40.0        # 48.68: wall top = lid underside
 Y_T = 55.0                    # track centre plane (left); inner edge at 43
 ROAD_X = (40.0, 80.0)         # road-wheel axles
-HUB_GAP = 0.5                 # rotating hub to wall / nut
-
-MOTOR = N20_100RPM
-JOURNAL_BOSS = 1.5            # inward boss at the sprocket: wall + boss = 6 mm journal for the sprocket hub
-MOTOR_FACE_Y = HALF_W_OUT - WALL - JOURNAL_BOSS - 0.5   # 31.5: gearbox face 0.5 mm inside the journal boss
-HUB_D = 10.0                  # sprocket hub = journal running in the wall boss (carries the track loads,
-                              # so the N20 shaft only carries torque; strength round 1)
+HUB_GAP = 0.5                 # rotating idler/wheel hub to the wall (a washer)
+BOSS_IN = 5.5                 # inward boss at the road-wheel bolts and the idler block: wall + boss = 10
+                              # (strength round 2, change 3: nut / hole-edge bearing at the 5 cm corner)
+HUB_D = 10.0                  # idler hub diameter (round bore on its M3 bolt)
 DROP_MM = 50                  # design drop height onto a hard floor (spec §4)
+LID_SCREWS = [(-13.0, 32.5), (-13.0, -32.5), (102.0, 32.5), (102.0, -32.5)]   # chassis columns = lid holes
+#   (round 3: M3 heat-set inserts in Ø10 columns; |y| 32.5 keeps the idler jack screw's line at |y| 25.4 clear,
+#    and the front pair at x 102 overlaps the idler block instead of touching it tangentially)
+
+# --- drivetrain ------------------------------------------------------------------------------
+MOTOR = N20_100RPM
+MOTOR_ROLL = 45.0             # motor rolled about its shaft: gearbox x-axis at 45° in the XZ plane
+HUB = POLOLU_HUB_1996         # aluminium hub on the N20 shaft: the sprocket disc bolts to it
+DISC_HALF = 3.5               # sprocket/idler disc and teeth: Y_T ± 3.5 (the link notch is ± 4)
+LINK_WALL_GAP = 1.0           # links to the chassis (>= 1 mm, Architect round 3)
+SKIN = 1.0                    # printed skin in front of the gearbox face: the motor's outward stop
+THRUST_WASHER_T = 0.5         # M3 washer (ISO 7089, 0.5 mm) on the shaft between the skin and the hub
+HUB_Y1 = Y_T - DISC_HALF                                      # 51.5: hub outer face = sprocket disc's inner face
+HUB_Y0 = HUB_Y1 - HUB.t                                       # 46.5: hub inner face
+MOTOR_FACE_Y = HUB_Y0 - THRUST_WASHER_T - SKIN                # 45.0: gearbox face (skin inner face)
+SHAFT_ARM = Y_T - MOTOR_FACE_Y                                # 10.0: shaft overhang, gearbox face to track plane
+HOUSING_OUT = Y_T - TRACK_W / 2 - LINK_WALL_GAP - HALF_W_OUT   # 4.0: housing on the wall's outer face (y 38-42),
+#                                                               beside the links: 1 mm from their inner edge (43)
+NACELLE_WALL = 2.0            # nacelle walls round the diamond pocket, beyond the housing (y 42-46, inside the wrap)
+
+# --- axle and hub fasteners (all M3; axle bolts are socket head cap screws, class 12.9, FULLY threaded,
+# because each one must engage the nut trapped in the wall's outer face) -------------------------------
+SCREW_HEAD = (5.5, 3.0)       # DIN 912 / ISO 4762 M3 head: diameter, height
+WASHER = (7.0, 0.5)           # ISO 7089 M3 washer: outside diameter, thickness
+WASHER_WIDE = (9.0, 0.8)      # DIN 9021 M3 washer (under each idler-bolt head)
+NUT = (5.5, 2.4)              # DIN 934 M3 nut: across flats, height (wall trap)
+NYLOC = (5.5, 4.0)            # DIN 985 M3 nyloc nut
+THREAD_PAST_NYLOC = 1.5       # minimum bolt thread standing out of each nyloc
+ROAD_BOLT_L = 50.0            # road wheels: head on a washer on the boss face (y 27.5) .. tip y 77.5
+IDLER_BOLT_L = 40.0           # idlers: head on a DIN 9021 washer (y 27.2) .. tip y 67.2
+HUB_SCREW_L = 12.0            # sprocket to hub: through the 7 mm disc under a washer, 4.5 mm into the hub
 
 
 def mirror_y(y: float, side: int) -> float:
     return y * side
+
+
+def motor_diamond(half_x: float, half_y: float) -> list[tuple[float, float]]:
+    """(x, z - Z_A) corners of a motor-frame rectangle (half sizes along the motor's x and y axes)
+    rolled MOTOR_ROLL about the shaft: the same corners on both sides of the rover."""
+    c, s = math.cos(math.radians(MOTOR_ROLL)), math.sin(math.radians(MOTOR_ROLL))
+    return [(u * c + v * s, u * s - v * c) for (u, v) in ((half_x, half_y), (half_x, -half_y), (-half_x, -half_y),
+                                                          (-half_x, half_y))]
+
+
+def motor_x_dir(side: int):
+    """World direction of the motor's x-axis (the gearbox's 12 mm side) for the motor frame used by the
+    assembly check: z = (0, side, 0) out of the gearbox."""
+    return (math.cos(math.radians(MOTOR_ROLL)), 0.0, math.sin(math.radians(MOTOR_ROLL)))

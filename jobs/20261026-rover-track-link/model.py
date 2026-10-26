@@ -22,7 +22,8 @@ from hobby_parts import chamfer_plane_edges  # noqa: E402
 
 # --- parameters (mm) -----------------------------------------------------------
 HOLE_COMP = HOLE_COMP_DEFAULT   # +0.2 on hole diameters (default, fdm-design-rules)
-PIN_RUN_CLR = 0.2               # centre knuckle: pin runs free (prints ~Ø2.2 on a Ø2.0 rod)
+PIN_RUN_CLR = 0.3               # centre knuckle: pin runs free, sliding fit (Ø2.5 CAD, prints ~Ø2.3 on a Ø2.0 pin;
+                                # DFM round 2 fix 1). Knuckle wall 3.0 - 1.25 = 1.75: four 0.45 lines at 0.41 spacing
 PIN_GRIP_CLR = 0.0              # outer knuckles: pin gripped (prints ~Ø2.0 on a Ø2.0 rod)
 KN_R = LINK_T / 2               # knuckle radius 3.0 (1.8 mm wall round the running hole)
 KN_GAP = 0.4                    # radial clearance round a neighbour's knuckle (cut radius 3.4)

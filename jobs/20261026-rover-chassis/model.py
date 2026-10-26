@@ -1,56 +1,92 @@
 """Tracked rover chassis: open-top tub (154 × 76 × 40) that carries both N20 drive motors, the
-road-wheel and idler bolts, the 2 × 18650 holder, the power switch and an HC-SR04 sensor.
+road-wheel and idler bolts, the 2 × 18650 holder and an HC-SR04 sensor.
 
 Design frame = rover world frame (see ../20261026-rover-assembly/rover_frame.py): X forward,
 Y left, Z up, ground at Z = 0, drive-sprocket axis at X = 0, Z = Z_A. Printed floor down:
 every hole in a wall is horizontal, so each gets a 45° point (teardrop) or a 45° roof, and every
 inward boss runs down to the floor (no overhanging boss undersides).
 
-Round 2 (DFM + strength round 1):
-- 4.5 mm walls; Ø20 road-wheel bosses and a 30 × 24 idler block, all down to the floor.
-- The sprocket hub runs in a 6 mm journal in the wall (Ø10 hub), so track loads go into the wall,
-  not the N20 shaft. The N20 sits in a cradle with side cheeks, a rear stop and a zip-tie tunnel,
-  gearbox face 0.5 mm inside the journal boss (no face screws).
-- Lid columns joined to the walls, front pair moved behind the idler slot (bolt heads clear).
-- Idler slot ends are teardrops; strap slots at |y| 27.5; 3 mm 45° fillets along the floor.
-- Mini toggle switch (threaded bushing, Ø6.2 hole) instead of a snap-in rocker (4.5 mm wall).
-Bolts: road wheels run on M3 × 45 and idlers on M3 × 35 bolts whose heads sit inside the tub and whose
-nuts sit in traps in the wall's outer face (flush), so the wheels run right next to the wall.
+Round 3 (DFM + strength round 2, Architect's round-3 decisions, deep reviews 01 and 04):
+- Drivetrain: no journal. Each N20, rolled 45° about its shaft (rover_frame.MOTOR_ROLL), slides
+  from inside the tub along an open V-trough into a diamond pocket. The pocket runs through the
+  wall, a housing on the wall's outer face (y 38-42, beside the links) and a nacelle that reaches
+  into the track's wrap (y 42-46, r <= 10.9, inside the links' r >= 12.39), until the gearbox face
+  stops on the nacelle's 1 mm skin at y 45. The rolled section makes every pocket face a 45° face,
+  so the pocket prints without a gable. An aluminium hub on the shaft outside the skin carries the
+  sprocket (sprocket job): shaft overhang 10 mm. The pocket sets the motor's height and takes its
+  torque; the V-trough under the can (walls >= 4 mm, ±12.1) steadies it, and its zip tie holds it
+  down. No rear stop: the motor is located by its gearbox face, so 9 and 11 mm gearboxes both fit.
+- Road-wheel bosses Ø26 with an r1.5 rim fillet; BOSS_IN 5.5 at the road-wheel bosses and the
+  idler block; 1.5 × 45° strips where the bosses, idler block, cradle and motor housing meet a wall.
+- Idler: slot hull up to the teardrop tips (one 8 mm bridge on 45° flanks), Ø9 washer under the
+  bolt head, and an M3 jack screw along +X (a set screw in a buttress behind the idler block)
+  that bears on the bolt head and holds the track tension without friction.
+- Lid columns Ø10 with M3 heat-set inserts, moved to |y| 32.5 so the jack screw's line is clear.
+- Strap slots at |y| 26; the toggle switch moved to the lid (the lever no longer sticks out).
+Axle bolts: M3 socket head cap screws, class 12.9, FULLY threaded (they must engage the nut
+trapped in the wall's outer face): M3 × 50 for the road wheels, M3 × 40 for the idlers.
 """
 import sys
 from pathlib import Path
 
-from build123d import (Align, Axis, Box, BuildPart, BuildSketch, Cylinder, Plane, Polygon, Pos, Rot, extrude,
-                       fillet)
+from build123d import (Align, Axis, Box, BuildPart, BuildSketch, Cone, Cylinder, Plane, Polygon, Pos, Rot,
+                       extrude, fillet)
 from cadlib import HOLE_COMP_DEFAULT, hex_nut_pocket, teardrop_cutter, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261026-rover-assembly"))
-from rover_frame import (AXLE_DX, FLOOR_T, FLOOR_Z, HALF_W_OUT, HUB_D, IDLER_SLOT, JOURNAL_BOSS, MOTOR,  # noqa: E402
-                         MOTOR_FACE_Y, ROAD_X, TOP_Z, WALL, X_FRONT_OUT, X_REAR_OUT, Z_A)
+from rover_frame import (AXLE_DX, BOSS_IN, CHORD_IN, FLOOR_T, FLOOR_Z, HALF_W_OUT, HOUSING_OUT,  # noqa: E402
+                         IDLER_SLOT, LID_SCREWS, LINK_WALL_GAP, MOTOR, MOTOR_FACE_Y, NACELLE_WALL, ROAD_X, SKIN,
+                         TOP_Z, WALL, WASHER_WIDE, X_FRONT_OUT, X_REAR_OUT, Z_A, motor_diamond)
 
-from hobby_parts import BATT_2X18650, HCSR04_TX_D, HCSR04_TX_DX, chamfer_plane_edges  # noqa: E402
+from hobby_parts import BATT_2X18650_LONG, HCSR04_TX_D, HCSR04_TX_DX, chamfer_plane_edges  # noqa: E402
 
 # --- parameters (mm) -----------------------------------------------------------
-HOLE_COMP = HOLE_COMP_DEFAULT
+HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (fdm-design-rules default; no library row)
 CORNER_R = 6.0
 BED_CHAMFER = 0.4
 BOLT_D = 3.4                  # M3 clearance (printed)
 NUT_AF, NUT_CLR, NUT_DEPTH = 5.5, 0.3, 2.6    # M3 nut trap from the outer face (nut flush)
-BOSS_IN = 1.5                 # inward boss at every bolt and at the journal: wall + boss = 6
-ROAD_BOSS_R = 10.0            # Ø20 road-wheel bosses (strength round 1)
+ROAD_BOSS_R = 13.0            # Ø26 road-wheel bosses (strength round 2, change 2)
+BOSS_RIM_R = 1.5              # fillet round the road-wheel boss rim (strength round 2, change 2: Kt 1.5)
+JOIN = 1.5                    # 1.5 × 45° strips where bosses, idler block, cradle and housing meet a wall (DFM r2 fix 3)
 IDLER_BLOCK = (30.0, 24.0)    # x length, height above the floor (strength round 1)
-JOURNAL_CLR = 0.5             # sprocket-hub running clearance in the journal (printed, diametral)
-JOURNAL_BOSS_HALF = 10.0      # journal boss block ±x, from the floor to Z_A + 10
-CRADLE_HALF_X = 7.0           # motor cradle under the gearbox and can
-CHEEK_T, CHEEK_TOP = 2.0, 3.0 # cradle cheeks (x 6.3-8.3) up to Z_A + 3: hold the motor against its reaction torque
-TIE_W, TIE_H = 4.0, 2.0       # zip-tie tunnel through the cradle, 1 mm under the can
-REAR_STOP = (2.0, 2.5)        # posts behind the can's end cap (y length, x half-width offset from the terminals)
-COLUMN_D, LID_PILOT, PILOT_DEPTH = 8.0, 2.6, 12.0
-COLUMNS = [(-13.0, 30.0), (-13.0, -30.0), (100.0, 30.0), (100.0, -30.0)]   # joined to the walls
-BATT_X0 = 22.0                # battery holder from x 22 (77 long)
-STRAP_W, STRAP_L, STRAP_Y = 3.0, 22.0, 27.5   # velcro strap slots beside the holder
+# motor pocket, housing, nacelle and skin (rover_frame: MOTOR_FACE_Y 45.0, SKIN 1.0, HOUSING_OUT 4.0)
+GB_CLR = 0.2                  # gearbox in its pocket: total clearance on each section dimension (+ HOLE_COMP)
+POCKET_HX = (MOTOR.gb_w + GB_CLR + HOLE_COMP) / 2        # 6.2: along the motor's x (12 mm side)
+POCKET_HY = (MOTOR.gb_h + GB_CLR + HOLE_COMP) / 2        # 5.2: along the motor's y (10 mm side)
+POCKET = motor_diamond(POCKET_HX, POCKET_HY)             # (x, z - Z_A): rolled 45°, every face at 45°
+POCKET_R = max((x * x + z * z) ** 0.5 for x, z in POCKET)                               # 8.09
+NACELLE = motor_diamond(POCKET_HX + NACELLE_WALL, POCKET_HY + NACELLE_WALL)             # 2 mm walls
+NACELLE_R = max((x * x + z * z) ** 0.5 for x, z in NACELLE)                             # 10.91
+assert NACELLE_R <= CHORD_IN - LINK_WALL_GAP - 0.4, "nacelle must stay inside the track's wrap"
+HOUSING_HALF_X, HOUSING_TOP = 11.2, Z_A + 12.5   # housing block round the pocket (y 38-42), floor to Z_A + 12.5;
+#                               its 1.5 strips end at x -12.7, clear of the rear corner's r6 fillet (from x -13)
+HOUSING_EDGE_R = 1.0          # round on the housing's top outer edge
+BOSS_HOLE_D = MOTOR.boss_d + 0.5                         # skin hole round the N20 bearing boss (printed Ø4.5)
+# V-trough cradle under the can (Architect round 3: 4 mm cheeks standing fully on the cradle; with the motor
+# rolled 45° the cheeks are the trough's two walls, >= 4 mm thick at their thinnest, standing on the floor)
+CHEEK_T = 4.0
+CRADLE_HALF_X = round(max(abs(x) for x, _ in POCKET) + CHEEK_T, 1)                       # 12.1
+TROUGH_TOP = Z_A + min(z for x, z in POCKET if abs(x) > POCKET_R * 0.9)                  # Z_A - 0.71: lower side vertex
+CRADLE_Y0 = MOTOR_FACE_Y - 11.0 - MOTOR.can_len - 1.0    # 17.5: rear end, takes a motor with an 11 mm gearbox
+TIE_W = 4.0                   # zip-tie tunnel through the trough walls, under the can (ties up to 3.6 wide)
+TIE_Y = 24.0                  # tunnel centre |y|: under the can for 9 and 11 mm gearboxes, clear of the rear columns
+# lid columns with M3 heat-set inserts (deep review 04 S-09, DFM round 2 R1)
+COLUMN_D = 10.0
+INSERT_D, INSERT_DEPTH = 4.0, 6.5    # M3 × 5.7 brass insert: maker's hole size (no HOLE_COMP), depth
+COLUMNS = LID_SCREWS          # (-13, ±32.5), (102, ±32.5): the front pair overlaps the idler block by 2 mm
+#                               (no tangent face) and leaves the jack screw's line (|y| 25.4) clear
+# idler positive stop: M3 × 20 set screw along +X bearing on the idler-bolt head (Architect round 3)
+IDLER_HEAD_Y1 = HALF_W_OUT - WALL - BOSS_IN - WASHER_WIDE[1]   # 27.2: idler-bolt head underside (on its Ø9 washer)
+JACK_Y = IDLER_HEAD_Y1 - 1.5 - 0.3     # 25.4: jack axis; the screw clears the Ø9 washer by 0.3 and bears on 2.7 mm of head
+JACK_PILOT = 2.6              # printed pilot for the self-tapped M3 set screw
+JACK_X = (101.5, 108.0)       # buttress: the screw's socket stays outside it at every idler position
+JACK_Y_IN = 22.0              # buttress inner face |y|: 1.5 mm from the battery holder (|y| 20.5)
+JACK_TOP = Z_A + 4.5
+BATT_X0 = 22.0                # battery holder from x 22 (77 mm standard, up to 80 for protected cells)
+BATT_LEN = BATT_2X18650_LONG.length
+STRAP_W, STRAP_L, STRAP_Y = 3.0, 22.0, 26.0   # velcro strap slots beside the holder (strength round 2: 26)
 FLOOR_FILLET = 3.0            # 45° fillet along the inside of every wall at the floor
-SWITCH_D, SWITCH_Z = 6.2, 32.0   # MTS-102 mini toggle (M6 bushing) in the rear wall
 SENSOR_Z = 30.0               # HC-SR04 transducer centres (front wall)
 SENSOR_CLR = 0.4
 
@@ -61,6 +97,7 @@ def _box(x0, x1, y0, y1, z0, z1):
 
 
 def _x_prism(pts_yz, x0, length):
+    """Polygon in (y, z), from X = x0 towards +X by `length`."""
     with BuildPart() as bp:
         with BuildSketch(Plane.YZ.offset(x0)):
             Polygon(*pts_yz, align=None)
@@ -77,9 +114,24 @@ def _y_prism(pts_xz, y0, length):
     return bp.part
 
 
+def _z_prism(pts_xy, z0, length):
+    """Polygon in (x, y), from Z = z0 upwards by `length`."""
+    with BuildPart() as bp:
+        with BuildSketch(Plane.XY.offset(z0)):
+            Polygon(*pts_xy, align=None)
+        extrude(amount=length)
+    return bp.part
+
+
+def _strip_z(x, y, sx, sy, z0, z1, t=JOIN):
+    """Vertical 45° strip in the concave corner at (x, y): legs t along sx and sy (±1)."""
+    return _z_prism([(x, y), (x + sx * t, y), (x, y + sy * t)], z0, z1 - z0)
+
+
 def _nut_trap(x, side, slot=0.0):
-    """Hex nut trap (vertices along ±X, flats top/bottom) from the outer face inward; stretched into
-    a slot of length `slot` along X for the idler."""
+    """Hex nut trap (vertices along ±X, flats top/bottom: the roof is a short flat bridge between
+    60° faces) from the outer face inward; stretched into a slot of length `slot` along X for the
+    idler's sliding nut."""
     af = NUT_AF + NUT_CLR + HOLE_COMP
     y_out = side * HALF_W_OUT
     trap = None
@@ -91,71 +143,137 @@ def _nut_trap(x, side, slot=0.0):
     return trap
 
 
+def _housing(side):
+    """Motor housing on the wall's outer face (y 38 .. 42, beside the links), floor to Z_A + 12.5, with
+    rounded outer edges and 45° strips to the wall, plus the diamond nacelle (y 42 .. 46) that reaches
+    into the track's wrap and ends in the 1 mm skin the gearbox face stops on."""
+    y0, y1 = HALF_W_OUT - 0.01, HALF_W_OUT + HOUSING_OUT
+    h = _box(-HOUSING_HALF_X, HOUSING_HALF_X, y0, y1, FLOOR_Z, HOUSING_TOP)
+    top_edge = h.edges().filter_by_position(Axis.Y, y1 - 0.01, y1 + 0.01).filter_by_position(Axis.Z, HOUSING_TOP - 0.01,
+                                                                                               HOUSING_TOP + 0.01)
+    h = fillet(top_edge, radius=HOUSING_EDGE_R)
+    for sx in (-1, 1):   # vertical strips at the wall
+        h += _strip_z(sx * HOUSING_HALF_X, HALF_W_OUT, sx, 1, FLOOR_Z, HOUSING_TOP)
+    h += _x_prism([(HALF_W_OUT - 0.01, HOUSING_TOP - 0.01), (HALF_W_OUT + JOIN, HOUSING_TOP - 0.01),
+                   (HALF_W_OUT - 0.01, HOUSING_TOP + JOIN)], -HOUSING_HALF_X, 2 * HOUSING_HALF_X)
+    h += _y_prism([(x, Z_A + z) for x, z in NACELLE], y1 - 0.01, MOTOR_FACE_Y + SKIN - y1 + 0.01)
+    return h if side > 0 else h.mirror(Plane.XZ)
+
+
+def _pocket(side, y_in):
+    """Diamond gearbox pocket (every face at 45°) from y_in inside the tub to the skin's inner face."""
+    c = _y_prism([(x, Z_A + z) for x, z in POCKET], y_in, MOTOR_FACE_Y - y_in)
+    return c if side > 0 else c.mirror(Plane.XZ)
+
+
+def _road_boss(x, side):
+    """Ø26 road-wheel boss: round top, block to the floor, from the wall's inner face to the boss
+    face at |y| 28, its rim filleted r1.5, and a 1.5 × 45° collar where it meets the wall."""
+    yi = HALF_W_OUT - WALL
+    yb = yi - BOSS_IN
+    floor_top = FLOOR_Z + FLOOR_T
+    r = ROAD_BOSS_R
+    b = Pos(x, (yb + yi + 0.01) / 2, Z_A) * Rot(90, 0, 0) * Cylinder(r, yi + 0.01 - yb)
+    b = b & _box(x - r - 1, x + r + 1, yb - 1, yi + 1, floor_top - 0.01, Z_A + r + 1)   # Ø26 reaches below the floor
+    b += _box(x - r, x + r, yb, yi + 0.01, floor_top - 0.01, Z_A)
+    rim = [e for e in b.edges().filter_by_position(Axis.Y, yb - 0.01, yb + 0.01)
+           if e.bounding_box().min.Z > floor_top + 0.1 or e.bounding_box().max.Z > floor_top + 0.1]
+    rim = [e for e in rim if not (abs(e.bounding_box().max.Z - e.bounding_box().min.Z) < 1e-6
+                                  and abs(e.bounding_box().min.Z - (floor_top - 0.01)) < 1e-3)]
+    b = fillet(rim, radius=BOSS_RIM_R)
+    collar = Pos(x, yi - JOIN / 2 + 0.005, Z_A) * Rot(-90, 0, 0) * Cone(r, r + JOIN, JOIN + 0.01)
+    collar = collar & _box(x - r - JOIN - 1, x + r + JOIN + 1, yi - JOIN - 1, yi + 1, Z_A, Z_A + r + JOIN + 1)
+    b += collar
+    for sx in (-1, 1):
+        b += _strip_z(x + sx * r, yi, sx, -1, floor_top - 0.01, Z_A)
+    return b if side > 0 else b.mirror(Plane.XZ)
+
+
 def design():
     bx0, bx1 = X_REAR_OUT, X_FRONT_OUT
-    outer = _box(bx0, bx1, -HALF_W_OUT, HALF_W_OUT, FLOOR_Z, TOP_Z)
-    outer = fillet(outer.edges().filter_by(Axis.Z), radius=CORNER_R)
-    outer = chamfer_plane_edges(outer, FLOOR_Z, BED_CHAMFER)
     xi0, xi1, yi = bx0 + WALL, bx1 - WALL, HALF_W_OUT - WALL
     floor_top = FLOOR_Z + FLOOR_T
+    yb = yi - BOSS_IN   # boss inner face (28)
+
+    # ---- outer body: box + the two motor housings, bed chamfer --------------------------------
+    outer = _box(bx0, bx1, -HALF_W_OUT, HALF_W_OUT, FLOOR_Z, TOP_Z)
+    outer = fillet(outer.edges().filter_by(Axis.Z), radius=CORNER_R)
+    for side in (1, -1):
+        outer += _housing(side)
+    outer = chamfer_plane_edges(outer, FLOOR_Z, BED_CHAMFER)
     tub = outer - _box(xi0, xi1, -yi, yi, floor_top, TOP_Z + 1)
+
+    # ---- floor fillets along the side walls and the end walls ---------------------------------
     f = FLOOR_FILLET
-    for s in (1, -1):   # floor fillets along the side walls and the end walls
+    for s in (1, -1):
         tub += _x_prism([(s * yi, floor_top - 0.01), (s * (yi - f), floor_top - 0.01), (s * yi, floor_top + f)], xi0, xi1 - xi0)
     tub += _y_prism([(xi0, floor_top - 0.01), (xi0 + f, floor_top - 0.01), (xi0, floor_top + f)], -yi, 2 * yi)
     tub += _y_prism([(xi1, floor_top - 0.01), (xi1 - f, floor_top - 0.01), (xi1, floor_top + f)], -yi, 2 * yi)
-    yb = yi - BOSS_IN   # boss inner face
 
     for side in (1, -1):
-        # journal boss for the sprocket hub, down to the floor
-        tub += _box(-JOURNAL_BOSS_HALF, JOURNAL_BOSS_HALF, side * yb, side * (yi + 0.01), floor_top - 0.01, Z_A + 10)
-        # motor cradle: block under gearbox + can, side cheeks, rear stop posts, zip-tie tunnel
-        y_face = MOTOR_FACE_Y
-        y_can_end = y_face - MOTOR.gb_len - MOTOR.can_len
-        cz = Z_A - MOTOR.gb_h / 2
-        tub += _box(-CRADLE_HALF_X, CRADLE_HALF_X, side * (y_can_end - REAR_STOP[0]), side * (yb + 0.01), floor_top - 0.01, cz)
+        s = side
+        # V-trough cradle under the can: a block up to the trough top (the pocket's diamond is cut through it
+        # below), 45° strips where it meets the wall
+        tub += _box(-CRADLE_HALF_X, CRADLE_HALF_X, s * CRADLE_Y0, s * (yi + 0.01), floor_top - 0.01, TROUGH_TOP)
         for sx in (-1, 1):
-            tub += _box(sx * (MOTOR.gb_w / 2 + 0.3), sx * (MOTOR.gb_w / 2 + 0.3 + CHEEK_T),
-                        side * y_can_end, side * (yb + 0.01), cz - 0.01, Z_A + CHEEK_TOP)
-            tub += _box(sx * 3.0, sx * (MOTOR.gb_w / 2 + 0.3 + CHEEK_T), side * (y_can_end - REAR_STOP[0]), side * (y_can_end - 0.3),
-                        cz - 0.01, Z_A + CHEEK_TOP)
-        yc = side * (y_face - MOTOR.gb_len - MOTOR.can_len / 2)
-        tub -= _box(-CRADLE_HALF_X - CHEEK_T - 2, CRADLE_HALF_X + CHEEK_T + 2, yc - TIE_W / 2, yc + TIE_W / 2,
-                    cz - 1.0 - TIE_H, cz - 1.0)
-        # road-wheel bosses Ø20 (round top, block to the floor) and the idler block
+            tub += _strip_z(sx * CRADLE_HALF_X, s * yi, sx, -s, floor_top - 0.01, TROUGH_TOP)
+        tub += _x_prism([(s * (yi + 0.01), TROUGH_TOP - 0.01), (s * (yi - JOIN), TROUGH_TOP - 0.01),
+                         (s * (yi + 0.01), TROUGH_TOP + JOIN)], -CRADLE_HALF_X, 2 * CRADLE_HALF_X)
+        # road-wheel bosses
         for x in ROAD_X:
-            tub += Pos(x, side * (yb + (BOSS_IN + 0.01) / 2), Z_A) * Rot(90, 0, 0) * Cylinder(ROAD_BOSS_R, BOSS_IN + 0.01)
-            tub += _box(x - ROAD_BOSS_R, x + ROAD_BOSS_R, side * yb, side * (yi + 0.01), floor_top - 0.01, Z_A)
+            tub += _road_boss(x, side)
+        # idler block, buttress for the jack screw, 45° strips at the side and front walls
         bl, bh = IDLER_BLOCK
-        tub += _box(AXLE_DX - bl / 2, min(AXLE_DX + bl / 2, xi1 + 0.01), side * yb, side * (yi + 0.01),
-                    floor_top - 0.01, floor_top + bh)
-    for (x, y) in COLUMNS:
-        tub += Pos(x, y, floor_top - 0.01) * Cylinder(COLUMN_D / 2, TOP_Z - floor_top + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        tub -= Pos(x, y, TOP_Z - PILOT_DEPTH) * Cylinder((LID_PILOT + HOLE_COMP) / 2, PILOT_DEPTH + 1,
-                                                         align=(Align.CENTER, Align.CENTER, Align.MIN))
+        top = floor_top + bh
+        tub += _box(AXLE_DX - bl / 2, xi1 + 0.01, s * yb, s * (yi + 0.01), floor_top - 0.01, top)
+        tub += _x_prism([(s * (yi + 0.01), top - 0.01), (s * (yi - JOIN), top - 0.01), (s * (yi + 0.01), top + JOIN)],
+                        AXLE_DX - bl / 2, xi1 - (AXLE_DX - bl / 2) + 0.01)
+        tub += _strip_z(xi1, s * yb, -1, -s, floor_top - 0.01, top)
+        tub += _y_prism([(xi1 + 0.01, top - 0.01), (xi1 - JOIN, top - 0.01), (xi1 + 0.01, top + JOIN)],
+                        min(s * yb, s * (yi + 0.01)), yi + 0.01 - yb)
+        tub += _box(JACK_X[0], JACK_X[1], s * JACK_Y_IN, s * (yi + 0.01), floor_top - 0.01, JACK_TOP)
 
+    # ---- lid columns (joined to the walls) with heat-set insert holes -------------------------
+    for (x, y) in COLUMNS:
+        tub += Pos(x, y, floor_top - 0.01) * Cylinder(COLUMN_D / 2, TOP_Z - floor_top + 0.01,
+                                                      align=(Align.CENTER, Align.CENTER, Align.MIN))
+        tub -= Pos(x, y, TOP_Z - INSERT_DEPTH) * Cylinder(INSERT_D / 2, INSERT_DEPTH + 1,
+                                                          align=(Align.CENTER, Align.CENTER, Align.MIN))
+
+    # ---- cuts ------------------------------------------------------------------------------------
     for side in (1, -1):
-        y_mid = side * (yb + HALF_W_OUT) / 2
+        s = side
+        y_mid = s * (yb + HALF_W_OUT) / 2
         span = HALF_W_OUT - yb + 2
-        # sprocket journal (Ø10 hub + 0.5 running clearance), teardrop pointing up
-        tub -= teardrop_cutter(HUB_D + JOURNAL_CLR + HOLE_COMP, span, axis="Y", center=(0.0, y_mid, Z_A))
+        # diamond gearbox pocket from the trough's rear end through the wall, housing and nacelle;
+        # skin hole for the N20 bearing boss and shaft
+        tub -= _pocket(side, CRADLE_Y0 - 1.0)
+        y_skin = s * (MOTOR_FACE_Y + SKIN / 2)
+        tub -= teardrop_cutter(BOSS_HOLE_D + HOLE_COMP, SKIN + 2, axis="Y", center=(0.0, y_skin, Z_A))
+        # zip-tie tunnel through the trough walls, under the can (the 2 mm gap between the can and the V's bottom)
+        zb = Z_A + min(z for _, z in POCKET)
+        tub -= _box(-CRADLE_HALF_X - 1, CRADLE_HALF_X + 1, s * (TIE_Y - TIE_W / 2), s * (TIE_Y + TIE_W / 2),
+                    zb, Z_A - MOTOR.can_d / 2 - 0.2)
         # road-wheel bolts + nut traps
         for x in ROAD_X:
             tub -= teardrop_cutter(BOLT_D + HOLE_COMP, span, axis="Y", center=(x, y_mid, Z_A))
             tub -= _nut_trap(x, side)
-        # idler bolt slot: teardrop ends + 8 mm flat top (bridges < 10) + nut slot
+        # idler bolt slot: teardrop ends + a hull up to the teardrop tips (8 mm bridge) + nut slot
         r = (BOLT_D + HOLE_COMP) / 2
         for dx in (-IDLER_SLOT, IDLER_SLOT):
             tub -= teardrop_cutter(BOLT_D + HOLE_COMP, span, axis="Y", center=(AXLE_DX + dx, y_mid, Z_A))
-        tub -= _box(AXLE_DX - IDLER_SLOT, AXLE_DX + IDLER_SLOT, side * (yb - 1), side * (HALF_W_OUT + 1), Z_A - r, Z_A + r)
+        tub -= _box(AXLE_DX - IDLER_SLOT, AXLE_DX + IDLER_SLOT, s * (yb - 1), s * (HALF_W_OUT + 1),
+                    Z_A - r, Z_A + r * 2 ** 0.5)
         tub -= _nut_trap(AXLE_DX, side, slot=2 * IDLER_SLOT)
+        # jack-screw pilot along X through the buttress, teardrop pointing up
+        tub -= teardrop_cutter(JACK_PILOT + HOLE_COMP, JACK_X[1] - JACK_X[0] + 6, axis="X",
+                               center=((JACK_X[0] + JACK_X[1]) / 2, s * JACK_Y, Z_A))
         # battery strap slots
-        xc = BATT_X0 + BATT_2X18650.length / 2
-        ys = side * STRAP_Y
+        xc = BATT_X0 + BATT_LEN / 2
+        ys = s * STRAP_Y
         tub -= _box(xc - STRAP_L / 2, xc + STRAP_L / 2, ys - STRAP_W / 2, ys + STRAP_W / 2, FLOOR_Z - 1, floor_top + FLOOR_FILLET + 1)
 
-    # toggle switch in the rear wall (teardrop), HC-SR04 transducers through the front wall
-    tub -= teardrop_cutter(SWITCH_D + HOLE_COMP, WALL + 2, axis="X", center=(bx0 + WALL / 2, 0.0, SWITCH_Z))
+    # HC-SR04 transducers through the front wall
     for sy in (-1, 1):
         tub -= teardrop_cutter(HCSR04_TX_D + SENSOR_CLR + HOLE_COMP, WALL + 2, axis="X",
                                center=(bx1 - WALL / 2, sy * HCSR04_TX_DX / 2, SENSOR_Z))
