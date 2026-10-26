@@ -9,7 +9,7 @@
 | Hexapod | about $461 | about $341 |
 | All three bought together | about $917 | |
 
-Not counted: the Logitech Brio 4K (already owned), shipping and tools. Prices come from Canadian retailers where one was readable, with US stores and a few labelled estimates otherwise; the Prices sheet gives each source and a confidence.
+Not counted: the Logitech Brio 4K (already owned), shipping and tools. Prices come from Canadian retailers where one was readable, with US stores and a few labelled estimates otherwise; the Prices sheet gives each source, a confidence and a clickable **Buy link** (and **Budget link**), and each robot's sheet has a **Where to buy** column linking to the product page. 76 of 78 parts link to a real listing; the 14-gauge steel strip and #4 × 2 in wood screws are priced as typical hardware-store items (no Canadian listing found; #6 × 2 in screws work too).
 
 To rebuild after a price or BOM change: edit `prices_*.csv` or `bom.py`, run `python3 build_xlsx.py` from this folder (it writes `Robot build costs.xlsx` next to itself), then recalculate the workbook in LibreOffice or Excel. `python3 recalc.py` does both with LibreOffice installed and writes the totals to `costs.json`.
 
