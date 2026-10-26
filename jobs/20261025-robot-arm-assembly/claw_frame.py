@@ -11,8 +11,9 @@ CLAW frame G (same as the old gripper-base frame, so the forearm and wrist do no
   y      = completes the frame, in the arm plane; the jaws close along y
 
 Layout along x: wrist horn (x 0) | claw MG90S body behind the bulkhead | bulkhead (x 3.5..10)
-| claw servo's upper case | rail + lip walls (x 18.35..22.35) | pinion and both racks (x 22.6..32.6) | cover front plate
-(x 32.85..37.85, with the pinion pass-through) | finger blades (x 38.35..83.35).
+| claw servo's upper case, rail block below it (x 10..22.35) and lip wall above it (x 14.35..22.35) | pinion and both
+racks (x 22.6..34.6) | cover front plate (x 34.85..39.85, with the pinion pass-through) | finger blades (x 40.35..83.35).
+Round 3 (2026-10-26): every required fix of the claw DFM and strength round 2 (see each claw job's design_brief.md).
 Layout along z (pinion axis at ZS 27.25): wrist plate (z 0..6, rack B rides on its top face)
 | rack B (teeth up) | pinion | rack A (teeth down, rides under the top wall) | cover top wall
 (z 48.5..51.5) | camera mount.
@@ -42,11 +43,12 @@ Z_TEETH = 20                   # even: the pinion looks the same to both racks (
 R_P = M * Z_TEETH / 2          # 10.0 pitch radius: 21.6 N per rack at the MG90S stall (24 N with 18 teeth)
 TIP_RELIEF = 0.15 * M          # pinion and rack tips topped 0.15 m: tip clearance 0.25 -> 0.40 (SYS-08 stack-up)
 R_TIP = R_P + M - TIP_RELIEF   # 10.85: pinion outside radius as made
-FACE_W = 10.0                  # pinion and rack face width (along x); 8 -> 10 (pinion strength)
-BACKLASH = 0.35                # total per mesh (SYS-08: 0.3-0.4; claw_sequence_check measures it), split unevenly.
-PINION_BACKLASH = 0.2          # gears.py thins a member's teeth by ITS backlash/2 at the pitch line: the pinion's by
-RACK_BACKLASH = 0.5            # 0.10 (its radial-flank root keeps Lewis SF 3.25 at the stall), the racks' by 0.25
-                               # (their 2.2 mm roots keep SF ≈4.6); (0.2 + 0.5) / 2 = 0.35
+FACE_W = 12.0                  # pinion and rack face width (along x); 10 -> 12 (claw round 3, pinion strength round 2:
+                               # tooth fillet SF 2.85 -> 3.60, racks 3.93)
+BACKLASH = 0.40                # total per mesh (SYS-08: 0.3-0.4; claw_sequence_check measures it), split unevenly.
+PINION_BACKLASH = 0.1          # gears.py thins a member's teeth by ITS backlash/2 at the pitch line: the pinion's by
+RACK_BACKLASH = 0.7            # 0.05 (its radial-flank root is the weaker one), the racks' by 0.35 (their 2.2 mm roots);
+                               # (0.1 + 0.7) / 2 = 0.40 (claw round 3: pry margin 0.08 -> 0.15 mm, pinion strength round 2)
 PINION_ROOT_FILLET = 0.38 * M  # tools/gears.py root fillets (pinion DFM fix 3 / strength)
 RACK_ROOT_FILLET = 0.30 * M
 P_CIRC = math.pi * M           # rack pitch 3.14
@@ -84,19 +86,22 @@ X_REAR = -8.0                  # wrist plate rear edge
 REAR_HALF = 32.0               # full width behind the bulkhead (strength fix 1: no 20 mm tail)
 HALF_Y = 32.0                  # frame / cover half width
 X_P0 = X_B + link_back_z(SERVO)    # 22.6: pinion back face (horn 2 mm deep in it) = racks' back
-X_P1 = X_P0 + FACE_W           # 32.6
+X_P1 = X_P0 + FACE_W           # 34.6
 RAIL_IN = 9.5                  # rails / lip start 9.5 from the axis (trimmed horn stubs reach 5.65)
 RAIL_X1 = X_P0 - CLR           # 22.35: rails' / lip's front face
-GUIDE_T = 4.0                  # rail (frame) and lip (cover) are 4 mm walls behind the racks, not blocks back to
-RAIL_X0 = RAIL_X1 - GUIDE_T    # 18.35   the bulkhead: 16 g less at the end of the arm (shoulder torque, SYS-02)
+GUIDE_T = 8.0                  # cover's lip wall behind rack A: 4 -> 8 (claw round 3, cover strength round 2: lip root
+LIP_X0 = RAIL_X1 - GUIDE_T     # 14.35   SF 1.30 -> 5.20, lip above the tie post 6.52); its back face, and the ties' posts
+RAIL_X0 = X_B                  # 10.0: the frame's rail behind rack B is a BLOCK back to the bulkhead's front face (claw
+                               # round 3, frame strength round 2: the 4 mm wall's root gave SF 0.65; the block 6.19). It
+                               # stays below the claw servo's case (z <= ZS - RAIL_IN = 17.75 against 21.15)
 WINDOW_ROOF = 7.0              # 45° shoulders above the servo window: bridge 23.2 - 14 = 9.2 mm (DFM fix 1)
 
 # --- cover ----------------------------------------------------------------------------
 FRONT_T = 5.0                  # front plate 3 -> 5 (cover strength fix 1)
-X_F0 = X_P1 + CLR              # 32.85: front plate inner face (= wrist plate front edge)
-X_F1 = X_F0 + FRONT_T          # 37.85
-FRONT_Z0 = -4.0                # front plate reaches 4 mm below the claw's back face: the strip under slot B is
-                               # 9.75 deep (z -4..5.75) instead of 5.75 (cover strength fix 3, RACK_BACK 10)
+X_F0 = X_P1 + CLR              # 34.85: front plate inner face (= wrist plate front edge)
+X_F1 = X_F0 + FRONT_T          # 39.85
+FRONT_Z0 = -6.0                # front plate reaches 6 mm below the claw's back face: the strip under slot B is
+                               # 11.75 deep (z -6..5.75); -4 -> -6 in claw round 3 (cover strength round 2: SF 2.58 -> 4.34)
 TOP_T = 3.0
 TOP_X0 = 0.0                   # top wall's rear edge: x 0 (DFM R2; carries the whole camera pad)
 Z_TOP0 = ZS + RACK_OUT + RACK_SEAT   # 48.5: top wall underside (= bulkhead top)
@@ -117,13 +122,19 @@ CRESCENT_Y = 7.0               # plate slivers between the pass-through and the 
 # a post behind the racks that meets the lip, over y -32..-24 (outside the pinion and every jaw path).
 TIE_Y = (-HALF_Y, -HALF_Y + 8.0)
 TIE_Z = 8.0
-TIE_X0 = RAIL_X0               # 18.35: post's rear face, in line with the lip's (1.55 in front of the servo case top)
+TIE_X0 = LIP_X0                # 14.35: post's rear face, in line with the lip's (clear of the claw servo: its case
+                               # ends at y -16.9, its tabs at y -21.6, and the posts are at |y| >= 24)
+# Second tie (claw round 3, cover strength round 2, change 2): the same post + web at y 24..32 joins the UPPER piece
+# (the plate beside slot B's open end, which rack B pushes when a finger is forced towards closing) to the lip. It sits
+# at the top of the print (the cover stands on its -y end), so its undersides are 45° slopes: the post grows from
+# the lip (full depth from y TIE2_Y[0]), the web from the post and from the front plate beside the pass-through.
+TIE2_Y = (HALF_Y - 8.0, HALF_Y)
 # cover screws: two M3 down into the bulkhead top, two M2.5 back into the wrist plate's front edge
 TOP_SCREWS = [(X_B - BULK_T / 2, -23.0), (X_B - BULK_T / 2, 14.0)]   # (x, y), clear of the servo window
 FRONT_SCREWS = [(-24.0, T_W / 2), (24.0, T_W / 2)]                  # (y, z)
 M3_PILOT = 2.5                 # printed pilot for M3 self-tapping (+ HOLE_COMP in the models)
 M3_CLEAR = 3.4
-M25_PILOT = 2.0                # front screws: M2.5 x 12 pan head self-tapping (head Ø5 x 1.5 stands 0.5 under
+M25_PILOT = 2.0                # front screws: M2.5 x 16 pan head self-tapping (head Ø5 x 1.5 stands 0.5 under
 M25_CLEAR = 2.8                # jaw B's finger, which sweeps over it; an M3 head would hit it). Pilot skin 1.9
                                # (DFM fix 2's M2.5 alternative)
 
@@ -131,14 +142,14 @@ M25_CLEAR = 2.8                # jaw B's finger, which sweeps over it; an M3 hea
 NECK_Z = (RACK_ROOT, RACK_OUT)     # neck band above the axis (jaw A): 11.25..21.25, on the rack's solid back
 NECK_Y = 20.0                  # neck length along y (jaw A: y -20..0)
 NECK_FILLET = 4.0              # neck root fillets at its two y edges (Kt 2.5 -> 1.5)
-NECK_X1 = X_F1 + 0.5           # 38.35: blades start 0.5 in front of the cover
+NECK_X1 = X_F1 + 0.5           # 40.35: blades start 0.5 in front of the cover
 BLADE_T = 6.0                  # finger thickness (y) at the tip
 BLADE_T_ROOT = 12.0            # finger thickness from the neck to TAPER_X0 (jaw strength candidate C)
 TAPER_X0, TAPER_X1 = NECK_X1 + 20.0, NECK_X1 + 35.0   # 12 -> 6 taper
 GRIP_HALF = 10.0               # blades overlap on z = ZS ± 10 (20 mm tall grip faces)
-BLADE_L = 45.0
-X_TIP = NECK_X1 + BLADE_L      # 83.35: fingertip
-GRIP_X0 = NECK_X1 + NECK_Z[0] + GRIP_HALF   # 59.6: full-height grip face starts
+X_TIP = 83.35                  # fingertip: kept where round 2 put it when FACE_W grew 2 mm (claw round 3), so the
+BLADE_L = X_TIP - NECK_X1      # arm's reach, payload and the guard's tip stay as they were; the blade is 45 -> 43
+GRIP_X0 = NECK_X1 + NECK_Z[0] + GRIP_HALF   # 61.6: full-height grip face starts
 TOP_KINK_X = NECK_X1 + 15.0    # finger top: flat at the neck top to here, then 45° down to ZS + GRIP_HALF
 KINK_FILLET = 3.0              # fillets at the finger's re-entrant kinks (Kt 2 -> 1.5)
 
@@ -160,3 +171,6 @@ HORN_FACE_ABOVE_SPLINE = 0.6   # hobby_parts.horn_face_z assumption
 CLAMP_ENGAGE = 4.6             # target engagement of every horn clamp screw in its spline thread
 PINION_CB_D = 6.2              # Ø6 M2 washer under the pinion clamp screw (pinion strength fix)
 PINION_FLOOR = 6.3             # pinion: counterbore floor to the horn face; M2 x 12 - 0.5 washer - 6.3 - 0.6 = 4.6
+WRIST_WASHER_OD = 8.0          # wrist clamp: Ø8 x 0.8 washer (DIN 9021 M2.5 size, hole 2.7) on the frame's pad, Ø6 -> 8
+WRIST_WASHER_T = 0.8           # (claw round 3, frame strength round 2: bearing SF 2.12 -> 4.08); M2 x 12 - 0.8 - 6.3 - 0.6
+                               # = 4.3 mm into the spline (thread depth >= 5.1, BUILD_GUIDE §2)

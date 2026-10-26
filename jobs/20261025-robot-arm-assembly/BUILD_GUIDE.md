@@ -1,22 +1,22 @@
 # Desktop robot arm: build guide
 
 Robot 1 of 3 (then the tracked rover, then the hexapod). Four joints plus a parallel claw, 5 hobby servos, an ESP32 DevKit, a 6 V supply and PETG, with an optional Logitech Brio 4K webcam on the claw.
-Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the desk from 84 to 263 mm from the yaw axis (claw straight down: 98 to 220 mm), collision-free; the sketch's guard keeps them 8 mm above it (§5 gives the guard's own figures). The claw opens 0–44 mm. At stall the pinion pushes 21.6 N into the racks: 10.8 N per jaw when both grip (the safety figure), all 21.6 N into one jaw when the other is blocked. Rack friction leaves a real grip of about 5–7.5 N per finger (deep review 03, SYS-15, scaled to the 10 mm pitch radius).
+Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the desk from 88 to 263 mm from the yaw axis (claw straight down: 98 to 220 mm), collision-free; the sketch's guard keeps them 8 mm above it (§5 gives the guard's own figures). The claw opens 0–44 mm. At stall the pinion pushes 21.6 N into the racks: 10.8 N per jaw when both grip (the safety figure), all 21.6 N into one jaw when the other is blocked. Rack friction leaves a real grip of about 5–7.5 N per finger (deep review 03, SYS-15, scaled to the 10 mm pitch radius).
 
 **Payload.** The shoulder MG996R sets it, and the camera package (Brio, mount, thumb screw, cable: ≈95 g at the arm's end) costs most of it. Grams the arm can carry 10 mm behind the fingertips, claw pointing down, object 20–60 mm above the desk, at the best pose inside the servo travel. "Short lift" keeps every servo under 50 % of its 6 V stall torque, "moving" allows ×1.3 for starting and stopping, "holding" keeps it under ⅓ of stall, the running-current band, for as long as you like. Above about 200 g the claw's friction grip, not the servos, is the limit.
 
 | Fingertips out along the arm | Camera: short lift | Camera: moving | Camera: holding | No camera: short lift | No camera: moving | No camera: holding |
 |---|---|---|---|---|---|---|
 | 60–100 mm | 200 g | 200 g | 200 g | 200 g | 200 g | 200 g |
-| 100–120 mm | 200 g | 200 g | 155 g | 200 g | 200 g | 200 g |
-| 120–140 mm | 200 g | 130 g | 80 g | 200 g | 200 g | 160 g |
-| 140–160 mm | 160 g | 60 g | 20 g | 200 g | 145 g | 100 g |
-| 160–180 mm | 95 g | 10 g | — | 180 g | 95 g | 60 g |
-| 180–200 mm | 50 g | — | — | 135 g | 60 g | 25 g |
-| 200–220 mm | 15 g | — | — | 100 g | 30 g | 5 g |
-| Arm straight out (≈280 mm) | — | — | — | 55 g | 5 g | — |
+| 100–120 mm | 200 g | 195 g | 135 g | 200 g | 200 g | 200 g |
+| 120–140 mm | 200 g | 110 g | 55 g | 200 g | 190 g | 140 g |
+| 140–160 mm | 135 g | 40 g | — | 200 g | 120 g | 80 g |
+| 160–180 mm | 70 g | — | — | 155 g | 70 g | 35 g |
+| 180–200 mm | 25 g | — | — | 110 g | 35 g | 5 g |
+| 200–220 mm | — | — | — | 75 g | 10 g | — |
+| Arm straight out (≈280 mm) | — | — | — | 35 g | — | — |
 
-"Out along the arm" is the fingertips' distance from the yaw axis in the arm's own plane; "—" means none. With the camera, holding the empty arm straight out already takes 51 % of the shoulder's stall torque, so don't park or wait there: `r` parks the arm upright (shoulder 90, elbow 0, wrist 0), where the shoulder holds almost nothing, and the sketch parks it by itself after 60 s without a command (§5). The figures use the parts' sliced masses; with solid parts each cell drops by about 25 g. Method and every number: `torque_budget.py` → `torque_budget.json` (deep review 03, SYS-02).
+"Out along the arm" is the fingertips' distance from the yaw axis in the arm's own plane; "—" means none. With the camera, holding the empty arm straight out already takes 56 % of the shoulder's stall torque, so don't park or wait there: `r` parks the arm upright (shoulder 90, elbow 0, wrist 0), where the shoulder holds almost nothing, and the sketch parks it by itself after 60 s without a command (§5). The figures use the parts' sliced masses; with solid parts each cell drops by about 30 g. Claw round 3 made the claw about 25 g heavier (the frame's rail block and ribs, the cover's thicker lip and second tie, the 12 mm racks and pinion), which costs every cell 20–30 g. Method and every number: `torque_budget.py` → `torque_budget.json` (deep review 03, SYS-02).
 
 ## 1. Bill of materials
 
@@ -30,7 +30,7 @@ Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the
 | 4 | Upper link (100 mm) | `20261025-arm-upper-link` | flat, horn pocket up |
 | 5 | Forearm (90 mm) | `20261025-arm-forearm` | flat, horn pocket up |
 | 6 | Claw frame | `20261026-arm-claw-frame` | back face down (wrist-horn pocket on the bed) |
-| 7 | Claw cover | `20261026-arm-claw-cover` | standing on its −y end (5 mm brim) |
+| 7 | Claw cover | `20261026-arm-claw-cover` | standing on its −y end (5 mm brim; 2 support pillars inside the round hole, snapped off before assembly) |
 | 8 | Claw pinion (20 teeth) | `20261026-arm-claw-pinion` | flat, horn pocket down, solid |
 | 9–10 | Claw jaw × 2 (identical) | `20261026-arm-claw-jaw` | standing on the rack's back end, finger up (both on one plate, no brim) |
 | 11 | Brio 4K camera mount *(optional)* | `20261026-arm-camera-mount` | standing on its −y end (5 mm brim) |
@@ -63,14 +63,16 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
 | 3 | M3 × 6 self-tapping (pan head) | Ring tabs. A longer screw would reach the ESP32 under the plate |
 | 3 | M3 × 10 self-tapping (pan head) | Cradle, from below into the counterbores. Not longer: the boss pilots are 6 mm deep |
 | 3 + 3 | M3 × 14 socket head (ISO 4762) + Ø9 × 0.8 washer (M3 large, ISO 7093) | Horn clamp screws: base (through the 8 mm turntable disk), shoulder and elbow (through the 10 mm links, 8 mm above the horn). Each reaches 4.6 mm into the spline (14 − 0.8 − 8 − 0.6, the horn face standing 0.6 above the spline). A socket head lets you re-tighten the base one with an L-key past the upright |
-| 2 + 2 | M2 × 12 socket or pan head (head ≤ Ø5.5) + Ø6 × 0.5 washer | Horn clamp screws: wrist (through the claw frame's raised pad) and pinion (from its front counterbore). Both have a 6.3 mm floor above the horn: 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, like the big ones |
+| 2 | M2 × 12 socket or pan head (head ≤ Ø5.5) | Horn clamp screws: wrist (through the claw frame's raised pad) and pinion (from its front counterbore). Both have a 6.3 mm floor above the horn |
+| 1 | Ø8 × 0.8 washer, hole 2.7 (DIN 9021 / ISO 7093, M2.5 size) | Under the wrist clamp screw: 12 − 0.8 − 6.3 − 0.6 = 4.3 mm into the spline. The bigger washer spreads the camera's knocks over the pad (claw round 3) |
+| 1 | Ø6 × 0.5 washer (M2) | Under the pinion clamp screw, in its counterbore: 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, like the big ones |
 | 7 | M2 × 6 self-tapping (pan head) | Horn anti-rotation screws: 2 each through the base disc horn and the shoulder and elbow double-arm horns, 1 through the wrist horn. Drill the horn's hole to 2.0 mm first. The pinion's horn is glued instead |
 | 2 | M2 × 12 self-tapping (pan head) | Wrist MG90S tab screws in the 10 mm forearm (9.5 mm engaged) |
 | 2 | M2 × 8 self-tapping (pan head) | Claw MG90S tab screws in the 6.5 mm bulkhead (5.5 mm engaged) |
-| 2 | M2.5 × 12 pan-head self-tapping, head Ø5.0 or less | Claw cover, front, into the wrist plate's front edge (7 mm engaged). Jaw B's finger passes 0.5 mm over the heads, so no bigger head |
+| 2 | M2.5 × 16 pan-head self-tapping, head Ø5.0 or less | Claw cover, front, into the wrist plate's front edge (11 mm engaged in the 14 mm pilots). Jaw B's finger passes 0.5 mm over the heads, so no bigger head |
 | 2 | M3 × 10 self-tapping (pan head), **or** 2 × M3 × 18 button head (ISO 7380) with the camera mount | Claw cover, top, into the bulkhead's 14 mm pilots (7 / 11.5 mm engaged) |
 | 4 | M3 × 50 (or #4 × 2") wood screws, or 2 desk clamps | **Required**: screw the base to the desk or to a board. With the arm out, it tips the base over |
-| *alt.* | Board ≥ 200 × 200 mm, 12–18 mm plywood or MDF, ≥ 0.4 kg, with 4 rubber feet; **or** 1.2 kg of ballast (0.8 kg without the camera) fixed inside the base | If you won't screw into the desk (deep review 03, SYS-12). Free-standing, the 0.7 kg robot tips over with the arm out (safety factor 0.34–0.48). On the board it holds with a safety factor of 2.2 or more, camera and 50 g at full reach included; the ballast gives 1.5 (`torque_budget.json`) |
+| *alt.* | Board ≥ 200 × 200 mm, 12–18 mm plywood or MDF, ≥ 0.4 kg, with 4 rubber feet; **or** 1.3 kg of ballast (0.95 kg without the camera) fixed inside the base | If you won't screw into the desk (deep review 03, SYS-12). Free-standing, the 0.7 kg robot tips over with the arm out (safety factor 0.31–0.44 with the camera). On the board it holds with a safety factor of 2.0 or more, camera and 50 g at full reach included; the ballast gives 1.5 (`torque_budget.json`) |
 | — | PTFE (plumber's) tape | One layer on the support ring's top face: the turntable disk runs on it |
 | — | Spiral cable wrap, zip ties (≤ 2.5 mm wide), 2 adhesive cable-tie mounts (≈10 × 10 mm), a drop of CA glue | Tidy the leads; one tie mount on the claw's bulkhead holds the camera cable (§4 step 14); the glue locks the trimmed horn in the pinion |
 | 1 | Right-angle micro-USB (or USB-C, to suit your ESP32) cable | The ESP32's USB cable leaves the base's +X wall under the arm's main pick zone: a right-angle plug keeps it down on the desk |
@@ -169,15 +171,16 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
    - With the elbow servo at its centre, push the forearm onto the elbow spline **60° below the upper link's line, bent towards +X**: with the upper link straight up, the forearm points 30° above horizontal, out over the USB wall. Check it with a protractor or a phone level, take the spline position nearest 30°, and fit the M3 × 14 + Ø9 washer. The trims in §5 take out the rest.
 7. **Claw frame, before the claw servo** (its body covers the wrist clamp screw).
    - Push the frame, with its horn, onto the wrist spline **in line with the forearm**.
-   - Fit the M2 × 12 + Ø6 washer from the front, through the centre hole in the raised pad.
+   - Put the Ø8 washer on the M2 × 12 and drive it from the front, through the centre hole in the raised pad. The washer slides down the shallow round groove in the bulkhead's back face and lies flat on the pad.
 8. **Claw servo, from the front.**
    - File its lead-end tab's slit to 2.1 mm as in step 6.
    - Feed its plug through the bulkhead's window from the front, then push the MG90S in after it, **case bottom first**, shaft pointing at the fingertips, the ribbon flat in the notch at the shaft end, until the tabs sit on the bulkhead's front face. Fix it with 2 × M2 × 8 self-tappers.
    - **Screw-strip check,** as in step 6: drive both screws snug and look at the strips beside the screw holes. White or cracked: stop and tell Claude.
    - **Direction.** Push a horn loosely onto its spline as a pointer and type `g 20`. Seen from the front, the spline must turn **anticlockwise** to open the claw. If it turns clockwise, set `GRIP_OPEN_DIR = -1` and `GRIP_CLOSED_DEG` to about 160 in the sketch and re-flash. Type `f` and take the pointer off.
 9. **Cover, then the camera mount.**
+   - First snap off the cover's two **support pillars**: the thin posts inside the round hole in its front plate, one under each side piece. Grip each with pliers and break it off at its foot, then trim any nub flush with a knife: the pinion passes 0.45 mm from the hole's edge.
    - Lower the cover onto the frame: the front plate slides down past the wrist plate's front edge, the lip goes in front of the claw servo's case, and the top wall lands on the bulkhead.
-   - Fix the front with 2 × M2.5 × 12 into the wrist plate's edge.
+   - Fix the front with 2 × M2.5 × 16 into the wrist plate's edge.
    - Fix the top with 2 × M3 × 10, or put the camera mount on now and use 2 × M3 × 18 button heads through both (step 13).
 10. **Jaws, slid in to fully open** (deep review 03, SYS-01). Without the pinion they slide freely. The front plate has two slots: the upper one is open on one side of the claw, the lower one on the other.
     - Jaw A: rack teeth facing the claw's middle, finger pointing forward. Slide its rack into the **upper** channel (under the top wall) from the side where the upper slot is open, neck in the slot, until its grip face is 22 mm from the claw's centre line.
@@ -187,7 +190,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
     - Press the horn into the pinion's back pocket. It's a light fit that centres the pinion on the horn (deep review 03, SYS-08); glue it only after the run in step 12.
     - Type `g 44`: the claw servo turns to its fully open angle.
     - Push the pinion, horn first, through the round hole in the front plate onto the spline. Its teeth slide into both racks at once. If they don't, nudge one or both jaws along their channels by up to half a tooth (1.6 mm), or turn the pinion by one spline tooth, until it slides home.
-    - Drive the M2 × 12 + Ø6 washer through the pinion's front counterbore into the spline.
+    - Drive the M2 × 12 + Ø6 washer through the pinion's front counterbore into the spline. The head sits about 1 mm below the pinion's face.
 12. **Claw calibration.**
     - Type `g 10`, then `k 20`: `k` sets the claw's closed servo angle and closes the claw to it by itself. Listen during the first 2 s: a closing move squeezes for at most 2 s and then eases off, so a buzz only shows then. If it buzzed, type `g 10` again and try `k 22`, `k 24`, …; if a gap is left between the grip faces, try lower values. Stop at the value where the faces just touch without a buzz. With `GRIP_OPEN_DIR = -1`, start at `k 160` and step the other way. The ESP32 keeps the trim; copying the printed `GRIP_CLOSED_DEG` into the sketch is optional.
     - Run `g 44` and `g 0` a few times: the jaws must run without a tight spot or a click anywhere over the stroke. A tight spot means a rack isn't riding on its guide or the pinion isn't centred on its horn; then glue the horn with a drop of CA.
@@ -206,7 +209,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
     - **Racks:** at 44 mm open each rack sticks 15 mm out of the claw's sides (front half of the claw). Keep every tie and cable behind the bulkhead.
     - **Camera cable:** stick an adhesive cable-tie mount on the claw frame's bulkhead, on the side the cable leaves the camera, and tie the cable there with a short strain-relief loop between it and the plug, so a tug never reaches the plug. Tie it again on the forearm 10–15 mm behind the wrist axis, with a 60 mm loop between the two ties outside the wrist servo, then along the forearm and upper link with a loop at the elbow, shoulder and base, and on to your PC.
 15. **Screw the base down, last.**
-    - 4 × M3 × 50 wood screws through the corner pillars into the desk, or into a board of at least 200 × 200 mm and 0.4 kg (12–18 mm plywood or MDF) with the rubber feet under the board. Or fix 1.2 kg of ballast inside the base (0.8 kg without the camera). Free-standing, the arm tips over in every extended pose (deep review 03, SYS-12).
+    - 4 × M3 × 50 wood screws through the corner pillars into the desk, or into a board of at least 200 × 200 mm and 0.4 kg (12–18 mm plywood or MDF) with the rubber feet under the board. Or fix 1.3 kg of ballast inside the base (0.95 kg without the camera). Free-standing, the arm tips over in every extended pose (deep review 03, SYS-12).
     - **Keep-out zones** (SYS-17): the claw and camera sweep a circle of about 300 mm radius round the yaw axis. With the shoulder past 90° the arm reaches the desk behind the base, over the jack and the cable slot, so run the 6 V lead and the cables away from there. The ESP32's USB cable leaves the +X wall under the main pick zone: use a right-angle plug and keep the cable flat on the desk. The camera and its plug stand 155 mm out sideways from the yaw axis.
 
 ## 5. First power-up, calibration and joint limits
@@ -288,14 +291,14 @@ It checks every step again while the move runs. From a pose that is already too 
 
 - **Checked against the CAD meshes** over 52 000 poses: shoulder 0–180, elbow −150–30, wrist ±90, claw closed and open, base contacts at yaw 0, ±45° and ±90°, the Brio with its right-angle plug and thumb screw (`firmware_test/guard_mesh_check.py`). No pose closer than 8 mm to the desk and no contact got through. The guard also blocks 0.4 % of the poses that clear the desk by 8 mm, and near the base 0.7–1.9 % that touch nothing.
 - **Desk reach with the guard.** With the claw pointing straight down, the fingertips come to 11 mm above the desk (the ends of the tips stay 8 mm up) from 60 to 200 mm out along the arm. That is 103–217 mm from the yaw axis, because the fingertips sit 84 mm to its side, or 99–223 mm with the claw up to 5° off straight down. The elbow's −150° stop and the shoulder's 0° stop set those ends, not the guard. At yaw ±90° the near limit is 84 mm out along the arm (119 mm from the axis), because the jaws then pass the base's side wall. With the claw tilted further, the fingertips come within 16 mm of the desk from 90 mm (107 mm at yaw ±90°) to 271 mm from the yaw axis.
-- **Why the top of this guide says 84–263 mm** (98–220 mm with the claw within 5° of straight down): those count every pose that touches nothing with the fingertips 0–8 mm above the desk. The guard keeps every part 8 mm off the desk and the base instead. With the claw near straight down that only lifts the fingertips 8 mm; the same stops set the ends. At other claw angles the guard also gives up the nearest poses, where the claw points down and back right beside the base's wall, and its far end is further out only because the fingertips are higher.
+- **Why the top of this guide says 88–263 mm** (98–220 mm with the claw within 5° of straight down): those count every pose that touches nothing with the fingertips 0–8 mm above the desk. The guard keeps every part 8 mm off the desk and the base instead. With the claw near straight down that only lifts the fingertips 8 mm; the same stops set the ends. At other claw angles the guard also gives up the nearest poses, where the claw points down and back right beside the base's wall, and its far end is further out only because the fingertips are higher.
 - **Without the Brio,** set `CAMERA_FITTED = false`: the wrist may then come closer to the desk.
 - The guard takes the desk to be level with the underside of the base, which is screwed down on it. It knows nothing else on the desk, nor your hands.
 
 **Check it** once the directions and trims are set:
 
 1. Type `i 0`, `r`, `s 0` (the arm straight out), then `e -90`. It should stop with `blocked: desk` when the forearm is about 26° below horizontal (30° without the camera).
-2. Type `r`, `e -150`, `w -30`, then `s 15`. It should stop with `blocked: base` at about `s 57`.
+2. Type `r`, `e -150`, `w -30`, then `s 15`. It should stop with `blocked: base` at about `s 61` (the claw's front plate reaches 6 mm below its back face).
 3. If either keeps going, type `x` and check the directions again. Type `r` and `i 60`.
 
 ### Holding something
@@ -310,7 +313,7 @@ The sketch can't feel an object, and an MG90S held stalled draws about 0.7 A and
 
 ### Parking
 
-With the camera, holding the empty arm straight out takes 51–56 % of the shoulder MG996R's stall torque (sliced or solid parts, `torque_budget.py`), more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 2 N·mm.
+With the camera, holding the empty arm straight out takes 56–62 % of the shoulder MG996R's stall torque (sliced or solid parts, `torque_budget.py`), more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 2 N·mm.
 
 - `r` parks now. The base and the claw stay as they are, so a held object stays held.
 - After 60 s without a command (`IDLE_PARK_S`) the arm parks by itself and prints `idle 60 s: parking`. **So it can move on its own.**
@@ -346,7 +349,7 @@ The Brio plugs into your PC, and the ESP32's USB port takes commands from the sa
   1. Start the preview with `--focus 200`.
   2. Step it with `,` and `.` until the fingertips are sharp.
   3. Pass that value to `open_camera()` in your own code.
-- **Crop the bottom 40 %.** The claw's own cover fills the bottom 38 % of the raw image at 65° (43 % at 90°): the right-hand side of the upright preview, past the orange line. In vision code, cut 40 % off with `crop_claw(frame)`, on the raw frame. If you use the 90° view, set `CLAW_ROWS` near the top of `arm_pc_control.py` to 0.43.
+- **Crop the bottom 46 %.** The claw's own cover fills the bottom 44 % of the raw image at 65° (46 % at 90°): the right-hand side of the upright preview, past the orange line. In vision code, cut 46 % off with `crop_claw(frame)`, on the raw frame. If you use the 90° view, set `CLAW_ROWS` near the top of `arm_pc_control.py` to 0.48.
 
 ## 7. Safety
 

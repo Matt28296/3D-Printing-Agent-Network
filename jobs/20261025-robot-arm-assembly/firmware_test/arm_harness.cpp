@@ -252,7 +252,7 @@ int main() {
   mark = Serial.log.size();
   session(b4::loop, {{0, "s 15\n"}});
   POSE(b4);
-  check(contains(out_since(mark), "blocked: base") && b4::jointNow(1) > 56 && b4::jointNow(1) < 59,
+  check(contains(out_since(mark), "blocked: base") && b4::jointNow(1) > 59 && b4::jointNow(1) < 63,   // claw round 3: s 61.5
         fmt("elbow folded -150: lowering the shoulder stops at s %.1f with blocked: base (the claw by the base wall)", b4::jointNow(1)));
   session(b4::loop, {{0, "s 90\n"}});
   check(near(b4::jointNow(1), 90, 0.01), "and back up is allowed");

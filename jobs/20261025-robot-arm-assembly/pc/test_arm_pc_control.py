@@ -128,7 +128,7 @@ def test_ik_refuses_what_the_arm_cant_do():
 def test_camera_above_tips():
     assert pc.camera_above_tips((0, 90, -150, -30)) == pytest.approx(83.35 - 17.79)    # straight down: 65.6 mm
     assert pc.camera_above_tips((0, 0, 0, 0)) == pytest.approx(12 - 51)                # level: the camera hangs low
-    assert pc.camera_above_tips((0, 45, -60, -30), gap=0) == pytest.approx(14.5, abs=0.1)   # pitch -45
+    assert pc.camera_above_tips((0, 45, -60, -30), gap=0) == pytest.approx(15.2, abs=0.1)   # pitch -45 (claw round 3)
     assert pc.camera_above_tips((0, 45, -60, -25), gap=0) < pc.CAMERA_ABOVE_MM             # pitch -40: too flat
 
 
@@ -165,7 +165,7 @@ def test_plan_approach_refuses():
 def test_crop_claw():
     np = pytest.importorskip("numpy")
     frame = np.zeros((1080, 1920, 3), np.uint8)
-    assert pc.crop_claw(frame).shape == (648, 1920, 3)
+    assert pc.crop_claw(frame).shape == (583, 1920, 3)        # CLAW_ROWS 0.46
 
 
 class FakePort:
@@ -288,7 +288,7 @@ def test_preview_keys(monkeypatch, capsys):
     cv2 = sys.modules["cv2"]
     assert ("set", cv2.CAP_PROP_AUTOFOCUS, 0) in log and [v for s, p, v in (e for e in log if e[0] == "set")
                                                           if p == cv2.CAP_PROP_FOCUS] == [200, 205, 200]
-    assert ("line", (0, 648), (1919, 648), (0, 165, 255)) in log      # the claw's 40 %, on the raw frame
+    assert ("line", (0, 583), (1919, 583), (0, 165, 255)) in log      # the claw's 46 %, on the raw frame
     port.sent.clear()
     monkeypatch.setitem(sys.modules, "cv2", _fake_cv2(np, [ord("c")], log))
     pc.preview(arm, 0, "ccw", None, None)

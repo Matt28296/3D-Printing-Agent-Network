@@ -15,7 +15,7 @@
     "claw_cover",
     "claw_frame"
    ],
-   "plane": "x = 32.85",
+   "plane": "x = 34.85",
    "what": "front plate on the wrist plate's front edge"
   },
   {
@@ -47,7 +47,7 @@
     "claw_cover",
     "front_screws"
    ],
-   "plane": "x = 37.85",
+   "plane": "x = 39.85",
    "what": "screw heads on the front plate"
   },
   {
@@ -217,23 +217,23 @@
  },
  "backlash_mm": {
   "definition": "free turn of the pinion between the two flanks of one rack, as arc length on the pitch circle (rack held); jaw_gap_play = both meshes, servo held",
-  "design": 0.35,
+  "design": 0.4,
   "gap 2": {
-   "rack_a": 0.327,
-   "rack_b": 0.327,
-   "jaw_gap_play": 0.654
+   "rack_a": 0.4,
+   "rack_b": 0.4,
+   "jaw_gap_play": 0.8
   },
   "gap 22": {
-   "rack_a": 0.35,
-   "rack_b": 0.35,
-   "jaw_gap_play": 0.7
+   "rack_a": 0.4,
+   "rack_b": 0.4,
+   "jaw_gap_play": 0.8
   },
   "gap 42": {
-   "rack_a": 0.35,
-   "rack_b": 0.35,
-   "jaw_gap_play": 0.7
+   "rack_a": 0.4,
+   "rack_b": 0.4,
+   "jaw_gap_play": 0.8
   }
  },
  "ok": true,
- "run_s": 1540.9
+ "run_s": 2350.1
 }

@@ -36,11 +36,13 @@ from claw_frame import (BLADE_T, BLADE_T_ROOT, FACE_W, GRIP_HALF, GRIP_X0, KINK_
 from gears import rack_bar  # noqa: E402
 
 # --- parameters (mm) -----------------------------------------------------------
-BED_CHAMFER = 0.3          # DFM fix 1: every edge of the bed face (rack back end, tooth outline included)
+BED_CHAMFER = 0.25         # 45°, every edge of the bed face, tooth outline included: 0.3 -> 0.25 (claw round 3, DFM
+                           # round 2: at 0.3 the gears.py loft twisted; 0.25 m is its true-45° limit, as on the pinion)
 TIP_CHAMFER = 4.0          # 45° corners at the fingertip (x-z outline)
 TIP_BEVEL = 3.5            # outer-face bevel at the fingertip (thin tip for small parts)
 GROOVE_D, GROOVE_PITCH = 0.6, 2.0
-GROOVE_X = (GRIP_X0 + 1.0, X_TIP - TIP_CHAMFER - 1.5)   # stop short of the tip chamfers (no slivers)
+GROOVE_X = (GRIP_X0 + 1.0, 71.0)  # grooves at x 62.6..70.6 only: none in the thin last 12.7 mm (claw round 3,
+                                  # jaw strength round 2: the groove at x 72.6 gave SF 2.62; now the neck root governs, 3.52)
 NOTCH_D = 1.5
 GUSSET = NECK_Y - BLADE_T_ROOT   # 8: 45° flare in plan from the 20 mm neck into the 12 mm finger
 TAPER_FILLET = 3.0         # fillet where the taper meets the 6 mm tip section

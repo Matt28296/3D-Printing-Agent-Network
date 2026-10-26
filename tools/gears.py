@@ -23,7 +23,10 @@ Conventions
   (elephant's-foot relief on the bed face). It is a ruled loft from the outline to its 2D inset,
   which works where an edge chamfer of the many short outline edges (root fillets) fails; where
   the loft fails too (tooth tips that the inset collapses, e.g. 0.3 on module 1) it falls back
-  to 0.1 mm stepped slices. Keep gear chamfers at 0.25 m or less to get the true 45° face.
+  to 0.1 mm stepped slices. The loft is also refused when the inset has fewer edges than the
+  outline (a tooth tip collapsed to a point): a ruled loft then pairs the wrong edges and gives a
+  twisted band that OCC still calls valid (claw jaw, DFM round 2). Keep gear chamfers at 0.25 m or
+  less to get the true 45° face.
 """
 from __future__ import annotations
 
@@ -160,8 +163,13 @@ def _chamfer_band(pts: list[tuple[float, float]], z_end: float, c: float, toward
 
     z_full = z_end + toward * c
     if method == "loft":
-        band = Solid.make_loft([Pos(0, 0, min(z_full, z_end)) * (wire if z_full < z_end else inset_wire(c)),
-                                Pos(0, 0, max(z_full, z_end)) * (wire if z_full > z_end else inset_wire(c))],
+        inset = inset_wire(c)
+        n0, n1 = len(wire.edges()), len(inset.edges())
+        if n1 != n0:
+            raise ValueError(f"chamfer inset has {n1} edges for the outline's {n0}: a ruled loft would pair the wrong "
+                             "edges and twist the band")
+        band = Solid.make_loft([Pos(0, 0, min(z_full, z_end)) * (wire if z_full < z_end else inset),
+                                Pos(0, 0, max(z_full, z_end)) * (wire if z_full > z_end else inset)],
                                ruled=True)
         if not band.is_valid:
             raise ValueError("chamfer loft is not a valid solid")
@@ -180,7 +188,7 @@ def _extrude_chamfered(pts: list[tuple[float, float]], width: float,
     """Extrude a closed outline along +Z from 0 to width, with 45° end chamfers: c0 at z = 0 and
     c1 at z = width. Each chamfer is a ruled loft from the outline to its 2D inset (OCC's edge
     chamfer fails on the many short edges of filleted tooth outlines; 2D insets do not), falling
-    back to 0.1 mm stepped slices where the loft fails."""
+    back to 0.1 mm stepped slices where the loft fails or would twist (an inset that lost edges)."""
     from build123d import Face, Solid, Wire
 
     c0, c1 = (float(c) for c in chamfer)
