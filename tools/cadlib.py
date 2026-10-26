@@ -110,6 +110,8 @@ def measure_holes(part: Part, min_arc_deg: float = 250) -> list[dict]:
     for f in part.faces().filter_by(GeomType.CYLINDER):
         try:
             axis, radius = f.axis_of_rotation, f.radius
+            if axis is None or radius is None:
+                continue  # the kernel can't give this face an axis or radius (some split/trimmed faces)
             p = f.position_at(0.5, 0.5)
             ad = axis.direction.normalized()
             radial = (p - axis.position) - ad * (p - axis.position).dot(ad)
