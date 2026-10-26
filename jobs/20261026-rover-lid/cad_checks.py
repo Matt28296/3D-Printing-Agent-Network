@@ -47,6 +47,29 @@ for s in (1, -1):
 check("3 mm tie bar between the slots (|y| <= 1.4 CAD)", solid(76, 0) and solid(76, 1.3) and not solid(76, 1.5), "")
 check("slots clear of the ESP32 seat (x <= 69) and the breadboard (x >= 84)", solid(70.5, 6) and solid(83, 6), "")
 check("old Ø10 cable hole gone", not [h for h in holes if abs(h["diameter"] - 10.2) < 0.05], "")
+# round 4 (strength round 3): window rails widened outward, RAIL_W 2.5 -> 4.5; the window and ledges stay put
+H, RW = ns["HALF"], ns["RAIL_W"]
+z_rail_top = F.TOP_Z + ns["T"] + ns["LEDGE_H"] + 1.6 + 0.5
+zr = z_rail_top - 1.0
+for s in (1, -1):
+    check(f"{'left' if s > 0 else 'right'} rail 4.5 wide (|y| {H:.2f}-{H + RW:.2f}) and 4.1 tall on the deck, x 13.4-69.0",
+          RW == 4.5 and solid(40, s * (H + 0.1), zr) and not solid(40, s * (H - 0.1), zr) and solid(40, s * (H + RW - 0.1), zr)
+          and not solid(40, s * (H + RW + 0.1), zr) and solid(40, s * (H + RW / 2), z_rail_top - 0.05)
+          and not solid(40, s * (H + RW / 2), z_rail_top + 0.05) and solid(13.5, s * (H + RW / 2), zr)
+          and solid(68.9, s * (H + RW / 2), zr) and not solid(69.1, s * (H + RW / 2), zr), "")
+yt = H + RW + 1.5 + ns["TIE_SLOT"][1] / 2
+tie_x = (ns["USB_END_X"] + ns["TIE_FROM_END"], ns["USB_END_X"] + ns["LONG"] - ns["TIE_FROM_END"],
+         ns["USB_END_X"] + ns["SHORT"] - ns["TIE_FROM_END"])
+check(f"zip-tie slots moved out with the rails: |y| {yt - 0.9:.2f}-{yt + 0.9:.2f}, 1.5 from the rail, at x "
+      f"{', '.join(f'{x:.1f}' for x in tie_x)}",
+      all(not solid(x, s * yt) and solid(x, s * (yt + 1.2)) and solid(x, s * (yt - 1.2)) for x in tie_x for s in (1, -1)), "")
+check("rails and tie slots stay over the tub: >= 10 mm inside the chassis walls' inner faces (|y| 33.5)",
+      F.HALF_W_OUT - F.WALL - (H + RW) >= 10 and F.HALF_W_OUT - F.WALL - (yt + 0.9) >= 10,
+      f"rail {F.HALF_W_OUT - F.WALL - (H + RW):.2f}, tie slot {F.HALF_W_OUT - F.WALL - (yt + 0.9):.2f}")
+sw_r = (ns["SWITCH_D"] + ns["HOLE_COMP"]) / 2
+check("wider rails clear of the toggle hole, the cable slots and the screw holes",
+      ns["USB_END_X"] - ns["CLR"] - (ns["SWITCH"][0] + sw_r) > 5 and ns["CABLE_X"][0] - ns["HOLE_COMP"] / 2 > 69.0
+      and all(abs(y) - 1.8 > H + RW + 5 for _, y in ns["SCREWS"]), "")
 # ---------------------------------------------------------------------------------
 
 sys.exit(1 if failures else 0)

@@ -58,6 +58,9 @@ check("HC-SR04 holes Ø16.6 CAD: 2", len(hole_d(16.6)) == 2, [h["point_on_axis"]
 check("no switch hole in the rear wall (moved to the lid)", not hole_d(6.4), hole_d(6.4))
 
 yf, sk = F.MOTOR_FACE_Y, F.SKIN
+# round 4: SKIN 2.0 (strength round 3 change 2) moves the gearbox face inward to |y| 44; the shaft arm is then 11
+check("round 4 stack-up: SKIN 2.0, gearbox face |y| 44.0, thrust washer 46.0, hub 46.5, shaft arm 11.0",
+      (sk, yf, yf + sk, F.HUB_Y0, F.SHAFT_ARM) == (2.0, 44.0, 46.0, 46.5, 11.0), (sk, yf, yf + sk, F.HUB_Y0, F.SHAFT_ARM))
 # diamond pocket (motor rolled 45°): the 12 mm faces lie on x + z' = ±8.77, the 10 mm faces on z' - x = ±7.35
 # (6.2 and 5.2 from the axis: gearbox 12 × 10 + 0.2 + HOLE_COMP), z' = z - Z_A
 both("gearbox pocket open from the trough to the skin (x 0, Z_A)", lambda s: not solid(0, s * 20.0, Z)
@@ -66,15 +69,17 @@ both("pocket 12 mm faces 6.2 from the axis (lower-left, in the wall)", lambda s:
      and not solid(-4.33, s * 36, Z - 4.33) and solid(4.43, s * 36, Z + 4.43) and not solid(4.33, s * 36, Z + 4.33))
 both("pocket 10 mm faces 5.2 from the axis (lower-right, in the wall)", lambda s: solid(3.73, s * 36, Z - 3.73)
      and not solid(3.63, s * 36, Z - 3.63) and solid(-3.73, s * 36, Z + 3.73) and not solid(-3.63, s * 36, Z + 3.63))
-both("skin 1.0 thick in front of the gearbox face (y 45-46)",
-     lambda s: solid(4.0, s * (yf + 0.05), Z) and solid(4.0, s * (yf + sk - 0.05), Z) and not solid(4.0, s * (yf + sk + 0.05), Z))
+both("skin 2.0 thick in front of the gearbox face (|y| 44-46): the pocket ends at 44",
+     lambda s: not solid(4.0, s * (yf - 0.05), Z) and solid(4.0, s * (yf + 0.05), Z) and solid(4.0, s * (yf + sk / 2), Z)
+     and solid(4.0, s * (yf + sk - 0.05), Z) and not solid(4.0, s * (yf + sk + 0.05), Z)
+     and solid(-4.0, s * (yf + 1.0), Z - 2.0) and solid(0.0, s * (yf + 1.0), Z + 5.0))
 both("skin hole clears the Ø4 bearing boss", lambda s: not solid(2.2, s * (yf + 0.5), Z) and solid(2.5, s * (yf + 0.5), Z - 0.3))
 both("housing outer face at |y| 42.0 = links' inner edge 43 - 1 (outside the nacelle)",
      lambda s: solid(10.5, s * 41.95, Z - 5) and not solid(10.5, s * 42.05, Z - 5))
 both("nacelle inside the wrap: r <= 10.9 (links' inner faces at r >= 12.39)", lambda s: solid(0.6, s * 44, Z + 10.6)
      and not solid(0.6, s * 44, Z + 11.0) and not solid(-11.0, s * 44, Z - 0.6) and not solid(-0.6, s * 44, Z - 11.0))
-both("nacelle walls 2.0 round the pocket (pocket face x + z' = -8.77, outer face -11.60)",
-     lambda s: solid(-5.1, s * 44, Z - 5.1) and not solid(-4.3, s * 44, Z - 4.3) and not solid(-5.9, s * 44, Z - 5.9))
+both("nacelle walls 2.0 round the pocket (pocket face x + z' = -8.77, outer face -11.60; pocket in the nacelle y 42-44)",
+     lambda s: solid(-5.1, s * 43, Z - 5.1) and not solid(-4.3, s * 43, Z - 4.3) and not solid(-5.9, s * 43, Z - 5.9))
 both("housing roof over the pocket's top vertex (Z_A + 8.06 .. 12.5)", lambda s: not solid(0.7, s * 40, Z + 7.9)
      and solid(0.7, s * 40, Z + 8.3) and solid(5.0, s * 40, Z + 12.4) and not solid(5.0, s * 40, Z + 12.6))
 both("V-trough walls >= 4 thick at their top edge (left 4.1, right 5.6)", lambda s: solid(-8.1, s * 28, Z - 0.9)
@@ -83,7 +88,9 @@ both("V-trough walls >= 4 thick at their top edge (left 4.1, right 5.6)", lambda
      and not solid(12.2, s * 20, Z - 2))
 both("V-trough top at the gearbox's lower side vertex (Z_A - 0.71)", lambda s: solid(10, s * 28, Z - 0.8)
      and not solid(10, s * 28, Z - 0.6))
-both("trough reaches back to y 17.5 (an 11 mm gearbox fits)", lambda s: solid(10, s * 17.6, Z - 3) and not solid(10, s * 17.4, Z - 3))
+cy0 = ns["CRADLE_Y0"]
+both(f"trough reaches back to y {cy0:.1f} (an 11 mm gearbox fits; 1 mm further in with the gearbox face)",
+     lambda s: abs(cy0 - 16.5) < 1e-9 and solid(10, s * (cy0 + 0.1), Z - 3) and not solid(10, s * (cy0 - 0.1), Z - 3))
 both("zip-tie tunnel through both trough walls under the can (|y| 22-26)", lambda s: not solid(-10, s * 24, Z - 7.2)
      and not solid(10, s * 24, Z - 7.2) and solid(-10, s * 24, Z - 5.5) and solid(-10, s * 21.5, Z - 7.2))
 for x in F.ROAD_X:
@@ -92,7 +99,33 @@ for x in F.ROAD_X:
          and not solid(x + 5, s * 27.9, Z))
     both(f"road-wheel boss x {x:.0f}: r1.5 rim fillet (corner cut back)", lambda s, x=x: not solid(x, s * 28.15, Z + 12.85))
     both(f"road-wheel boss x {x:.0f}: 45° collar at the wall", lambda s, x=x: solid(x, s * 33.0, Z + 13.3) and not solid(x, s * 31.8, Z + 13.3))
-both("idler block face at |y| 28 (BOSS_IN 5.5)", lambda s: solid(110, s * 28.1, Z + 6) and not solid(110, s * 27.9, Z + 6))
+both("idler block face at |y| 28 (BOSS_IN 5.5; probed above the plate recess)",
+     lambda s: solid(110, s * 28.1, Z + 9) and not solid(110, s * 27.9, Z + 9))
+# round 4, strength round 3 change 1: steel clamp plates (sizes and PLATE_T in rover_frame)
+pt, (rx0, rx1), rz = F.PLATE_T, ns["PLATE_RECESS_X"], ns["PLATE_RECESS_Z"]
+check("head-plate recess depth = PLATE_T = 2.0, so the plate is flush: head on its Ø9 washer still at |y| 27.2, jack line 25.4",
+      (ns["PLATE_RECESS_D"], pt, ns["IDLER_HEAD_Y1"], ns["JACK_Y"]) == (2.0, 2.0, 27.2, 25.4),
+      (ns["PLATE_RECESS_D"], pt, ns["IDLER_HEAD_Y1"], ns["JACK_Y"]))
+both("head-plate recess 2.0 deep in the idler-block face (|y| 28-30)", lambda s: not solid(110, s * 28.5, Z + 3)
+     and not solid(110, s * 29.9, Z + 3) and solid(110, s * 30.1, Z + 3) and not solid(126, s * 29.9, Z - 4))
+both("recess x 108-129: from the buttress face to the front 45° strip, cutting neither",
+     lambda s: (rx0, rx1) == (108.0, 129.0) and not solid(108.1, s * 29, Z) and solid(107.9, s * 29, Z)
+     and not solid(128.9, s * 29, Z - 4) and solid(129.1, s * 29, Z - 4)
+     and solid(107.9, s * 27.9, Z - 3) and solid(130.0, s * 27.6, Z) and solid(129.6, s * 27.7, Z + 3))
+both("recess bottom Z_A ± 5.2 (10 mm plate + 0.2 a side), 45° roof up to Z_A + 7.2 at the block face",
+     lambda s: abs(rz - 5.2) < 1e-9 and not solid(118, s * 29.9, Z - 5.1) and solid(118, s * 29.9, Z - 5.3)
+     and not solid(118, s * 29.9, Z + 5.2) and solid(118, s * 29.9, Z + 5.45)
+     and not solid(118, s * 28.1, Z + 7.0) and solid(118, s * 28.1, Z + 7.25))
+both("idler nut slot 9 tall (Z_A ± 4.5), PLATE_T deeper: |y| 33.4-38, x 112.5-127.5",
+     lambda s: not solid(113, s * 33.5, Z + 4.4) and solid(113, s * 33.3, Z + 4.4) and not solid(113, s * 34.5, Z - 4.4)
+     and solid(113, s * 34.5, Z - 4.6) and solid(112.4, s * 35, Z) and not solid(112.6, s * 35, Z)
+     and not solid(127.4, s * 35, Z) and solid(127.6, s * 35, Z))
+both("nut-slot roof flat over the nut plate (|y| 33.4-35.4: its top edge bears there), then 45° to the outer face",
+     lambda s: solid(113, s * 33.6, Z + 4.6) and solid(113, s * 35.3, Z + 4.6) and not solid(113, s * 35.3, Z + 4.4)
+     and not solid(113, s * 37.9, Z + 6.9) and solid(113, s * 37.9, Z + 7.1))
+both("PETG web 3.4 thick between the recess and the nut slot (|y| 30-33.4), clamped between the plates",
+     lambda s: solid(113, s * 30.1, Z + 3.5) and solid(113, s * 33.3, Z + 3.5) and solid(126, s * 31.7, Z - 4)
+     and not solid(113, s * 29.9, Z + 3.5) and not solid(113, s * 33.5, Z + 3.5))
 both("idler slot hull up to the teardrop tips (Z_A + 2.55)", lambda s: not solid(120, s * 31, Z + 2.45) and solid(120, s * 31, Z + 2.7))
 both("idler slot ±4 (bolt centres x 116-124)", lambda s: not solid(116, s * 31, Z) and not solid(124, s * 31, Z) and solid(126.5, s * 31, Z))
 both("jack pilot on |y| 25.4 at Z_A through the buttress", lambda s: not solid(105, s * 25.4, Z) and solid(105, s * 25.4, Z + 2.5))

@@ -11,3 +11,4 @@
 - 2026-10-26T08:07Z · architect (as head-orchestrator) · status.json: stage DESIGN, DESIGN iterations 1; round 3 merged into robot-arm-test-build, fresh DFM and strength reviews next · ok
 - 2026-10-26T08:54Z · dfm-reviewer (round 3, independent) · design_review.md · PASS
 - 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · FAIL (SF 2.49 at the rail top under the 20 N press: the lid rests on the walls, so the rail is an edge beam; change RAIL_W 2.5 → 4.5, SF 3.29). Second DESIGN failure
+- 2026-10-26T11:08Z · design-lead (round 4, strength round 3's required change only) · model.py: RAIL_W 2.5 → 4.5 (rails |y| 14.85–19.35, tie slots moved out to |y| 20.85–22.65, 10.85 mm inside the walls); spec.md (§2, §3, §8 test 1a presses on the rail top), design_brief.md, cad_checks.py (14 checks) updated; built, rendered, mesh_check + cad_checks OK (154 × 76 × 7.1 mm, 32 289 mm³); assembly check 0 collisions · ok

@@ -10,6 +10,9 @@ Round 3 (deep review 04 S-06, S-09, S-10): screws moved to the chassis's new ins
 (-13, ±32.5) and (102, ±32.5); MTS-102 toggle moved here from the rear wall (its lever stuck out
 20 mm behind the tracks); the Ø10 cable hole became two 10 × 10.5 slots with a 3 mm tie bar
 between them, so the wire bundle can be tied to the lid (strain relief).
+Round 4 (strength round 3's required change): the window rails widen outward, RAIL_W 2.5 -> 4.5. The
+lid rests on the wall tops, so a press at the window edge travels along the rail as an edge beam; the
+window, pocket and ledges stay put, and the zip-tie slots move out with the rails.
 """
 import sys
 from pathlib import Path
@@ -32,7 +35,7 @@ BOARDS = (ESP32_DEVKIT_38, ESP32_DEVKIT_30)
 USB_END_X = 14.0          # both boards' USB end (rear), so a cable reaches over the rear
 LEDGE_H = 2.0             # PCB bottom this far above the lid top
 CLR = 0.6                 # round the PCB (printed)
-RAIL_W = 2.5
+RAIL_W = 4.5              # side rails beside the window, widened outward (strength round 3: 2.5 -> 4.5; 4.0 is the minimum)
 LONG = max(b.length for b in BOARDS)
 SHORT = min(b.length for b in BOARDS)
 HALF = max(b.width for b in BOARDS) / 2 + CLR + HOLE_COMP / 2

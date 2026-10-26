@@ -1,6 +1,6 @@
 {
  "tol_mm3": 0.5,
- "bodies": 154,
+ "bodies": 158,
  "collisions": [],
  "exempt_pairs": [],
  "idler_and_jack_at_slot_ends": "clear",
@@ -63,16 +63,18 @@
  "motor_with_11mm_gearbox": "clear",
  "shaft_variants": {
   "9 mm shaft": {
+   "shaft_end_y": 53.0,
+   "engaged_in_hub_mm": 5.0,
+   "set_screw_y": 49.0,
+   "shaft_past_set_screw_mm": 2.5,
+   "in_sprocket_centre_hole_mm": 1.5
+  },
+  "10 mm shaft": {
    "shaft_end_y": 54.0,
    "engaged_in_hub_mm": 5.0,
    "set_screw_y": 49.0,
-   "shaft_past_set_screw_mm": 3.5
-  },
-  "10 mm shaft": {
-   "shaft_end_y": 55.0,
-   "engaged_in_hub_mm": 5.0,
-   "set_screw_y": 49.0,
-   "shaft_past_set_screw_mm": 4.5
+   "shaft_past_set_screw_mm": 3.5,
+   "in_sprocket_centre_hole_mm": 2.5
   }
  },
  "axle_bolt_stacks": [
@@ -124,7 +126,87 @@
   "tip_to_skin_mm": 1.0
  },
  "tool_paths": "clear",
- "shaft_overhang_gearbox_face_to_track_plane_mm": 10.0,
+ "idler_clamp_plates": {
+  "plate_t_mm": 2.0,
+  "head_plate_mm": [
+   20.6,
+   10.0,
+   2.0
+  ],
+  "head_plate_x": [
+   108.2,
+   128.8
+  ],
+  "head_plate_y": [
+   28.0,
+   30.0
+  ],
+  "head_recess_x": [
+   108.0,
+   129.0
+  ],
+  "head_recess_clearance_x_mm_cad": 0.4,
+  "nut_plate_mm": [
+   14.0,
+   8.0,
+   2.0
+  ],
+  "nut_plate_x": [
+   113.0,
+   127.0
+  ],
+  "nut_plate_y": [
+   33.4,
+   35.4
+  ],
+  "nut_slot_x": [
+   112.5,
+   127.5
+  ],
+  "nut_slot_h": 9.0,
+  "nut_plate_top_edge_to_slot_roof_mm": 0.5,
+  "slots_mm": [
+   3.4,
+   12.0
+  ],
+  "bolt_travel_x_in_both_plate_slots": [
+   115.5,
+   124.5
+  ],
+  "bolt_travel_x_needed": [
+   116.0,
+   124.0
+  ],
+  "head_stack_unchanged": {
+   "head_underside_y": 27.2,
+   "washer_y": [
+    27.2,
+    28.0
+   ],
+   "jack_axis_y": 25.4
+  },
+  "at_slot_positions": [
+   {
+    "idler_dx": -4.0,
+    "washer_on_head_plate_margin_mm": 3.3,
+    "nut_flats_on_nut_plate_margin_mm": 0.25
+   },
+   {
+    "idler_dx": 0.0,
+    "washer_on_head_plate_margin_mm": 4.3,
+    "nut_flats_on_nut_plate_margin_mm": 4.25
+   },
+   {
+    "idler_dx": 4.0,
+    "washer_on_head_plate_margin_mm": 0.3,
+    "nut_flats_on_nut_plate_margin_mm": 0.25
+   }
+  ],
+  "ok": true
+ },
+ "skin_mm": 2.0,
+ "gearbox_face_y": 44.0,
+ "shaft_overhang_gearbox_face_to_track_plane_mm": 11.0,
  "links_inner_edge_y": 43.0,
  "housing_outer_face_y": 42.0,
  "link_to_housing_gap_mm": 1.0,
