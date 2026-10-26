@@ -2,16 +2,19 @@
  "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
- "model": "part.stl",
  "overrides": {
-  "perimeters": 5,
+  "layer_height": 0.2,
+  "perimeters": 8,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
   "fill_density": "60%",
   "fill_pattern": "gyroid",
-  "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "aligned",
+  "support_material": 0,
+  "brim_width": 0
  },
+ "model": "part.stl",
  "copies": 2,
- "rationale": "Stock QUALITY + Prusament PETG; 5 perimeters and 60 % gyroid (the 6 mm blade and 5 mm neck print almost solid); EFC 0.2 so the rack's bed edge stays square; 2 copies on one plate (jaw A and jaw B are the same part)."
+ "rationale": "SLICE round 1 for the claw round-3 design (replaces the round-2 plan). Profiles: stock MK3S printer, 0.20mm QUALITY @MK3 and Prusament PETG from config/printer.json; filament_type PETG = print_requirements, spec 6 and the brief. Temperatures stay in the filament profile (240/250 C nozzle, 85/90 C bed, fan 30-50 %: inside 230-250 / 80-90 and the skill's PETG range). No library rows: no flow, temperature or xy compensation overrides. Requirements: top/bottom 5 (min 5), fill 60 % gyroid (min 60, equals gyroid), layer 0.2 (max 0.2), brim_width 0 (max 0: a brim would fill the tooth gaps). Perimeters 8 (min 5) is a strength decision: the brief puts every neck and finger bending across the layers, and strength round 3 checked the sections as solid at the 12.5 MPa across-layer allowable (neck root 3.52 against 3 under the one-jaw grip stall). With 5 perimeters the 20 x 10 neck would keep a 15.8 x 5.8 mm core of 60 % gyroid, about 0.89 x the solid section's bonded modulus, near SF 3.1; 8 perimeters (about 3.3 mm a side, arachne) leave a 13.4 x 3.4 core (about 0.96 x), fill the 6 mm taper and the module-1 rack teeth with perimeters, and keep the gyroid only in the middle of the 12 mm blade and the rack's 12 x 10 back. Copies 2 = spec 7 and the brief: jaw A and jaw B are the same part, both on one plate, limit 6 h; PrusaSlicer arranges them. Orientation is in the STL (brief): standing on the rack's back end, finger up, rack teeth in the bed plane. Elephant-foot 0.2 pairs with the 0.25 mm bed chamfer (tooth outline included); the audit checks the first layer keeps every tooth. Seam: aligned (stock, stated), so seams go to corners, not onto the tooth flanks, the neck's sliding faces (0.25 gaps) or the grip face; the audit checks where they land. Supports off: mesh_check 0 % overhang, no bridges; grooves, gusset and 45-degree edges print unsupported (brief)."
 }
