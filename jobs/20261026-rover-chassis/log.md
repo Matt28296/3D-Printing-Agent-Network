@@ -28,3 +28,4 @@
 - 2026-10-26T13:58Z · architect · BUILD_GUIDE step 3 and Tools: 2.5 mm ball-end key, tilted over the opposite block; spec §3 seat row gives printed targets · ok
 - 2026-10-26T14:22Z · strength-analyst (round 5, independent) · strength.md, strength_calc.py · FAIL (1 of 70 rows: rear end stop root 2.75; round 4's fix confirmed: drop 3.02 / 3.01, reverse stall 6.44, plates 3.29)
 - 2026-10-26T14:22Z · architect (as head-orchestrator) · merged; strength_calc re-run; DESIGN iterations 5; escalated to the user · ok
+- 2026-10-26T14:22Z · architect · user approved a sixth round: STOP_W 1.5 → 2.0; spec §8 test 1 per strength round 5 (hang at mid-slot, pull at the front end, disc measured with the idler pulled rearward, PETG round each plate spelled out) · ok

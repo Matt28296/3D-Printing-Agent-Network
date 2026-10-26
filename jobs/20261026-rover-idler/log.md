@@ -24,3 +24,4 @@
 - 2026-10-26T13:58Z · dfm-reviewer (round 5, independent) · design_review.md · PASS (no overhangs or bridges; hub wall 3.15; 3.6–4.5 mm past the nyloc)
 - 2026-10-26T14:22Z · strength-analyst (round 5, independent) · strength.md, strength_calc.py · NEEDS_TEST (lowest SF 4.19, bore edge with the idler cocked 1.94°)
 - 2026-10-26T14:22Z · architect (as head-orchestrator) · merged; DESIGN pass · ok
+- 2026-10-26T14:22Z · architect · spec §8 test 1 per strength round 5 (front end of the slot; disc measured with the idler pulled rearward) · ok
