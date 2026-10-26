@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 2 DFM: two front-plate pieces beside the pinion pass-through start in mid-air (print z 38.5 and 39.1, joined only at 43.1 / 47.7): supports justified in the brief or re-laid openings; round-1 fix 1 (brief's 'all bending along the layers') still open",
+    "DESIGN": "FAIL round 2 DFM and strength (lowest SF 1.30, lip root with one jaw blocked); claw round 3 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:46:55+00:00"
+  "updated": "2026-10-26T12:55:03+00:00"
 }

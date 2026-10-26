@@ -9,3 +9,5 @@
 - 2026-10-26T11:51Z · architect · user decision: keep the MG90S tab-pilot strips under 1.8 mm and check them on the first print; spec §8 screw-strip check added (459ee45) · ok
 - 2026-10-26T12:46Z · dfm-reviewer (claw round 2, independent) · design_review.md · FAIL (flat-topped lead notch ledge; rail wall load path across the layers; pilot strips recorded as the user-accepted deviation)
 - 2026-10-26T12:46Z · architect (as head-orchestrator) · merged the round 2 DFM review; status.json updated · ok
+- 2026-10-26T12:55Z · strength-analyst (claw round 2, independent) · strength.md, strength_calc.py · FAIL (lowest SF 0.65, rail wall root; Ø6 washer 2.39 / 2.12; bulkhead root 2.70; window strips 1.32; MG90S tab-pilot strips 1.60 at the peak, 4.10 on the mean: the user-accepted first-print check stands)
+- 2026-10-26T12:55Z · architect (as head-orchestrator) · merged the round 2 strength review; strength_calc re-run; status.json updated · ok

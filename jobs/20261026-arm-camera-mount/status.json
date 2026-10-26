@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 2: DFM PASS; strength review running",
+    "DESIGN": "pass (round 2: DFM PASS; strength NEEDS_TEST, lowest SF 4.53; proof test in spec \u00a78 to be raised to 15 N plus a twist pull)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:46:55+00:00"
+  "updated": "2026-10-26T12:55:03+00:00"
 }

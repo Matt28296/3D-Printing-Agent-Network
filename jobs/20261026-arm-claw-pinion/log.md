@@ -8,3 +8,5 @@
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 2 in review (round 1 DFM and strength FAIL); arm round merged (28d9365), fresh DFM and strength reviews next · ok
 - 2026-10-26T12:46Z · dfm-reviewer (claw round 2, independent) · design_review.md · PASS (advisory: chamfer the pocket mouth)
 - 2026-10-26T12:46Z · architect (as head-orchestrator) · merged the round 2 DFM review; status.json updated · ok
+- 2026-10-26T12:55Z · strength-analyst (claw round 2, independent) · strength.md, strength_calc.py · FAIL (lowest SF 2.85 at the tooth fillet; the designer's Lewis 3.25 is not conservative for this tooth)
+- 2026-10-26T12:55Z · architect (as head-orchestrator) · merged the round 2 strength review; strength_calc re-run; status.json updated · ok

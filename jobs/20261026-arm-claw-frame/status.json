@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 2 DFM: lead notch has a flat top (1.4 mm one-sided ledge: give it a 45\u00b0 top as the turntable's _notch_tops does); the 4 mm rail wall bends across the layers under rack B's thrust (name the load path in brief and spec, strength to check it); MG90S pilot strips are the user-accepted deviation",
+    "DESIGN": "FAIL round 2 DFM and strength (lowest SF 0.65, rail wall root with one jaw blocked opening; also the \u00d86 clamp washer, the bulkhead root, the window strips); claw round 3 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:46:55+00:00"
+  "updated": "2026-10-26T12:55:03+00:00"
 }

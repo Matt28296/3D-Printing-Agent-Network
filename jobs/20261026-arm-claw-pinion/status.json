@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 2: DFM PASS (advisory: chamfer the 0.1 mm-fit pocket mouth); strength review running",
+    "DESIGN": "FAIL round 2 strength (lowest SF 2.85, tooth fillet with one jaw blocked; DFM PASS); claw round 3 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:46:55+00:00"
+  "updated": "2026-10-26T12:55:03+00:00"
 }

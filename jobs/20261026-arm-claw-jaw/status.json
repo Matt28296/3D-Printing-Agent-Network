@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 2 DFM: the 0.3 mm bed chamfer comes out twisted (gears.py offset outline loses 2 of 256 edges), leaving 38 of 73 mm\u00b2 of tooth on the first layer: BED_CHAMFER 0.25 (verified clean on a scratch copy)",
+    "DESIGN": "FAIL round 2 DFM (twisted bed chamfer) and strength (lowest SF 2.62, the V-groove near the tip); claw round 3 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:46:55+00:00"
+  "updated": "2026-10-26T12:55:03+00:00"
 }
