@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 2 in review (round 1 DFM and strength FAIL): \u00d822.6 pinion pass-through with a 45\u00b0 top, 5 mm front plate, tie post",
+    "DESIGN": "FAIL round 2 DFM: two front-plate pieces beside the pinion pass-through start in mid-air (print z 38.5 and 39.1, joined only at 43.1 / 47.7): supports justified in the brief or re-laid openings; round-1 fix 1 (brief's 'all bending along the layers') still open",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:56:21+00:00"
+  "updated": "2026-10-26T12:46:55+00:00"
 }

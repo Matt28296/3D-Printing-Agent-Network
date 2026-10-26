@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 2 in review (round 1 DFM and strength FAIL): lead notch and moved pilot, full-width plate, 6.5 mm bulkhead, window roof",
+    "DESIGN": "FAIL round 2 DFM: lead notch has a flat top (1.4 mm one-sided ledge: give it a 45\u00b0 top as the turntable's _notch_tops does); the 4 mm rail wall bends across the layers under rack B's thrust (name the load path in brief and spec, strength to check it); MG90S pilot strips are the user-accepted deviation",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:56:21+00:00"
+  "updated": "2026-10-26T12:46:55+00:00"
 }

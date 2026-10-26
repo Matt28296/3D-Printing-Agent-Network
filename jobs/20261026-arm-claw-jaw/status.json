@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 2 in review (round 1 DFM and strength FAIL): strength candidate C (10 mm rack back, 20 \u00d7 10 neck, gusset)",
+    "DESIGN": "FAIL round 2 DFM: the 0.3 mm bed chamfer comes out twisted (gears.py offset outline loses 2 of 256 edges), leaving 38 of 73 mm\u00b2 of tooth on the first layer: BED_CHAMFER 0.25 (verified clean on a scratch copy)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:56:21+00:00"
+  "updated": "2026-10-26T12:46:55+00:00"
 }

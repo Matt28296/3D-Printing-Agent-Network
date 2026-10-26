@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-sprocket",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 3 DFM PASS; strength NEEDS_TEST, round 4 re-check: H4/H5 need a 10 mm motor shaft, at least 9.6 mm; spec \u00a71\u2013\u00a74 and \u00a78 updated)",
-    "SLICE": null,
+    "SLICE": "pass (2 per plate \u00d7 1, 0.97 h, 8.4 g, 50 % gyroid, seams in the tooth roots; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:16:47+00:00"
+  "updated": "2026-10-26T12:46:55+00:00"
 }

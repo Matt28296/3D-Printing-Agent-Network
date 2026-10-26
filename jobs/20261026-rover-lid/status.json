@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-lid",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 4: DFM PASS; strength NEEDS_TEST, lowest SF 3.15, proof tests in spec \u00a78 with the new strap test 6)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 2.39 h, 33.5 g, 5 perimeters (rails print solid), 20 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T12:16:47+00:00"
+  "updated": "2026-10-26T12:46:55+00:00"
 }
