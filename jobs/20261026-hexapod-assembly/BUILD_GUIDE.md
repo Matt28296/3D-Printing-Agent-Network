@@ -1,6 +1,6 @@
 # Hexapod: build guide
 
-Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo drivers, ESP32, 2S LiPo. About 277 × 282 × 146 mm standing, ≈0.6 kg.
+Robot 3 of 3. Six identical 3-DOF legs on 18 MG90S servos, two PCA9685 servo drivers, ESP32, 2S LiPo. About 277 × 282 × 160 mm standing, ≈0.6 kg.
 
 ## 1. Bill of materials
 
@@ -26,7 +26,7 @@ Print times and filament: see `README.md` next to this file.
 | 1 | MP1584 buck module set to 5.0 V | ESP32 5V/VIN |
 | 1 | Toggle or rocker switch | in the battery lead |
 | 1 | 1000 µF 10 V capacitor | across the servo rail |
-| 18 | M2 × 12 screws + 18 M2 washers (Ø6) | horn clamp screws (replace the short horn screw from each bag) |
+| 12 + 6 | M2 × 12 screws (femur, tibia) and M2 × 10 screws (coxa), + 18 M2 washers (Ø6) | horn clamp screws (replace the short horn screw from each bag). The coxa hub has a 3 mm floor, so its screw is 2 mm shorter |
 | 36 | M2 × 8 self-tapping screws | servo tab screws (the bag screws may be too short in the 4.5–7 mm plates) |
 | 4 | M3 × 8 self-tapping screws | top plate onto the columns |
 | 8 | M2.5 × 6 self-tapping screws | PCA9685 boards |
@@ -62,8 +62,8 @@ Fit every horn with its servo at 90° (centre), so each joint's travel lines up 
    - femur onto the femur servo, pointing **straight out**
    - bracket onto the coxa servo, pointing **radially out** from the body centre
    
-   Drive each M2 × 12 clamp screw firmly.
-5. **Top plate:** fit the PCA9685 boards on the posts (M2.5 × 6), the ESP32 in its seat (zip tie), the UBEC and buck (double-sided tape). Bring the 18 servo leads up through the 4 cable slots (tibia leads need the 15 cm extensions). Screw the top plate onto the columns (4 × M3 × 8).
+   Drive each clamp screw firmly (M2 × 10 on the coxae, M2 × 12 on the femurs and tibias).
+5. **Top plate:** fit the PCA9685 boards on the posts (M2.5 × 6), the ESP32 in its seat (zip tie) and the buck at the front of the deck (double-sided tape). The UBEC goes on its side on the bottom plate, beside the LiPo (double-sided tape), clear of the middle coxa servo. Bring the 18 servo leads up through the 4 cable slots (tibia leads need the 15 cm extensions). Screw the top plate onto the columns (4 × M3 × 8).
 
 ## 4. First steps
 

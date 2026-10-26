@@ -18,7 +18,7 @@ The user chose the ESP32 and left servos, power and material to the designer.
 
 ## Shared frame (`hex_frame.py`; every model.py imports it)
 
-World: X forward, Y left, Z up, ground Z = 0, origin under the body centre. Coxa tab plane (bottom-plate underside) at Z 92.7 in the neutral stance. Leg frames S0 → C → S1 → F → S2 → T are defined in `hex_frame.py` and built by `leg_frames()` in `assembly_check.py`.
+World: X forward, Y left, Z up, ground Z = 0, origin under the body centre. Coxa tab plane (bottom-plate underside) at Z 96.4 in the neutral stance (round 2: the femur axis sits 17 mm below the coxa bracket's back face, 4 mm lower than round 1, to make room for the bracket's root gusset). Leg frames S0 → C → S1 → F → S2 → T are defined in `hex_frame.py` and built by `leg_frames()` in `assembly_check.py`.
 
 | Leg | Mount (x, y) | Angle |
 |---|---|---|
@@ -37,7 +37,7 @@ World: X forward, Y left, Z up, ground Z = 0, origin under the body centre. Coxa
 
 ## Assembly check (`assembly_check.py` → `assembly_check.json`, `assembly_hexapod.png`)
 
-Neutral stance: **no collisions**, all six foot tips at Z 0.0, overall 277 × 282 × 146 mm, body underside 49 mm above the ground.
+Neutral stance (round 2): **no collisions**, all six foot tips at Z 0.0, overall 277 × 282 × 160 mm, body underside 49 mm above the ground. The body plates are 40 mm apart (round 2, was 30) so the ESP32's jumper leads can bend above the LiPo; the four columns sit at (±40, ±25), clear of the PCA9685 posts.
 
 | Sweep | Collision-free |
 |---|---|
