@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "reopened for chassis round 5 (user-approved): hub 5.2 mm shorter (starts at |y| 43.7) to make room for the nut plate on the chassis wall's outer face",
+    "DESIGN": "round 5 in review: hub 5.2 mm shorter (part 14.8 tall) for the chassis's outer-face nut plate",
     "SLICE": "stale: the round 4 slice (2 per plate, 1.16 h) predates the hub change",
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T13:06:30+00:00"
+  "updated": "2026-10-26T13:41:19+00:00"
 }

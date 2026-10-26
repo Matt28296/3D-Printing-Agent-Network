@@ -21,3 +21,5 @@
 - 2026-10-26T12:54Z · strength-analyst (round 4, independent) · strength.md, strength_calc.py · FAIL (10 of 58 rows; lowest SF 0.61, B15: web top strip root across the layers, 5 cm front-corner drop; round 3's five failures fixed; N20 shaft 3.06 stall / 1.91 drop against 1.5 for steel)
 - 2026-10-26T12:54Z · architect (as head-orchestrator) · merged the review (b51930e); strength_calc re-run; status.json: DESIGN iterations 4, escalated to the user with the reviewer's fix · ok
 - 2026-10-26T13:06Z · architect · user approved a fifth DESIGN round with the strength reviewer's fix (nut plate on the wall's outer face, nut slot deleted, Ø9 washer under the nut, idler hub 5.2 mm shorter); round 5 started · ok
+- 2026-10-26T13:41Z · architect · spec §1–§3 and §8 for round 5 (nut-plate seat, 0.04 N·m oiled snug, tests at the slot's front end, PETG round each plate in the pass criteria) · ok
+- 2026-10-26T13:41Z · architect (as head-orchestrator) · merged round 5 (3b368bd); cad_checks re-run; status.json: in review · ok

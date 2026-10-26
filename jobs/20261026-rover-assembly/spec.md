@@ -57,7 +57,7 @@ Do these after every part's §8 proof tests have passed (deep review 04 S-11):
 - [ ] **3. Pivot.** A 360° pivot turn (one track forward, one back) on the household's thickest carpet without stalling.
 - [ ] **4. Step.** Drives forward over a 12 mm step, both tracks.
 - [ ] **5. Ramp.** Drives up and down a 20° carpet ramp.
-- [ ] **6. Tension holds.** Pen-mark each idler slot nut against its slot edge. After 30 min of driving, the idler hasn't moved.
+- [ ] **6. Tension holds.** Pen-mark each idler bolt's head washer against its head plate. After 30 min of driving, the idler hasn't moved.
 - [ ] **7. Run time.** At least 2 h of mixed driving on one charge (estimated 5–11 h, deep review 04 S-14).
 - [ ] **8. Drops.** The 5 cm drops in the chassis spec §8 (test 3): flat and on each corner. Afterwards, tests 1 and 2 still pass.
 

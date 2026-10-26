@@ -7,8 +7,8 @@ The sprocket's toothed geometry (10 teeth, pitch radius 16.18) with a round Ø3.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: Ø35.8 × 20 mm, round bore through. Hub end at world |y| 38.5 on a washer against the wall; disc ±3.5 about the track plane (|y| 51.5–58.5).
-- Fasteners used: rides on an M3 × 40 socket head cap screw (class 12.9, fully threaded). Stack from inside the tub: head on an M3 DIN 9021 washer (Ø9 × 0.8) on the idler block's face (|y| 27.2–28.0), sliding M3 nut in the wall's outer slot, washer (ISO 7089), idler, washer, M3 nyloc (DIN 985). The bolt stands 4.2 mm out of the nyloc. The jack screw is an M3 × 20 set screw (chassis job).
+- Mating parts and their dimensions: Ø35.8 × 14.8 mm, round bore through. Hub end at world |y| 43.7 (round 5: 5.2 mm shorter, to make room for the chassis's nut plate, washer and nut on the wall's outer face) on a washer against the nut; disc ±3.5 about the track plane (|y| 51.5–58.5).
+- Fasteners used: rides on an M3 × 40 socket head cap screw (class 12.9, fully threaded). Stack from inside the tub (chassis round 5): head on an M3 DIN 9021 washer (Ø9 × 0.8) on the steel head plate in the idler block's recess, the bolt through both plates, then on the wall's outer face the steel nut plate, a DIN 9021 washer and the M3 nut, then a washer (ISO 7089), the idler, a washer and an M3 nyloc (DIN 985). The bolt stands 4.2 mm out of the nyloc. The jack screw is an M3 × 20 set screw (chassis job).
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -48,7 +48,7 @@ Design loads, as re-derived by strength round 2 (see the strength.md files):
 ## 8. Acceptance criteria (measurable)
 - [ ] Spins freely on the bolt with < 0.5 mm axial play
 - [ ] **Proof tests** (strength round 3):
-  1. **Rearward pull.** Fit the idler on its bolt at mid-slot in the chassis, the jack screw set against the bolt head and a pen mark across the slot and the washer. Pull it **rearward, horizontally along the track line, with 4.5 kg (44 N, 1.5 × the 29.8 N reverse-stall load)** for 1 min, using a strap round the idler. Pass: the idler still spins freely; axial play < 0.5 mm; bore ovalisation < 0.1 mm; the bolt hasn't moved (pen mark); measured against a fixed mark on the chassis, the idler disc's rear face has moved ≤ 0.3 mm; the bolt stays square (≤ 0.5 mm runout at its tip). Run this test after the chassis's idler-clamp change (chassis strength round 3, change 1).
+  1. **Rearward pull.** Fit the idler on its bolt at mid-slot in the chassis, the jack screw set against the bolt head and a pen mark across the head washer and the head plate. Pull it **rearward, horizontally along the track line, with 4.5 kg (44 N, 1.5 × the 29.8 N reverse-stall load)** for 1 min, using a strap round the idler. Pass: the idler still spins freely; axial play < 0.5 mm; bore ovalisation < 0.1 mm; the bolt hasn't moved (pen mark); measured against a fixed mark on the chassis, the idler disc's rear face has moved ≤ 0.3 mm; the bolt stays square (≤ 0.5 mm runout at its tip). Run this test on the round 5 clamp (nut plate on the wall's outer face).
   2. **Chassis tests.** The chassis stall test, run **in reverse as well**, and the 5 cm drop also cover the idler. Afterwards it must still spin freely.
 
 ## 9. Notes and open questions

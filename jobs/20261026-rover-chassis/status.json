@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in progress (approved by the user after the fourth failure): nut plate out of the wall onto its outer face (20.6 \u00d7 10 \u00d7 2 on a printed lip), nut slot deleted, \u00d89 washer under the nut; idler hub 5.2 mm shorter",
+    "DESIGN": "round 5 in review (user-approved fifth round): nut plate on the wall's outer face, nut slot gone, \u00d89 washer under the nut",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T13:06:30+00:00"
+  "updated": "2026-10-26T13:41:19+00:00"
 }

@@ -18,3 +18,5 @@
 - 2026-10-26T12:46Z · architect (as head-orchestrator) · merged the slice; validation sha256 matches the worktree G-code; stage → AWAITING_APPROVAL (DESIGN, SLICE gates pass); the user re-slices locally before approve.py · ok
 - 2026-10-26T12:54Z · architect · open question: the chassis round 5 fix offered by its strength review would shorten this hub by 5.2 mm · ok
 - 2026-10-26T13:06Z · architect (as head-orchestrator) · user approved chassis round 5, which shortens this hub by 5.2 mm: status.json back to DESIGN (iterations unchanged: not a failure of this part), slice marked stale · ok
+- 2026-10-26T13:41Z · architect · spec §2 and §8 for the 14.8 mm part and the round 5 bolt stack · ok
+- 2026-10-26T13:41Z · architect (as head-orchestrator) · merged round 5 (3b368bd); cad_checks re-run; status.json: in review · ok
