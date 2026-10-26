@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-chassis",
-  "stage": "SLICE",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 5,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 6: DFM PASS; strength NEEDS_TEST, lowest SF 3.01; proof tests in spec \u00a78)",
-    "SLICE": null,
+    "SLICE": "pass (1 plate, 11.53 h of 12, 142.5 g, 5 perimeters, 30 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T14:50:29+00:00"
+  "updated": "2026-10-26T15:16:36+00:00"
 }

@@ -14,7 +14,7 @@ Robot 2 of 3. Skid-steer tank with printed tracks on steel pins, 2 × N20 gear m
 | Road wheel | `20261026-rover-wheel` | 2 | **2** |
 | Track link | `20261026-rover-track-link` | 35 | **2** (68 links + 2 spare) |
 
-Sliced on 26 Oct 2026 (each job's `slice_stats.json`, stock Prusa PETG profiles, 0.2 mm layers): lid 2.4 h / 34 g; sprockets 1.0 h / 8 g; idlers 1.0 h / 10 g (round 5, shorter hub); road wheels 2.3 h / 25 g per plate (2 plates: four on one plate would take 3.9 h, over the 3 h limit); track links 6.2 h / 45 g per plate (2 plates; build the 5-link test chain from plate 1 before printing plate 2). The chassis is sliced after its strength review. Every plate goes on the smooth PEI sheet with a thin layer of glue stick (each job's `preflight.md`).
+Sliced on 26 Oct 2026 (each job's `slice_stats.json`, stock Prusa PETG profiles, 0.2 mm layers): lid 2.4 h / 34 g; sprockets 1.0 h / 8 g; idlers 1.0 h / 10 g (round 5, shorter hub); road wheels 2.3 h / 25 g per plate (2 plates: four on one plate would take 3.9 h, over the 3 h limit); track links 6.2 h / 45 g per plate (2 plates; build the 5-link test chain from plate 1 before printing plate 2). Chassis (round 6) 11.5 h / 142 g, one plate. Every plate goes on the smooth PEI sheet with a thin layer of glue stick (each job's `preflight.md`).
 
 ### Bought
 | Qty | Item | Notes |

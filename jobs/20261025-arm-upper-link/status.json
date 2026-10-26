@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in review (links strength round 4's fixes)",
+    "DESIGN": "round 5: DFM PASS; strength review running",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T14:35:38+00:00"
+  "updated": "2026-10-26T15:16:36+00:00"
 }
