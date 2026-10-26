@@ -2,22 +2,35 @@
   "bbox_mm": [
     35.777,
     34.52,
-    26.5
+    7.0
   ],
   "bbox_min_mm": [
     -17.888,
     -17.26,
     0.0
   ],
-  "volume_mm3": 5502.05,
-  "area_mm2": 3121.85,
+  "volume_mm3": 3554.86,
+  "area_mm2": 2720.39,
   "solids": 1,
-  "holes": {
-    "error": "type NoneType doesn't define __round__ method"
-  },
+  "holes": [
+    {
+      "diameter": 3.6,
+      "axis": [
+        -0.0,
+        0.0,
+        1.0
+      ],
+      "point_on_axis": [
+        0.0,
+        0.0,
+        3.5
+      ],
+      "arc_deg": 355.0
+    }
+  ],
   "min_z_mm": 0.0,
   "watertight": true,
-  "mesh_faces": 2406,
+  "mesh_faces": 3408,
   "fits_bed": true,
   "bed_mm": [
     250,

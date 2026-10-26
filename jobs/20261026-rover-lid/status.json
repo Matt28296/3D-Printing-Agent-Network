@@ -1,14 +1,14 @@
 {
   "job_id": "20261026-rover-lid",
-  "stage": "SPEC",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 0,
+    "DESIGN": 1,
     "SLICE": 0
   },
   "gates": {
-    "SPEC": null,
-    "DESIGN": null,
+    "SPEC": "pass",
+    "DESIGN": "round 3 in review (round 2 DFM PASS, strength NEEDS_TEST): changed in round 3 (heat-set inserts)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T01:23:34+00:00"
+  "updated": "2026-10-26T08:07:54+00:00"
 }

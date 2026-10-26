@@ -217,3 +217,33 @@ def test_micro_servo_needs_a_shifted_pilot_for_its_lead():
 def test_unknown_lead_option_is_refused():
     with pytest.raises(ValueError):
         hp.servo_mount_cutter(hp.SG90, 4.0, lead="slot")
+
+
+def test_detailed_n20_adds_end_cap_and_tabs_behind_the_can():
+    """detailed=True makes the motor longer (end cap, tabs, solder) but no wider than the gearbox."""
+    m = hp.N20_100RPM
+    plain, det = hp.gearmotor_dummy(m), hp.gearmotor_dummy(m, detailed=True)
+    assert det.volume - plain.volume > 70.0                      # 9 × 8.8 × 1.4 cap, less the old terminal box
+    assert det.bounding_box().min.Z < plain.bounding_box().min.Z - 1.0
+    bb = det.bounding_box()
+    assert bb.max.X <= m.gb_w / 2 + 1e-6 and bb.max.Y <= m.gb_h / 2 + 1e-6
+
+
+def test_mounting_hub_dummy_takes_its_shaft_and_screws():
+    """The hub disc spans z 0..t, and a shaft in its bore and screws in its holes don't overlap it."""
+    import math
+    h = hp.POLOLU_HUB_1996
+    hub = hp.mounting_hub_dummy(h, hole_angle_deg=45.0)
+    bb = hub.bounding_box()
+    assert abs(bb.min.Z) < 1e-6 and abs(bb.max.Z - h.t) < 1e-6
+    assert abs((bb.max.X - bb.min.X) - h.od) < 0.02
+    c = (Align.CENTER, Align.CENTER, Align.MIN)
+    shaft = Pos(0, 0, -2) * Cylinder(h.bore / 2 - 0.01, h.t + 4, align=c)
+    assert (hub & shaft).volume < 1e-3
+    for k in range(h.n_holes):
+        a = math.radians(45.0 + k * 360.0 / h.n_holes)
+        screw = Pos(h.bolt_circle_r * math.cos(a), h.bolt_circle_r * math.sin(a), -1) * Cylinder(
+            h.hole_thread / 2 - 0.01, h.t + 2, align=c)
+        assert (hub & screw).volume < 1e-3
+    lo, hi = h.bolt_circle_r_range
+    assert lo <= h.bolt_circle_r <= hi and hi + h.hole_thread / 2 < h.od / 2
