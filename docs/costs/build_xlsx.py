@@ -43,6 +43,28 @@ main["cells18650"] = {"key": "cells18650", "listing": "Protected 18650 Li-ion ce
                       "notes": "Research found C$22-24 each in stock at Canadian stores; US store Illumn sells LG MJ1 protected at US$7.49 but Li-ion shipping to Canada is unconfirmed"}
 budget["cells18650"] = [r for r in load("prices_a.csv") if r["key"] == "cells18650"][0]
 
+# real Canadian listings for parts first priced as "typical" (link research, 26 Oct 2026); the old typical
+# price becomes the budget option when it is cheaper per unit and no budget option exists
+_links = {r["key"]: r for r in load("prices_links.csv") if r.get("url")}
+if "stripboard" in _links and "stripboard.header" in _links:
+    sb, hd = _links["stripboard"], _links.pop("stripboard.header")
+    _links["stripboard"] = dict(sb, listing=sb["listing"] + " + " + hd["listing"],
+                                retailer=sb["retailer"] + " + " + hd["retailer"],
+                                pack_price=f'{float(sb["pack_price"]) + float(hd["pack_price"]):.2f}',
+                                notes=(sb["notes"] + " Header strips: " + hd["url"]))
+if "wire18" in _links:
+    _links["wire18"]["pack_qty"] = "1"
+if "m17" in _links:
+    _links["m17"]["pack_qty"] = "50"   # the kit holds 50 x M1.7 x 5 (750 screws in 15 sizes)
+for k, r in _links.items():
+    if k not in main:
+        continue
+    old = main[k]
+    unit = lambda x: float(x["pack_price"]) * (FX if x["currency"] == "USD" else 1) / float(x["pack_qty"] or 1)
+    if k not in budget and unit(old) < unit(r):
+        budget[k] = dict(old, retailer=old["retailer"] + " (budget)")
+    main[k] = dict(r, date_checked="2026-10-26")
+
 NAMES = {  # short item names for the Prices sheet
     "mg996r": "MG996R servo", "mg90s": "MG90S micro servo", "esp32": "ESP32 DevKit", "pca9685": "PCA9685 servo driver",
     "n20": "N20 gearmotor 6 V ≈150:1", "hub1996": "Pololu #1996 hub (2-pack)", "tb6612": "TB6612FNG driver",
@@ -76,6 +98,7 @@ NORMAL = Font(name=F, size=10)
 BOLD = Font(name=F, size=10, bold=True)
 INPUT = Font(name=F, size=10, color="0000FF")
 LINK = Font(name=F, size=10, color="008000")
+URL = Font(name=F, size=10, color="1155CC", underline="single")
 MUTED = Font(name=F, size=9, color="555555", italic=True)
 HEAD_FILL = PatternFill("solid", fgColor="E8ECEF")
 TOTAL_FILL = PatternFill("solid", fgColor="F3F5F7")
@@ -105,10 +128,10 @@ wp["A1"] = "Prices (CAD, before tax and shipping)"; wp["A1"].font = H1
 wp["A2"] = (f"Checked {AS_OF}. Blue cells are inputs you can change; everything else recalculates. USD prices convert at the "
             "rate on the Summary sheet. Confidence: high = price seen on the product page; medium = search snippet, "
             "unclear variant or a typical store price; estimate = no price could be read, a typical price is used.")
-wp["A2"].font = MUTED; wp["A2"].alignment = WRAP; wp.merge_cells("A2:N2"); wp.row_dimensions[2].height = 42
+wp["A2"].font = MUTED; wp["A2"].alignment = WRAP; wp.merge_cells("A2:P2"); wp.row_dimensions[2].height = 42
 cols = ["Key", "Item", "Listing", "Retailer", "Pack qty", "Pack price", "Currency", "Pack price (CAD)", "Unit price (CAD)",
-        "Budget option", "Budget pack qty", "Budget pack (CAD)", "Confidence", "Notes / link"]
-head(wp, 4, cols, [16, 24, 46, 24, 8, 10, 8, 12, 11, 34, 9, 12, 11, 60])
+        "Budget option", "Budget pack qty", "Budget pack (CAD)", "Confidence", "Notes", "Buy link", "Budget link"]
+head(wp, 4, cols, [16, 24, 46, 24, 8, 10, 8, 12, 11, 34, 9, 12, 11, 60, 40, 40])
 keys = sorted(main)
 PR = {}
 for i, k in enumerate(keys):
@@ -132,11 +155,11 @@ for i, k in enumerate(keys):
         c = wp.cell(row=r, column=12, value=(f"={bp}*Summary!$C$8" if b["currency"] == "USD" else bp))
         c.number_format = MONEY; c.font = INPUT
     wp.cell(row=r, column=13, value=m["confidence"]).font = NORMAL
-    note = m["notes"]
-    if m.get("url"):
-        note = (note + " · " if note else "") + m["url"]
-    wp.cell(row=r, column=14, value=note).font = NORMAL
-    for col in range(1, 15):
+    wp.cell(row=r, column=14, value=m["notes"]).font = NORMAL
+    for col, u in ((15, m.get("url")), (16, (b or {}).get("url") if b and k not in ("mp1584",) else "")):
+        if u:
+            c = wp.cell(row=r, column=col, value=u); c.hyperlink = u; c.font = URL
+    for col in range(1, 17):
         wp.cell(row=r, column=col).alignment = WRAP if col in (3, 4, 10, 14) else TOP
 LAST = 4 + len(keys)
 wp.freeze_panes = "B5"
@@ -157,10 +180,10 @@ def robot_sheet(name, lines, print_info):
     kg, hours, src = print_info
     ws["A2"] = ("Quantities come from the build guide's bill of materials. 'Value of parts used' counts only the share of "
                 "each pack this robot uses; 'Cost to buy' is what you pay buying whole packs for this robot alone.")
-    ws["A2"].font = MUTED; ws["A2"].alignment = WRAP; ws.merge_cells("A2:L2"); ws.row_dimensions[2].height = 30
+    ws["A2"].font = MUTED; ws["A2"].alignment = WRAP; ws.merge_cells("A2:M2"); ws.row_dimensions[2].height = 30
     cols = ["Group", "Item", "Price key", "Qty", "Unit price", "Value of parts used", "Pack qty", "Packs to buy",
-            "Pack price", "Cost to buy", "Budget cost", "Notes"]
-    head(ws, 4, cols, [16, 46, 18, 7, 10, 12, 8, 8, 10, 11, 11, 48])
+            "Pack price", "Cost to buy", "Budget cost", "Notes", "Where to buy"]
+    head(ws, 4, cols, [16, 46, 18, 7, 10, 12, 8, 8, 10, 11, 11, 48, 14])
     r = 5
     first = r
     for group, item, key, qty, note in lines:
@@ -182,7 +205,9 @@ def robot_sheet(name, lines, print_info):
                     value=f"=IF(D{r}<=0,0,IF(ISNUMBER({bp}),CEILING(D{r}/{bq},1)*{bp},J{r}))")
         c.number_format = MONEY; c.font = NORMAL
         ws.cell(row=r, column=12, value=note).font = NORMAL
-        for col in range(1, 13):
+        u, rt = lookup('O', f'C{r}'), lookup('D', f'C{r}')
+        c = ws.cell(row=r, column=13, value=f'=IFERROR(IF({u}="","",HYPERLINK({u},{rt})),"")'); c.font = URL
+        for col in range(1, 14):
             ws.cell(row=r, column=col).alignment = WRAP if col in (2, 12) else TOP
         r += 1
     last = r - 1
