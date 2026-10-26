@@ -1,20 +1,20 @@
 {
   "job_id": "20261025-arm-forearm",
-  "stage": "AWAITING_APPROVAL",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 0,
+    "DESIGN": 1,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "pass (DFM PASS; strength NEEDS_TEST with proof test in spec \u00a78)",
-    "SLICE": "pass",
+    "DESIGN": "reopened 2026-10-26: deep review 01 B1 + B2: the wrist MG90S's lead can't pass its window, and the MG90S spline sits 3.2 mm higher than modelled",
+    "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T01:29:19+00:00"
+  "updated": "2026-10-26T06:39:59+00:00"
 }

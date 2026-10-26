@@ -1,6 +1,6 @@
 # Desktop robot arm: status
 
-Robot 1 of 3. All 8 printed parts passed design review, strength review (NEEDS_TEST: proof tests in each spec §8) and the G-code audit. Every job is at **AWAITING_APPROVAL**; nothing is on an SD card.
+Robot 1 of 3. **Don't approve or print anything yet (26 Oct 2026).** The deep review found that no servo lead can pass its closed window, and that the MG90S output sits 3.2 mm higher than modelled. The base, turntable, upper link and forearm are back in DESIGN for lead notches. The gripper below was replaced by the parallel claw and Brio camera mount (`jobs/20261026-arm-claw-*`, `jobs/20261026-arm-camera-mount`), which are in their second design round. The table below is the state before the deep review; it is regenerated when the round passes.
 
 | Part | Job | Size (mm, as printed) | Print time | PETG | DFM | Strength | G-code audit | SD-card file |
 |---|---|---|---|---|---|---|---|---|
