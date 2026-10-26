@@ -10,3 +10,4 @@
 - 2026-10-26T09:32Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · NEEDS_TEST
 - 2026-10-26T09:32Z · architect · spec §8 proof test updated to the round-3 strength review · ok
 - 2026-10-26T11:23Z · architect (as head-orchestrator) · status.json: all five hexapod parts pass DESIGN; stage SLICE · ok
+- 2026-10-26T11:51Z · architect · user decision: keep the MG90S tab-pilot strips under 1.8 mm and check them on the first print; spec §8 screw-strip check added (459ee45) · ok

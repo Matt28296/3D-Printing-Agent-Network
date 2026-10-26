@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 4 DFM: MG90S tab-pilot walls 1.34 (lead end) and 1.45 (far end) mm CAD, under the 1.8 mm rule; one decision for every closed MG90S window asked of the user",
+    "DESIGN": "FAIL round 4 DFM (MG90S strips 1.34 / 1.45 mm CAD); the user kept them with a first-print check (spec \u00a78, 11:40Z); next: brief line 33 cites the decision, then a DFM re-check",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "MG90S closed windows: the tab-pilot walls are 1.34-1.65 mm CAD (forearm, hexapod coxa and femur, claw), under fdm-design-rules' 1.8 mm. Move the pilots out and file the tab slits, or accept the walls with a check? (asked of the user)"
-  ],
-  "updated": "2026-10-26T11:38:01+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T11:51:39+00:00"
 }

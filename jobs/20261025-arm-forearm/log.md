@@ -19,3 +19,4 @@
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 4 in review; arm round merged (28d9365), fresh DFM and strength reviews next · ok
 - 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · FAIL (MG90S tab-pilot walls 1.34 / 1.45 mm CAD < 1.8; fix: pilots out 1.6 / ≥ 0.2 mm, or a user-accepted deviation)
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T11:51Z · architect · user decision: keep the MG90S tab-pilot strips (1.34 / 1.45 mm CAD) and check them on the first print; spec §8 and BUILD_GUIDE §4 step 6 carry the check (459ee45); open question closed · ok

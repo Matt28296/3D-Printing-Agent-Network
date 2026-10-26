@@ -9,3 +9,4 @@
 - 2026-10-26T10:17Z · architect · merge of round 4: FEMUR_MAX 90 → 80 in hexapod_test.ino (with the coxa at ±30°, a femur raised past 80° meets the widened bottom plate); BUILD_GUIDE and assembly_plan limits updated; host-shim harness 15/15 PASS in C++11 and C++23 · ok
 - 2026-10-26T10:38Z · architect · BUILD_GUIDE BOM: the XT30 pigtail is male (LiPo leads carry the female plug), found while pricing the parts · ok
 - 2026-10-26T11:23Z · architect · BUILD_GUIDE step 5: coxa tab screws tightened by feel with dry threads (strength round 4: 0.045 N·m gives SF 3.09 dry, 2.31 oiled); status.json updated · ok
+- 2026-10-26T11:51Z · architect · BUILD_GUIDE §1 and step 6: screw-strip check on the first coxa plate and the femur plate (user decision: keep the 1.35–1.45 mm strips) · ok
