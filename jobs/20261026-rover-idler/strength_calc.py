@@ -1,13 +1,17 @@
-"""Strength check for jobs/20261026-rover-idler (tracked rover, PETG), round 3.
+"""Strength check for jobs/20261026-rover-idler (tracked rover, PETG), rover round 5 (the idler's round 4).
 
-Run from the project root with the CAD venv active (build123d):
-    source /home/claude/.venv-cad/bin/activate
-    python3 jobs/20261026-rover-idler/strength_calc.py
+Run from the project root with the CAD venv's interpreter (build123d):
+    /home/claude/.venv-cad/bin/python3 jobs/20261026-rover-idler/strength_calc.py
 
 The idler runs the sprocket model with BORE = "round": the same 10-tooth disc on a Ø10 hub with a Ø3.5 printed running
 bore on its M3 x 40 bolt (class 12.9, fully threaded), held in the chassis's ±4 mm slot by an M3 jack screw at the bolt
-head. The idler's bolt, slot, nut and clamp belong to the chassis check. Rows tagged as drop rows scale linearly with
-the drop height.
+head. Round 5 (chassis strength round 4's fix, user-approved): the chassis's nut plate, a Ø9 washer and the wall nut now sit
+outside the wall (|y| 38-43.2), so the hub starts at |y| 43.7 (rover_frame.IDLER_HUB_Y0) and the part is 14.8 tall instead
+of 20: the bore is 14.8 long (L/D 4.9 on the Ø3 bolt), so the idler can cock 1.94° on its bolt instead of 1.43°. The disc,
+teeth, track plane and the bolt stack beyond the disc don't move. This script re-runs round 3's rows on the round-5 part and
+adds: the bore's peak bearing (rigid bore on the bolt), the bore's end edges with the idler cocked by the side drag, the
+hub's root, and a tooth pushed sideways by a link. The idler's bolt, slot, plates and jack screw belong to the chassis check.
+Rows tagged as drop rows scale linearly with the drop height.
 """
 # ===================== shared rover block, round 3 (identical in all six rover strength_calc.py) =====================
 import json
@@ -201,10 +205,15 @@ ins = runpy.run_path(os.path.join(JOBS, JOB, "model.py"), run_name="model")
 IDL = ins["design"]()                                # idler frame = sprocket frame (axis +Z out, track plane z 0)
 sp = SimpleNamespace(**{k: v for k, v in ins["_sp"].items() if k.isupper()})
 pr = json.load(open(os.path.join(JOBS, JOB, "print_requirements.json")))["min"]
+bb_all = IDL.bounding_box()
 bore_cad = ins["ROUND_BORE"] + sp.HOLE_COMP          # 3.7 CAD, about 3.5 printed: 0.5 running clearance on the M3 threads
 d_bolt = 3.0
+clear_d = ins["ROUND_BORE"] - d_bolt                 # 0.5 diametral running clearance (printed bore on the bolt)
 THREAD_F = 0.5                                       # crest contact on the threads: half the projected area (rounds 1-2)
-L_bore = F.DISC_HALF - sp.HUB_Z0_ROUND               # 20
+L_bore = F.DISC_HALF - sp.HUB_Z0_ROUND               # 14.8 (round 5; 20 before)
+assert abs((bb_all.max.Z - bb_all.min.Z) - L_bore) < 0.01, "the bore runs the part's full height"
+assert abs(F.Y_T + sp.HUB_Z0_ROUND - F.IDLER_HUB_Y0) < 1e-9 and abs(F.IDLER_HUB_Y0 - 43.7) < 1e-9
+L_hub = -F.DISC_HALF - sp.HUB_Z0_ROUND               # 7.8: hub from the disc's inner face to its inner end
 L_disc = 2 * F.DISC_HALF + (F.HUB_D - bore_cad) / 2  # disc plus a 45° spread into the hub: 10.15
 L_eff = THREAD_F * min(L_disc, L_bore)
 perim_t = pr["perimeters"] * 0.45
@@ -215,14 +224,43 @@ g = GProp_GProps()
 BRepGProp.SurfaceProperties_s(cut[0].wrapped, g)
 bb = cut[0].bounding_box()
 Z_t = g.MatrixOfInertia().Value(3, 3) / ((bb.max.Y - bb.min.Y) / 2)
+w_root = bb.max.Y - bb.min.Y                         # tangential width of the tooth section at the chamfer top
+t_tooth = bb.max.Z - bb.min.Z                        # its axial thickness (the disc's 7 mm)
 arm = F.RP - r_root
 KT_CH = 1.8
-print(f"\nidler: bore Ø{bore_cad:.1f} CAD on the M3 threads, bore {L_bore:.0f} long, effective bearing {L_eff:.2f} mm"
-      f" (disc {L_disc:.2f} x thread factor {THREAD_F}); {pr['perimeters']} perimeters; tooth Z {Z_t:.2f} mm³ (solid)")
+KT_SHARP = 2.5
+# cock: the 0.5 mm clearance over the bore length lets the idler tilt on its bolt
+cock = clear_d / L_bore
+cock_r4 = clear_d / 20.0
+tip_side = sp.TOOTH_TIP_R * cock
+print(f"\nidler (round 5): part {bb_all.max.Z - bb_all.min.Z:.1f} tall (solid), bore Ø{bore_cad:.1f} CAD on the M3 threads, bore"
+      f" {L_bore:.1f} long (L/D {L_bore / d_bolt:.1f}), hub Ø{F.HUB_D:.0f} x {L_hub:.1f} from |y| {F.IDLER_HUB_Y0}; effective"
+      f" bearing {L_eff:.2f} mm (disc {L_disc:.2f} x thread factor {THREAD_F}); {pr['perimeters']} perimeters; tooth Z"
+      f" {Z_t:.2f} mm³, root {w_root:.2f} x {t_tooth:.2f} (solid)")
+print(f"cock on the bolt: {clear_d} / {L_bore:.1f} = {cock * 1000:.1f} mrad = {math.degrees(cock):.2f}° (round 4's 20 mm bore:"
+      f" {math.degrees(cock_r4):.2f}°); tooth tips (r {sp.TOOTH_TIP_R:.1f}) then {tip_side:.2f} mm sideways against the link notch's"
+      f" 0.5 a side: the links straighten it as the teeth enter (free play, no stiffness, so no force beyond the side drag)")
 
 
 def bore(R):
     return bearing(R, d_bolt, L_eff)
+
+
+def bore_peak(R):
+    """Rigid bore on the bolt as a Winkler foundation (round 3's rigid-pin model): the radial load acts at the track plane,
+    DISC_HALF from the bore's outer end; the contact runs over 3 x that (10.5 mm) if the bore is that long, triangular, so
+    its peak at the outer end is 2R / (thread factor x d x 10.5)."""
+    e_out = F.DISC_HALF
+    if L_bore >= 3 * e_out:
+        return 2 * R / (THREAD_F * d_bolt * 3 * e_out), 3 * e_out
+    raise ValueError("bore shorter than the contact: use the trapezoid")
+
+
+def cock_edge(S):
+    """The idler cocked on its bolt by a side force S at the pitch circle: the couple S x RP bears on the bore's two end
+    edges, F_e = S RP / L_bore each, over an assumed 1.0 mm of bore length (edge contact) at the thread factor."""
+    Fe = S * F.RP / L_bore
+    return Fe, Fe / (THREAD_F * d_bolt * 1.0)
 
 
 def tooth_root(Fn, Kt=KT_CH):
@@ -230,35 +268,83 @@ def tooth_root(Fn, Kt=KT_CH):
 
 
 F_drag = 0.3 * L.R_idler_stall * (d_bolt / 2) / F.RP  # a free idler's teeth carry only its bearing drag
-check(f"I1 bore bearing on the M3 threads, reverse stall {L.R_idler_stall:.1f} N", bore(L.R_idler_stall), False, SF_STATIC)
-check(f"I2 bore bearing, cyclic {L.R_idler_cyc:.1f} N", bore(L.R_idler_cyc), False, SF_CYCLIC)
-check(f"I3 bore bearing, pretension {L.R_sus:.0f} N sustained (creep)", bore(L.R_sus), False, SF_CYCLIC)
-check(f"I4 bore bearing, 5 cm front corner {L.drop:.1f} N", bore(L.drop), False, SF_STATIC, drop=True)
+check(f"I1 bore bearing on the M3 threads (mean, effective {L_eff:.2f} mm), reverse stall {L.R_idler_stall:.1f} N",
+      bore(L.R_idler_stall), False, SF_STATIC)
+check(f"I2 bore bearing (mean), cyclic {L.R_idler_cyc:.1f} N", bore(L.R_idler_cyc), False, SF_CYCLIC)
+check(f"I3 bore bearing (mean), pretension {L.R_sus:.0f} N sustained (creep)", bore(L.R_sus), False, SF_CYCLIC)
+check(f"I4 bore bearing (mean), 5 cm front corner {L.drop:.1f} N", bore(L.drop), False, SF_STATIC, drop=True)
+pk, Lc = bore_peak(1.0)
+check(f"I1p bore bearing PEAK at the outer end (rigid bore, triangular over {Lc:.1f} of the {L_bore:.1f} mm bore), reverse"
+      f" stall", pk * L.R_idler_stall, False, SF_STATIC)
+check(f"I3p bore bearing PEAK, pretension {L.R_sus:.0f} N sustained (creep)", pk * L.R_sus, False, SF_CYCLIC)
+check(f"I4p bore bearing PEAK, 5 cm front corner", pk * L.drop, False, SF_STATIC, drop=True)
+Fe, p_e = cock_edge(L.side)
+for lab, R, sf in ((f"everyday {L.R_idler_cyc:.1f} N cyclic", L.R_idler_cyc, SF_CYCLIC),
+                   (f"reverse stall {L.R_idler_stall:.1f} N", L.R_idler_stall, SF_STATIC)):
+    check(f"I8 bore's outer end edge, idler cocked {math.degrees(cock):.2f}° by the side drag {L.side:.0f} N at r {F.RP:.2f}"
+          f" (edge force {Fe:.2f} N on 1 mm) + the radial PEAK, {lab}", p_e + pk * R, False, sf)
 check("I5 disc rim bearing under a link, 5 cm front corner", L.drop / (2 * F.DISC_HALF * 2 * perim_t), False, SF_STATIC,
       drop=True)
 check(f"I6 tooth root (chamfer top), bearing drag {F_drag:.2f} N (Kt {KT_CH})", tooth_root(F_drag), False, SF_CYCLIC)
-A_end = math.pi / 4 * (F.HUB_D ** 2 - bore_cad ** 2)
-check(f"I7 hub end-face bearing on the wall washer, side {L.side:.0f} N", L.side / A_end, False, SF_CYCLIC)
+arm_tip = sp.TOOTH_TIP_R - r_root
+check(f"I9 tooth pushed sideways by a link at its tip (side drag {L.side:.0f} N on one tooth): root bending, Kt {KT_CH}",
+      bend_rect(L.side * arm_tip, w_root, t_tooth), False, SF_CYCLIC, Kt=KT_CH)
+A_wash = math.pi * ((F.WASHER[0] / 2) ** 2 - (bore_cad / 2) ** 2)
+check(f"I7 hub end face on its running washer (Ø{F.WASHER[0]:.0f} on the wall nut: r {bore_cad / 2:.2f}-{F.WASHER[0] / 2},"
+      f" {A_wash:.1f} mm²), side {L.side:.0f} N", L.side / A_wash, False, SF_CYCLIC)
+# hub root: the Ø10 hub meets the disc's inner face at a sharp corner (Kt 2.5); its axis is the print Z, so its bending
+# stress runs ACROSS the layers. Loads: the cock couple's inner edge force at the hub's inner end (arm L_hub), plus the part
+# of the radial triangle that falls in the hub (beyond the 7 mm disc)
+Z_hub = math.pi * (F.HUB_D ** 4 - bore_cad ** 4) / (32 * F.HUB_D)
+s_d = 2 * F.DISC_HALF
+
+
+def hub_moment(R, S):
+    Lc_ = 3 * F.DISC_HALF
+    share = max(0.0, (Lc_ - s_d) / Lc_) ** 2               # triangle's load beyond the disc
+    cen = (Lc_ - s_d) / 3                                 # its centroid from the hub root
+    return S * F.RP / L_bore * L_hub + R * share * cen
+
+
+for lab, R, S, sf, dr in ((f"everyday {L.R_idler_cyc:.1f} N + side {L.side:.0f} N cyclic", L.R_idler_cyc, L.side, SF_CYCLIC,
+                           False),
+                          (f"reverse stall {L.R_idler_stall:.1f} N + side {L.side:.0f} N", L.R_idler_stall, L.side, SF_STATIC,
+                           False),
+                          (f"5 cm front corner {L.drop:.1f} N + side {L.side:.0f} N", L.drop, L.side, SF_STATIC, True)):
+    check(f"I10 hub root (Ø{F.HUB_D:.0f} / Ø{bore_cad:.1f}, {L_hub:.1f} long) bending across layers, sharp corner (Kt"
+          f" {KT_SHARP}), {lab}", hub_moment(R, S) / Z_hub, True, sf, Kt=KT_SHARP, drop=dr)
 
 # advisory
-check(f"proof (§8 test 1): 4.5 kg ({4.5 * G_MS2:.0f} N) rearward, bore bearing", bore(4.5 * G_MS2), False, SF_PROOF, info=True)
-check(f"proof: reverse stall at 100 % PWM on a fresh pack {L.R_idler_proof:.1f} N, bore bearing", bore(L.R_idler_proof), False,
-      SF_PROOF, info=True)
-check(f"jam: stall pull {L.F_stall:.2f} N on one idler tooth (Kt {KT_CH})", tooth_root(L.F_stall), False, SF_STATIC, info=True)
-check(f"bore bearing, 5 cm corner, stiff landing ({L.drop_stiff:.0f} N)", bore(L.drop_stiff), False, SF_STATIC, info=True)
-F_s08 = 2 * (T0_N + L.s08[-1][2])
-check(f"S-08 ungated 196 N*mm motor at the 6.0 V cap: reverse stall {F_s08:.1f} N, bore bearing", bore(F_s08), False, SF_STATIC,
+check(f"proof (§8 test 1): 4.5 kg ({4.5 * G_MS2:.0f} N) rearward, bore bearing (mean)", bore(4.5 * G_MS2), False, SF_PROOF,
       info=True)
-# if the chassis clamp yaws (chassis rows B5/B6), the idler leans back until its hub face edge (r 5) presses the wall washer;
-# the nyloc then holds it. Edge contact taken over a 30° arc x 1.5 mm of the hub face.
-M_yaw = L.R_idler_stall * (F.Y_T - 25.4)
-F_edge = M_yaw / (F.HUB_D / 2)
-A_edge = math.radians(30) * F.HUB_D / 2 * 1.5
-check(f"backstop if the chassis clamp yaws: hub-face edge on the wall washer, reverse stall ({F_edge:.0f} N)",
-      F_edge / A_edge, False, SF_STATIC, info=True)
+check(f"proof (§8 test 1): 4.5 kg rearward, bore bearing PEAK", pk * 4.5 * G_MS2, False, SF_PROOF, info=True)
+check(f"proof: reverse stall at 100 % PWM on a fresh pack {L.R_idler_proof:.1f} N, bore bearing (mean)", bore(L.R_idler_proof),
+      False, SF_PROOF, info=True)
+check(f"proof: 5 kg (49 N) hung from the idler (chassis §8 test 1), bore bearing PEAK", pk * 5 * G_MS2, False, SF_PROOF,
+      info=True)
+check(f"jam: stall pull {L.F_stall:.2f} N on one idler tooth (Kt {KT_CH})", tooth_root(L.F_stall), False, SF_STATIC, info=True)
+check(f"bore bearing (mean), 5 cm corner, stiff landing ({L.drop_stiff:.0f} N)", bore(L.drop_stiff), False, SF_STATIC, info=True)
+check(f"bore bearing PEAK, 5 cm corner, stiff landing ({L.drop_stiff:.0f} N)", pk * L.drop_stiff, False, SF_STATIC, info=True)
+F_s08 = 2 * (T0_N + L.s08[-1][2])
+check(f"S-08 ungated 196 N*mm motor at the 6.0 V cap: reverse stall {F_s08:.1f} N, bore bearing (mean)", bore(F_s08), False,
+      SF_STATIC, info=True)
+Fe4 = L.side * F.RP / 20.0
+check(f"round 4's 20 mm bore for comparison: I8 at the reverse stall (edge force {Fe4:.2f} N)",
+      Fe4 / (THREAD_F * d_bolt) + pk * L.R_idler_stall, False, SF_STATIC, info=True)
+# the chassis clamp's yaw no longer reaches the idler's hub face: chassis round 5 strength_calc gives the bolt body's yaw at
+# the reverse stall as <= 2.43 mrad (printed there), far inside the idler's own free cock, so the hub face is never the
+# backstop that round 3 checked (that row is retired)
+THETA_CLAMP_R5 = 2.43e-3
+check_custom(f"chassis clamp yaw at the reverse stall ({THETA_CLAMP_R5 * 1000:.2f} mrad, chassis round 5) against the idler's"
+             f" free cock ({cock * 1000:.1f} mrad): the hub face doesn't become a backstop", THETA_CLAMP_R5 * 1000,
+             cock * 1000, "mrad",
+             SF_STATIC, info=True)
 d3 = D3_M3
 for lab, Fb in ((f"reverse stall {L.R_idler_stall:.1f} N", L.R_idler_stall), (f"5 cm corner {L.drop:.1f} N", L.drop)):
     check_metal(f"M3 x 40 class 12.9 bending at the wall face (chassis-owned): {lab} x {F.Y_T - F.HALF_W_OUT:.0f}",
                 bend_round(Fb * (F.Y_T - F.HALF_W_OUT), d3), SY_129_MPA, info=True)
+print(f"stack (rover_frame / assembly_check): nut plate {F.HALF_W_OUT:.0f}-{F.HALF_W_OUT + F.PLATE_T:.0f}, Ø9 washer"
+      f" -{F.HALF_W_OUT + F.PLATE_T + F.WASHER_WIDE[1]:.1f}, wall nut -{F.HALF_W_OUT + F.PLATE_T + F.WASHER_WIDE[1] + F.NUT[1]:.1f},"
+      f" running washer -{F.IDLER_HUB_Y0:.1f}, idler {F.IDLER_HUB_Y0:.1f}-{F.Y_T + F.DISC_HALF:.1f}")
 
 report(f"{JOB} strength checks")
