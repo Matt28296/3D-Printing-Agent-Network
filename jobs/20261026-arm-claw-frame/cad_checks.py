@@ -31,7 +31,8 @@ def solid(x, y, z):
 
 
 # ---- CHECKS: one line per critical dimension in design_brief.md -----------------
-check("overall size 42.85 x 64 x 48.5", all(abs(a - b) < 0.01 for a, b in zip(size, [42.85, 64.0, 48.5])), size)
+check("overall size 42.85 x 64 x 48.45 (bulkhead top 48.45 since round 6)",
+      all(abs(a - b) < 0.01 for a, b in zip(size, [42.85, 64.0, 48.45])), size)
 check("one solid", len(part.solids()) == 1, len(part.solids()))
 dia = sorted(round(h["diameter"], 2) for h in holes)
 check("holes: clamp Ø2.6, 3 x M3 pilot Ø2.7 (2 top + the cover's anchor), 2 x M2.5 pilot Ø2.2",
@@ -64,8 +65,20 @@ check("wrist plate top (rack B's guide) z 6.0", solid(30, 0, 5.9) and not solid(
 check("wrist plate front edge x 34.85", solid(34.8, 0, 3) and not solid(34.9, 0, 3))
 check("rail block from the bulkhead's front face (x 10) to x 22.35, z 6..17.75", solid(10.1, 0, 12) and solid(22.3, 31.9, 17.7)
       and not solid(22.4, 0, 12) and not solid(15, 0, 17.85))
-check("bulkhead x 3.5..10, top z 48.5", solid(3.6, 20, 45) and solid(9.9, 20, 45) and not solid(10.1, 20, 45)
-      and not solid(6.75, 20, 48.6))
+bt = ns["BULK_TOP"]
+check("bulkhead x 3.5..10, top z 48.45 (BULK_TOP, round 6; the cover's top wall stays at 48.5, 0.05 over it in CAD)",
+      abs(bt - 48.45) < 1e-9 and solid(3.6, 20, 45) and solid(9.9, 20, 45) and not solid(10.1, 20, 45)
+      and solid(6.75, 20, bt - 0.02) and not solid(6.75, 20, bt + 0.02)
+      and all(solid(-6.4, s * 29, bt - 0.02) and not solid(-6.4, s * 29, bt + 0.02) for s in (-1, 1)),
+      "bulkhead and both ribs probed ±0.02 about 48.45")
+# PrusaSlicer slices every 0.2 mm layer at its mid-height (first layer 0.2): slice planes at 0.1 + 0.2 k. A horizontal
+# face ON a slice plane prints a layer high or low by floating-point rounding (round 5: 48.5 printed at 48.4).
+d_plane = min(abs(bt - (0.1 + 0.2 * k)) for k in range(400))
+check("bulkhead top off the 0.2 mm slice planes (>= 0.04 to the nearest; prints at 48.4 with 0.05 to 48.3 and 48.5)",
+      d_plane >= 0.04 - 1e-9, f"nearest slice plane {d_plane:.3f} away")
+check("top M3 pilots Ø2.7 CAD, 14 deep below the bulkhead top (floor z 34.45)",
+      all(not solid(x, y, bt - 1) and not solid(x, y, 34.55) and solid(x, y, 34.35) for x, y in ns["TOP_SCREWS"]),
+      f"{ns['TOP_SCREWS']}")
 check("clamp floor 6.3: pocket ceiling z 2.0, pad top z 8.3 (washer seat whole)", not solid(5.0, 0, 1.9) and solid(5.0, 0, 2.1)
       and solid(0, 3.5, 8.2) and solid(3.3, 0, 8.2) and not solid(0, 3.5, 8.4))
 check("Ø8 washer relief: r 4.5 into the bulkhead's back face, pad to top", not solid(4.4, 0, 9.0) and not solid(4.4, 0, 15)

@@ -22,7 +22,9 @@ Checks, in the claw frame G with the model.py solids (build123d / OCC booleans):
 An overlap over STRICT_TOL (0.001 mm³) is a clash, except on the declared contact planes in
 CONTACTS (faces that rest or slide on each other by design: the rack backs on their guides, the
 servo tabs on the bulkhead, the cover on the frame): an overlap there must lie within
-CONTACT_BAND of the plane.
+CONTACT_BAND of the plane. Claw round 6: the cover's V-ridge meets the frame's V-groove line to line on its two 45°
+flanks (ridge-first contact, VSEAT_CLR 0). That is a face contact on inclined planes, which CONTACTS cannot declare; its
+boolean overlap is zero volume, so it is held to STRICT_TOL like any other pair.
 
 Run from the project root (writes claw_sequence_check.json; assembly_check.py calls run() too):
     .venv/bin/python jobs/20261025-robot-arm-assembly/claw_sequence_check.py
@@ -71,7 +73,8 @@ JOBS = {"claw_frame": "20261026-arm-claw-frame", "claw_cover": "20261026-arm-cla
 CONTACTS = {
     frozenset({"servo", "claw_frame"}): [("x", C.X_B, "servo tabs on the bulkhead's front face")],
     frozenset({"claw_cover", "claw_frame"}): [("x", C.X_F0, "front plate on the wrist plate's front edge"),
-                                              ("z", C.Z_TOP0, "top wall on the bulkhead top"),
+                                              ("z", C.BULK_TOP, "top wall over the bulkhead top (claw round 6: "
+                                               "0.05 clear in CAD, the cover rests on its ridge)"),
                                               ("x", C.X_B, "lip against the bulkhead's front face")],
     frozenset({"camera_mount", "claw_cover"}): [("z", C.Z_TOP1, "mount pad on the top wall")],
     frozenset({"front_screws", "claw_cover"}): [("x", C.X_F1, "screw heads on the front plate")],

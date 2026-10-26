@@ -23,8 +23,8 @@
     "claw_cover",
     "claw_frame"
    ],
-   "plane": "z = 48.5",
-   "what": "top wall on the bulkhead top"
+   "plane": "z = 48.45",
+   "what": "top wall over the bulkhead top (claw round 6: 0.05 clear in CAD, the cover rests on its ridge)"
   },
   {
    "pair": [
@@ -235,5 +235,5 @@
   }
  },
  "ok": true,
- "run_s": 841.5
+ "run_s": 859.8
 }

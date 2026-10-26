@@ -9,6 +9,14 @@ between the frame's lower rail and this front plate. Each jaw's neck passes thro
 the front plate: slot A (upper) is open at the -y end, slot B (lower) at the +y end, so the jaws
 slide in from the ends after the cover is screwed on.
 
+Round 6 (cover round 5 independent review: as printed, the ridge's flanks, the foot's flats on the rail block and the
+ridge's tip on the groove's closed first layer all stopped the cover at once, so the ridge's x play was set by print
+tolerances, 0.08 mm RSS / 0.13 worst case, against 0.04 allowed): ridge-first contact. VSEAT_CLR 0 (claw_frame.py):
+the ridge is the groove's own V, virtual apex 16.95. The foot's flats are decoupled from it and raised: TIE2_FOOT_Z =
+ZS - RAIL_IN + FOOT_CLR = 18.05, and the ridge's 45° flanks run on up to them (base x 14.15..16.35, 2.2 wide: 0.2 behind
+the post's back face and 0.2 from the anchor hole). RIDGE_TIP_Z 17.35, absolute (0.8 wide, 0.15 over the groove's
+closed first layer). The frame's bulkhead top drops to 48.45 (BULK_TOP, frame only); this part's top wall stays at 48.5.
+
 Round 5 (cover strength round 4: the anchor held the post's foot in x only by the preload's friction, against
 fdm-design-rules §4; with the preload gone the top wall fell to SF 1.37): a 90° V-ridge under the post's foot sits in a
 matching groove in the frame's rail block (0.1 clear per flank), so the foot is held in x by geometry and the M3 x 45 only
@@ -80,15 +88,19 @@ SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)        # beside slot A's end / 
                                                         # piece (b)'s whole first layer; claw DFM round 3 fix 1)
 SUP_GAP = 0.25                               # one layer (0.2) and a bit, under each piece
 TIE2_POST_T = 8.0              # second tie's post, x 14.35..22.35 like the first tie's (claw strength round 3: 4 -> 8)
-TIE2_FOOT_Z = ZS - RAIL_IN + VSEAT_CLR   # 17.85: the post's foot flats (y 24..32) stand 0.1 over the frame's rail
-                                         # block (z 17.75; round 4 17.75, round 3 19.25); the ridge below them locates
+FOOT_CLR = 0.30                # the post's foot flats over the frame's CAD rail block top (17.75), round 6 (cover round 5
+                               # review): the block prints at 17.8, so 0.25 as printed; the ridge, never the flats, stops
+                               # the cover (round 5: 0.1, tied to VSEAT_CLR)
+TIE2_FOOT_Z = ZS - RAIL_IN + FOOT_CLR   # 18.05: the post's foot flats (y 24..32); independent of VSEAT_CLR (round 5 17.85,
+                                        # round 4 17.75, round 3 19.25); the ridge below them locates
 # V-ridge under the post's foot (round 5, cover strength round 4; VSEAT_* in claw_frame.py): the frame groove's 90° V
-# raised VSEAT_CLR, i.e. 0.1 clear per flank (horizontal), virtual apex z 17.05 (0.8 under the flats), base x
-# 14.45..16.05. In print (G +y up) it is a vertical prism, its start a 45° lead-in that continues the post's underside.
-# The tip is cut flat at RIDGE_TIP_Z: the groove's bottom 0.25 (z 16.95..17.2, a 0.3 mm slot at its first layer) will
-# not print open in the frame, so a full-height ridge could bottom there and hold the cover up.
-RIDGE_APEX_Z = ZS - RAIL_IN - VSEAT_D + VSEAT_CLR   # 17.05: virtual apex (groove bottom 16.95 + 0.1)
-RIDGE_TIP_Z = RIDGE_APEX_Z + 0.2                     # 17.25: flat tip 0.4 wide, 0.05 over the groove's closed first layer
+# raised VSEAT_CLR (round 6: 0, its flanks line to line with the groove's in CAD), virtual apex z 16.95. Its 45° flanks
+# run on up to the flats (z 18.05): base x 14.15..16.35, 2.2 wide, 0.2 behind the post's back face (x 14.35) and 0.2 from
+# the anchor hole's edge (x 16.55). In print (G +y up) it is a vertical prism, its start a 45° lead-in that continues
+# the post's underside. The tip is cut flat at RIDGE_TIP_Z: the groove's bottom 0.25 (z 16.95..17.2, a 0.3 mm slot at its
+# first layer) will not print open in the frame, so a full-height ridge would bottom there and hold the cover up.
+RIDGE_APEX_Z = ZS - RAIL_IN - VSEAT_D + VSEAT_CLR   # 16.95: virtual apex (= the groove's bottom with VSEAT_CLR 0)
+RIDGE_TIP_Z = 17.35            # absolute (round 6): flat tip 0.8 wide, 0.15 over the groove's closed first layer (17.2)
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -160,8 +172,8 @@ def second_tie():
     material starts just above the pass-through's 45° teardrop flanks (apex y 2k = 16.12)."""
     z0, z1, zp = ZS - TIE_Z, ZS + TIE_Z, ZS + RAIL_IN           # 19.25, 35.25, 36.75 (the post meets the lip)
     yp = TIE2_Y[0] - (zp - z0)                                  # 6.5: where the web's growth from the post starts
-    zf = TIE2_FOOT_Z                                            # 17.85: the post's foot flats, 0.1 over the rail block
-    yf = TIE2_Y[0] - (zp - zf)                                  # 5.1: the post's 45° underside meets the lip here
+    zf = TIE2_FOOT_Z                                            # 18.05: the post's foot flats, 0.3 over the rail block
+    yf = TIE2_Y[0] - (zp - zf)                                  # 5.3: the post's 45° underside meets the lip here
     post = _yz_prism([(yf - 0.01, zp + 0.01), (HALF_Y, zp + 0.01), (HALF_Y, zf), (TIE2_Y[0], zf)], RAIL_X1 - TIE2_POST_T,
                      RAIL_X1 + 0.01)
     post += ridge()
@@ -176,9 +188,10 @@ def second_tie():
 
 
 def ridge():
-    """The V-ridge under the second post's foot (round 5): the frame groove's 90° V raised VSEAT_CLR, cut flat at
-    RIDGE_TIP_Z, along y from the foot's start to the cover's +y end. Its -y end is the post's 45° underside carried on
-    down (y + z >= TIE2_Y[0] + TIE2_FOOT_Z), so in print it starts with a 45° lead-in over y 24..24.6."""
+    """The V-ridge under the second post's foot (round 5; round 6: VSEAT_CLR 0, flanks up to the flats at 18.05): the
+    frame groove's 90° V raised VSEAT_CLR, cut flat at RIDGE_TIP_Z, along y from the foot's start to the cover's +y
+    end. Its -y end is the post's 45° underside carried on down (y + z >= TIE2_Y[0] + TIE2_FOOT_Z), so in print it
+    starts with a 45° lead-in over y 24..24.7."""
     zf, za, zt = TIE2_FOOT_Z, RIDGE_APEX_Z, RIDGE_TIP_Z
     top = zf + 0.01                                             # 0.01 into the post
     pts = [(VSEAT_XC - (top - za), top), (VSEAT_XC + (top - za), top), (VSEAT_XC + (zt - za), zt),

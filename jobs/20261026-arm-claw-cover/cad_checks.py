@@ -56,35 +56,69 @@ check("first tie: post x 14.35..22.35 + web, y -32..-24, |z - 27.25| <= 8", soli
 check("second tie: 8 mm post x 14.35..22.35 (claw strength round 3: 4 -> 8) + web, full at y 24..32",
       solid(14.4, 25, 20) and not solid(14.3, 25, 20) and solid(22.3, 25, 20) and solid(16, 31.9, 30)
       and solid(30, 24.1, 19.4) and solid(30, 24.1, 35.1) and not solid(30, 28, 35.4) and not solid(30, 28, 19.1))
-check("second tie's post foot flats z 17.85 over y 24..32, 0.1 over the rail block (round 5; round 4 17.75)",
-      all(solid(x, y, 17.9) and not solid(x, y, 17.8) for x in (14.4, 16.2, 22.3) for y in (24.1, 26.0, 31.9)),
-      "probes x 14.4 / 16.2-22.3 (beside the ridge), y 24.1-31.9")
-check("post's 45° underside: from the foot at y 24 to the lip at y 5.1 (2.6 over the claw servo's case at y 5.9)",
-      solid(16, 15, 26.95) and not solid(16, 15, 26.75) and solid(16, 5.9, 36.05) and not solid(16, 5.9, 35.85)
-      and solid(16, 5.2, 36.8) and not solid(16, 4.9, 36.7), "z = 17.85 + (24 - y)")
-zt, za, xc = ns["RIDGE_TIP_Z"], ns["RIDGE_APEX_Z"], ns["VSEAT_XC"]
-check("V-ridge under the foot (round 5): 90° V, virtual apex z 17.05 (0.8 under the flats) on x 15.25, base x "
-      "14.45..16.05, tip cut flat at z 17.25 (0.4 wide), full from y 24.6 to 32, 45° lead-in from y 24",
-      abs(za - 17.05) < 1e-9 and abs(zt - 17.25) < 1e-9 and abs(xc - 15.25) < 1e-9
+check("second tie's post foot flats z 18.05 over y 24..32: FOOT_CLR 0.30 over the rail block's CAD top 17.75 (round 6; "
+      "round 5 17.85)", abs(ns["TIE2_FOOT_Z"] - 18.05) < 1e-9 and abs(ns["FOOT_CLR"] - 0.30) < 1e-9
+      and all(solid(x, y, 18.1) and not solid(x, y, 18.0) for x in (16.45, 21.0, 22.3) for y in (24.1, 26.0, 31.9)),
+      "probes x 16.45 (between the ridge and the anchor hole) / 21.0 / 22.3, y 24.1-31.9")
+check("post's 45° underside: from the foot at y 24 to the lip at y 5.3",
+      solid(16, 15, 27.15) and not solid(16, 15, 26.95) and solid(16, 5.9, 36.25) and not solid(16, 5.9, 36.05)
+      and solid(16, 5.4, 36.8) and not solid(16, 5.1, 36.7), "z = 18.05 + (24 - y)")
+zt, za, xc, zf = ns["RIDGE_TIP_Z"], ns["RIDGE_APEX_Z"], ns["VSEAT_XC"], ns["TIE2_FOOT_Z"]
+check("V-ridge under the foot (round 6): the groove's own 90° V (VSEAT_CLR 0), virtual apex z 16.95 on x 15.25, flanks "
+      "up to the flats (base x 14.15..16.35 at z 18.05, 2.2 wide), tip cut flat at z 17.35 (0.8 wide), full from y 24.7 "
+      "to 32, 45° lead-in from y 24",
+      abs(za - 16.95) < 1e-9 and abs(zt - 17.35) < 1e-9 and abs(xc - 15.25) < 1e-9
       and all(solid(xc + s * (z - za - 0.05), y, z) and not solid(xc + s * (z - za + 0.05), y, z)
-              for s in (-1, 1) for z in (17.3, 17.55, 17.8) for y in (24.8, 28.0, 31.9))
-      and solid(xc, 28, 17.3) and not solid(xc, 28, 17.2) and solid(xc - 0.15, 31.9, 17.3) and not solid(xc, 32.1, 17.5)
-      and solid(xc, 24.3, 17.6) and not solid(xc, 24.3, 17.5) and solid(xc, 24.65, 17.3) and not solid(xc, 24.5, 17.3)
-      and not solid(xc, 23.9, 17.8), "flanks probed ±0.05 at z 17.3 / 17.55 / 17.8, y 24.8 / 28 / 31.9")
+              for s in (-1, 1) for z in (17.4, 17.7, 18.0) for y in (24.9, 28.0, 31.9))
+      and solid(xc, 28, 17.4) and not solid(xc, 28, 17.3) and solid(xc + 0.35, 28, 17.4) and solid(xc - 0.35, 28, 17.4)
+      and not solid(xc, 32.1, 17.5)
+      and solid(xc, 24.5, 17.6) and not solid(xc, 24.4, 17.6) and solid(xc, 24.7, 17.4) and not solid(xc, 24.6, 17.4)
+      and not solid(xc, 23.9, 18.0), "flanks probed ±0.05 at z 17.4 / 17.7 / 18.0, y 24.9 / 28 / 31.9; lead-in y + z >= 42.05")
+x_b0, x_b1 = xc - (zf - za), xc + (zf - za)
+ax, ay = ns["ANCHOR_XY"]
+r_hole = (ns["M3_CLEAR"] + ns["HOLE_COMP"]) / 2
+check("ridge's -x base 0.2 behind the post's back face (x 14.35), a bump on the post's face in print",
+      abs((ns["LIP_X0"] - x_b0) - 0.2) < 1e-9 and solid(x_b0 + 0.05, 28, zf - 0.01) and not solid(x_b0 - 0.05, 28, zf - 0.01)
+      and not solid(ns["LIP_X0"] - 0.05, 28, zf + 0.05), f"base x {x_b0:.2f}..{x_b1:.2f}; post's back face x {ns['LIP_X0']:.2f}")
+check("ridge's +x base 0.2 from the anchor hole's edge on the flats plane",
+      abs((ax - r_hole) - x_b1 - 0.2) < 1e-9 and solid(x_b1 - 0.05, ay, zf - 0.01) and not solid(x_b1 + 0.05, ay, zf - 0.01)
+      and not solid(ax - r_hole + 0.05, ay, zf + 0.1) and solid(ax - r_hole - 0.05, ay, zf + 0.1),
+      f"ridge {x_b1:.2f}, hole edge {ax - r_hole:.2f}")
 fr = runpy.run_path(str(JOB.parent / "20261026-arm-claw-frame" / "model.py"), run_name="model")["design"]()
-seat = Pos(13.5, 22.5, 16.5) * Box(4, 10.5, 2, align=(Align.MIN,) * 3)     # x 13.5..17.5, y 22.5..33, z 16.5..18.5
 ov = d & fr
 ov_v = sum(s.volume for s in ov.solids()) if ov else 0.0
+seat = Pos(13.5, 22.5, 16.5) * Box(4, 10.5, 2, align=(Align.MIN,) * 3)     # x 13.5..17.5, y 22.5..33, z 16.5..18.5
 gap_fl = (d & seat).distance_to(fr & seat)
-check("ridge in the frame's V-groove as fitted: no overlap with the frame; 0.1 clear per flank horizontal (0.071 normal), "
-      "flats 0.1 over the block, flat tip 0.3 over the groove's bottom", ov_v < 1e-6 and abs(gap_fl - 0.1 / 2 ** 0.5) < 0.002,
-      f"overlap {ov_v:.4f} mm3, min gap {gap_fl:.4f}")
-ax, ay = ns["ANCHOR_XY"]
+flats = Pos(16.6, 24.5, 17.0) * Box(5.7, 7.4, 1.5, align=(Align.MIN,) * 3)  # beside the ridge: the flats over the block
+gap_ft = (d & flats).distance_to(fr & flats)
+topw = Pos(3.5, -32, 47.0) * Box(6.5, 64, 3, align=(Align.MIN,) * 3)       # the top wall over the bulkhead (x 3.5..10)
+gap_tw = (d & topw).distance_to(fr & topw)
+z_slot = 17.2                                   # top of the groove's first layer (17.0..17.2), which prints closed
+check("CAD, cover seated at nominal: the ridge's flanks touch the groove's (0 mm³, distance 0) before anything else: the "
+      "foot's flats 0.30 over the block, the tip 0.15 over the groove's closed first layer, the top wall 0.05 over the "
+      "bulkhead", ov_v < 1e-6 and gap_fl < 1e-6 and abs(gap_ft - 0.30) < 1e-6 and abs(zt - z_slot - 0.15) < 1e-9
+      and abs(gap_tw - 0.05) < 1e-6,
+      f"overlap {ov_v:.4f} mm3, flanks {gap_fl:.4f}, flats {gap_ft:.4f}, tip over 17.2 {zt - z_slot:.3f}, top wall {gap_tw:.4f}")
+# As printed (round 6 scratch slice of both part.stl files with the arm's command, G-code read back; design_review.md):
+# frame bulkhead top 48.4, rail block top 17.8, groove walls at half-widths 0.15 / 0.35 / 0.55 / 0.75 in the layers
+# ending 17.2 / 17.4 / 17.6 / 17.8 (each layer's top corner 0.1 inside the CAD flank); the cover's ridge, tip and flats
+# print to CAD (external perimeters 0.225 inside them). A corner bead rounding r (0.075 nominal) moves the 45° ridge's
+# contact (2 - sqrt 2) r further out. Lowered onto the printed frame, the ridge lands on those corners and sits `lift` above
+# its CAD seat:
+Z_BULK_PR, Z_BLOCK_PR, INSET, R_BEAD = 48.4, 17.8, 0.1, 0.075
+lift = INSET - (2 - 2 ** 0.5) * R_BEAD
+top_pr = ns["Z_TOP0"] + lift - Z_BULK_PR
+flat_pr = zf + lift - Z_BLOCK_PR
+tip_pr = zt + lift - z_slot
+check("as printed, nominal: the ridge lands on the groove's layer corners first; before the screws the top wall stands "
+      "~0.16 over the printed bulkhead (BUILD_GUIDE §4 step 9: a 0.03 feeler must go in), the flats ~0.3 over the block, "
+      "the tip ~0.2 over the closed first layer", 0.10 <= top_pr <= 0.20 and flat_pr >= 0.25 and tip_pr >= 0.15,
+      f"lift {lift:.3f}: top wall {top_pr:.3f}, flats {flat_pr:.3f}, tip {tip_pr:.3f}")
 anc = [h for h in holes if abs(h["diameter"] - 3.6) < 0.01 and abs(h["point_on_axis"][0] - ax) < 0.01
        and abs(h["point_on_axis"][2] - (ay + 32)) < 0.01]
-check("anchor hole Ø3.4 + HOLE_COMP = Ø3.6 at (18.35, 28), vertical through the top wall, lip and post z 17.85..51.5 "
-      "(teardrop +y); its edge 0.5 from the ridge's base",
-      len(anc) == 1 and all(not solid(ax, ay, z) for z in (17.9, 25, 36, 40, 49, 51.4))
+check("anchor hole Ø3.4 + HOLE_COMP = Ø3.6 at (18.35, 28), vertical through the top wall, lip and post z 18.05..51.5 "
+      "(teardrop +y)",
+      len(anc) == 1 and all(not solid(ax, ay, z) for z in (18.1, 25, 36, 40, 49, 51.4))
       and not solid(16.6, ay, 25) and solid(16.5, ay, 25)
       and not solid(ax, ay + 2.4, 30) and solid(ax, ay + 2.7, 30) and not solid(ax + 1.75, ay, 30) and solid(ax + 1.85, ay, 30)
       and not solid(ax, ay - 1.75, 30) and solid(ax, ay - 1.85, 30), f"{[h['arc_deg'] for h in anc]}")
