@@ -1,7 +1,7 @@
 # Desktop robot arm: build guide
 
 Robot 1 of 3 (then the tracked rover, then the hexapod). Four joints plus a parallel claw, 5 hobby servos, an ESP32 DevKit, a 6 V supply and PETG, with an optional Logitech Brio 4K webcam on the claw.
-Reach is 284 mm horizontally and the fingertips touch the desk from about 76 to 260 mm out. The claw opens 0–44 mm with about 12 N per finger at stall.
+Reach is 284 mm horizontally. Within the servos' travel the fingertips come down to the desk from about 125 to 245 mm out, and the sketch's desk guard stops them about 8 mm above it. The claw opens 0–44 mm with about 12 N per finger at stall.
 
 **Payload:**
 - 50 g without the camera.
@@ -35,10 +35,14 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
 | 3 | MG996R servo (metal gear, 180°) | Base, shoulder, elbow. Keep the bag: you need the **double-arm horn** and the screws |
 | 2 | MG90S micro servo (metal gear, 180°) | Wrist and claw. Keep the **single-arm horn** (wrist) and the **double-arm horn** (claw pinion) |
 | 1 | ESP32 DevKit (38-pin DevKitC or 30-pin DOIT) | Pins soldered down |
-| 1 | 6 V 5 A DC adapter, 5.5 × 2.1 mm plug | Servo power. 5 A covers two MG996R stalling at once |
-| 1 | 5.5 × 2.1 mm panel-mount DC jack (Ø11 mm thread) | Goes in the base's −X wall |
+| 1 | 6 V 5 A DC adapter, 5.5 × 2.1 mm plug, **centre positive** | Servo power. 5 A covers two MG996R stalling at once. Unloaded it should read 6.2 V or less: the MG90S is rated 4.8–6.0 V |
+| 1 | 5.5 × 2.1 mm panel-mount DC jack (Ø11 mm thread) | Goes in the base's −X wall. Label it "6 V, centre +" |
 | 1 | 1000 µF 10 V (or higher) electrolytic capacitor | Across the servo supply, at the jack |
-| 1 | 5 V buck module (e.g. MP1584 or LM2596, set to 5.0 V) | *Optional*: runs the ESP32 from the 6 V supply without USB |
+| 1 | Inline DC switch lead, 5.5 × 2.1 mm plug to socket, rated 5 A or more | Between the adapter and the jack, on the desk within reach: the arm's off switch and emergency stop |
+| 1 | 5 A fuse: inline blade-fuse holder with a 5 A blade, or a 5 A (hold) polyfuse | In the + wire from the jack to the power bus |
+| *opt.* | SMBJ6.5A TVS diode (6.5 V, unidirectional) | Across the bus after the fuse, stripe to +6 V: a 9–12 V or reversed adapter then blows the fuse instead of the servos |
+| *opt.* | 5 × 10 kΩ resistor | Pull-down from each servo signal to GND: the pins float until the sketch starts |
+| *opt.* | USB phone charger (5 V, 1 A) | Runs the ESP32 through its USB port when no PC is connected. The ESP32 always runs from USB: there is no buck |
 | ~15 | Female–female and female–male jumper wires, servo extension leads (2 × 30 cm) | The shoulder, elbow, wrist and claw leads must reach the base |
 | 3 | M3 × 6 self-tapping (pan head) | Ring tabs. A longer screw would reach the ESP32 under the plate |
 | 3 | M3 × 10 self-tapping (pan head) | Cradle, from below into the counterbores. Not longer: the boss pilots are 6 mm deep |
@@ -67,34 +71,46 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
 ## 3. Wiring
 
 ```
-6 V adapter ─► DC jack ─┬─ 1000 µF (+ to +6 V) ─┐
-                        ├─► servo V+ (red) × 5  │
-                        └─► servo GND (brown) × 5 ─┴─► ESP32 GND   ← common ground is required
-(optional) 6 V ─► 5 V buck ─► ESP32 5V/VIN pin          (or power the ESP32 from USB)
+6 V adapter ─► inline switch ─► DC jack + ─► 5 A fuse ─► bus +6 V ─┬─ 1000 µF (+ to +6 V)
+(6 V, centre +)    (off / e-stop)                                    ├─ SMBJ6.5A (optional, stripe to +6 V)
+                                                                     └─► servo V+ (red) × 5
+                                DC jack − ─────────────► bus GND ───┬─ capacitor −, TVS anode
+                                                                     ├─► servo GND (brown) × 5
+                                                                     └─► ESP32 GND   ← common ground is required
 
-ESP32 GPIO ─► servo signal (orange/yellow)
+ESP32 GPIO ─► servo signal (orange/yellow)          (optional: 10 kΩ from each signal to GND)
   GPIO13  base yaw (MG996R)
-  GPIO14  shoulder (MG996R)
+  GPIO32  shoulder (MG996R)
   GPIO27  elbow (MG996R)
   GPIO26  wrist (MG90S)
   GPIO25  claw (MG90S)
 
-Brio 4K ─► USB-C cable ─► your PC (vision)        ESP32 USB ─► your PC (commands)
+ESP32 USB ─► your PC (commands, and the ESP32's power), or a USB phone charger when no PC is used
+Brio 4K ─► USB-C cable ─► your PC (vision)
 ```
 
 - Never power the servos from the ESP32's 5V/3V3 pins: the arm can draw several amps.
-- Never connect the 6 V supply directly to the ESP32's 3V3 pin.
-- These GPIOs are not boot-strapping pins, so the board boots normally with the servos connected.
-- Make a 5-way power bus inside the base for V+ and GND: a small piece of stripboard, or Wago-style lever connectors.
+- The ESP32 runs from its USB port only. Never connect the 6 V supply, or a buck converter, to its 5V or 3V3 pin: Espressif allows only one of USB, 5V and 3V3 at a time, and a buck would let the PC's USB port feed the servos when the adapter is unplugged.
+- **Before the first connection**, check the adapter with a meter: 6.2 V or less unloaded, centre pin positive. A 9 V or 12 V adapter with the same plug destroys the MG90S servos, and a centre-negative one reverses the capacitor and the servos.
+- The inline switch is the arm's off switch: keep it within reach while the arm moves.
+- None of these GPIOs is a strapping pin (0, 2, 5, 12, 15) or input-only (34–39). The shoulder is on GPIO32, not GPIO14: GPIO14 puts out a PWM signal at boot, and the shoulder carries the whole arm.
+- Make a 5-way power bus inside the base for V+ and GND: a small piece of stripboard, or Wago-style lever connectors. Run the 6 V from the jack through the fuse to the bus in 20–22 AWG wire, not jumper wire.
+- GPIO13, 25, 26 and 27 are ADC2 pins. That's fine for servo signals, but any analog input added later must use ADC1 (GPIO32–39): ADC2 stops working once Wi-Fi is on.
 
 ## 4. Centre the servos, then assemble
 
 The horns must go on with every servo at its centre position (90°) and the links in their neutral pose. Otherwise a joint's travel won't line up with its collision-free range.
 
-1. **Flash and centre.**
+1. **Flash, find the end stops, and centre.**
    - Wire everything (section 3).
-   - Flash `arm_test/arm_test.ino`: Arduino IDE, board "ESP32 Dev Module", library **ESP32Servo**.
-   - Open the Serial Monitor at 115200 and type `c`. This centres the base, shoulder, elbow and wrist and closes the claw servo.
+   - Flash `arm_test/arm_test.ino`: Arduino IDE, board "ESP32 Dev Module" on the arduino-esp32 3.x core, library **ESP32Servo** 3.x.
+   - Plug in the USB first, then switch on the 6 V. Open the Serial Monitor at 115200 and type `c`.
+   - **End stops**, one servo at a time, with a horn pushed loosely onto the spline as a pointer. Hobby servos don't all turn 180° between 500 and 2500 µs; one that hits its end stop first stalls there at full current.
+     - Type `u s 1500`, then step down 100 µs at a time (`u s 1400`, `u s 1300` …) to `u s 500`. If the horn stops turning or the servo buzzes before 500, come back in 20 µs steps until it is quiet, then 30 µs more, and note that pulse.
+     - Do the same upwards to `u s 2500`. Type `c`.
+     - Repeat for `b`, `e`, `w` and `g` (the claw).
+     - If a servo stopped short, put its two pulses into `minUs` and `maxUs` on its line of the sketch's `joints[]` table and re-flash.
+   - Type `c`. This centres the base, shoulder, elbow and wrist and closes the claw servo.
    - Leave the power on while you fit the horns.
 2. **Base.**
    - Screw the base to the desk or to a board with 4 × M3×50 wood screws through the corner pillars.
@@ -155,15 +171,34 @@ The horns must go on with every servo at its centre position (90°) and the link
 
 ## 5. First power-up and joint limits
 
-Use the Serial Monitor commands in `arm_test.ino` to move one joint at a time. For example, `s 100` sets the shoulder to 100° and `g 30` opens the claw 30 mm. The sketch clamps every joint to the limits the assembly check found collision-free (`assembly_check.json`). Joints move 1° per 15 ms; `x` stops a move.
+**Power order:** plug in the ESP32's USB first, then switch on the 6 V. The servo signal pins float until the sketch starts, and a servo can twitch on a floating signal (the optional 10 kΩ pull-downs stop that). **Type `c` before you switch off:** the arm then rests upright, which is also the pose the sketch restores next time.
+
+The sketch saves the pose and the claw trim on the ESP32 after every move. After a reset (power-up, or the PC opening the serial port) the servos start where they stopped instead of jumping to 90°. The `k` trim survives power-off and re-flashing, so copying it into the sketch is optional. A re-flash with a different `GRIP_OPEN_DIR` or `GRIP_CLOSED_DEG` starts the claw closed at the new value.
+
+Use the Serial Monitor commands in `arm_test.ino` to move one joint at a time. For example, `s 100` sets the shoulder to 100° and `g 30` opens the claw 30 mm. Joints move 1° per 15 ms. `x` stops a move for good: no later command resumes it. `p` prints the angles and moves nothing. A command without a valid number (`s`, `s abc`) is refused with `err`.
 
 | Joint | Command | Meaning |
 |---|---|---|
 | Base | `b 0–180` | yaw ±90° |
 | Shoulder | `s 0–180` | 90 = upright. The link reaches horizontal at 0 or 180, depending on the mounting side: check the direction with small moves first |
-| Elbow | `e 0–180` | 90 = straight. Collision-free to ±170°, so the whole servo range is safe |
-| Wrist | `w 0–180` | 90 = straight. Collision-free to ±150°; the camera clears the arm in every pose |
+| Elbow | `e 0–180` | 90 = straight. The arm can't hit itself anywhere in the servo range (clear to ±170°); the desk guard keeps it off the desk |
+| Wrist | `w 0–180` | 90 = straight. Clear of the arm to ±150°; the camera clears the arm in every pose |
 | Claw | `g 0–44` (mm) | 0 = closed. 3.18° of servo per mm; `k` trims the closed angle |
+| Any | `u <joint> <µs>` | A raw pulse, moved slowly: the end-stop test of section 4, step 1. `u s 1500` = shoulder at 1500 µs |
+
+**Desk guard.** Limiting each joint on its own doesn't keep the claw or the camera off the desk: with the shoulder low, the elbow and wrist can still drive the jaws into it. So the sketch checks every 1° step against a side view of the arm and stops the move with `blocked: desk` before the claw, the jaws or the camera reaches the desk; the fingertips stay about 8 mm above it. From a pose that is already too low, a move may only go up. It needs two signs, set once after assembly with the claw empty and the switch within reach:
+
+1. Type `c`, then `s 60`: the arm leans towards the side that `s 0` points to.
+2. Type `e 100`. If the forearm's end rises, keep `EL_SIGN = +1`; if it drops, set `EL_SIGN = -1`. Type `e 90`.
+3. Type `w 100`. If the fingertips rise, keep `WR_SIGN = +1`; if they drop, set `WR_SIGN = -1`. Type `w 90`, then `c`.
+4. Without the Brio, set `CAMERA_FITTED = false`: the wrist may then come closer to the desk.
+5. Re-flash if you changed anything. Check: type `s 0`, then swing the forearm down (`e 0` with `EL_SIGN = +1`, `e 180` with `-1`). It should stop with `blocked: desk` when the forearm is about 25° below horizontal (30° without the camera). If it keeps going, type `x` and recheck the signs.
+
+The guard takes the desk to be level with the underside of the base, which is screwed down on it.
+
+**Claw scale:** type `g 40` and measure the gap between the grip faces with calipers. It should be 40 ± 1 mm. If not, the claw servo turns more or less than 180° between its `minUs` and `maxUs`: set `DEG_PER_MM` to 3.183 × 40 / (the measured gap) and re-flash.
+
+**Holding something:** command the object's width minus 2 mm, not `g 0`. At `g 0` the claw servo stalls against the object and heats up.
 
 Then do the **proof tests** in each part's `spec.md` §8, for example 1 kg hung at the elbow axis for 1 minute with the shoulder holding, and the claw's grip tests. The strength verdicts rely on them, because there's no measured PETG data in `library/` yet. Record the results in each job's `inspection.md`.
 
@@ -171,9 +206,10 @@ Then do the **proof tests** in each part's `spec.md` §8, for example 1 kg hung 
 
 The Brio plugs into your PC, and the ESP32's USB port takes commands from the same PC. `pc/arm_pc_control.py` is a starting point. Install its dependencies with `pip install pyserial opencv-python`.
 
-- `python pc/arm_pc_control.py --port COM5 preview` shows the camera with a crosshair. `o` and `c` open and close the claw, `[` and `]` move the wrist, `q` quits.
-- `python pc/arm_pc_control.py --port COM5 move 90 60 80 100 20` moves every joint together (base, shoulder, elbow, wrist in degrees, claw in mm) and waits for `ok`.
-- In your own code, `Arm(port).move(...)` and `.status()` use the same serial commands (`m`, `?`, `x`; see the top of `arm_test.ino`).
+- `python pc/arm_pc_control.py --port COM5 preview` shows the camera with a crosshair. `o` and `c` open and close the claw, `[` and `]` move the wrist, `q` quits. It asks the camera for MJPG at 1920 × 1080 and 30 fps (uncompressed 1080p doesn't fit through USB 2.0, which many thin cables are) and prints the size it got. Camera 0 is often a laptop's own camera: if the picture isn't the Brio's, use `--camera 1`.
+- `python pc/arm_pc_control.py --port COM5 move 90 60 80 100 20` moves every joint together (base, shoulder, elbow, wrist in degrees, claw in mm) and waits for `ok`. A move the desk guard stops ends with `arm: blocked: desk`.
+- In your own code, `Arm(port).move(...)` and `.status()` use the same serial commands (`m`, `?`, `x`; see the top of `arm_test.ino`). `move()` returns True when every joint arrived and False after `stop()`. It raises `RuntimeError` when the sketch refuses the move (`err …`) or the desk guard stops it (`blocked: desk`), `TimeoutError` when the arm doesn't answer, and `ValueError` for a NaN target.
+- **Keep one connection open** for a whole session, as the preview does, rather than running the script once per move. It opens the port with DTR and RTS off, which keeps most PCs from resetting the ESP32, but not all. After a reset the sketch restarts where the arm stopped, which takes about 2 s.
 - The camera is mounted turned 90° to the arm. With the claw level, "up" is at the right of the raw image; the preview rotates it upright.
 - The jaws sit near the middle of the picture, about 70–100 mm from the lens. Set the Brio's field of view to 78° or 65° in Logi Tune for a closer view.
 
