@@ -58,7 +58,7 @@ Design loads, as re-derived by strength round 2 (see the strength.md files):
 ## 8. Acceptance criteria (measurable)
 - [ ] The disc seats flat on the hub with all 4 screws through the slots; it runs true (no visible wobble)
 - [ ] The hub's set screw bites the shaft flat; the hub turns 0.5 mm clear of the skin
-- [ ] **Proof tests** (strength round 2; measure the motors first, see the chassis spec §8):
+- [ ] **Proof tests** (strength round 3; measure each motor's stall torque first, **with the hub on and before the sprocket disc is fitted**, so a motor stronger than the specified N20 never drives the printed teeth; see the chassis spec §8):
   1. **Torque.** Hold the track still and stall the motor at **100 % PWM on a freshly charged pack for 1 s, 5 times** (about 182 N·mm, 1.14 × the design value and the most the specified N20 gives). Pass: no slip of the hub on the shaft or of the disc on the hub (pen marks); no cracked or sheared tooth; the sprocket still runs true.
   2. **Tooth.** Mount the sprocket on its hub on a spare N20, or on a 3 mm D shaft in a vice. Hang **2 kg (19.6 N, 2 × the 9.9 N stall pull)** for 1 min from one link seated on one horizontal tooth. Pass: no crack at the tooth root, no permanent set.
 

@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 2,
+    "DESIGN": 3,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 in review (rounds 1 and 2 FAIL): concept C drivetrain (N20 rolled 45\u00b0, hub), jack-screw idler stop, inserts; a third failure escalates to the user",
+    "DESIGN": "FAIL round 3 (third DESIGN failure): strength SF 0.60 (idler clamp yaw at reverse stall), plus the sliding nut, the 1 mm skin and the nacelle wall root in the drop",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
-  "updated": "2026-10-26T08:07:54+00:00"
+  "open_questions": [
+    "Third DESIGN failure. Proposed round 4: steel plates under the idler bolt head (21 \u00d7 10 \u00d7 2, recessed) and nut (14 \u00d7 8 \u00d7 2, in a taller nut slot), and SKIN 1.0 \u2192 2.0 mm. Waiting for the user's decision."
+  ],
+  "updated": "2026-10-26T10:25:32+00:00"
 }

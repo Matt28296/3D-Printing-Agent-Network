@@ -47,8 +47,8 @@ Design loads, as re-derived by strength round 2 (see the strength.md files):
 
 ## 8. Acceptance criteria (measurable)
 - [ ] Spins freely on the bolt with < 0.5 mm axial play
-- [ ] **Proof tests** (strength round 2):
-  1. **Rearward pull.** Fit the idler on its bolt at mid-slot in the chassis, the jack screw set against the bolt head and a pen mark across the slot and the washer. Pull it **rearward, horizontally along the track line, with 4.5 kg (44 N, 1.5 × the 29.8 N reverse-stall load)** for 1 min, using a strap round the idler. Pass: the idler still spins freely; axial play < 0.5 mm; bore ovalisation < 0.1 mm; the bolt hasn't moved (pen mark).
+- [ ] **Proof tests** (strength round 3):
+  1. **Rearward pull.** Fit the idler on its bolt at mid-slot in the chassis, the jack screw set against the bolt head and a pen mark across the slot and the washer. Pull it **rearward, horizontally along the track line, with 4.5 kg (44 N, 1.5 × the 29.8 N reverse-stall load)** for 1 min, using a strap round the idler. Pass: the idler still spins freely; axial play < 0.5 mm; bore ovalisation < 0.1 mm; the bolt hasn't moved (pen mark); measured against a fixed mark on the chassis, the idler disc's rear face has moved ≤ 0.3 mm; the bolt stays square (≤ 0.5 mm runout at its tip). Run this test after the chassis's idler-clamp change (chassis strength round 3, change 1).
   2. **Chassis tests.** The chassis stall test, run **in reverse as well**, and the 5 cm drop also cover the idler. Afterwards it must still spin freely.
 
 ## 9. Notes and open questions

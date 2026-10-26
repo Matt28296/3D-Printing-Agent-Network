@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 in review (round 2 DFM PASS, strength NEEDS_TEST): changed in round 3 (heat-set inserts)",
+    "DESIGN": "FAIL round 3 (strength SF 2.49, rail top under the 20 N press): change RAIL_W 2.5 \u2192 4.5 in the next round",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T08:07:54+00:00"
+  "updated": "2026-10-26T10:25:32+00:00"
 }

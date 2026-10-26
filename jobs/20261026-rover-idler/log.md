@@ -11,3 +11,5 @@
 - 2026-10-26T08:03Z · cad-engineer · round 3: keeps its round Ø3.5 bore and Ø10 hub (design() now restores the shared sprocket model's BORE setting afterwards instead of forcing it to "D"), root chamfer from the disc circle; M3 × 40 class 12.9 fully threaded bolt with a DIN 9021 head washer and the jack-screw stop; elefant_foot_compensation 0.2 added to print_requirements "min"; cad_checks.py added; spec.md/design_brief.md updated; built, rendered, mesh_check + cad_checks OK (35.8 × 34.5 × 20 mm, 4 853 mm³) · ok
 - 2026-10-26T08:07Z · architect (as head-orchestrator) · status.json: stage DESIGN, DESIGN iterations 1; round 3 merged into robot-arm-test-build, fresh DFM and strength reviews next · ok
 - 2026-10-26T08:54Z · dfm-reviewer (round 3, independent) · design_review.md · PASS
+- 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · NEEDS_TEST
+- 2026-10-26T10:25Z · architect · spec §8 proof test updated to the round-3 strength review · ok

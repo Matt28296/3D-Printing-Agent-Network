@@ -10,3 +10,4 @@
 - 2026-10-26T08:03Z · cad-engineer · round 3: screw holes on the chassis insert columns (M3 × 8), MTS-102 toggle hole at (0, −23), Ø10 cable hole replaced by two 10 × 10.5 slots with a 3 mm tie bar, buck under the deck; cad_checks.py added; spec.md/design_brief.md rewritten (proof tests per strength round 2 + toggle and lid refit); built, rendered, mesh_check + cad_checks OK (154 × 76 × 7.1 mm, 31 377 mm³) · ok
 - 2026-10-26T08:07Z · architect (as head-orchestrator) · status.json: stage DESIGN, DESIGN iterations 1; round 3 merged into robot-arm-test-build, fresh DFM and strength reviews next · ok
 - 2026-10-26T08:54Z · dfm-reviewer (round 3, independent) · design_review.md · PASS
+- 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · FAIL (SF 2.49 at the rail top under the 20 N press: the lid rests on the walls, so the rail is an edge beam; change RAIL_W 2.5 → 4.5, SF 3.29). Second DESIGN failure
