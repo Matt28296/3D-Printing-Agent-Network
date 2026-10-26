@@ -62,7 +62,7 @@ NAMES = {  # short item names for the Prices sheet
     "m3washer.iso7089": "M3 washers Ø7", "m3washer.din9021": "M3 penny washers Ø9", "inserts": "M3 heat-set inserts",
     "dowel2x24": "Ø2 mm steel rod 100 mm", "m2kit": "M2 screws + nuts", "m2nyloc": "M2 Nyloc nut",
     "selftap": "Self-tapping screws", "m25tap": "M2.5 × 6 self-tapping", "m17": "M1.7 × 5 horn screws",
-    "woodscrew": "Wood screws #4 × 2 in", "m3nut": "M3 hex nuts", "m2washer": "M2 washers", "thumbscrew": "1/4\"-20 thumb screw", "ptfe": "PTFE tape",
+    "woodscrew": "Wood screws #4 × 2 in", "m3nut": "M3 hex nuts", "m2washer": "M2 washers", "stripboard": "Stripboard + headers", "wire18": "18 AWG silicone wire", "tiemount": "Cable-tie mounts", "usbra": "Right-angle USB cable (ESP32)", "thumbscrew": "1/4\"-20 thumb screw", "ptfe": "PTFE tape",
     "rubberfeet": "Rubber feet", "consumables.foamtape": "Mounting tape", "consumables.hotglue": "Hot-glue sticks",
     "consumables.ca": "CA glue", "consumables.threadlocker": "Threadlocker (blue)", "flatbar": "14 ga steel strip",
     "petg.generic": "PETG 1 kg (Sunlu)", "petg.prusament": "PETG 1 kg (Prusament)", "electricity": "Electricity (NB Power)",
@@ -352,7 +352,7 @@ notes = [
     "Budget total: the same build with the cheapest price found per item (servos direct from Waveshare, and so on).",
     "Prices with confidence 'estimate' on the Prices sheet are typical store prices where no listing could be read; "
     "check them before ordering. Amazon.ca was not readable by the price search and is often cheaper for multi-packs.",
-    "PETG and print hours: arm from its latest slices; rover from its round-2 slices; hexapod estimated. They change "
+    "PETG and print hours: arm from its round-3 slices (the new claw is heavier); rover from its round-2 slices; hexapod estimated. They change "
     "with each design round.",
 ]
 for n in notes:
