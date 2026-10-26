@@ -1,11 +1,20 @@
 """Assembly interference and reach check for the desktop robot arm.
 
-Places every printed part (each model.py's design(), in its joint frame) plus servo and
-ESP32 dummies in the world frame for a set of joint poses, then measures the overlap
-volume of every pair of bodies. Overlaps under TOL mm³ count as touching (tabs resting on
-plates, horns in pockets). The claw's moving parts (pinion, both jaws) are also checked
-against each other and the frame and cover with exact solids, every 1 mm of jaw gap, where
-anything over STRICT_TOL (0.001 mm³) is a clash: a running fit has nothing to rest on.
+Places every printed part (each model.py's design(), in its joint frame) plus servo, ESP32 and
+camera dummies (the Brio carries a right-angle USB-C plug on its back and the thumb screw under
+its seat) in the world frame for a set of joint poses, then measures the overlap volume of every
+pair of bodies. Overlaps under TOL mm³ count as touching (tabs resting on plates, horns in
+pockets). Then:
+- joint sweeps, one joint at a time. The ELBOW and WRIST windows count only that joint's own
+  self-collisions (the parts beyond the joint against the link and servo it hangs on), which no
+  other joint can change. Hits against the turntable, base, ring and desk depend on the other
+  joints; they are listed, and the firmware's guard keeps the arm out of them (deep review 02 A4);
+- the desk search: poses with the fingertips 0-8 mm above the desk, nearest and farthest
+  collision-free, for any claw angle and with the claw within 5° of straight down. "pick from
+  desk" and the two "desk ..." poses come from it;
+- the viewer's demo poses (viz_export.DEMO): collision-free and above the desk;
+- the claw: claw_sequence_check.run(), its assembly sequence and running fit with exact solids
+  (deep review 03 SYS-01 / SYS-08).
 Writes assembly_check.json and renders assembly_*.png.
 
 Run from the project root:  .venv/bin/python jobs/20261025-robot-arm-assembly/assembly_check.py
@@ -25,21 +34,16 @@ import trimesh
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-from build123d import Align, Box, Pos, export_stl  # noqa: E402
-from build123d.topology import Shape  # noqa: E402
-from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform  # noqa: E402
-from OCP.gp import gp_Trsf  # noqa: E402
+from build123d import Align, Box, Cylinder, Pos, export_stl  # noqa: E402
 from hobby_parts import (BRIO_4K, ESP32_DEVKIT_38, MG90S, MG996R, link_back_z,  # noqa: E402
                          servo_dummy)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import claw_frame as C  # noqa: E402
+import claw_sequence_check as CS  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 TOL = 1.0  # mm³ (meshes; resting contacts and servo dummies in their pockets)
-STRICT_TOL = 0.001  # mm³ (exact solids; claw parts that slide or turn against each other)
-CLAW_MOVING = ("claw_pinion", "claw_jaw", "claw_jaw_b")
-CLAW_ALL = ("claw_frame", "claw_cover") + CLAW_MOVING
 EXPECTED = [{"base", "desk"}, {"cradle", "esp32"}, {"camera_mount", "brio"}]   # resting contacts
 JOBS = {
     "base": "20261025-arm-base", "ring": "20261025-arm-turntable-ring",
@@ -50,6 +54,20 @@ JOBS = {
     "claw_pinion": "20261026-arm-claw-pinion", "claw_jaw": "20261026-arm-claw-jaw",
     "camera_mount": "20261026-arm-camera-mount",
 }
+# parts that never move against each other: their pairs are checked in the named poses only
+RIGID = [{"base", "ring", "cradle", "esp32", "servo_base", "desk"}, {"turntable", "servo_shoulder"},
+         {"upper", "servo_elbow"}, {"forearm", "servo_wrist"},
+         {"claw_frame", "claw_cover", "camera_mount", "brio", "servo_grip"}]
+CLAW_SET = {"claw_frame", "claw_cover", "claw_pinion", "claw_jaw", "claw_jaw_b", "servo_grip", "camera_mount", "brio"}
+BEYOND = {"elbow": {"forearm", "servo_wrist"} | CLAW_SET, "wrist": CLAW_SET}   # parts carried by the joint ...
+ON = {"elbow": {"upper", "servo_elbow"}, "wrist": {"forearm", "servo_wrist"}}   # ... and what they hang on
+DESK_Z = -40.0
+# q = (yaw, shoulder, elbow, wrist in degrees, claw gap in mm). shoulder 0 = upper link horizontal
+# towards +X, + = up; elbow/wrist 0 = straight, + = up; gap 0 = closed, 44 = open.
+# Servo travel 0..180 for every joint (sketch LIMITS). Shoulder: servo 90 = upper link upright.
+# Elbow: the horn is fitted at servo 90 with the forearm 60° below the upper link (towards +X), so
+# servo 0..180 = elbow -150..+30 (deep review 03 SYS-03, BUILD_GUIDE §4). Wrist: servo 90 = straight.
+TRAVEL = {"shoulder": (0, 180), "elbow": (-150, 30), "wrist": (-90, 90)}
 
 
 def load_model(job):
@@ -76,21 +94,9 @@ def Rz(deg):
     m = np.eye(4); m[:2, :2] = [[c, -s], [s, c]]; return m
 
 
-def Rx(deg):
-    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
-    m = np.eye(4); m[1:3, 1:3] = [[c, -s], [s, c]]; return m
-
-
 def Ry(deg):
     c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
     m = np.eye(4); m[0, 0], m[0, 2], m[2, 0], m[2, 2] = c, s, -s, c; return m
-
-
-def place_shape(shape, m):
-    """Exact solid moved by a 4x4 rigid transform."""
-    tr = gp_Trsf()
-    tr.SetValues(*[float(m[i, j]) for i in range(3) for j in range(4)])
-    return Shape.cast(BRepBuilderAPI_Transform(shape.wrapped, tr, True).Shape())
 
 
 def frame(origin, x_dir, z_dir):
@@ -101,34 +107,17 @@ def frame(origin, x_dir, z_dir):
     return m
 
 
-def main():
-    mods = {k: load_model(v) for k, v in JOBS.items()}
+def chain(mods):
+    """The arm's kinematic chain: returns place(q) -> ({body: 4x4 world transform}, fingertip xyz).
+    q = (yaw, shoulder, elbow, wrist in degrees, claw gap in mm); see TRAVEL for the conventions."""
     tt = mods["turntable"]
-    print("tessellating parts ...", flush=True)
-    solid = {k: mods[k].design() for k in ("claw_frame", "claw_cover", "claw_pinion", "claw_jaw")}
-    mesh = {k: to_mesh(solid[k] if k in solid else m.design()) for k, m in mods.items()}
-    mesh["claw_jaw_b"] = mesh["claw_jaw"].copy()
-    mesh["servo_base"] = to_mesh(servo_dummy(MG996R, with_horn=False))
-    mesh["servo_shoulder"] = mesh["servo_base"].copy()
-    mesh["servo_elbow"] = mesh["servo_base"].copy()
-    mesh["servo_wrist"] = to_mesh(servo_dummy(MG90S, with_horn=False))
-    mesh["servo_grip"] = mesh["servo_wrist"].copy()
-    mesh["brio"] = to_mesh(Box(BRIO_4K.width, BRIO_4K.length, BRIO_4K.height,
-                               align=(Align.CENTER, Align.CENTER, Align.MIN)))
-    b = ESP32_DEVKIT_38
-    x1 = mods["cradle"].USB_END_X
-    yc = mods["cradle"].YC
-    pcb = Pos(x1 - b.length / 2, yc, -11.6 + b.pcb_t / 2) * Box(b.length, b.width, b.pcb_t)
-    shield = Pos(x1 - b.length + 9, yc, -10 + 3.2 / 2) * Box(18, 16, 3.2)     # WROOM module can
-    mesh["esp32"] = to_mesh(pcb + shield)
-    mesh["desk"] = to_mesh(Pos(0, 0, -45) * Box(800, 800, 10))   # desk top at Z = -40
-
     lb_mg, lb_sg = link_back_z(MG996R), link_back_z(MG90S)
     xs, zs, up_y = tt.XS, tt.ZS, tt.UP_Y
     t_up, t_fa = mods["upper"].T, mods["forearm"].T
+    l_up, l_fa = mods["upper"].L, mods["forearm"].L
     servo_in_g = frame((C.X_B, 0, C.ZS), (0, 1, 0), (1, 0, 0))
     pinion_in_g = frame((C.X_P0, 0, C.ZS), (0, 0, 1), (1, 0, 0))
-    turn_b = T(0, 0, C.ZS) @ Rx(180) @ T(0, 0, -C.ZS)            # jaw B = jaw A turned about the pinion axis
+    turn_b = T(0, 0, C.ZS) @ CS.Rx(180) @ T(0, 0, -C.ZS)            # jaw B = jaw A turned about the pinion axis
     cam_in_g = T(C.CAM_XC, 0, C.CAM_ZC) @ Ry(C.CAM_TILT)
 
     def place(q):
@@ -139,11 +128,11 @@ def main():
         P["servo_shoulder"] = W @ frame((xs, up_y, zs), (1, 0, 0), (0, 1, 0))
         U = W @ frame((xs, up_y + lb_mg, zs), (math.cos(math.radians(sh)), 0, math.sin(math.radians(sh))), (0, 1, 0))
         P["upper"] = U
-        P["servo_elbow"] = U @ T(100, 0, t_up)
-        F = U @ T(100, 0, t_up + lb_mg) @ Rz(-el)       # + = elbow up
+        P["servo_elbow"] = U @ T(l_up, 0, t_up)
+        F = U @ T(l_up, 0, t_up + lb_mg) @ Rz(-el)       # + = elbow up
         P["forearm"] = F
-        P["servo_wrist"] = F @ T(90, 0, t_fa)
-        G = F @ T(90, 0, t_fa + lb_sg) @ Rz(-wr)        # + = wrist up
+        P["servo_wrist"] = F @ T(l_fa, 0, t_fa)
+        G = F @ T(l_fa, 0, t_fa + lb_sg) @ Rz(-wr)        # + = wrist up
         d = gap / 2.0
         P["claw_frame"] = P["claw_cover"] = P["camera_mount"] = G
         P["servo_grip"] = G @ servo_in_g
@@ -154,122 +143,182 @@ def main():
         tip = G @ np.array([C.X_TIP - 3.0, 0.0, C.ZS, 1.0])      # between the fingertips
         return P, tip[:3]
 
-    def overlaps(P):
+    return place
+
+
+def brio_with_plug():
+    """Brio 4K in its camera frame (origin at the thread on the bottom face, +X lens, +Y long axis),
+    plus a right-angle USB-C plug on the BACK face (deep review 01 S5: ≈12 out × 8 thick × 25 along
+    the camera, port assumed centred on the back above the mount's 6 mm lip), plus the thumb
+    screw's knurled head (Ø16 × 5) under the 4 mm seat."""
+    w, l, h = BRIO_4K.width, BRIO_4K.length, BRIO_4K.height
+    body = Box(w, l, h, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    plug = Pos(-w / 2 - 6.0, 8.5, h / 2) * Box(12.0, 25.0, 8.0)
+    thumb = Pos(0, 0, -C.SEAT_T) * Cylinder(8.0, 5.0, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    return body + plug + thumb
+
+
+def main():
+    mods = {k: load_model(v) for k, v in JOBS.items()}
+    tt = mods["turntable"]
+    print("tessellating parts ...", flush=True)
+    solid = {k: mods[k].design() for k in ("claw_frame", "claw_cover", "claw_pinion", "claw_jaw", "camera_mount")}
+    mesh = {k: to_mesh(solid[k] if k in solid else m.design()) for k, m in mods.items()}
+    mesh["claw_jaw_b"] = mesh["claw_jaw"].copy()
+    mesh["servo_base"] = to_mesh(servo_dummy(MG996R, with_horn=False))
+    mesh["servo_shoulder"] = mesh["servo_base"].copy()
+    mesh["servo_elbow"] = mesh["servo_base"].copy()
+    mesh["servo_wrist"] = to_mesh(servo_dummy(MG90S, with_horn=False))
+    mesh["servo_grip"] = mesh["servo_wrist"].copy()
+    mesh["brio"] = to_mesh(brio_with_plug())
+    b = ESP32_DEVKIT_38
+    x1 = mods["cradle"].USB_END_X
+    yc = mods["cradle"].YC
+    pcb = Pos(x1 - b.length / 2, yc, -11.6 + b.pcb_t / 2) * Box(b.length, b.width, b.pcb_t)
+    shield = Pos(x1 - b.length + 9, yc, -10 + 3.2 / 2) * Box(18, 16, 3.2)     # WROOM module can
+    mesh["esp32"] = to_mesh(pcb + shield)
+    mesh["desk"] = to_mesh(Pos(0, 0, DESK_Z - 5) * Box(800, 800, 10))   # desk top at Z = -40
+
+    place = chain(mods)
+    zs = tt.ZS
+
+    def overlaps(P, rigid=True):
+        """Overlapping pairs over TOL. rigid=False skips pairs that never move against each other."""
         placed = {k: mesh[k].copy().apply_transform(P[k]) for k in P}
         hits = []
         for a, c in itertools.combinations(sorted(placed), 2):
+            if {a, c} in EXPECTED or (not rigid and any(a in g and c in g for g in RIGID)):
+                continue
             ma, mc = placed[a], placed[c]
             lo = np.maximum(ma.bounds[0], mc.bounds[0]); hi = np.minimum(ma.bounds[1], mc.bounds[1])
-            if np.any(hi - lo <= 0) or {a, c} in EXPECTED:
+            if np.any(hi - lo <= 0):
                 continue
             try:
                 v = trimesh.boolean.intersection([ma, mc], engine="manifold").volume
-            except Exception as e:  # empty result
+            except Exception:  # empty result
                 v = 0.0
             if v > TOL:
                 hits.append((a, c, round(float(v), 1)))
         return hits, placed
 
-    desk_z = -40.0
-    # q = (yaw, shoulder, elbow, wrist in degrees, claw gap in mm). shoulder 0 = upper link
-    # horizontal towards +X, + = up; elbow/wrist 0 = straight, + = up; gap 0 = closed, 44 = open.
-    # Servo travel (180° servos centred as BUILD_GUIDE says): shoulder 0..180, elbow and wrist -90..+90.
-    # Every named pose, sweep and the desk-reach search stay inside it (deep review 02, A5).
-    TRAVEL = {"shoulder": (0, 180), "elbow": (-90, 90), "wrist": (-90, 90)}
-    poses = {
-        "home (reach out, horizontal)": (0, 0, 0, 0, 0),
-        "upright": (0, 90, 0, 0, 0),
-        "elbow up 90": (0, 30, 90, 0, 0),
-        "elbow down 90": (0, 90, -90, 0, 0),
-        "wrist +90": (0, 30, -30, 90, 0),
-        "wrist -90": (0, 30, -30, -90, 0),
-        "gripper open 44": (45, 45, -45, 0, 44),
-        "pick from desk": (-30, 60, -80, -60, 20),
-        "camera looking down": (0, 80, -90, -60, 10),
-    }
-    for name, q in poses.items():
-        for (j, (lo, hi)), v in zip(TRAVEL.items(), q[1:4]):
-            assert lo <= v <= hi, f"pose {name!r}: {j} {v} is outside the servo travel {lo}..{hi}"
-    report = {"tol_mm3": TOL, "poses": {}, "sweeps": {}}
-    for name, q in poses.items():
-        P, tip = place(q)
-        hits, placed = overlaps(P)
-        report["poses"][name] = {"q_deg": q, "fingertip_mm": [round(float(v), 1) for v in tip],
-                                 "collisions": hits}
-        print(f"{name:32s} tip {np.round(tip, 0)}  collisions: {hits or 'none'}", flush=True)
-        if name in ("home (reach out, horizontal)", "pick from desk", "elbow up 90", "upright"):
-            scene = trimesh.Scene(list(placed.values()))
-            report["poses"][name]["render"] = f"assembly_{name.split()[0]}.png"
-            _render(placed, HERE / report["poses"][name]["render"], name)
+    def own(hits, joint):
+        return [h for h in hits if (h[0] in BEYOND[joint] and h[1] in ON[joint])
+                or (h[1] in BEYOND[joint] and h[0] in ON[joint])]
 
-    # joint-range sweeps (one joint at a time, others at a neutral pose)
-    def sweep(idx, values, base_q):
-        ok = []
-        for v in values:
-            q = list(base_q); q[idx] = v
-            hits, _ = overlaps(place(tuple(q))[0])
-            ok.append((v, not hits, hits))
-        free = [v for v, good, _ in ok if good]
-        return {"tested": values, "collision_free": free,
-                "first_hits": [(v, h) for v, g, h in ok if not g][:4]}
-    report["servo_travel_deg"] = TRAVEL
-    report["sweeps"]["shoulder (elbow 0)"] = sweep(1, list(range(0, 181, 10)), (0, 0, 0, 0, 0))
-    report["sweeps"]["elbow (shoulder 60)"] = sweep(2, list(range(-90, 91, 10)), (0, 60, 0, 0, 0))
-    report["sweeps"]["wrist (shoulder 45, elbow -45)"] = sweep(3, list(range(-90, 91, 10)), (0, 45, -45, 0, 0))
-    report["sweeps"]["claw opening mm"] = sweep(4, list(range(0, 45, 4)), (0, 45, -45, 0, 0))
+    def in_travel(q):
+        return all(lo <= v <= hi for (lo, hi), v in zip(TRAVEL.values(), q[1:4]))
 
-    # claw internals with exact solids, every 1 mm of gap (in the claw frame G)
-    def claw_in_g(gap):
-        d = gap / 2.0
-        return {"claw_frame": np.eye(4), "claw_cover": np.eye(4),
-                "claw_pinion": pinion_in_g @ Rz(math.degrees(d / C.R_P)),
-                "claw_jaw": T(0, -d, 0), "claw_jaw_b": turn_b @ T(0, -d, 0)}
-    src = dict(solid, claw_jaw_b=solid["claw_jaw"])
-    worst, clashes = {}, []
-    for gap in range(0, 45):
-        Pg = claw_in_g(gap)
-        placed_s = {k: place_shape(src[k], Pg[k]) for k in CLAW_ALL}
-        for a, c in itertools.combinations(CLAW_ALL, 2):
-            if a not in CLAW_MOVING and c not in CLAW_MOVING:
-                continue          # frame and cover are screwed together
-            v = float((placed_s[a] & placed_s[c]).volume)
-            key = f"{a} / {c}"
-            worst[key] = max(worst.get(key, 0.0), v)
-            if v > STRICT_TOL:
-                clashes.append((gap, a, c, round(v, 4)))
-    report["claw_internal"] = {"strict_tol_mm3": STRICT_TOL, "gaps_mm": [0, 44, 1],
-                               "worst_overlap_mm3": {k: round(v, 5) for k, v in worst.items()},
-                               "clashes": clashes[:40], "clash_count": len(clashes)}
-    print("claw internals (exact, every 1 mm):", "clear" if not clashes else f"{len(clashes)} clashes, first {clashes[:6]}",
-          flush=True)
-    for k, s in report["sweeps"].items():
-        print(f"{k:32s} free: {s['collision_free']}")
-        if s["first_hits"]:
-            print(f"{'':32s} hits: {s['first_hits']}")
-    # desk workspace: grid-search poses whose fingertip is 0-8 mm above the desk, then
-    # confirm the nearest and farthest ones are collision-free
+    report = {"tol_mm3": TOL, "servo_travel_deg": TRAVEL, "poses": {}, "sweeps": {}}
+
+    # desk search: fingertips 0-8 mm above the desk (yaw 0), on a 5° / 5° / 10° grid
     on_desk = []
     for sh in range(TRAVEL["shoulder"][0], TRAVEL["shoulder"][1] + 1, 5):
         for el in range(TRAVEL["elbow"][0], TRAVEL["elbow"][1] + 1, 5):
             for wr in range(TRAVEL["wrist"][0], TRAVEL["wrist"][1] + 1, 10):
                 _, tip = place((0, sh, el, wr, 0))
-                if -40 <= tip[2] <= -32:
-                    on_desk.append((math.hypot(tip[0], tip[1]), (0, sh, el, wr, 0)))
-    on_desk.sort()
-    found = {}
-    for label, seq in (("nearest", on_desk), ("farthest", on_desk[::-1])):
-        for r, q in seq[:400]:
-            if r < 60 and label == "nearest":
-                continue  # inside the base footprint
-            if not overlaps(place(q)[0])[0]:
-                found[label] = {"radius_mm": round(r, 1), "q_deg": q}
-                break
-    report["desk_reach"] = found
-    print("desk reach", found)
-    # reach: fingertip radius from the yaw axis at full extension
+                if DESK_Z <= tip[2] <= DESK_Z + 8:
+                    on_desk.append((math.hypot(tip[0], tip[1]), float(tip[0]), (0, sh, el, wr, 0)))
+    down = [c for c in on_desk if abs(c[2][1] + c[2][2] + c[2][3] + 90) <= 5]
+
+    def first_clear(cands, limit=300):
+        for r, x, q in cands[:limit]:
+            if not overlaps(place(q)[0], rigid=False)[0]:
+                return {"radius_mm": round(r, 1), "in_plane_x_mm": round(x, 1), "q_deg": q}
+        return None
+
+    desk = {}
+    for label, cands in (("any claw angle", on_desk), ("claw within 5° of straight down", down)):
+        near = sorted([c for c in cands if c[0] >= 60.0])     # r < 60 is over the base itself
+        desk[label] = {"candidates": len(cands), "nearest": first_clear(near), "farthest": first_clear(near[::-1])}
+        print(f"desk reach, {label}: {desk[label]}", flush=True)
+    # "pick from desk": claw down, fingertips on the desk about 150 mm out, claw open 20 mm (opening moves the
+    # fingers along G y, which tilts with the claw: the check must see the open claw)
+    pick = first_clear([(r, x, q[:4] + (20,)) for r, x, q in sorted(down, key=lambda c: abs(c[0] - 150.0))])
+    report["desk_reach"] = desk
+
+    poses = {
+        "home (reach out, horizontal)": (0, 0, 0, 0, 0),
+        "upright (park, r)": (0, 90, 0, 0, 0),
+        "elbow up 30": (0, 30, 30, 0, 0),
+        "elbow down 90": (0, 90, -90, 0, 0),
+        "elbow folded -150": (0, 90, -150, 0, 0),
+        "wrist +90": (0, 30, -30, 90, 0),
+        "wrist -90": (0, 30, -30, -90, 0),
+        "gripper open 44": (45, 45, -45, 0, 44),
+        "pick from desk": tuple(pick["q_deg"]),
+        "desk, nearest (claw down)": desk["claw within 5° of straight down"]["nearest"]["q_deg"],
+        "desk, farthest (any angle)": desk["any claw angle"]["farthest"]["q_deg"],
+        "camera looking down": (0, 80, -90, -60, 10),
+    }
+    for name, q in poses.items():
+        assert in_travel(q), f"pose {name!r} {q} is outside the servo travel {TRAVEL}"
+    half_width = 0.0
+    renders = {"home (reach out, horizontal)": "assembly_home.png", "pick from desk": "assembly_pick.png",
+               "elbow up 30": "assembly_elbow.png", "upright (park, r)": "assembly_upright.png"}
+    for name, q in poses.items():
+        P, tip = place(q)
+        hits, placed = overlaps(P)
+        if q[0] == 0:       # yaw 0: world Y is across the arm plane (SYS-17 keep-out width)
+            half_width = max(half_width, float(placed["brio"].bounds[1][1]), float(placed["camera_mount"].bounds[1][1]))
+        report["poses"][name] = {"q_deg": list(q), "fingertip_mm": [round(float(v), 1) for v in tip], "collisions": hits}
+        print(f"{name:36s} tip {np.round(tip, 0)}  collisions: {hits or 'none'}", flush=True)
+        if name in renders:
+            report["poses"][name]["render"] = renders[name]
+            _render(placed, HERE / renders[name], name)
+    report["camera_outboard_y_mm"] = round(half_width, 1)
+
+    # viewer demo poses (viz_export.DEMO): inside the travel, collision-free, fingertips above the desk
+    import viz_export
+    demo = []
+    for q in viz_export.DEMO:
+        q = tuple(q)
+        P, tip = place(q)
+        hits = overlaps(P, rigid=False)[0]
+        demo.append({"q": list(q), "in_travel": in_travel(q), "fingertip_z_mm": round(float(tip[2]), 1),
+                     "collisions": hits})
+    report["viewer_demo"] = demo
+    print("viewer demo:", [(d["q"], d["in_travel"], d["fingertip_z_mm"], d["collisions"]) for d in demo], flush=True)
+
+    # joint sweeps (one joint at a time, the others at a neutral pose)
+    def sweep(idx, values, base_q, joint=None):
+        rows = []
+        for v in values:
+            q = list(base_q); q[idx] = v
+            hits = overlaps(place(tuple(q))[0], rigid=False)[0]
+            rows.append((v, hits, own(hits, joint) if joint else hits))
+        return {"tested": values, "base_q": list(base_q),
+                "collision_free": [v for v, h, _ in rows if not h],
+                "own_collision_free": [v for v, _, o in rows if not o],
+                "hits": [(v, h) for v, h, _ in rows if h][:12]}
+
+    def window(s, step):
+        free, best, run = s["own_collision_free"], [], []
+        for v in s["tested"]:
+            run = run + [v] if v in free and (not run or v - run[-1] == step) else ([v] if v in free else [])
+            best = run if len(run) > len(best) else best
+        return [best[0], best[-1]] if best else None
+
+    report["sweeps"]["shoulder (elbow 0)"] = sweep(1, list(range(0, 181, 10)), (0, 0, 0, 0, 0))
+    report["sweeps"]["elbow (shoulder 90)"] = sweep(2, list(range(-150, 31, 5)), (0, 90, 0, 0, 0), "elbow")
+    report["sweeps"]["elbow (shoulder 60)"] = sweep(2, list(range(-150, 31, 10)), (0, 60, 0, 0, 0), "elbow")
+    report["sweeps"]["wrist (shoulder 45, elbow -45)"] = sweep(3, list(range(-90, 91, 10)), (0, 45, -45, 0, 0), "wrist")
+    report["sweeps"]["claw opening mm"] = sweep(4, list(range(0, 45, 4)), (0, 45, -45, 0, 0))
+    report["elbow_window_deg"] = window(report["sweeps"]["elbow (shoulder 90)"], 5)
+    report["wrist_window_deg"] = window(report["sweeps"]["wrist (shoulder 45, elbow -45)"], 10)
+    for k, s in report["sweeps"].items():
+        print(f"{k:32s} free: {s['collision_free']}")
+        if s["hits"]:
+            print(f"{'':32s} hits: {s['hits']}")
+    print("elbow window", report["elbow_window_deg"], " wrist window", report["wrist_window_deg"], flush=True)
+
     _, tip = place((0, 0, 0, 0, 0))
     report["reach_horizontal_mm"] = round(float(math.hypot(tip[0], tip[1])), 1)
-    report["shoulder_height_above_desk_mm"] = round(zs - desk_z, 1)
+    report["shoulder_height_above_desk_mm"] = round(zs - DESK_Z, 1)
+
+    # claw internals: assembly sequence, running stroke, backlash (exact solids)
+    print("claw sequence check (exact solids) ...", flush=True)
+    report["claw_internal"] = CS.run(solid)
+    print("claw:", "clear" if report["claw_internal"]["ok"] else "CLASHES", flush=True)
     (HERE / "assembly_check.json").write_text(json.dumps(report, indent=1))
     print("reach", report["reach_horizontal_mm"], "-> assembly_check.json")
 
@@ -284,7 +333,7 @@ def _render(placed, out, title):
     for ax, (vname, (elev, azim)) in zip(axes, (("iso", R.VIEWS["iso"]), ("front", R.VIEWS["front"]))):
         img, _ = R.render_view(m, elev, azim, with_bed=False)
         ax.imshow(img, interpolation="antialiased"); ax.set_axis_off(); ax.set_title(vname)
-    fig.suptitle(f"robot arm · {title} · parts + servo/ESP32 dummies", fontsize=13)
+    fig.suptitle(f"robot arm · {title} · parts + servo/ESP32/camera dummies", fontsize=13)
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)

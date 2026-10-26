@@ -1,20 +1,24 @@
 # Desktop robot arm: status
 
-Robot 1 of 3. **Don't approve or print anything yet (26 Oct 2026).** The deep review found that no servo lead can pass its closed window, and that the MG90S output sits 3.2 mm higher than modelled. The base, turntable, upper link and forearm are back in DESIGN for lead notches. The gripper below was replaced by the parallel claw and Brio camera mount (`jobs/20261026-arm-claw-*`, `jobs/20261026-arm-camera-mount`), which are in their second design round. The table below is the state before the deep review; it is regenerated when the round passes.
+Robot 1 of 3. **Don't approve or print anything yet (26 Oct 2026).** Round 3 answers deep reviews 01 and 03 and the claw's first DFM and strength round: lead notches in every servo window, the real MG90S height, the claw's new assembly order (pinion last, through the cover's front plate), the re-centred elbow window, the disc horn under the turntable and a 0.4 mm ring gap. Every part except the cradle changed, so their DFM and strength reviews run again, and their G-code (sliced from the old geometry) is stale. The table is the round-3 CAD; print times and filament come back with the re-slice.
 
-| Part | Job | Size (mm, as printed) | Print time | PETG | DFM | Strength | G-code audit | SD-card file |
-|---|---|---|---|---|---|---|---|---|
-| Base | `20261025-arm-base` | 110 × 104 × 40 | 8.08 h | 97.6 g | PASS | NEEDS_TEST | PASS | `1025_arm_base.gcode` |
-| Turntable support ring | `20261025-arm-turntable-ring` | 91 × 96 × 15 | 1.23 h | 14.1 g | PASS | NEEDS_TEST | PASS | `1025_arm_turntable_ring.gcode` |
-| Turntable + shoulder upright | `20261025-arm-turntable` | 96 × 96 × 81 | 6.76 h | 77.0 g | PASS | NEEDS_TEST | PASS | `1025_arm_turntable.gcode` |
-| Upper link | `20261025-arm-upper-link` | 146 × 34 × 10 | 2.98 h | 33.9 g | PASS | NEEDS_TEST | PASS | `1025_arm_upper_link.gcode` |
-| Forearm | `20261025-arm-forearm` | 129 × 26 × 10 | 2.21 h | 25.1 g | PASS | NEEDS_TEST | PASS | `1025_arm_forearm.gcode` |
-| Gripper base + fixed jaw | `20261025-arm-gripper-base` | 108 × 25 × 25 | 1.90 h | 20.9 g | PASS | NEEDS_TEST | PASS | `1025_arm_gripper_base.gcode` |
-| Moving jaw | `20261025-arm-gripper-jaw` | 63 × 16 × 8 | 0.55 h | 6.2 g | PASS | NEEDS_TEST | PASS | `1025_arm_gripper_jaw.gcode` |
-| ESP32 cradle | `20261025-arm-esp32-cradle` | 66 × 43 × 10 | 1.03 h | 10.8 g | PASS | NEEDS_TEST | PASS | `1025_arm_esp32_cradle.gcode` |
-| **Total** | | | **24.7 h** | **285 g** | | | | |
+| Part | Job | Size (mm, as printed) | PETG, solid (g) | Status |
+|---|---|---|---|---|
+| Base | `20261025-arm-base` | 110 × 104 × 40 | 114 | DESIGN round 3 (lead notches) |
+| Turntable support ring | `20261025-arm-turntable-ring` | 91 × 96 × 16 | 17 | DESIGN round 3 (0.4 mm gap) |
+| Turntable + shoulder upright | `20261025-arm-turntable` | 96 × 96 × 81 | 113 | DESIGN round 3 (lead notches, disc horn) |
+| Upper link | `20261025-arm-upper-link` | 146 × 34 × 10 | 50 | DESIGN round 3 (lead notches) |
+| Forearm | `20261025-arm-forearm` | 129 × 26 × 10 | 37 | DESIGN round 3 (MG90S window, lead notch) |
+| Claw frame | `20261026-arm-claw-frame` | 41 × 64 × 48 | 44 | DESIGN round 2 |
+| Claw cover | `20261026-arm-claw-cover` | 38 × 56 × 64 | 29 | DESIGN round 2 |
+| Claw pinion (20 teeth) | `20261026-arm-claw-pinion` | 22 × 22 × 10 | 3.5 | DESIGN round 2 |
+| Claw jaw (× 2, one plate) | `20261026-arm-claw-jaw` | 31 × 57 × 61 each | 2 × 20.5 | DESIGN round 2 |
+| Brio 4K camera mount *(optional)* | `20261026-arm-camera-mount` | 40 × 32 × 50 | 13 | DESIGN round 2 |
+| ESP32 cradle | `20261025-arm-esp32-cradle` | 66 × 43 × 10 | 15 | AWAITING_APPROVAL (unchanged) |
 
-Read next: [BUILD_GUIDE.md](BUILD_GUIDE.md) (parts list, wiring, assembly, proof tests), [assembly_plan.md](assembly_plan.md) (frames, decisions, joint ranges), `assembly_check.json` and `assembly_*.png` (collision and reach check), `arm_test/arm_test.ino` (servo centring sketch).
+The old gripper (`20261025-arm-gripper-base`, `-gripper-jaw`) is superseded: don't print it.
+
+Read next: [BUILD_GUIDE.md](BUILD_GUIDE.md) (parts list, payload by reach, wiring, assembly, calibration), [spec.md](spec.md) (system spec and acceptance tests), [assembly_plan.md](assembly_plan.md) (frames, decisions, joint windows), `assembly_check.json` and `assembly_*.png` (collision and reach check, with the claw's assembly sequence in `claw_internal`), `torque_budget.json` (torques, payload, stability), `arm_test/arm_test.ino` (the sketch).
 
 ## To print a part
 1. Read its `preflight.md`.
@@ -25,4 +29,6 @@ Read next: [BUILD_GUIDE.md](BUILD_GUIDE.md) (parts list, wiring, assembly, proof
 ## Review history
 - Round 1: DFM 7/8 FAIL (no hole compensation, 10.6 mm horn-slot bridges, thin SG90 pilot walls, clearances); strength 6/8 FAIL (sideways loads not in the specs; links held on their horns by two small screws).
 - Round 2: horn clamp screws, thicker plates, pocket-up printing, HOLE_COMP everywhere: DFM 5/8 PASS, strength 7/8 NEEDS_TEST.
-- Round 3: turntable washer clearance, M3×10 cradle screws, M2×12 wrist screws: all PASS / NEEDS_TEST.
+- Round 3 of the arm parts: turntable washer clearance, M3×10 cradle screws, M2×12 wrist screws: all PASS / NEEDS_TEST.
+- Claw v2, round 1 (2026-10-26): DFM and strength FAIL on all five claw jobs; deep reviews 01 (bought parts) and 03 (arm system) found the servo leads can't pass their windows, the MG90S output sits 3 mm higher than modelled, and the claw can't be assembled.
+- Arm round 3 / claw round 2 (2026-10-26): the redesign above, verified by `assembly_check.py` and `claw_sequence_check.py`; reviews pending.

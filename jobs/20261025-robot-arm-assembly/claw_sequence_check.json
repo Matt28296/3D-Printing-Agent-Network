@@ -1,0 +1,239 @@
+{
+ "strict_tol_mm3": 0.001,
+ "contact_band_mm": 0.001,
+ "declared_contacts": [
+  {
+   "pair": [
+    "claw_frame",
+    "servo"
+   ],
+   "plane": "x = 10",
+   "what": "servo tabs on the bulkhead's front face"
+  },
+  {
+   "pair": [
+    "claw_cover",
+    "claw_frame"
+   ],
+   "plane": "x = 32.85",
+   "what": "front plate on the wrist plate's front edge"
+  },
+  {
+   "pair": [
+    "claw_cover",
+    "claw_frame"
+   ],
+   "plane": "z = 48.5",
+   "what": "top wall on the bulkhead top"
+  },
+  {
+   "pair": [
+    "claw_cover",
+    "claw_frame"
+   ],
+   "plane": "x = 10",
+   "what": "lip against the bulkhead's front face"
+  },
+  {
+   "pair": [
+    "camera_mount",
+    "claw_cover"
+   ],
+   "plane": "z = 51.5",
+   "what": "mount pad on the top wall"
+  },
+  {
+   "pair": [
+    "claw_cover",
+    "front_screws"
+   ],
+   "plane": "x = 37.85",
+   "what": "screw heads on the front plate"
+  },
+  {
+   "pair": [
+    "claw_cover",
+    "jaw_a"
+   ],
+   "plane": "z = 48.5",
+   "what": "rack A's back (and neck top) under the top wall"
+  },
+  {
+   "pair": [
+    "claw_frame",
+    "jaw_b"
+   ],
+   "plane": "z = 6",
+   "what": "rack B's back on the wrist plate"
+  },
+  {
+   "pair": [
+    "jaw_a",
+    "jaw_b"
+   ],
+   "plane": "y = 0",
+   "what": "fingers closed (gap 0 only)"
+  }
+ ],
+ "order": [
+  "claw servo from the front (-x), case bottom first, lead through the window notch",
+  "cover lowered (-z) onto the frame; 2 x M2.5 front, 2 x M3 top",
+  "camera mount lowered onto the cover (optional)",
+  "jaw A slid in along +y from slot A's open end to fully open (44 mm)",
+  "jaw B slid in along -y from slot B's open end to fully open",
+  "pinion + trimmed horn pushed axially (-x) through the pass-through onto the spline at g 44"
+ ],
+ "service": "the reverse: pinion out first (claw at g 44), then jaw B, jaw A, camera mount, cover, servo; each part leaves along the path it came in by, so the same sweeps cover it",
+ "paths": {
+  "1 servo in from the front": {
+   "path": "servo + lead, +SERVO_TRAVEL -> seated along -x",
+   "positions": 41,
+   "step_mm": -0.5,
+   "worst_clash_mm3": {
+    "claw_frame": 0.0
+   },
+   "contact_mm3": {},
+   "clashes": [],
+   "clash_count": 0
+  },
+  "2 cover lowered onto the frame": {
+   "path": "cover, +COVER_LIFT -> seated along -z",
+   "positions": 57,
+   "step_mm": -1.0,
+   "worst_clash_mm3": {
+    "claw_frame": 0.0,
+    "servo": 0.0
+   },
+   "contact_mm3": {},
+   "clashes": [],
+   "clash_count": 0
+  },
+  "3 camera mount lowered onto the cover": {
+   "path": "camera mount, +10 -> seated along -z",
+   "positions": 11,
+   "step_mm": -1.0,
+   "worst_clash_mm3": {
+    "claw_frame": 0.0,
+    "servo": 0.0,
+    "claw_cover": 0.0
+   },
+   "contact_mm3": {},
+   "clashes": [],
+   "clash_count": 0
+  },
+  "4 jaw A slid in to fully open": {
+   "path": "jaw A, y -JAW_TRAVEL -> fully open along +y",
+   "positions": 91,
+   "step_mm": -0.5,
+   "worst_clash_mm3": {
+    "claw_frame": 0.0,
+    "servo": 0.0,
+    "claw_cover": 0.0,
+    "camera_mount": 0.0,
+    "front_screws": 0.0
+   },
+   "contact_mm3": {},
+   "clashes": [],
+   "clash_count": 0
+  },
+  "5 jaw B slid in to fully open": {
+   "path": "jaw B, y +JAW_TRAVEL -> fully open along -y",
+   "positions": 91,
+   "step_mm": -0.5,
+   "worst_clash_mm3": {
+    "claw_frame": 0.0,
+    "servo": 0.0,
+    "claw_cover": 0.0,
+    "camera_mount": 0.0,
+    "front_screws": 0.0,
+    "jaw_a": 0.0
+   },
+   "contact_mm3": {},
+   "clashes": [],
+   "clash_count": 0
+  },
+  "6 pinion pushed in axially at 44 mm open": {
+   "path": "pinion outline swept from 70 mm in front of its seat (beyond the fingertips) to seated, at the 44 mm angle; one exact solid",
+   "overlap_mm3": {
+    "claw_frame": 0.0,
+    "servo": 0.0,
+    "claw_cover": 0.0,
+    "camera_mount": 0.0,
+    "front_screws": 0.0,
+    "jaw_a": 0.0,
+    "jaw_b": 0.0
+   },
+   "clash_count": 0,
+   "pass_through_radial_clearance_mm": {
+    "cad": 0.55,
+    "printed": 0.45
+   }
+  }
+ },
+ "pinion_removable_from_gap_mm": 22,
+ "stroke": {
+  "gaps_mm": [
+   0,
+   44,
+   1
+  ],
+  "worst_clash_mm3": {
+   "claw_frame / claw_pinion": 0.0,
+   "claw_frame / jaw_a": 0.0,
+   "claw_frame / jaw_b": 0.0,
+   "servo / claw_pinion": 0.0,
+   "servo / jaw_a": 0.0,
+   "servo / jaw_b": 0.0,
+   "claw_cover / claw_pinion": 0.0,
+   "claw_cover / jaw_a": 0.0,
+   "claw_cover / jaw_b": 0.0,
+   "camera_mount / claw_pinion": 0.0,
+   "camera_mount / jaw_a": 0.0,
+   "camera_mount / jaw_b": 0.0,
+   "front_screws / claw_pinion": 0.0,
+   "front_screws / jaw_a": 0.0,
+   "front_screws / jaw_b": 0.0,
+   "claw_pinion / jaw_a": 0.0,
+   "claw_pinion / jaw_b": 0.0,
+   "jaw_a / jaw_b": 0.0
+  },
+  "contact_mm3": {},
+  "clashes": [],
+  "clash_count": 0
+ },
+ "mesh_fine": {
+  "gaps_mm": [
+   20.0,
+   26.283,
+   0.1
+  ],
+  "positions": 64,
+  "worst_mm3": {
+   "jaw_a": 0.0,
+   "jaw_b": 0.0
+  },
+  "clashes": [],
+  "clash_count": 0
+ },
+ "backlash_mm": {
+  "definition": "free turn of the pinion between the two flanks of one rack, as arc length on the pitch circle (rack held); jaw_gap_play = both meshes, servo held",
+  "design": 0.35,
+  "gap 2": {
+   "rack_a": 0.327,
+   "rack_b": 0.327,
+   "jaw_gap_play": 0.654
+  },
+  "gap 22": {
+   "rack_a": 0.35,
+   "rack_b": 0.35,
+   "jaw_gap_play": 0.7
+  },
+  "gap 42": {
+   "rack_a": 0.35,
+   "rack_b": 0.35,
+   "jaw_gap_play": 0.7
+  }
+ },
+ "ok": true,
+ "run_s": 1540.9
+}

@@ -1,11 +1,22 @@
 # Desktop robot arm: build guide
 
 Robot 1 of 3 (then the tracked rover, then the hexapod). Four joints plus a parallel claw, 5 hobby servos, an ESP32 DevKit, a 6 V supply and PETG, with an optional Logitech Brio 4K webcam on the claw.
-Reach is 284 mm horizontally. Within the servos' travel the fingertips come down to the desk from about 125 to 245 mm out, and the sketch's desk guard stops them about 8 mm above it. The claw opens 0–44 mm with about 12 N per finger at stall.
+Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the desk from 84 to 263 mm from the yaw axis (claw straight down: 98 to 220 mm), collision-free; the sketch's guard keeps them 8 mm above it (§5 gives the guard's own figures). The claw opens 0–44 mm. At stall the pinion pushes 21.6 N into the racks: 10.8 N per jaw when both grip (the safety figure), all 21.6 N into one jaw when the other is blocked. Rack friction leaves a real grip of about 5–7.5 N per finger (deep review 03, SYS-15, scaled to the 10 mm pitch radius).
 
-**Payload:**
-- 50 g without the camera.
-- 20 g at full reach with the camera. Bend the elbow and it can carry more. The camera's 63 g sits at the arm's end, so the shoulder servo works harder.
+**Payload.** The shoulder MG996R sets it, and the camera package (Brio, mount, thumb screw, cable: ≈95 g at the arm's end) costs most of it. Grams the arm can carry 10 mm behind the fingertips, claw pointing down, object 20–60 mm above the desk, at the best pose inside the servo travel. "Short lift" keeps every servo under 50 % of its 6 V stall torque, "moving" allows ×1.3 for starting and stopping, "holding" keeps it under ⅓ of stall, the running-current band, for as long as you like. Above about 200 g the claw's friction grip, not the servos, is the limit.
+
+| Fingertips out along the arm | Camera: short lift | Camera: moving | Camera: holding | No camera: short lift | No camera: moving | No camera: holding |
+|---|---|---|---|---|---|---|
+| 60–100 mm | 200 g | 200 g | 200 g | 200 g | 200 g | 200 g |
+| 100–120 mm | 200 g | 200 g | 155 g | 200 g | 200 g | 200 g |
+| 120–140 mm | 200 g | 130 g | 80 g | 200 g | 200 g | 160 g |
+| 140–160 mm | 160 g | 60 g | 20 g | 200 g | 145 g | 100 g |
+| 160–180 mm | 95 g | 10 g | — | 180 g | 95 g | 60 g |
+| 180–200 mm | 50 g | — | — | 135 g | 60 g | 25 g |
+| 200–220 mm | 15 g | — | — | 100 g | 30 g | 5 g |
+| Arm straight out (≈280 mm) | — | — | — | 55 g | 5 g | — |
+
+"Out along the arm" is the fingertips' distance from the yaw axis in the arm's own plane; "—" means none. With the camera, holding the empty arm straight out already takes 51 % of the shoulder's stall torque, so don't park or wait there: `r` parks the arm upright (shoulder 90, elbow 0, wrist 0), where the shoulder holds almost nothing, and the sketch parks it by itself after 60 s without a command (§5). The figures use the parts' sliced masses; with solid parts each cell drops by about 25 g. Method and every number: `torque_budget.py` → `torque_budget.json` (deep review 03, SYS-02).
 
 ## 1. Bill of materials
 
@@ -19,20 +30,20 @@ Reach is 284 mm horizontally. Within the servos' travel the fingertips come down
 | 4 | Upper link (100 mm) | `20261025-arm-upper-link` | flat, horn pocket up |
 | 5 | Forearm (90 mm) | `20261025-arm-forearm` | flat, horn pocket up |
 | 6 | Claw frame | `20261026-arm-claw-frame` | back face down (wrist-horn pocket on the bed) |
-| 7 | Claw cover | `20261026-arm-claw-cover` | standing on its end (brim) |
-| 8 | Claw pinion | `20261026-arm-claw-pinion` | flat, horn pocket down, solid |
-| 9–10 | Claw jaw × 2 (identical) | `20261026-arm-claw-jaw` | standing on the rack, finger up (both on one plate) |
-| 11 | Brio 4K camera mount *(optional)* | `20261026-arm-camera-mount` | standing on its end (brim) |
+| 7 | Claw cover | `20261026-arm-claw-cover` | standing on its −y end (5 mm brim) |
+| 8 | Claw pinion (20 teeth) | `20261026-arm-claw-pinion` | flat, horn pocket down, solid |
+| 9–10 | Claw jaw × 2 (identical) | `20261026-arm-claw-jaw` | standing on the rack's back end, finger up (both on one plate, no brim) |
+| 11 | Brio 4K camera mount *(optional)* | `20261026-arm-camera-mount` | standing on its −y end (5 mm brim) |
 | 12 | ESP32 cradle | `20261025-arm-esp32-cradle` | as it hangs (frame bottom down) |
 
-Each part's print time and filament are in its `slice_stats.json`, and `README.md` next to this file has a summary table.
+Each part's print time and filament are in its `slice_stats.json`, and `README.md` next to this file has a summary table. Round 3 (deep reviews 01 and 03) changed every part except the cradle: their G-code is from the old geometry and gets sliced again once the reviews pass.
 
 The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded**. Don't print it.
 
 ### Bought
 | Qty | Item | Notes |
 |---|---|---|
-| 3 | MG996R servo (metal gear, 180°) | Base, shoulder, elbow. Keep the bag: you need the **double-arm horn** and the screws |
+| 3 | MG996R servo (metal gear, 180°) | Base, shoulder, elbow. Keep the bags: the base needs the **Ø25 round disc horn**, the shoulder and elbow the **double-arm horn**. Leave the rubber grommets and brass eyelets out: the tabs sit flat on the plastic |
 | 2 | MG90S micro servo (metal gear, 180°) | Wrist and claw. Keep the **single-arm horn** (wrist) and the **double-arm horn** (claw pinion) |
 | 1 | ESP32 DevKit (38-pin DevKitC or 30-pin DOIT) | Pins soldered down |
 | 1 | 6 V 5 A DC adapter, 5.5 × 2.1 mm plug, **centre positive** | Servo power. 5 A covers two MG996R stalling at once. Unloaded it should read 6.2 V or less: the MG90S is rated 4.8–6.0 V |
@@ -43,30 +54,41 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
 | *opt.* | SMBJ6.5A TVS diode (6.5 V, unidirectional) | Across the bus after the fuse, stripe to +6 V: a 9–12 V or reversed adapter then blows the fuse instead of the servos |
 | *opt.* | 5 × 10 kΩ resistor | Pull-down from each servo signal to GND: the pins float until the sketch starts |
 | *opt.* | USB phone charger (5 V, 1 A) | Runs the ESP32 through its USB port when no PC is connected. The ESP32 always runs from USB: there is no buck |
-| ~15 | Female–female and female–male jumper wires, servo extension leads (2 × 30 cm) | The shoulder, elbow, wrist and claw leads must reach the base |
+| 1 | Power bus: stripboard ≈50 × 30 mm with 5 rows of 3-pin male headers (G-V-S), or a 5-way terminal strip | Inside the base. Each servo plugs straight onto it; only its signal wire goes on to the ESP32 |
+| 1 m | Silicone wire 0.5–0.75 mm² (18–20 AWG), red and black, plus heat-shrink | Jack → fuse → bus, and bus GND → ESP32 GND. Servo power never runs through Dupont jumpers |
+| 5 | Female–female jumper wires | Servo signals from the bus to the ESP32 only |
+| 2 | Servo extension lead, 50 cm (40 cm at least) | Claw and wrist: their MG90S leads are 24–25 cm, the run to the base ≈560 and ≈520 mm |
+| 1 | Servo extension lead, 30 cm | Elbow (run ≈430 mm, MG996R lead 30 cm). The shoulder and base leads reach without one |
+| 12 + 12 | M3 × 12 pan-head self-tapping screw (ST2.9 or a thread-forming screw for plastics) + M3 washer Ø7 × 0.5 | MG996R tab screws: base, shoulder, elbow, 4 each. Through the 2.5 mm tab and the washer they reach 9 mm into the 10 mm base plate and boss and the 10 mm upper link; in the 7 mm upright the tip stands 2 mm out at the back, clear of the gussets |
 | 3 | M3 × 6 self-tapping (pan head) | Ring tabs. A longer screw would reach the ESP32 under the plate |
 | 3 | M3 × 10 self-tapping (pan head) | Cradle, from below into the counterbores. Not longer: the boss pilots are 6 mm deep |
-| 3 | M3 × 16 screw + Ø9 (M3 large) washer | MG996R horn clamp screws for the base, shoulder and elbow. They replace the short horn screw from the bag |
-| 1 | M2 × 12 screw + Ø6 washer | Wrist horn clamp screw, through the claw frame |
-| 1 | M2 × 10 pan or cheese head | Pinion clamp screw |
-| 2 | M2 × 12 self-tapping | Wrist MG90S tab screws in the 10 mm forearm |
-| 2 | M2 × 8 self-tapping | Claw MG90S tab screws in the bulkhead, if the bag screws are shorter |
-| 2 | M3 × 12 self-tapping (pan head) | Claw cover, front, into the claw frame |
-| 2 | M3 × 10 self-tapping, **or** 2 × M3 × 18 button head (ISO 7380) with the camera mount | Claw cover, top, into the bulkhead |
+| 3 + 3 | M3 × 14 socket head (ISO 4762) + Ø9 × 0.8 washer (M3 large, ISO 7093) | Horn clamp screws: base (through the 8 mm turntable disk), shoulder and elbow (through the 10 mm links, 8 mm above the horn). Each reaches 4.6 mm into the spline (14 − 0.8 − 8 − 0.6, the horn face standing 0.6 above the spline). A socket head lets you re-tighten the base one with an L-key past the upright |
+| 2 + 2 | M2 × 12 socket or pan head (head ≤ Ø5.5) + Ø6 × 0.5 washer | Horn clamp screws: wrist (through the claw frame's raised pad) and pinion (from its front counterbore). Both have a 6.3 mm floor above the horn: 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, like the big ones |
+| 7 | M2 × 6 self-tapping (pan head) | Horn anti-rotation screws: 2 each through the base disc horn and the shoulder and elbow double-arm horns, 1 through the wrist horn. Drill the horn's hole to 2.0 mm first. The pinion's horn is glued instead |
+| 2 | M2 × 12 self-tapping (pan head) | Wrist MG90S tab screws in the 10 mm forearm (9.5 mm engaged) |
+| 2 | M2 × 8 self-tapping (pan head) | Claw MG90S tab screws in the 6.5 mm bulkhead (5.5 mm engaged) |
+| 2 | M2.5 × 12 pan-head self-tapping, head Ø5.0 or less | Claw cover, front, into the wrist plate's front edge (7 mm engaged). Jaw B's finger passes 0.5 mm over the heads, so no bigger head |
+| 2 | M3 × 10 self-tapping (pan head), **or** 2 × M3 × 18 button head (ISO 7380) with the camera mount | Claw cover, top, into the bulkhead's 14 mm pilots (7 / 11.5 mm engaged) |
 | 4 | M3 × 50 (or #4 × 2") wood screws, or 2 desk clamps | **Required**: screw the base to the desk or to a board. With the arm out, it tips the base over |
-| — | Spiral cable wrap or zip ties, 4 rubber feet, a drop of CA glue | Tidy the leads; the glue locks the trimmed horn in the pinion |
+| *alt.* | Board ≥ 200 × 200 mm, 12–18 mm plywood or MDF, ≥ 0.4 kg, with 4 rubber feet; **or** 1.2 kg of ballast (0.8 kg without the camera) fixed inside the base | If you won't screw into the desk (deep review 03, SYS-12). Free-standing, the 0.7 kg robot tips over with the arm out (safety factor 0.34–0.48). On the board it holds with a safety factor of 2.2 or more, camera and 50 g at full reach included; the ballast gives 1.5 (`torque_budget.json`) |
+| — | PTFE (plumber's) tape | One layer on the support ring's top face: the turntable disk runs on it |
+| — | Spiral cable wrap, zip ties (≤ 2.5 mm wide), 2 adhesive cable-tie mounts (≈10 × 10 mm), a drop of CA glue | Tidy the leads; one tie mount on the claw's bulkhead holds the camera cable (§4 step 14); the glue locks the trimmed horn in the pinion |
+| 1 | Right-angle micro-USB (or USB-C, to suit your ESP32) cable | The ESP32's USB cable leaves the base's +X wall under the arm's main pick zone: a right-angle plug keeps it down on the desk |
 | *opt.* | Logitech Brio 4K webcam, with its clip removed | Plugs into your **PC**, not the ESP32 (the ESP32 has no USB host) |
-| *opt.* | 1/4"-20 × 3/8" knurled thumb screw (camera screw) | Holds the Brio on the mount. It must not stand more than the camera's thread depth above the 4 mm seat |
-| *opt.* | Flexible USB-C to USB-A cable, 2 m or more | A thin, soft cable loads the wrist less than the stiff stock cable |
+| *opt.* | 1/4"-20 × 5/16" knurled thumb screw (camera screw), **or** a 3/8" one with a 1.5 mm washer under its head | Holds the Brio on the mount: 7.9 mm under the head, so 3.9 mm into the camera after the 4 mm seat. Camera makers keep tripod screws under 5.5 mm |
+| *opt.* | Thin USB-C **right-angle (90°)** to USB-A cable, 2 m or more | The Brio's port is on its **back**. A straight plug sticks out 50–75 mm towards the wrist; a right-angle plug stands ≈12 mm out and turns the cable along the camera. A thin, soft cable also loads the wrist less (1080p runs over USB 2.0) |
 
 ## 2. Before you print
 
 1. **Measure your servos and horns.** The CAD uses nominal datasheet sizes (`tools/hobby_parts.py`).
-   - On the servos, measure body length and width, tab-hole spacing, and the distance from the shaft to the near body end.
-   - On the horns, measure the MG996R double-arm horn (hub Ø, centre to tip, tip width) and the MG90S arm horns (the same three sizes, plus the arm's width near the hub).
-   - If anything differs by more than 0.3 mm, give the numbers to Claude. Claude updates the specs in the models and re-runs the pipeline.
-2. **Camera:** measure how deep the Brio's tripod thread is, so the thumb screw doesn't bottom out.
-3. Load PETG. The G-code is sliced with Prusa's stock **Prusament PETG** and **0.20 mm QUALITY** presets. Print on a smooth PEI sheet with glue stick or a release agent: PETG can bond too hard to bare smooth PEI. The cover and the camera mount print standing up with a brim.
+   - On the servos: body length and width, tab-hole spacing, the distance from the shaft to the near body end.
+   - On the MG90S also (deep review 01, B2): case bottom → tab underside (CAD 18.5), tab underside → spline top (CAD 14.0), and the width of the slit from each tab hole to the tab end.
+   - Where each lead leaves its case (01, B1): which end, how high above the case bottom, how wide and thick the ribbon is. The windows' notches assume the shaft end, 5.1 mm (MG90S) or 6 mm (MG996R) up, a 3.6 × 1.2 mm (4 × 1.3 mm) ribbon.
+   - On the horns: the MG996R double-arm horn (hub Ø, centre to tip, tip width), the MG996R disc horn (Ø, hole circle), the MG90S arm horns (the same three sizes, plus the arm's width near the hub).
+   - **Spline thread depth** (01, S2): screw a long M3 (MG996R) or M2 (MG90S) into a bare output shaft until it stops and count the turns (0.5 or 0.4 mm each). Every horn clamp screw reaches 4.6 mm into it; if yours is shallower than 5.1 mm, use the next shorter screw.
+   - If a body length or width differs by more than 0.1 mm, or anything else by more than 0.3 mm, give the numbers to Claude. Claude updates the specs in the models and re-runs the pipeline.
+2. **Camera:** measure how deep the Brio's tripod thread is, so the thumb screw doesn't bottom out, and where the USB-C port sits on its back: the mount's rear lip stands 6 mm up the back, so the plug must sit above that.
+3. Load PETG. The G-code is sliced with Prusa's stock **Prusament PETG** and **0.20 mm QUALITY** presets. Print on a smooth PEI sheet with glue stick or a release agent: PETG can bond too hard to bare smooth PEI. The cover and the camera mount print standing up with a 5 mm brim; the jaws print without one (it would fill the tooth gaps).
 
 ## 3. Wiring
 
@@ -94,15 +116,32 @@ Brio 4K ─► USB-C cable ─► your PC (vision)
 - **Before the first connection**, check the adapter with a meter: 6.2 V or less unloaded, centre pin positive. A 9 V or 12 V adapter with the same plug destroys the MG90S servos, and a centre-negative one reverses the capacitor and the servos.
 - The inline switch is the arm's off switch: keep it within reach while the arm moves.
 - None of these GPIOs is a strapping pin (0, 2, 5, 12, 15) or input-only (34–39). The shoulder is on GPIO32, not GPIO14: GPIO14 puts out a PWM signal at boot, and the shoulder carries the whole arm.
-- Make a 5-way power bus inside the base for V+ and GND: a small piece of stripboard, or Wago-style lever connectors. Run the 6 V from the jack through the fuse to the bus in 20–22 AWG wire, not jumper wire.
+- Make the 5-way power bus inside the base (deep review 01, S8): stripboard with five rows of 3-pin male headers, G-V-S, the V strip and the G strip each joined along the board. Each servo's plug (or its extension's) goes straight onto a row; only the signal strip of each row goes on to the ESP32, on a jumper. Run the 6 V from the jack through the fuse to the bus in 18–20 AWG silicone wire, never in jumper wire: an MG996R stalls at 2.5 A.
+- Put the extension-lead junctions just outside the base's cable slot or on the turntable side, never at a moving joint: the 2.54 mm housings are bulky, and the junctions stay reachable after the base is screwed down.
 - GPIO13, 25, 26 and 27 are ADC2 pins. That's fine for servo signals, but any analog input added later must use ADC1 (GPIO32–39): ADC2 stops working once Wi-Fi is on.
 
 ## 4. Centre the servos, then assemble
 
-The horns must go on with every servo at its centre position (90°) and the links in their neutral pose. Otherwise a joint's travel won't line up with its collision-free range.
+Build the whole base on the bench first and screw it down last: once it is screwed to the desk, the cradle, the ESP32 and the bus inside it are out of reach (deep review 03, SYS-09). Every horn goes on with its servo at its centre (`c`: 90° on every servo) and its link in that joint's fitting pose. Otherwise a joint's travel won't line up with its collision-free range and the sketch's limits.
 
-1. **Flash, find the end stops, and centre.**
-   - Wire everything (section 3).
+| Joint | Fitting pose at `c` (joint angle, §5) |
+|---|---|
+| Base | the upright's front face (where the shoulder shaft comes out) towards +Y, so the arm reaches out over the +X (USB) wall (0) |
+| Shoulder | upper link straight up (90) |
+| Elbow | forearm 60° below the upper link's line, bent towards +X: it points 30° above horizontal (−60). The elbow's window is then −150 … +30 |
+| Wrist | claw in line with the forearm (0) |
+| Claw | pinion fitted last, at `g 44` with both jaws fully open (steps 10–11) |
+
+Every servo goes into its window **from the tab side, case bottom first**. Its lead comes out of the case end nearest the shaft, close to the case bottom, so its root crosses the plate: each window has a notch at that end (both ends on the MG996Rs, whose lead end isn't confirmed). Feed the plug through first, then keep the ribbon flat in the notch while the case follows.
+
+1. **Base, upside down on the bench.**
+   - Fit the DC jack in the −X wall (label it "6 V, centre +"), and the fuse, the capacitor and the power bus inside (§3).
+   - Fit the cradle to the 3 bosses under the top plate (3 × M3 × 10 from below) and drop the ESP32 in pins-down, its USB end against the slot in the +X wall.
+   - Turn the base over. Put the base MG996R into the top-plate window from above, shaft up, case bottom first, its lead through an end notch. Fix it with 4 × M3 × 12 + washers and plug it onto the bus.
+   - Put one layer of PTFE tape on the support ring's top face, then screw the ring on with 3 × M3 × 6.
+   - Don't screw the base down yet (step 15).
+2. **Flash, find the end stops, and centre.**
+   - Plug the other four servos onto the bus loose, on the bench.
    - Flash `arm_test/arm_test.ino`: Arduino IDE, board "ESP32 Dev Module" on the arduino-esp32 3.x core, library **ESP32Servo** 3.x.
    - Plug in the USB first, then switch on the 6 V. Open the Serial Monitor at 115200 and type `c`.
    - **End stops**, one servo at a time, with a horn pushed loosely onto the spline as a pointer. Hobby servos don't all turn 180° between 500 and 2500 µs; one that hits its end stop first stalls there at full current.
@@ -110,64 +149,62 @@ The horns must go on with every servo at its centre position (90°) and the link
      - Do the same upwards to `u s 2500`. Type `c`.
      - Repeat for `b`, `e`, `w` and `g` (the claw).
      - If a servo stopped short, put its two pulses into `minUs` and `maxUs` on its line of the sketch's `joints[]` table and re-flash.
-   - Type `c`. This centres the base, shoulder, elbow and wrist and closes the claw servo.
-   - Leave the power on while you fit the horns.
-2. **Base.**
-   - Screw the base to the desk or to a board with 4 × M3×50 wood screws through the corner pillars.
-   - Fit the cradle to the 3 bosses under the base top plate (M3×10 from below).
-   - Drop the ESP32 in pins-down, with its USB end against the slot in the +X wall.
-   - Fit the DC jack, the capacitor and the power bus.
-   - Drop the base MG996R into the top-plate window, shaft up, and fix it with its 4 tab screws.
-   - Screw the ring on with 3 × M3×6.
-3. **Horns into the links.**
-   - Press each horn into its pocket on the link's back face, with double-arm horns along the link's long axis.
-   - Drill 1.5 mm pilots through two of the horn's arm holes into the plastic. Screw the horn down with the small horn screws so it can't turn.
-   - The **centre clamp screw** goes in from the link's front face, through the link and the horn, into the spline: M3×16 + washer on the big servos, M2×12 + washer on the wrist. It holds the link on, so tighten it firmly.
-4. **Turntable, before the shoulder servo.** The servo body covers the centre hole once it's fitted.
-   - Lay the base horn flat on the turntable's underside, centred on the Ø3.4 hole and pointing along X. Drill and screw through two arm holes.
-   - Push it onto the base servo's spline with the upright facing **+X**.
-   - Drive the M3×16 + washer from the top. A screwdriver with a shaft of 75 mm or more clears the upright.
-   - **Then** put the shoulder MG996R through the upright window from the front (+Y side), shaft facing forward and body horizontal. Fix it with 4 tab screws.
+   - Type `c`: every servo goes to its centre and the claw servo to its closed angle. Leave the power on while you fit the horns, and unplug a servo from the bus only to thread its lead.
+3. **Horns.** Drill each horn's screw hole to 2.0 mm, put a 1.5 mm pilot through it into the plastic, and fix the horn with M2 × 6 self-tappers so it can't turn.
+   - Shoulder and elbow: the MG996R **double-arm** horns into the pockets on the back faces of the upper link and the forearm, along the link's long axis, 2 screws each.
+   - Base: the MG996R **Ø25 disc horn** flat on the turntable's underside, centred on the Ø3.6 hole, 2 screws through two of its holes (deep review 03, SYS-05: the disc carries the disk ±12.5 mm in every direction).
+   - Wrist: the MG90S **single-arm** horn into the pocket on the claw frame's back face, arm towards the bulkhead, 1 screw.
+4. **Turntable, before the shoulder servo** (the servo body covers the centre hole once it's in).
+   - Push the turntable's disc horn onto the base servo's spline with the upright's **front face towards +Y**: the shoulder shaft will come out of that face, and the arm then reaches out over the +X (USB) wall at `b 0`.
+   - Drive the M3 × 14 socket head + Ø9 washer from the top. An L-key or a screwdriver with a 75 mm shaft clears the upright.
+   - The disk should now turn 0.3–0.4 mm above the taped ring all round. Where it rubs, sand the ring's top; where the gap is bigger, add a second layer of tape there.
+   - **Then** put the shoulder MG996R through the upright's window from the front (+Y side), case bottom first, shaft facing forward, body horizontal, its lead through an end notch. Fix it with 4 × M3 × 12 + washers: their tips stand 2 mm out of the upright's back face.
 5. **Upper link.**
-   - Fit the elbow MG996R in the link's far window: tabs on the front face, shaft forward.
-   - Push the link's horn onto the shoulder spline with the link pointing **straight up** (servo at 90° = upright).
-   - Fit the clamp screw.
-6. **Forearm.**
-   - Fit the wrist MG90S in the forearm's far window, shaft forward, with 2 × M2×12 self-tapping screws.
-   - Push the forearm onto the elbow spline **in line with the upper link** (elbow at 90° = straight).
-7. **Claw frame, before the claw servo.** The claw servo's body covers the wrist clamp screw.
-   - Press the MG90S **single-arm** horn into the pocket on the frame's back face, pointing towards the bulkhead. Screw it down through one arm hole.
-   - Push the frame onto the wrist spline **in line with the forearm**.
-   - Fit the M2×12 + Ø6 washer from the front through the centre hole.
-8. **Claw servo.** Slide the claw MG90S through the bulkhead window from behind, shaft pointing at the fingertips. Fix it with its 2 tab screws (M2×8 self-tapping if the bag screws are short).
-9. **Pinion.**
-   - Cut both arms of the MG90S **double-arm** horn **5.5 mm from the centre** with flush cutters, leaving two short stubs on the hub.
-   - File the cut ends flat and press the horn into the pinion's back pocket. It should be snug. A drop of CA glue removes any play.
-   - Type `f`: the claw servo goes to its closed angle.
-   - Push the pinion and horn onto the claw spline (any tooth orientation is fine) and drive the M2×10 from the front.
-10. **Cover.**
-    - Lower the cover onto the frame. The lip goes behind the pinion's level, the top wall rests on the bulkhead, and the front plate covers the wrist plate's front edge.
-    - Fix the front with 2 × M3×12 into the wrist plate's edge.
-    - Fix the top with 2 × M3×10, or with the camera mount and 2 × M3×18 button heads (step 13).
-11. **Jaws.** The front plate has two slots. The upper slot is open at one side and the lower slot at the other.
-    - Slide one jaw into the **upper** channel from the side where the upper slot is open: rack teeth down, finger pointing forward, neck in the slot.
-    - At the pinion, push gently and wiggle until the teeth mesh. Keep pushing until the finger reaches the claw's centre line.
-    - Slide the second jaw, upside down, into the **lower** channel from the other side, in the same way.
-    - The two grip faces should meet in the middle. If one is a tooth off (about 3 mm), pull it back out one tooth and slide it in again.
+   - Put the elbow MG996R into the link's far window from the front face, case bottom first, shaft forward, lead through a notch: 4 × M3 × 12 + washers.
+   - Push the link's horn onto the shoulder spline with the link **straight up**, and fit the M3 × 14 + Ø9 washer.
+6. **Forearm** (deep review 03, SYS-03).
+   - File the slit that runs from the lead-end tab's hole to the tab's end to 2.1 mm wide with a needle file: that pilot is moved 1.3 mm out, beside the lead notch (deep review 01, B1). Check that an M2 passes, then fit the wrist MG90S into the forearm's far window from the front face, case bottom first, shaft forward, its lead in the notch at the shaft end: 2 × M2 × 12 self-tappers.
+   - With the elbow servo at its centre, push the forearm onto the elbow spline **60° below the upper link's line, bent towards +X**: with the upper link straight up, the forearm points 30° above horizontal, out over the USB wall. Check it with a protractor or a phone level, take the spline position nearest 30°, and fit the M3 × 14 + Ø9 washer. The trims in §5 take out the rest.
+7. **Claw frame, before the claw servo** (its body covers the wrist clamp screw).
+   - Push the frame, with its horn, onto the wrist spline **in line with the forearm**.
+   - Fit the M2 × 12 + Ø6 washer from the front, through the centre hole in the raised pad.
+8. **Claw servo, from the front.**
+   - File its lead-end tab's slit to 2.1 mm as in step 6.
+   - Feed its plug through the bulkhead's window from the front, then push the MG90S in after it, **case bottom first**, shaft pointing at the fingertips, the ribbon flat in the notch at the shaft end, until the tabs sit on the bulkhead's front face. Fix it with 2 × M2 × 8 self-tappers.
+   - **Direction.** Push a horn loosely onto its spline as a pointer and type `g 20`. Seen from the front, the spline must turn **anticlockwise** to open the claw. If it turns clockwise, set `GRIP_OPEN_DIR = -1` in the sketch and re-flash. Type `f` and take the pointer off.
+9. **Cover, then the camera mount.**
+   - Lower the cover onto the frame: the front plate slides down past the wrist plate's front edge, the lip goes in front of the claw servo's case, and the top wall lands on the bulkhead.
+   - Fix the front with 2 × M2.5 × 12 into the wrist plate's edge.
+   - Fix the top with 2 × M3 × 10, or put the camera mount on now and use 2 × M3 × 18 button heads through both (step 13).
+10. **Jaws, slid in to fully open** (deep review 03, SYS-01). Without the pinion they slide freely. The front plate has two slots: the upper one is open on one side of the claw, the lower one on the other.
+    - Jaw A: rack teeth facing the claw's middle, finger pointing forward. Slide its rack into the **upper** channel (under the top wall) from the side where the upper slot is open, neck in the slot, until its grip face is 22 mm from the claw's centre line.
+    - Jaw B: the same part turned upside down. Slide it into the **lower** channel (on the wrist plate) from the other side, where the lower slot is open, until its grip face is 22 mm from the centre line too: the grip faces are now 44 mm apart.
+11. **Pinion, last, pushed in axially through the front plate.**
+    - Cut both arms of the MG90S **double-arm** horn **5.5 mm from the centre** with flush cutters and file the ends round, so the horn fits a Ø11 circle.
+    - Press the horn into the pinion's back pocket. It's a light fit that centres the pinion on the horn (deep review 03, SYS-08); glue it only after the run in step 12.
+    - Type `g 44`: the claw servo turns to its fully open angle.
+    - Push the pinion, horn first, through the round hole in the front plate onto the spline. Its teeth slide into both racks at once. If they don't, nudge one or both jaws along their channels by up to half a tooth (1.6 mm), or turn the pinion by one spline tooth, until it slides home.
+    - Drive the M2 × 12 + Ø6 washer through the pinion's front counterbore into the spline.
 12. **Claw calibration.**
-    - Type `g 10`: the claw should open 10 mm.
-    - If it squeezes instead, set `GRIP_OPEN_DIR = -1` and `GRIP_CLOSED_DEG = 160` in the sketch, re-flash, and redo step 9 from `f`.
-    - Then type `k 20`, `k 22`, … until `g 0` just brings the faces together without the servo buzzing.
-    - Copy the printed `GRIP_CLOSED_DEG` value into the sketch.
+    - Type `k 20`, `k 22`, …: each one closes the claw itself to that angle. Listen during the first 2 s: every closing move squeezes for at most 2 s and then eases off, so a buzz only shows then. Stop at the value where the grip faces just touch without the servo buzzing. The ESP32 keeps the trim; copying the printed `GRIP_CLOSED_DEG` into the sketch is optional.
+    - Run `g 44` and `g 0` a few times: the jaws must run without a tight spot or a click anywhere over the stroke. A tight spot means a rack isn't riding on its guide or the pinion isn't centred on its horn; then glue the horn with a drop of CA.
+    - Then do §5's claw scale check (`g 40`).
+    - **Service** is the same in reverse: `g 44`, the M2 screw out, the pinion out through the front hole, then the jaws out of the slots' open ends, the cover off, and the claw servo out to the front. With a dead claw servo, pull the jaws open by hand first; that back-drives the servo you are replacing anyway.
 13. **Camera (optional).**
     - Take the clip off the Brio (Logitech's quick-start guide shows how, in its tripod section).
-    - Screw the camera mount onto the cover with the 2 × M3×18 button heads.
-    - Hold the camera on the tilted seat against the rear lip, lens towards the fingers. Turn the knurled 1/4"-20 thumb screw up into it from below until snug. The thread is in the camera's plastic, so don't force it.
-    - Plug the USB cable into the camera's end and zip-tie it to the claw frame.
-    - Run it along the forearm and upper link with a slack loop at the wrist, elbow, shoulder and base, then on to your PC.
-14. **Leads.**
-    - Run the servo leads down each link with spiral wrap, leaving slack at every joint.
-    - Take them through the base's cable slot to the bus and the ESP32.
+    - If not done in step 9, screw the camera mount onto the cover with the 2 × M3 × 18 button heads.
+    - Hold the camera on the tilted seat against the rear lip, lens towards the fingers. Turn the 1/4"-20 × 5/16" thumb screw up into it from below until snug. The thread is in the camera's plastic, so don't force it.
+    - Plug the **right-angle** USB-C plug into the port on the camera's **back**, turned so the cable runs along the camera, and route it as in step 14.
+14. **Leads and cables** (deep review 03, SYS-10).
+    - Extensions: 50 cm on the claw and wrist leads, 30 cm on the elbow lead. Put the junctions outside the base's cable slot or on the turntable side, never at a joint.
+    - Run each lead along its links in spiral wrap. Tie it with a zip tie around the link 6–14 mm from each joint axis on both sides of the joint, and leave a free loop over the joint. Run each joint slowly through its window (§5) and check the loops never pull tight.
+    - Cross every joint **around the outside of the servo body**, never through the 2.6–5 mm gap between a link's back face and the servo case behind it: the horn turns there.
+    - **Yaw loop:** tie the bundle to the upright's rear gusset and to a clip at the base's cable slot. About 60 mm of slack then hangs in a vertical loop outside r 52 mm, never under the disk's rim, where the ring's tab screws are.
+    - **Racks:** at 44 mm open each rack sticks 15 mm out of the claw's sides (front half of the claw). Keep every tie and cable behind the bulkhead.
+    - **Camera cable:** stick an adhesive cable-tie mount on the claw frame's bulkhead, on the side the cable leaves the camera, and tie the cable there with a short strain-relief loop between it and the plug, so a tug never reaches the plug. Tie it again on the forearm 10–15 mm behind the wrist axis, with a 60 mm loop between the two ties outside the wrist servo, then along the forearm and upper link with a loop at the elbow, shoulder and base, and on to your PC.
+15. **Screw the base down, last.**
+    - 4 × M3 × 50 wood screws through the corner pillars into the desk, or into a board of at least 200 × 200 mm and 0.4 kg (12–18 mm plywood or MDF) with the rubber feet under the board. Or fix 1.2 kg of ballast inside the base (0.8 kg without the camera). Free-standing, the arm tips over in every extended pose (deep review 03, SYS-12).
+    - **Keep-out zones** (SYS-17): the claw and camera sweep a circle of about 300 mm radius round the yaw axis. With the shoulder past 90° the arm reaches the desk behind the base, over the jack and the cable slot, so run the 6 V lead and the cables away from there. The ESP32's USB cable leaves the +X wall under the main pick zone: use a right-angle plug and keep the cable flat on the desk. The camera and its plug stand 155 mm out sideways from the yaw axis.
 
 ## 5. First power-up and joint limits
 
