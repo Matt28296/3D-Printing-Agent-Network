@@ -191,7 +191,7 @@ def _roof_hits_pilots(s: ServoSpec, c: float, roof: str, wall: float = 1.0) -> l
 
 def horn_pocket_cutter(s: ServoSpec, depth: float = 2.0, clearance: float = 0.5,
                        screw_access_d: float | None = None, link_t: float = 50.0,
-                       hole_comp: float = HOLE_COMP_DEFAULT) -> Part:
+                       hole_comp: float = HOLE_COMP_DEFAULT, trim_r: float | None = None) -> Part:
     """Cutter for the horn recess in a link, in LINK frame: origin on the shaft axis at the
     link's BACK face (servo side), +Z pointing away from the servo (into the link).
     Place the link's back face at `link_back_z(s, depth)` in the servo frame, so the horn's
@@ -203,6 +203,9 @@ def horn_pocket_cutter(s: ServoSpec, depth: float = 2.0, clearance: float = 0.5,
     screw would clamp only the horn). Pocket and hole get `hole_comp` added (printed sizes).
     depth=0 gives just the clamp hole (horn face flat on the link's back face). Screw the horn to the link first (its own small screws, pilot-drilled
     through the horn holes), then push the assembly onto the spline.
+    trim_r: for a horn whose arms are CUT SHORT to fit a small part (a pinion): the pocket
+    is clipped to a circle of trim_r (+ clearance) around the shaft. The user cuts each arm
+    trim_r from the centre; the stubs' flat sides still carry the torque.
     """
     clearance = clearance + hole_comp
     access_d = (s.horn_screw_clear_d if screw_access_d is None else screw_access_d) + hole_comp
@@ -223,6 +226,11 @@ def horn_pocket_cutter(s: ServoSpec, depth: float = 2.0, clearance: float = 0.5,
                 r = r_hub + (r_tip - r_hub) * t
                 pocket = pocket + Pos(sgn * s.horn_arm_len * t, 0, -0.5) * Cylinder(
                     r, depth + 0.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if trim_r is not None:
+        if trim_r <= s.horn_d / 2:
+            raise ValueError(f"trim_r {trim_r} leaves no arm stub outside the {s.horn_d} mm hub")
+        pocket = pocket & (Pos(0, 0, -1) * Cylinder(trim_r + clearance / 2, depth + 2,
+                                                    align=(Align.CENTER, Align.CENTER, Align.MIN)))
     return pocket + access
 
 
@@ -423,3 +431,17 @@ UBEC_6V_5A = BoxSpec("6 V 5 A UBEC (switching BEC)", 45.0, 20.0, 9.0, 15.0, "set
 PCA9685_HOLES = (56.0, 19.0)
 
 __all__ += ["MG90S", "PCA9685_BOARD", "LIPO_2S_1000", "UBEC_6V_5A", "PCA9685_HOLES"]
+
+# MG90S with its DOUBLE-arm horn (same arm size as the single arm, both ways along ±x).
+MG90S_DOUBLE = replace(MG90S, horn_arms=2)
+
+# Logitech Brio 4K webcam with its mounting clip REMOVED (Logitech 4K Pro quick-start guide:
+# camera 27 H x 102 W x 27 D mm, 63 g; the clip is 44 g extra). A 1/4"-20 tripod thread sits
+# in the middle of the bottom face. USB-C socket on the camera, 2.2 m USB-A cable.
+# Frame used by the mounts: origin at the thread on the bottom face, +X = lens direction,
+# +Y = long axis, +Z = up. The body spans x ±13.5, y ±51, z 0..27; lens at (13.5, 0, 13.5).
+BRIO_4K = BoxSpec("Logitech Brio 4K webcam, clip removed", 102.0, 27.0, 27.0, 63.0,
+                  "1/4-20 thread centred on the bottom; measure its depth before choosing the screw")
+BRIO_EDGE_R = 6.0          # rounding of the long edges (estimated from photos: measure yours)
+TRIPOD_SCREW_D = 6.35      # 1/4"-20 UNC major diameter
+__all__ += ["MG90S_DOUBLE", "BRIO_4K", "BRIO_EDGE_R", "TRIPOD_SCREW_D"]

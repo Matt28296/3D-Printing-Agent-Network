@@ -170,3 +170,22 @@ def test_chamfer_plane_edges_skips_tangent_edges():
     out = chamfer_plane_edges(blank, 3.0, 0.3)
     assert out.is_valid
     assert out.volume < blank.volume - 0.3 ** 2 / 2 * (10 + 12 + 10) * 0.9   # the three plain edges were cut
+
+
+def test_trimmed_horn_pocket_fits_inside_a_small_pinion():
+    """A double-arm horn cut to 5.5 mm fits in a pocket of radius ~5.85 (+ clamp hole)."""
+    from hobby_parts import MG90S_DOUBLE, horn_pocket_cutter
+    full = horn_pocket_cutter(MG90S_DOUBLE, link_t=6)
+    trimmed = horn_pocket_cutter(MG90S_DOUBLE, link_t=6, trim_r=5.5)
+    bb = trimmed.bounding_box()
+    assert max(bb.max.X, -bb.min.X, bb.max.Y, -bb.min.Y) <= 5.5 + 0.35 + 1e-6
+    assert trimmed.volume < full.volume
+    # the stubs are still there: the trimmed pocket is wider along the arm than across it
+    assert bb.max.X - bb.min.X > bb.max.Y - bb.min.Y + 2.0
+
+
+def test_trimmed_horn_must_leave_a_stub():
+    import pytest
+    from hobby_parts import MG90S_DOUBLE, horn_pocket_cutter
+    with pytest.raises(ValueError):
+        horn_pocket_cutter(MG90S_DOUBLE, trim_r=3.0)

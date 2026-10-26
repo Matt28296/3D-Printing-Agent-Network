@@ -22,18 +22,24 @@ import trimesh
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-from build123d import Box, Pos, export_stl  # noqa: E402
-from hobby_parts import (ESP32_DEVKIT_38, MG996R, SG90, link_back_z,  # noqa: E402
+from build123d import Align, Box, Pos, export_stl  # noqa: E402
+from hobby_parts import (BRIO_4K, ESP32_DEVKIT_38, MG90S, MG996R, link_back_z,  # noqa: E402
                          servo_dummy)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import claw_frame as C  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 TOL = 1.0  # mm³
-EXPECTED = [{"base", "desk"}, {"cradle", "esp32"}]   # resting contacts, not interference
+EXPECTED = [{"base", "desk"}, {"cradle", "esp32"}, {"camera_mount", "brio"}]   # resting contacts
 JOBS = {
     "base": "20261025-arm-base", "ring": "20261025-arm-turntable-ring",
     "turntable": "20261025-arm-turntable", "upper": "20261025-arm-upper-link",
-    "forearm": "20261025-arm-forearm", "gripper_base": "20261025-arm-gripper-base",
-    "jaw": "20261025-arm-gripper-jaw", "cradle": "20261025-arm-esp32-cradle",
+    "forearm": "20261025-arm-forearm", "cradle": "20261025-arm-esp32-cradle",
+    # parallel claw + Brio 4K mount (claw v2, 2026-10-26; replaces gripper-base / gripper-jaw)
+    "claw_frame": "20261026-arm-claw-frame", "claw_cover": "20261026-arm-claw-cover",
+    "claw_pinion": "20261026-arm-claw-pinion", "claw_jaw": "20261026-arm-claw-jaw",
+    "camera_mount": "20261026-arm-camera-mount",
 }
 
 
@@ -61,6 +67,16 @@ def Rz(deg):
     m = np.eye(4); m[:2, :2] = [[c, -s], [s, c]]; return m
 
 
+def Rx(deg):
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    m = np.eye(4); m[1:3, 1:3] = [[c, -s], [s, c]]; return m
+
+
+def Ry(deg):
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    m = np.eye(4); m[0, 0], m[0, 2], m[2, 0], m[2, 2] = c, s, -s, c; return m
+
+
 def frame(origin, x_dir, z_dir):
     x = np.array(x_dir, float); x /= np.linalg.norm(x)
     z = np.array(z_dir, float); z /= np.linalg.norm(z)
@@ -74,11 +90,14 @@ def main():
     tt = mods["turntable"]
     print("tessellating parts ...", flush=True)
     mesh = {k: to_mesh(m.design()) for k, m in mods.items()}
+    mesh["claw_jaw_b"] = mesh["claw_jaw"].copy()
     mesh["servo_base"] = to_mesh(servo_dummy(MG996R, with_horn=False))
     mesh["servo_shoulder"] = mesh["servo_base"].copy()
     mesh["servo_elbow"] = mesh["servo_base"].copy()
-    mesh["servo_wrist"] = to_mesh(servo_dummy(SG90, with_horn=False))
+    mesh["servo_wrist"] = to_mesh(servo_dummy(MG90S, with_horn=False))
     mesh["servo_grip"] = mesh["servo_wrist"].copy()
+    mesh["brio"] = to_mesh(Box(BRIO_4K.width, BRIO_4K.length, BRIO_4K.height,
+                               align=(Align.CENTER, Align.CENTER, Align.MIN)))
     b = ESP32_DEVKIT_38
     x1 = mods["cradle"].USB_END_X
     yc = mods["cradle"].YC
@@ -87,13 +106,16 @@ def main():
     mesh["esp32"] = to_mesh(pcb + shield)
     mesh["desk"] = to_mesh(Pos(0, 0, -45) * Box(800, 800, 10))   # desk top at Z = -40
 
-    lb_mg, lb_sg = link_back_z(MG996R), link_back_z(SG90)
+    lb_mg, lb_sg = link_back_z(MG996R), link_back_z(MG90S)
     xs, zs, up_y = tt.XS, tt.ZS, tt.UP_Y
-    t_up, t_fa, t_gb = mods["upper"].T, mods["forearm"].T, mods["gripper_base"].T
-    t_jaw = mods["jaw"].T
+    t_up, t_fa = mods["upper"].T, mods["forearm"].T
+    servo_in_g = frame((C.X_B, 0, C.ZS), (0, 1, 0), (1, 0, 0))
+    pinion_in_g = frame((C.X_P0, 0, C.ZS), (0, 0, 1), (1, 0, 0))
+    turn_b = T(0, 0, C.ZS) @ Rx(180) @ T(0, 0, -C.ZS)            # jaw B = jaw A turned about the pinion axis
+    cam_in_g = T(C.CAM_XC, 0, C.CAM_ZC) @ Ry(C.CAM_TILT)
 
     def place(q):
-        yaw, sh, el, wr, gr = q
+        yaw, sh, el, wr, gap = q            # gap = jaw opening in mm (0 = closed, 44 = open)
         W = Rz(yaw)
         P = {"base": np.eye(4), "ring": np.eye(4), "cradle": np.eye(4), "esp32": np.eye(4), "desk": np.eye(4),
              "servo_base": np.eye(4), "turntable": W}
@@ -105,10 +127,14 @@ def main():
         P["forearm"] = F
         P["servo_wrist"] = F @ T(90, 0, t_fa)
         G = F @ T(90, 0, t_fa + lb_sg) @ Rz(-wr)        # + = wrist up
-        P["gripper_base"] = G
-        P["servo_grip"] = G @ T(40, 0, t_gb)
-        P["jaw"] = G @ T(40, 0, t_gb + lb_sg) @ Rz(gr)  # + = open
-        tip = G @ np.array([95.0, -6.0, t_gb + lb_sg + t_jaw / 2, 1.0])
+        d = gap / 2.0
+        P["claw_frame"] = P["claw_cover"] = P["camera_mount"] = G
+        P["servo_grip"] = G @ servo_in_g
+        P["claw_pinion"] = G @ pinion_in_g @ Rz(math.degrees(d / C.R_P))
+        P["claw_jaw"] = G @ T(0, -d, 0)
+        P["claw_jaw_b"] = G @ turn_b @ T(0, -d, 0)
+        P["brio"] = G @ cam_in_g
+        tip = G @ np.array([C.X_TIP - 3.0, 0.0, C.ZS, 1.0])      # between the fingertips
         return P, tip[:3]
 
     def overlaps(P):
@@ -128,8 +154,8 @@ def main():
         return hits, placed
 
     desk_z = -40.0
-    # q = (yaw, shoulder, elbow, wrist, gripper) in degrees. shoulder 0 = upper link
-    # horizontal towards +X, + = up; elbow/wrist 0 = straight, + = up; gripper 0 = closed.
+    # q = (yaw, shoulder, elbow, wrist in degrees, claw gap in mm). shoulder 0 = upper link
+    # horizontal towards +X, + = up; elbow/wrist 0 = straight, + = up; gap 0 = closed, 44 = open.
     poses = {
         "home (reach out, horizontal)": (0, 0, 0, 0, 0),
         "upright": (0, 90, 0, 0, 0),
@@ -138,8 +164,9 @@ def main():
         "elbow folded down 150": (0, 60, -150, 0, 0),
         "wrist +90": (0, 30, -30, 90, 0),
         "wrist -90": (0, 30, -30, -90, 0),
-        "gripper open 30": (45, 45, -45, 0, 30),
+        "gripper open 44": (45, 45, -45, 0, 44),
         "pick from desk": (-30, 70, -120, -40, 20),
+        "camera over the arm (wrist -150)": (0, 30, -30, -150, 10),
     }
     report = {"tol_mm3": TOL, "poses": {}, "sweeps": {}}
     for name, q in poses.items():
@@ -166,7 +193,7 @@ def main():
     report["sweeps"]["shoulder (elbow 0)"] = sweep(1, list(range(-40, 181, 10)), (0, 0, 0, 0, 0))
     report["sweeps"]["elbow (shoulder 60)"] = sweep(2, list(range(-170, 171, 10)), (0, 60, 0, 0, 0))
     report["sweeps"]["wrist (shoulder 45, elbow -45)"] = sweep(3, list(range(-150, 151, 10)), (0, 45, -45, 0, 0))
-    report["sweeps"]["gripper"] = sweep(4, list(range(-20, 61, 5)), (0, 45, -45, 0, 0))
+    report["sweeps"]["claw opening mm"] = sweep(4, list(range(0, 45, 4)), (0, 45, -45, 0, 0))
     for k, s in report["sweeps"].items():
         print(f"{k:32s} free: {s['collision_free']}")
         if s["first_hits"]:
