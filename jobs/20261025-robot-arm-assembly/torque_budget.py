@@ -49,6 +49,10 @@ CLAW = ["claw_frame", "claw_cover", "claw_pinion", "claw_jaw", "claw_jaw_b", "ca
 # sliced/solid ratio of each job's last slice (filament per copy / (old CAD volume x 1.27))
 SLICED_RATIO = {"upper": 0.672, "forearm": 0.672, "claw_frame": 0.748, "claw_cover": 0.920, "claw_pinion": 1.035,
                 "claw_jaw": 0.946, "claw_jaw_b": 0.946, "camera_mount": 0.999}
+# links round 5: the 6 mm back-face rail ribs (upper link +4.6 cm³, forearm +3.6 cm³ incl. its cross-rib) print about 80 %
+# dense (5 perimeters a side on a 6.6-6.85 mm rib, 40 % gyroid core), against the plates' 0.672 from the round-2 slice:
+# about 0.685 for each whole link until it is sliced again
+SLICED_RATIO.update({"upper": 0.685, "forearm": 0.685})
 
 
 def servo_com(s):

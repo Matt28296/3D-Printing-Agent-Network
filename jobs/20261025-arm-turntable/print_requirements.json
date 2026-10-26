@@ -4,7 +4,8 @@
  "min": {
   "perimeters": 5,
   "top_solid_layers": 5,
-  "bottom_solid_layers": 5,
+  "bottom_solid_layers": 30,
+  "bottom_solid_min_thickness": 6.0,
   "fill_density": 40
  },
  "max": {

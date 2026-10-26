@@ -8,15 +8,15 @@ Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the
 | Fingertips out along the arm | Camera: short lift | Camera: moving | Camera: holding | No camera: short lift | No camera: moving | No camera: holding |
 |---|---|---|---|---|---|---|
 | 60–100 mm | 200 g | 200 g | 200 g | 200 g | 200 g | 200 g |
-| 100–120 mm | 200 g | 200 g | 155 g | 200 g | 200 g | 200 g |
-| 120–140 mm | 200 g | 130 g | 80 g | 200 g | 200 g | 160 g |
-| 140–160 mm | 160 g | 60 g | 20 g | 200 g | 145 g | 100 g |
-| 160–180 mm | 95 g | 10 g | — | 180 g | 95 g | 60 g |
-| 180–200 mm | 50 g | — | — | 135 g | 60 g | 25 g |
-| 200–220 mm | 15 g | — | — | 100 g | 30 g | 5 g |
-| Arm straight out (≈280 mm) | — | — | — | 55 g | 5 g | — |
+| 100–120 mm | 200 g | 200 g | 150 g | 200 g | 200 g | 200 g |
+| 120–140 mm | 200 g | 125 g | 75 g | 200 g | 200 g | 160 g |
+| 140–160 mm | 155 g | 55 g | 15 g | 200 g | 140 g | 100 g |
+| 160–180 mm | 90 g | 5 g | — | 175 g | 90 g | 55 g |
+| 180–200 mm | 45 g | — | — | 130 g | 55 g | 20 g |
+| 200–220 mm | 10 g | — | — | 95 g | 25 g | — |
+| Arm straight out (≈280 mm) | — | — | — | 50 g | 5 g | — |
 
-"Out along the arm" is the fingertips' distance from the yaw axis in the arm's own plane; "—" means none. With the camera, holding the empty arm straight out already takes 51 % of the shoulder's stall torque, so don't park or wait there: `r` parks the arm upright (shoulder 90, elbow 0, wrist 0), where the shoulder holds almost nothing, and the sketch parks it by itself after 60 s without a command (§5). The figures use the parts' sliced masses; with solid parts each cell drops by about 25 g. Method and every number: `torque_budget.py` → `torque_budget.json` (deep review 03, SYS-02).
+"Out along the arm" is the fingertips' distance from the yaw axis in the arm's own plane; "—" means none. With the camera, holding the empty arm straight out already takes 52 % of the shoulder's stall torque, so don't park or wait there: `r` parks the arm upright (shoulder 90, elbow 0, wrist 0), where the shoulder holds almost nothing, and the sketch parks it by itself after 60 s without a command (§5). The figures use the parts' sliced masses; with solid parts each cell drops by about 25 g. Method and every number: `torque_budget.py` → `torque_budget.json` (deep review 03, SYS-02).
 
 ## 1. Bill of materials
 
@@ -27,8 +27,8 @@ Reach is 293 mm horizontally. Inside the servos' travel the fingertips reach the
 | 1 | Base | `20261025-arm-base` | upside down (top plate on bed) |
 | 2 | Turntable support ring | `20261025-arm-turntable-ring` | flat, tabs down |
 | 3 | Turntable + shoulder upright | `20261025-arm-turntable` | disk on bed |
-| 4 | Upper link (100 mm) | `20261025-arm-upper-link` | flat, horn pocket up |
-| 5 | Forearm (90 mm) | `20261025-arm-forearm` | flat, horn pocket up |
+| 4 | Upper link (100 mm) | `20261025-arm-upper-link` | flat, horn pocket and back-face ribs up |
+| 5 | Forearm (90 mm) | `20261025-arm-forearm` | flat, horn pocket and back-face ribs up |
 | 6 | Claw frame | `20261026-arm-claw-frame` | back face down (wrist-horn pocket on the bed) |
 | 7 | Claw cover | `20261026-arm-claw-cover` | standing on its −y end (5 mm brim) |
 | 8 | Claw pinion (20 teeth) | `20261026-arm-claw-pinion` | flat, horn pocket down, solid |
@@ -60,12 +60,14 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
 | 2 | Servo extension lead, 50 cm (40 cm at least) | Claw and wrist: their MG90S leads are 24–25 cm, the run to the base ≈560 and ≈520 mm |
 | 1 | Servo extension lead, 30 cm | Elbow (run ≈430 mm, MG996R lead 30 cm). The shoulder and base leads reach without one |
 | 12 + 12 | M3 × 12 pan-head self-tapping screw (ST2.9 or a thread-forming screw for plastics) + M3 washer Ø7 × 0.5 | MG996R tab screws: base, shoulder, elbow, 4 each. Through the 2.5 mm tab and the washer they reach 9 mm into the 10 mm base plate and boss and the 10 mm upper link; in the 7 mm upright the tip stands 2 mm out at the back, clear of the gussets |
-| 3 | M3 × 6 self-tapping (pan head) | Ring tabs. A longer screw would reach the ESP32 under the plate |
-| 3 | M3 × 10 self-tapping (pan head) | Cradle, from below into the counterbores. Not longer: the boss pilots are 6 mm deep |
+| 3 + 3 | M3 × 6 self-tapping (pan head) + M3 washer Ø7 × 0.5 | Ring tabs. The washer spreads the head's clamp on the 3 mm tab, which creeps under a bare pan head (links strength round 4); a relief in the ring's wall lets it sit flat. A longer screw would reach the ESP32 under the plate, and with the washer 2.5 mm bites the plate: drive them snug, no harder |
+| 3 | M3 × 10 self-tapping (pan head) | Cradle, from below into the counterbores. Not longer: the boss pilots are 7 mm deep, 1 mm more than an M3 × 10 reaches |
 | 3 + 3 | M3 × 14 socket head (ISO 4762) + Ø9 × 0.8 washer (M3 large, ISO 7093) | Horn clamp screws: base (through the 8 mm turntable disk), shoulder and elbow (through the 10 mm links, 8 mm above the horn). Each reaches 4.6 mm into the spline (14 − 0.8 − 8 − 0.6, the horn face standing 0.6 above the spline). A socket head lets you re-tighten the base one with an L-key past the upright |
 | 2 + 2 | M2 × 12 socket or pan head (head ≤ Ø5.5) + Ø6 × 0.5 washer | Horn clamp screws: wrist (through the claw frame's raised pad) and pinion (from its front counterbore). Both have a 6.3 mm floor above the horn: 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline, like the big ones |
-| 7 | M2 × 6 self-tapping (pan head) | Horn anti-rotation screws: 2 each through the base disc horn and the shoulder and elbow double-arm horns, 1 through the wrist horn. Drill the horn's hole to 2.0 mm first. The pinion's horn is glued instead |
-| 2 | M2 × 12 self-tapping (pan head) | Wrist MG90S tab screws in the 10 mm forearm (9.5 mm engaged) |
+| 5 | M2 × 6 self-tapping (pan head) | Horn anti-rotation screws: 2 each through the shoulder and elbow double-arm horns, 1 through the wrist horn. Drill the horn's hole to 2.0 mm first. The pinion's horn is glued instead |
+| 4 | M2 × 8 self-tapping (pan head) | Base disc horn anti-rotation: through 4 of the disc's holes, in opposite pairs on one circle at r ≥ 7 mm, 5.2 mm into the turntable disk (§4 step 3). Two M2 × 6 weren't enough for the base servo's stall (links strength round 4) |
+| 1 | M2 × 12 self-tapping (pan head) | Wrist MG90S, lead-end tab, in the 10 mm forearm (9.5 mm engaged) |
+| 1 | M2 × 16 self-tapping (pan head) | Wrist MG90S, far tab, into the 16 mm pilot through the forearm's cross-rib (13.5 mm engaged; links strength round 4). Not shorter: an M2 × 12 there pulls out under a yaw stall |
 | 2 | M2 × 8 self-tapping (pan head) | Claw MG90S tab screws in the 6.5 mm bulkhead (5.5 mm engaged) |
 | 2 | M2.5 × 12 pan-head self-tapping, head Ø5.0 or less | Claw cover, front, into the wrist plate's front edge (7 mm engaged). Jaw B's finger passes 0.5 mm over the heads, so no bigger head |
 | 2 | M3 × 10 self-tapping (pan head), **or** 2 × M3 × 18 button head (ISO 7380) with the camera mount | Claw cover, top, into the bulkhead's 14 mm pilots (7 / 11.5 mm engaged) |
@@ -84,7 +86,8 @@ The old gripper (`20261025-arm-gripper-base` and `-gripper-jaw`) is **superseded
    - On the servos: body length and width, tab-hole spacing, the distance from the shaft to the near body end.
    - On the MG90S also (deep review 01, B2): case bottom → tab underside (CAD 18.5), tab underside → spline top (CAD 14.0), and the width of the slit from each tab hole to the tab end.
    - Where each lead leaves its case (01, B1): which end, how high above the case bottom, how wide and thick the ribbon is. The windows' notches assume the shaft end, 5.1 mm (MG90S) or 6 mm (MG996R) up, a 3.6 × 1.2 mm (4 × 1.3 mm) ribbon.
-   - On the horns: the MG996R double-arm horn (hub Ø, centre to tip, tip width), the MG996R disc horn (Ø, hole circle), the MG90S arm horns (the same three sizes, plus the arm's width near the hub).
+   - On the horns: the MG996R double-arm horn (hub Ø, centre to tip, tip width), the MG996R disc horn, the MG90S arm horns (the same three sizes, plus the arm's width near the hub).
+   - On the **MG996R disc horn** (links strength round 4): its diameter, its thickness at the holes, and its holes. For each circle of holes, count the holes and measure centre to centre across the circle: the radius is half that. The turntable needs **4 holes in opposite pairs on one circle at r ≥ 7 mm** for its 4 anti-rotation screws (§4 step 3). The design assumed r 9; anything from r 7 up is fine. If your disc has no such circle, tell Claude before printing.
    - **Spline thread depth** (01, S2): screw a long M3 (MG996R) or M2 (MG90S) into a bare output shaft until it stops and count the turns (0.5 or 0.4 mm each). Every horn clamp screw reaches 4.6 mm into it; if yours is shallower than 5.1 mm, use the next shorter screw.
    - If a body length or width differs by more than 0.1 mm, or anything else by more than 0.3 mm, give the numbers to Claude. Claude updates the specs in the models and re-runs the pipeline.
 2. **Camera:** measure how deep the Brio's tripod thread is, so the thumb screw doesn't bottom out, and where the USB-C port sits on its back: the mount's rear lip stands 6 mm up the back, so the plug must sit above that.
@@ -138,7 +141,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
    - Fit the DC jack in the −X wall (label it "6 V, centre +"), and the fuse, the capacitor and the power bus inside (§3).
    - Fit the cradle to the 3 bosses under the top plate (3 × M3 × 10 from below) and drop the ESP32 in pins-down, its USB end against the slot in the +X wall.
    - Turn the base over. Put the base MG996R into the top-plate window from above, shaft up, case bottom first, its lead through an end notch. Fix it with 4 × M3 × 12 + washers and plug it onto the bus.
-   - Put one layer of PTFE tape on the support ring's top face, then screw the ring on with 3 × M3 × 6.
+   - Put one layer of PTFE tape on the support ring's top face, then screw the ring on with 3 × M3 × 6, each with a Ø7 washer under its head (the wall has a relief for it). Snug, no harder: they have 2.5 mm of thread in the plate.
    - Don't screw the base down yet (step 15).
 2. **Flash, find the end stops, and centre.**
    - Plug the other four servos onto the bus loose, on the bench.
@@ -151,9 +154,10 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
      - Repeat for `b`, `e`, `w` and `g` (the claw).
      - If a servo stopped short, put its two pulses into `minUs` and `maxUs` on its line of the sketch's `joints[]` table and re-flash.
    - Type `c`: every servo goes to its centre and the claw servo to its closed angle. Leave the power on while you fit the horns, and unplug a servo from the bus only to thread its lead.
-3. **Horns.** Drill each horn's screw hole to 2.0 mm, put a 1.5 mm pilot through it into the plastic, and fix the horn with M2 × 6 self-tappers so it can't turn.
+3. **Horns.** Drill each horn's screw hole to 2.0 mm, put a 1.5 mm pilot through it into the plastic, and fix the horn with M2 self-tappers so it can't turn: M2 × 6, or M2 × 8 on the base disc horn.
    - Shoulder and elbow: the MG996R **double-arm** horns into the pockets on the back faces of the upper link and the forearm, along the link's long axis, 2 screws each.
-   - Base: the MG996R **Ø25 disc horn** flat on the turntable's underside, centred on the Ø3.6 hole, 2 screws through two of its holes (deep review 03, SYS-05: the disc carries the disk ±12.5 mm in every direction).
+   - Base: the MG996R **Ø25 disc horn** flat on the turntable's underside, centred on the Ø3.6 hole (deep review 03, SYS-05: the disc carries the disk ±12.5 mm in every direction), with **4 × M2 × 8** through 4 of its holes (links strength round 4). Use 4 holes in opposite pairs on one circle at r ≥ 7 mm (§2). Drill each pilot 1.5 mm **6 mm deep** into the disk, with a tape flag on the drill, and no deeper: the disk is 8 mm, and its bottom 6 mm is printed solid for these screws. Opposite pairs let §5's half turn reuse the same pilots.
+     - If your disc has no circle of 4 holes at r ≥ 7 mm: 4 holes in opposite pairs at r 5–7 mm still hold (safety factor ≥ 3.6). Or use 3 holes on one circle at r ≥ 7 mm (≥ 3.8), but then §5's half turn needs 3 fresh pilots. Anything less: tell Claude before drilling.
    - Wrist: the MG90S **single-arm** horn into the pocket on the claw frame's back face, arm towards the bulkhead, 1 screw.
 4. **Turntable, before the shoulder servo** (the servo body covers the centre hole once it's in).
    - Push the turntable's disc horn onto the base servo's spline with the upright's **front face towards +Y**: the shoulder shaft will come out of that face, and the arm then reaches out over the +X (USB) wall at `b 0`.
@@ -164,7 +168,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
    - Put the elbow MG996R into the link's far window from the front face, case bottom first, shaft forward, lead through a notch: 4 × M3 × 12 + washers.
    - Push the link's horn onto the shoulder spline with the link **straight up**, and fit the M3 × 14 + Ø9 washer.
 6. **Forearm** (deep review 03, SYS-03).
-   - File the slit that runs from the lead-end tab's hole to the tab's end to 2.1 mm wide with a needle file: that pilot is moved 1.3 mm out, beside the lead notch (deep review 01, B1). Check that an M2 passes, then fit the wrist MG90S into the forearm's far window from the front face, case bottom first, shaft forward, its lead in the notch at the shaft end: 2 × M2 × 12 self-tappers.
+   - File the slit that runs from the lead-end tab's hole to the tab's end to 2.1 mm wide with a needle file: that pilot is moved 1.3 mm out, beside the lead notch (deep review 01, B1). Check that an M2 passes, then fit the wrist MG90S into the forearm's far window from the front face, case bottom first, shaft forward, its lead in the notch at the shaft end, between the two ribs on the back face. Screws: **M2 × 12 in the lead-end tab, M2 × 16 in the far tab**, whose pilot runs 16 mm deep through the cross-rib on the back face (links strength round 4).
    - **Screw-strip check.** The plastic between the window and each screw hole is only about 1.5 mm wide, under the project's 1.8 mm rule; you chose to keep it and check it instead (26 Oct 2026). Drive both screws snug, no more, then look at the two strips. If either has turned white or cracked, stop and tell Claude: the screw holes move out and the forearm is reprinted.
    - With the elbow servo at its centre, push the forearm onto the elbow spline **60° below the upper link's line, bent towards +X**: with the upper link straight up, the forearm points 30° above horizontal, out over the USB wall. Check it with a protractor or a phone level, take the spline position nearest 30°, and fit the M3 × 14 + Ø9 washer. The trims in §5 take out the rest.
 7. **Claw frame, before the claw servo** (its body covers the wrist clamp screw).
@@ -202,6 +206,7 @@ Every servo goes into its window **from the tab side, case bottom first**. Its l
     - Extensions: 50 cm on the claw and wrist leads, 30 cm on the elbow lead. Put the junctions outside the base's cable slot or on the turntable side, never at a joint.
     - Run each lead along its links in spiral wrap. Tie it with a zip tie around the link 6–14 mm from each joint axis on both sides of the joint, and leave a free loop over the joint. Run each joint slowly through its window (§5) and check the loops never pull tight.
     - Cross every joint **around the outside of the servo body**, never through the 2.6–5 mm gap between a link's back face and the servo case behind it: the horn turns there.
+    - The upper link and the forearm have 6 mm ribs on their back faces along both sides of each servo window. Lay the bundle along a link's edge or over a rib, and put the zip ties round the whole link, ribs and servo included.
     - **Yaw loop:** tie the bundle to the upright's rear gusset and to a clip at the base's cable slot. About 60 mm of slack then hangs in a vertical loop outside r 52 mm, never under the disk's rim, where the ring's tab screws are.
     - **Racks:** at 44 mm open each rack sticks 15 mm out of the claw's sides (front half of the claw). Keep every tie and cable behind the bulkhead.
     - **Camera cable:** stick an adhesive cable-tie mount on the claw frame's bulkhead, on the side the cable leaves the camera, and tie the cable there with a short strain-relief loop between it and the plug, so a tug never reaches the plug. Tie it again on the forearm 10–15 mm behind the wrist axis, with a 60 mm loop between the two ties outside the wrist servo, then along the forearm and upper link with a loop at the elbow, shoulder and base, and on to your PC.
@@ -271,7 +276,7 @@ A horn goes onto its spline in steps of 14.4° (MG996R) or about 17–18° (MG90
 6. **More than 3.6° on the base, shoulder or elbow:** turn that MG996R's horn half a turn on its part. On the 25-tooth spline the two positions are half a tooth (7.2°) apart, so one of them is within ±3.6°.
    - Type `c`.
    - **Shoulder or elbow:** undo the link's M3 × 14 clamp screw and take the link off its spline. Unscrew the double-arm horn from its pocket, turn it end-for-end and screw it back: the drilled holes still match.
-   - **Base:** its Ø25 disc horn is screwed under the turntable, so it comes off with the turntable. Undo the turntable's M3 × 14 clamp screw from the top (an L-key reaches it past the upright) and lift the turntable off the spline. Turn the disc horn half a turn on the turntable's underside and screw it back into the same pilots.
+   - **Base:** its Ø25 disc horn is screwed under the turntable, so it comes off with the turntable. Undo the turntable's M3 × 14 clamp screw from the top (an L-key reaches it past the upright) and lift the turntable off the spline. Turn the disc horn half a turn on the turntable's underside and screw it back into the same pilots: its 4 screws sit in opposite pairs (§4 step 3).
    - Push the link or the turntable back on at the spline position nearest its §4 fitting pose and refit the clamp screw. Type `t <joint> 0` and redo that joint's step.
 7. `t` shows the trims. `t save` keeps them on the ESP32; without it, a reset brings back the last saved ones. Type `i 60` to switch parking back on.
 
@@ -310,7 +315,7 @@ The sketch can't feel an object, and an MG90S held stalled draws about 0.7 A and
 
 ### Parking
 
-With the camera, holding the empty arm straight out takes 51–56 % of the shoulder MG996R's stall torque (sliced or solid parts, `torque_budget.py`), more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 2 N·mm.
+With the camera, holding the empty arm straight out takes 52–58 % of the shoulder MG996R's stall torque (sliced or solid parts, `torque_budget.py`), more than it can hold for long (deep review 03, SYS-02). Upright (shoulder 90, elbow 0, wrist 0) the shoulder holds about 2 N·mm.
 
 - `r` parks now. The base and the claw stay as they are, so a held object stays held.
 - After 60 s without a command (`IDLE_PARK_S`) the arm parks by itself and prints `idle 60 s: parking`. **So it can move on its own.**
