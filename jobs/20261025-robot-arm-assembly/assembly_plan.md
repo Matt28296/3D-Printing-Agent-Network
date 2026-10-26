@@ -49,7 +49,7 @@ Every printed part (claw v2: frame, cover, pinion, both jaws, camera mount), 5 s
 | Wrist (shoulder 45, elbow −45) | −150° … +150° (camera fitted) | −90° … +90° |
 | Claw | 0 … 44 mm (0 = fingers touching) | 0 … 44 mm (140° of servo) |
 
-Reach (claw v2): 284 mm from the yaw axis at full horizontal extension; collision-free poses put the fingertips on the desk from 76 mm to 260 mm out. Every named pose is collision-free, including the elbow folded ±150° and the wrist at −150° with the camera passing over the forearm (the camera sits outboard of every other part).
+Reach (claw v2): 284 mm from the yaw axis at full horizontal extension; collision-free poses inside the servos' travel (shoulder 0…180°, elbow and wrist −90…+90°) put the fingertips on the desk from about 125 mm to 245 mm out. Every named pose is collision-free, including the elbow folded ±150° and the wrist at −150° with the camera passing over the forearm (the camera sits outboard of every other part).
 
 ## Printed pieces
 
