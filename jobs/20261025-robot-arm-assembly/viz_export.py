@@ -34,7 +34,7 @@ LABELS = {"base": "Base", "ring": "Turntable support ring", "turntable": "Turnta
 QTY = {"claw_jaw": 2}
 # review status shown on the page (update after each gate)
 STAMPS = [{"text": "9 of 11 parts awaiting your approval", "kind": "pass"},
-          {"text": "Claw frame + cover: fifth attempt in review", "kind": "warn"}]
+          {"text": "Claw frame + cover: round 5 in final review", "kind": "warn"}]
 RESLICE = ("claw_frame", "claw_cover")   # changed since their last slice (slice_stats.json has no STL hash): drop each once re-sliced
 PAYLOAD = ("with the camera, claw down: ≈160 g lifted at 140–160 mm out, ≈50 g at 180–200 mm, none held straight out; "
            "without it ≈55 g straight out (BUILD_GUIDE payload table)")
