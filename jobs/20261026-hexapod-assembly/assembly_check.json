@@ -1,8 +1,78 @@
 {
  "tol_mm3": 1.0,
- "stance_z_tab_mm": 96.4,
- "stance": {
+ "frames": {
+  "mounts": {
+   "coxa": "reversed",
+   "femur servo": "normal",
+   "tibia servo": "reversed"
+  },
+  "LB": 12.6,
+  "Z_F": 20.0,
+  "S0_above_plate_underside": 8.5,
+  "plate_gap_to_bracket": 4.1,
+  "foot_side_mm": 12.7,
+  "leg_mounts": [
+   [
+    60.0,
+    42.0,
+    40.0
+   ],
+   [
+    0.0,
+    56.0,
+    90.0
+   ],
+   [
+    -60.0,
+    42.0,
+    140.0
+   ],
+   [
+    60.0,
+    -42.0,
+    -40.0
+   ],
+   [
+    0.0,
+    -56.0,
+    -90.0
+   ],
+   [
+    -60.0,
+    -42.0,
+    -140.0
+   ]
+  ],
+  "columns": [
+   [
+    36.0,
+    25.0
+   ],
+   [
+    36.0,
+    -25.0
+   ],
+   [
+    -36.0,
+    25.0
+   ],
+   [
+    -36.0,
+    -25.0
+   ]
+  ],
+  "ubec_box_xyz": [
+   -25.0,
+   25.0,
+   22.5,
+   32.5,
+   0.0,
+   20.0
+  ]
+ },
+ "servo_centre": {
   "collisions": [],
+  "plate_underside_mm": 94.1,
   "feet_z_mm": [
    0.0,
    0.0,
@@ -13,36 +83,123 @@
   ],
   "feet_xy_mm": [
    [
-    129.1,
-    79.4
+    127.1,
+    81.8
    ],
    [
-    15.8,
-    129.0
+    12.7,
+    133.0
    ],
    [
-    -108.8,
-    103.6
+    -110.8,
+    101.2
    ],
    [
-    108.8,
-    -103.6
+    110.8,
+    -101.2
    ],
    [
-    -15.8,
-    -129.0
+    -12.7,
+    -133.0
    ],
    [
-    -129.1,
-    -79.4
+    -127.1,
+    -81.8
+   ]
+  ]
+ },
+ "stance": {
+  "sketch_angles": {
+   "femur": -4.7,
+   "tibia": -14.0
+  },
+  "collisions": [],
+  "plate_underside_mm": 94.09,
+  "feet_z_mm": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "feet_xy_mm": [
+   [
+    109.8,
+    67.2
+   ],
+   [
+    12.7,
+    110.4
+   ],
+   [
+    -93.5,
+    86.7
+   ],
+   [
+    93.5,
+    -86.7
+   ],
+   [
+    -12.7,
+    -110.4
+   ],
+   [
+    -109.8,
+    -67.2
    ]
   ],
   "overall_mm": [
-   276.6,
-   281.8,
-   160.4
+   275.7,
+   290.0,
+   160.3
   ],
-  "body_underside_clearance_mm": 49.2
+  "lowest_point_mm": [
+   49.0,
+   "L0_coxa"
+  ]
+ },
+ "gait": {
+  "stride 30 mm, lift 20 mm": {
+   "frames": 20,
+   "collisions": [],
+   "ik_foot_error_mm": 0.0,
+   "joint_ranges_sketch_deg": {
+    "coxa": [
+     -15.9,
+     15.0
+    ],
+    "femur": [
+     -12.0,
+     22.7
+    ],
+    "tibia": [
+     -38.5,
+     -6.4
+    ]
+   },
+   "max_neighbour_coxa_difference_deg": 23.6
+  },
+  "stride 40 mm, lift 20 mm": {
+   "frames": 20,
+   "collisions": [],
+   "ik_foot_error_mm": 0.0,
+   "joint_ranges_sketch_deg": {
+    "coxa": [
+     -21.0,
+     19.5
+    ],
+    "femur": [
+     -14.9,
+     22.7
+    ],
+    "tibia": [
+     -38.9,
+     -3.0
+    ]
+   },
+   "max_neighbour_coxa_difference_deg": 32.6
+  }
  },
  "sweeps": {
   "all coxae together": {
@@ -77,27 +234,46 @@
     15,
     20,
     25,
-    30,
-    35
+    30
    ],
    "hits": [
+    [
+     35,
+     [
+      [
+       "L0_tibia_servo",
+       "L1_tibia",
+       425.7
+      ],
+      [
+       "L0_tibia_servo",
+       "L1_tibia_clamp",
+       32.2
+      ],
+      [
+       "L3_tibia",
+       "L4_tibia_servo",
+       29.2
+      ]
+     ]
+    ],
     [
      40,
      [
       [
-       "L0_femur",
-       "L1_tibia",
-       34.4
+       "L0_tibia_servo",
+       "L1_femur",
+       466.5
       ],
       [
        "L0_tibia_servo",
        "L1_tibia",
-       457.2
+       918.2
       ],
       [
        "L0_tibia_servo",
-       "L1_tibia_servo",
-       89.3
+       "L1_tibia_clamp",
+       29.1
       ]
      ]
     ],
@@ -105,19 +281,19 @@
      45,
      [
       [
+       "L0_coxa",
+       "L1_femur",
+       387.5
+      ],
+      [
        "L0_femur",
        "L1_femur",
-       16.5
+       2.7
       ],
       [
        "L0_femur",
        "L1_tibia",
-       1008.9
-      ],
-      [
-       "L0_femur",
-       "L1_tibia_servo",
-       107.4
+       320.1
       ]
      ]
     ]
@@ -131,27 +307,46 @@
     15,
     20,
     25,
-    30,
-    35
+    30
    ],
    "hits": [
+    [
+     35,
+     [
+      [
+       "L1_tibia_servo",
+       "L2_tibia",
+       29.2
+      ],
+      [
+       "L4_tibia",
+       "L5_tibia_servo",
+       425.7
+      ],
+      [
+       "L4_tibia_clamp",
+       "L5_tibia_servo",
+       32.2
+      ]
+     ]
+    ],
     [
      40,
      [
       [
        "L1_femur",
-       "L2_tibia",
-       483.1
+       "L2_tibia_clamp",
+       3.9
+      ],
+      [
+       "L1_tibia_servo",
+       "L2_femur",
+       63.3
       ],
       [
        "L1_tibia_servo",
        "L2_tibia",
-       79.6
-      ],
-      [
-       "L1_tibia_servo",
-       "L2_tibia_servo",
-       34.7
+       231.2
       ]
      ]
     ],
@@ -161,23 +356,23 @@
       [
        "L1_femur",
        "L2_femur",
-       11.1
+       16.8
+      ],
+      [
+       "L1_femur",
+       "L2_tibia",
+       218.8
       ],
       [
        "L1_femur",
        "L2_tibia_servo",
-       459.2
-      ],
-      [
-       "L1_tibia",
-       "L2_tibia",
-       754.7
+       176.6
       ]
      ]
     ]
    ]
   },
-  "middle-left femur (tibia -90)": {
+  "middle-left femur (tibia perpendicular)": {
    "free": [
     -70,
     -60,
@@ -199,17 +394,8 @@
    ],
    "hits": []
   },
-  "middle-left tibia (femur +30)": {
+  "middle-left tibia, sketch angle (femur +30)": {
    "free": [
-    -170,
-    -160,
-    -150,
-    -140,
-    -130,
-    -120,
-    -110,
-    -100,
-    -90,
     -80,
     -70,
     -60,
@@ -218,9 +404,57 @@
     -30,
     -20,
     -10,
-    0
+    0,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
    ],
    "hits": []
   }
- }
+ },
+ "joint_limits": {
+  "coxa": {
+   "gait": [
+    -21.0,
+    19.5
+   ],
+   "free_sweep": [
+    -45,
+    45
+   ],
+   "inside_travel_with_trims": true,
+   "inside_free_sweep": true
+  },
+  "femur": {
+   "gait": [
+    -14.9,
+    22.7
+   ],
+   "free_sweep": [
+    -70,
+    90
+   ],
+   "inside_travel_with_trims": true,
+   "inside_free_sweep": true
+  },
+  "tibia": {
+   "gait": [
+    -38.9,
+    -3.0
+   ],
+   "free_sweep": [
+    -80,
+    90
+   ],
+   "inside_travel_with_trims": true,
+   "inside_free_sweep": true
+  }
+ },
+ "clean": true
 }

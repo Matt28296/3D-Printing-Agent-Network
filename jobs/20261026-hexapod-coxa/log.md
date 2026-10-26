@@ -6,3 +6,4 @@
 - 2026-10-26T05:22Z · architect · round 2: spec/brief updated for DFM round-1 fixes (Z_F +4, gusset, hub fillet, M2x10, columns at ±40 x ±25, 40 mm tall); model rebuilt, mesh + assembly check OK · ok
 - 2026-10-26T05:48:04Z · dfm-reviewer · round 2 design_review.md · FAIL
 - 2026-10-26T06:29Z · strength-analyst · wrote strength.md · FAIL
+- 2026-10-26T07:50Z · design-lead (round 3) · strength set (T_V 10, 13 mm posts, T_C 8 + Ø10 washer, 45° ramp, R1 reliefs, full gusset, M2×10 tab screws), B1 option 1 (lead notch, outboard pilot +1.3, file 6 tab slits), SYS-5 tie slot, 6 mm corner cut; spec §2/3/4/8 + brief rewritten; built, rendered, mesh_check, cad_checks 16/16, assembly check clean · ok
