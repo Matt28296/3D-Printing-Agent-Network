@@ -17,3 +17,4 @@
 - 2026-10-26T15:43Z · dfm-reviewer (claw round 3, independent) · design_review.md · PASS
 - 2026-10-26T16:08Z · strength-analyst (claw round 3, independent) · strength.md, strength_calc.py · NEEDS_TEST
 - 2026-10-26T16:08Z · architect (as head-orchestrator) · merged; DESIGN pass; stage SLICE · ok
+- 2026-10-26T16:09Z · architect · user approved the cover anchor: one M3 pilot added to the rail block; back to DESIGN for a recheck · ok

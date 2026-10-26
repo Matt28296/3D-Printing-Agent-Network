@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 in progress for the DFM pillar fix (user-approved); round 3 strength also FAILED (1.23: an opening stall on jaw B exits through the 3 mm top wall); the reviewer's fix (anchor the second tie's post to the frame's rail block with an M3 \u00d7 45) is asked of the user",
+    "DESIGN": "round 4 in progress (user-approved): support pillar B thicker; second tie post 8 mm onto the frame's rail block with an M3 \u00d7 45 anchor",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Extend the cover's fourth round with the strength fix: second tie post 8 mm thick down onto the frame's rail block, one M3 \u00d7 45 into a new pilot in the frame (every cover row \u2265 4.64)? (asked of the user)"
-  ],
-  "updated": "2026-10-26T16:08:26+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T16:09:12+00:00"
 }

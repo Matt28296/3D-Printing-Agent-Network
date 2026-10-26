@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-arm-claw-frame",
-  "stage": "SLICE",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "pass (round 3: DFM PASS; strength NEEDS_TEST, lowest SF 3.03, 3.53 after the cover anchor)",
+    "DESIGN": "round 4 change (user-approved with the cover anchor): one \u00d82.7 \u00d7 14 M3 pilot in the rail block; recheck after",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T16:08:26+00:00"
+  "updated": "2026-10-26T16:09:12+00:00"
 }
