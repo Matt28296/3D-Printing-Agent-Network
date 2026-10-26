@@ -1,75 +1,81 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review: 20261026-arm-claw-frame (round 2)
+# DFM review: 20261026-arm-claw-frame (round 3)
 
-Reviewer: dfm-reviewer (independent) · 2026-10-26 · DESIGN gate, round 2 (round 1: FAIL).
-Inputs: spec.md (including the 459ee45 screw-strip check), design_brief.md, model.py, geometry.json, mesh_check.json, print_requirements.json, renders/*.png (regenerated; all 5 viewed), round-1 design_review.md and strength.md, ../20261025-robot-arm-assembly/claw_frame.py, claw_sequence_check.py/.json, assembly_plan.md, BUILD_GUIDE §4, deep reviews 01 (B1, B2) and 03 (SYS-01, SYS-08), tools/hobby_parts.py (`servo_mount_cutter`, `MG90S`), tools/cadlib.py, library/ (no lessons, no material rows, so skill defaults apply).
+Reviewer: dfm-reviewer (independent) · 2026-10-26 · DESIGN gate, round 3 (rounds 1 and 2: FAIL). This is the third design attempt.
 
-The outputs are current. `build()` rebuilt in memory gives 34 759.99 mm³ and 14 333.26 mm², the same as geometry.json, and mesh_check re-run in memory reproduces mesh_check.json. Extra evidence:
-- a layer-by-layer slice of part.stl: 0.2 mm layers on a 0.04 mm raster, each layer compared with the one below, flagging anything more than 0.3 mm from it;
-- a per-layer 0.9 mm thin-feature test;
-- ray probes.
+**Inputs:**
+- this job: spec.md (§1 holds the round-3 values), design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, print_requirements.json, log.md (the 15:16Z lines), and the round-2 design_review.md and strength.md;
+- renders/*.png, regenerated with `tools/render.py`; all 5 viewed;
+- `../20261025-robot-arm-assembly/`: claw_frame.py, claw_sequence_check.py (re-run), assembly_check.json, BUILD_GUIDE §4 steps 7–9;
+- tools/hobby_parts.py;
+- library/: no lessons and no material rows, so the skill defaults apply.
 
-The frame prints in G: back face on the bed, z up.
+**The outputs are current.** Each check below was run on the round-3 files:
+- `build()` rebuilt in memory gives 46 477.38 mm³ and 14 986.02 mm², the same as geometry.json. part.stl gives 46 477.7 mm³.
+- `tools/mesh_check.py` re-run: overhang 1.41 %, bed contact 2534.7 mm², widest bridge 7.9 mm, thin walls 0.
+- `cad_checks.py` exits 0, with 15/15 PASS.
+
+**Extra evidence:**
+- **Layer check** of part.stl: 0.2 mm layers on a 0.04 mm raster. Each layer is compared with the one below grown 0.3 mm, and every patch is reported with its distance from material below.
+- **Thin-feature test:** a per-layer 0.9 mm morphological opening.
+- **Bridge columns:** a per-column look at the window-roof bridge next to the washer relief.
+
+Print frame = claw frame G: the back face is on the bed, and z is up.
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits the bed with a 5 mm margin | PASS | 40.85 × 64.0 × 48.5 mm, `fits_bed: true` |
+| 1 | Fits the bed with a 5 mm margin | PASS | 42.85 × 64.0 × 48.5 mm, `fits_bed: true` |
 | 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, `min_z_mm: 0.0` |
-| 3 | Orientation matches the brief | PASS | Back face on the bed with the horn pocket in it (bottom.png). The bulkhead, the window with its 45° roof and the rail wall rise from the plate (iso.png, front.png, right.png) |
-| 4 | Load paths vs layers | **FAIL** | **The rail wall is new this round:** a 4 mm wall at x 18.35–22.35, z 6–17.75, standing upright in print (front.png). Rack B's back thrust (spec §4: ≈28 N at one rack end, along x) bends it as a cantilever off the plate, so its root stress runs along z, across the layers. Spec §4 says "in their planes" and the brief says "bending along its 64 mm length (≈0.9 MPa)". That figure is 168 N·mm over the whole 64 mm wall (Z = 64 × 4²/6). But a rack end loads only a strip about twice its ≈6 mm lever wide. And when the claw is wide open, rack B's back end (it reaches y 47 at 44 mm open) bears on the rail's free end at y 32. Reviewer's estimate: ≈5 MPa nominal mid-rail and ≈10 MPa at the end, before Kt 2.5 at the sharp front root (item 10). The across-layer placeholder is 12.5 MPa, and SF 3 needs ≤ 4.2. The brief neither names this across-layer path nor justifies it, and round-1 strength checked only bearing, on the old solid rail (row 14). Other paths are fine: plate bending runs along the layers, and the bulkhead root is named in the brief as across the layers and covered by strength |
-| 5 | Bed contact | PASS | 2408.3 mm², PETG |
-| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | **FAIL** | **The lead notch has a flat top.** The notch is at the window's +y end (y 6.1–7.5, z 25.05–29.45). Its top at z 29.45 opens into the window, so it is a 1.4 mm ledge anchored on its +y side only. The layer check at z 29.5 finds 7.6 mm² up to 1.16 mm beyond the 0.3 mm support allowance. mesh_check lists it as a 1.41 mm "bridge", but its −y side is the open window. It is neither supported nor justified in the brief. Deep review 01 B1 gives a notch in a standing wall "a 45° top", and the turntable's notches have exactly that (its model.py `_notch_tops()`, its round-4 review item 6). **Everything else passes:** window-roof flat 9.2 mm, anchored on both shoulders (layer check at z 40.7: at most 4.48 from support, so two-sided); horn-pocket ceiling 7.9 mm, anchored all round (z 2.1); front-pilot flats 0.91 mm between 45° flanks (z 4.1); pilot teardrops and the Ø3 corner reliefs point up (right.png). Where each pilot's 0.4 mm outward slot passes its teardrop, a 0.17 mm flat is left: negligible. overhang_pct 1.49 |
-| 7 | Walls ≥ 1.8, none < 0.9 | PASS (user-accepted deviation) | **MG90S tab-pilot strips,** measured on part.stl at the pilots' centre line (z 27.25) through the whole bulkhead (x 3.6, 6.75 and 9.9, the same at all three). **Lead end:** notch end wall y 7.51 → moved pilot slot y 8.85 = **1.34 mm CAD** (≈1.54 printed). **Far end:** pilot slot y −18.55 → window end y −17.1 = **1.45 mm CAD** (≈1.65 printed). Both are under rule §2's 1.8 mm. The user kept them on 26 Oct 2026, and spec §8 (459ee45) now has the screw-strip check: drive both M2 × 8 snug, no whitening, no crack. So they are a user-accepted deviation covered by that check, not a fail. What still holds: no strip is under 0.9 mm; neither pilot breaks into the window or the notch; the pilots are the right size (Ø1.7 CAD = MG90S `screw_pilot_d` 1.5 + HOLE_COMP, slotted 0.4 mm outward). **Other walls:** bulkhead 6.5 mm, with 1.9 mm each side of the Ø2.7 top pilots; front pilots 1.9 mm of skin above (flat at z 4.1, rack B's track at z 6) and 1.9 below; rail 4.0; the top pilots stay 4.55 and 6.55 mm from the window and roof. `thin_wall_warnings` is empty, and the per-layer 0.9 mm test finds no thin region |
-| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | `HOLE_COMP = HOLE_COMP_DEFAULT` goes into the window (23.2 × 12.8 CAD, 23.0 × 12.6 printed), the notch (4.4 × 1.6 CAD), the tab pilots (Ø1.7), the pocket (hub Ø7.9), the clamp hole (Ø2.6), the top pilots (Ø2.7) and the front pilots (Ø2.2); measure_holes agrees. Horizontal openings: the window has its 45° roof, the pilots and the corner reliefs are teardrops, the front pilots are flat-topped teardrops. The notch's flat top is item 6 |
-| 9 | Bottom edges chamfered | PASS (note) | 0.4 mm `chamfer_plane_edges` on the plate blank (model.py l.94; bottom.png). The pocket and clamp-hole mouths are cut after it. They are loose fits (pocket +0.5) and rely on EFC 0.2, as in round 1 |
-| 10 | Internal corners on load paths filleted | PASS (advisory) | **Filleted:** the rail's back root, r 2 (front.png); the window's lower corners, Ø3 reliefs (strength fix 2). **Rail front root (x 22.35, z 6), sharp:** a channel corner, because rack B's square edge runs 0.25 mm from it (model.py l.79–80), so it is accepted as round 1 accepted channel corners. It is the tension side of item 4's path, though, so fix 2's check must use Kt 2.5 there. If that fails, it needs the relief and fillet in fix 2. **Bulkhead roots (x 10 / z 6 and x 3.5 / z 8.3), sharp:** round-1 R1 was not adopted. Strength checked them at Kt 2.5, SF ≥ 5.6 (round-1 rows 13, 17) |
-| 11 | Fasteners per §4 | PASS | **Wrist:** M2 × 12 + Ø6 washer over the 6.3 mm floor, 12 − 0.5 − 6.3 − 0.6 = 4.6 mm into the spline; washer edge at x 3.0, bulkhead at x 3.5. **Claw servo tabs:** M2 × 8, 5.5 mm engaged in 6.5, so no breakout; the lead-end slit is filed to 2.1 mm (BUILD_GUIDE §4 step 8). **Cover:** M3 × 10 or M3 × 18 engage 7 or 11.5 mm of the 14 mm pilots; M2.5 × 12 engage 7 mm of 10. Self-tapping is acceptable here: these come apart only for service |
-| 12 | Spec §3 dims are named parameters | PASS | ZS 27.25, X_B 10, T_W 6 (RACK_SEAT 0), RAIL_X1 22.35, X_F0 32.85, and the clamp floor T_W + PAD_T − HORN_DEPTH = 6.3. The window is CLR 0.4 and END_CLR 0.2 + HOLE_COMP, so 23.0 × 12.6 printed, and the spec now says printed (round-1 fix 3). All are named, with comments, in model.py or claw_frame.py |
+| 3 | Orientation matches the brief | PASS | Back face on the bed with the horn pocket in it (bottom.png). Rising from the plate (iso.png, front.png, top.png): the bulkhead with its window, the rail block from the bulkhead's front face to x 22.35, the pad behind the bulkhead, and the two ribs at the y ends |
+| 4 | Load paths vs layers | PASS (justified) | **Round-2 fix 2 is done.** The brief's table names the rail block as a cantilever off the plate with its root stress along z, across the layers. It also names the sharp rack-side root (x 22.35, z 6, Kt 2.5) and the worst case: rack B's end at the free end y +32, jaws open, b_eff 7.9. **The rail is a block back to the bulkhead now** (RAIL_X0 = X_B = 10; cad_checks "rail block … x 10 to x 22.35"). The brief predicts SF 6.31 for it (round 2: 0.65); the number is strength's to confirm. **Other across-layer paths in the table:** the bulkhead root (with the ribs), the window strips, the clamp floor punching and the tab-pilot strips |
+| 5 | Bed contact | PASS | 2534.7 mm² of PETG on a 42.85 × 64 plate |
+| 6 | Overhangs ≤ 45°, bridges ≤ 10 mm | PASS | **Round-2 fix 1 is done: the lead notch has a 45° top.** `_notch_top()` (model.py l.95–108) adds the triangle (y 7.5, z 29.45) → (y 6.1, z 30.85). The layer check finds nothing between z 29.3 and 31.0; round 2 had a 7.6 mm² one-sided ledge at z 29.5. mesh_check's z 29.45 entry is the 0.01 mm overlap sliver (0.1 mm²). **The layer check finds only these patches:**<br>• the pocket ceiling, z 2.1: 7.9 mm bridge, anchored all round, 3.74 mm from support at most;<br>• the front pilots' flats, z 4.1: 0.91 mm between 45° flanks;<br>• the pilot slots' 0.17 mm flats, z 28.1;<br>• the window-roof flat, z 40.7: 9.2 mm, two-sided.<br>**New this round:** the Ø9 washer relief removes the roof flat's +y anchor over x 3.5–4.45, the 1 mm of bulkhead next to the back face (columns end at y −2.78 to −0.86 against the relief). Those lines sit inside the 4 perimeters (1.8 mm), which follow the relief's arc onto the shoulder at (x 4.45, y −0.8), so they stay anchored at both ends: about 9.5 mm along the path. Every point is within 4.80 mm of material below (round 2: 4.48), so it is still a two-sided bridge under 10 mm. overhang_pct 1.41 |
+| 7 | Walls ≥ 1.8, none < 0.9 | PASS (user-accepted deviation) | **MG90S tab-pilot strips: 1.34 mm CAD at the lead end, 1.45 at the far end.** These are a deviation the user accepted on 26 Oct 2026, covered by the spec §8 screw-strip check on the first printed frame (both M2 × 8 snug, no whitening, no crack; BUILD_GUIDE §4 step 8 repeats it). They are not a fail. No strip is under 0.9 mm. **Other walls:**<br>• bulkhead 6.5 (5.5 where the relief cuts it, \|y\| ≤ 2.83);<br>• ribs 6 × 10;<br>• rail block 12.35 deep;<br>• 1.9 mm skin over the front pilots;<br>• the top pilots stay 4.55 / 6.55 mm from the window and roof.<br>`thin_wall_warnings` is empty, and the 0.9 mm opening finds nothing in any layer |
+| 8 | HOLE_COMP; horizontal holes teardrop or flat-top | PASS | `HOLE_COMP = HOLE_COMP_DEFAULT` on:<br>• the window: 23.2 × 12.8 CAD;<br>• the notch, 4.4 × 1.6, now with its 45° top;<br>• the tab pilots, Ø1.7 teardrop slots;<br>• the clamp hole (Ø2.6), the top pilots (Ø2.7) and the front pilots (Ø2.2);<br>• the washer relief: Ø8 + 2 × 0.4 + 0.2 = Ø9.0.<br>geometry.json's measure_holes agrees: 2.6, 2.7, 2.7, 2.2, 2.2. The front pilots are flat-topped teardrops, 14 deep. The point_on_axis x 27.85 is the middle of x 20.85–34.85 |
+| 9 | Bottom edges chamfered | PASS (note) | 0.4 mm `chamfer_plane_edges` on the plate blank (model.py l.132; bottom.png). The pocket and clamp-hole mouths are loose fits cut after it, as in rounds 1–2 |
+| 10 | Internal corners on load paths filleted | PASS | **Filleted:**<br>• the pad / bulkhead back root, r 1.5, full width except where the relief interrupts it (strength fix 3; cad_checks);<br>• the window's lower corners, Ø3 reliefs.<br>**Sharp, named in the brief with Kt 2.5 for strength:**<br>• the rail block's rack-side root (x 22.35, z 6), a channel corner where rack B's square edge runs 0.25 away;<br>• the rib roots on the pad.<br>The old sharp bulkhead front root (x 10, z 6) is gone: the rail block fills it. The new re-entrant corner at the block top (x 10, z 17.75) is R1 |
+| 11 | Fasteners per §4 | PASS | **Wrist clamp:** M2 × 12 + Ø8 × 0.8 washer on the pad. 12 − 0.8 − 6.3 − 0.6 = 4.3 mm into the spline, within BUILD_GUIDE §2's ≥ 5.1 mm thread check. The washer (r 4.0) lies inside the r 4.5 relief, clear of the fillet. **Claw servo:** M2 × 8 in 6.5 mm, the lead-end slit filed to 2.1 (BUILD_GUIDE §4 step 8). **Cover:** M3 × 10 or × 18 into the 14 mm top pilots, and M2.5 × 16 through the 5 mm front plate into the 14 mm front pilots: 11 engaged, 3 mm spare. Self-tapping is fine for service-only joints |
+| 12 | Spec §3 dims are named parameters | PASS (note) | ZS 27.25, X_B 10, T_W 6, RAIL_X0 10 / RAIL_X1 22.35, the clamp floor T_W + PAD_T − HORN_DEPTH = 6.3, WASHER_RELIEF_D, RIB_W/RIB_D and FRONT_PILOT_DEPTH 14 are all named with source comments (model.py l.50–62, claw_frame.py). **Note:** spec §3 still gives the wrist plate front edge as x 32.85, and the §1 round-3 line doesn't override it. The model has X_F0 = 34.85, following FACE_W 12 (recorded in the cover's and pinion's spec §1 and in claw_frame.py). That is a spec wording gap for the Architect (R2), not a design error |
 | 13 | Service temperature | PASS | 40 °C against PETG at ≈70 °C |
 | 14 | lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | No inputs/ |
 
+**Assembly:** `claw_sequence_check.py` re-run on the round-3 parts:
+- every insertion path is 0 mm³ (servo, cover, camera mount, jaw A, jaw B);
+- the swept pinion is 0 mm³;
+- the stroke 0–44 every 1 mm is 0 mm³, and so is one tooth pitch in 0.1 mm steps;
+- backlash is 0.40 per mesh;
+- `ok: true`.
+
+assembly_check.json (89b2f2a) has no collisions in any pose or sweep. Its `claw_internal` matches.
+
 ## Required fixes
 
-1. **Give the lead notch a 45° top (item 6).**
-   - **Change:** add a right triangle on the notch's upper side (servo +y, which is up here), as the turntable's `_notch_tops()` does (20261025-arm-turntable/model.py l.44–59). Its legs are the notch reach, 1.6 mm. The notch top then runs from (y 7.5, z 29.45) up to the window wall at (y 6.1, z 30.85).
-   - **What stays the same:** the notch's end wall at y 7.51, the 1.34 mm strip to the moved pilot, and the 4.4 mm the ribbon passes through.
-   - **Rule:** §2 (overhangs ≤ 45°); deep review 01 B1 (a notch in a standing wall gets a 45° top).
-   - **Evidence:** item 6. right.png shows the square notch at the window's +y end.
-2. **Name the rail wall's across-layer bending, and have it checked (items 4 and 10).**
-   - **Brief:** in design_brief.md's orientation section, replace "bending along its 64 mm length (≈0.9 MPa)" with the real path:
-     - the rail is a 4 × 11.75 mm cantilever off the plate, so its root stress runs across the layers;
-     - its tension-side root (x 22.35, z 6) is sharp;
-     - at wide openings rack B's back end bears on the rail's free end at y 32.
-   - **Spec:** spec §4's row ("rail wall and wrist plate, in their planes") needs the same correction. That is the Architect's file.
-   - **Strength:** strength-analyst then checks the rail root under rack B's back thrust at the across-layer allowable with Kt 2.5, both mid-rail and at the y 32 end.
-   - **If it fails,** the options include:
-     - the rail back to a block to the bulkhead, as in round 1;
-     - a 45° gusset on its back face;
-     - a 45° relief of 1 mm or more on rack B's rear-bottom edge, so the front root can take an r ≥ 1 fillet. On the jaw this is the same edge that runs at the cover's lip.
-   - **Rule:** §1 (trace every load path; justify loads across the layers).
-   - **Evidence:** item 4. front.png shows the rail with a fillet only behind it.
+None.
 
-## Round-1 required fixes
+## Round-2 required fixes
 
-| Round-1 fix | Status | Evidence |
+| Round-2 fix | Status | Evidence |
 |---|---|---|
-| 1. Window-roof bridge ≤ 10 mm | Done | WINDOW_ROOF 7.0. Flat 23.2 − 14 = 9.2 mm, anchored on both shoulders (item 6) |
-| 2. Thicker skin over the front pilots | Done | Flat-topped Ø2.2 M2.5 pilots, round 1's alternative. 1.9 mm skin under rack B's track |
-| 3. Window size stated as printed in the spec | Done | Spec §2/§3: 23.2 × 12.8 CAD, 23.0 × 12.6 printed, for the 22.8 × 12.2 MG90S (01 S1) |
-| R1. Bulkhead-root fillets | Not adopted | Advisory again (item 10) |
-| R2. BULK_T 6.5 | Done | 1.9 mm walls beside the top pilots |
-| R3. geometry.json holes | Done | All 5 holes listed |
-| Strength 1–2: full-width plate + pad, corner reliefs | Done | REAR_HALF 32, PAD_T 2.3 (floor 6.3), Ø3 teardrop reliefs |
+| 1. 45° top on the lead notch | Done | `_notch_top()`; the layer check is clean at z 29.3–31.0; cad_checks "lead notch … 45° top" |
+| 2. Name the rail's across-layer bending; strength to check it | Done (brief), and redesigned | The brief's load-path table names it (item 4). The rail is a block from the bulkhead (x 10–22.35), and spec §1 records it |
 
-Other round-2 changes checked:
-- **Lead notch and moved pilot (01 B1, option 1):** notch 4.4 × 1.6 CAD, ≈4.2 × 1.5 printed, passes the 3.6 × 1.2 ribbon. claw_sequence_check sweeps the servo and its lead in from 20 mm out: 0 mm³.
-- **MG90S window for 22.8 × 12.2 (01 S1, B2):** done.
+**Round-2 strength fixes, as built:**
+- the rail block;
+- the Ø8 washer with its 1 mm relief (cad_checks: r 4.5, pad top whole);
+- the r 1.5 back fillet;
+- the two 6 × 10 ribs at y ±(26…32), x −6.5…3.5, from the pad to the top;
+- the M2.5 × 16 front screws in 14 mm pilots.
+
+The ribs clear the claw servo (y −16.9…5.9) and the top screws (y −23, 14), and they carry the cover's top wall at z 48.5 (a declared contact plane).
 
 ## Recommendations (not blocking)
 
-- R1. Fillet the bulkhead's front root r 2 (x 10, z 6). The nearest feature, the rail's back fillet, starts 6.35 mm away, and the claw servo's tabs start at z 21.15. Fillet its back root r 0.5: the clamp washer reaches x 3.0.
-- R2. Process: slice_plan.json, slice_settings.json, slice_stats.json and validation.json in this folder date from before round 1. Re-slice after the DESIGN gate passes.
+- **R1. Block-top corner.** An r 1.5 fillet at the rail block's top / bulkhead front corner (x 10, z 17.75) would take Kt off the bulkhead's front face under a −x USB tug. It fits: it reaches z 19.25, below the claw servo's tabs at z 21.15. Strength can tell whether it is needed.
+- **R2. For the Architect, spec §1.**
+  - Add "wrist plate front edge x 34.85 (FACE_W 12); envelope 42.85 × 64 × 48.5". §2 and §3 still say x 32.85 and 40.85.
+  - §2 still describes the "rail wall x 18.35–22.35" and the "M2.5 × 12". §1 overrides both, but rewriting §2–§3 would remove the ambiguity.
+- **R3. Process.** slice_plan.json, slice_settings.json, slice_stats.json and validation.json in this folder are from before round 1. Re-slice after the DESIGN gate passes.
