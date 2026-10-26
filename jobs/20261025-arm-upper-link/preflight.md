@@ -1,16 +1,18 @@
-# Preflight: Upper link (shoulder → elbow, 100 mm)
+# Preflight: Upper link (shoulder → elbow, round 6)
 
 Job: 20261025-arm-upper-link · print-ops-lead · 2026-10-26 · confirm each item at approval and again at the printer.
 
-- [ ] **Filament:** Prusament PETG (or another PETG; the G-code uses the Prusament PETG profile: 240 °C first layer, then 250 °C; bed 85 then 90 °C). At least **37 g** on the spool (33.9 g + 10 %).
-- [ ] **Drying:** if the spool has been out of its bag for more than a few days, dry it (65 °C, 4 h). Wet PETG strings and prints weak.
-- [ ] **Sheet:** smooth PEI cleaned with isopropyl alcohol, then a thin glue-stick layer as a release agent (PETG can tear chunks out of bare smooth PEI). A textured sheet needs no glue.
+- [ ] **Plates:** 1 plate, 1 upper link (spec §7 quantity 1).
+- [ ] **Before printing, measure** your MG996R and its horn (spec §3): body length and width, tab-hole spacing, shaft-to-end distance, lead exit, horn hub Ø, arm length and tip width. Give Claude any difference.
+- [ ] **Filament:** PETG, loaded (`config/printer.json` lists no materials on hand yet, so confirm you have it). The G-code uses the Prusament PETG profile: 240 °C on the first layer, then 250 °C; bed 85 °C, then 90 °C. Have at least **43 g** on the spool (38.6 g + 10 %).
+- [ ] **Drying:** if the spool has been out of its bag for more than a few days, dry it first (65 °C, 4 h). Wet PETG strings and prints weak.
+- [ ] **Sheet:** smooth PEI, cleaned with isopropyl alcohol, then a thin, even **glue-stick** layer as a release layer. PETG bonds hard to bare smooth PEI. Let the bed cool before you take the link off.
 - [ ] **Bed clear** of objects and old prints; nozzle clean.
-- [ ] **Orientation check on the LCD preview / first layer:** Flat, FRONT face on the bed (the horn pocket opens upward, so no bridge). In-plane and out-of-plane bending run along the layers; horn-joint pull-out shears the layers, which the centre-screw clamp now carries.
+- [ ] **First layer:** the flat FRONT face, 146 × 34 mm, with the servo window and holes open. The horn pocket and back-face ribs build up from the top. It takes about 9 min.
 - [ ] **SD card file:** `1025_arm_upper_link.gcode` (written by `tools/export_sd.py` after you approve).
-- [ ] **On the printer:** Print from SD → `1025_arm_upper_link.gcode`. Watch the whole first layer (about 5 min).
-- [ ] **Time:** about **3.0 h**. Decide whether someone will be nearby; the printer is offline, so nothing reports a failure.
+- [ ] **On the printer:** Print from SD → `1025_arm_upper_link.gcode`. Watch the whole first layer.
+- [ ] **Time:** about **3.5 h**. Decide whether someone will be nearby: the printer is offline, so nothing reports a failure.
 
-After printing and assembly, the strength verdict is NEEDS_TEST: do this proof test and record it in inspection.md:
-
-> (1) Shoulder horn in a vice (horn clamped in its slot), 1 kg at the elbow axis for 1 min: deflection at the elbow < 2 mm, no permanent set. (2) Same clamping, 21 N (≈2.1 kg) sideways (out of the link plane) at the elbow axis for 1 min each way, then 7.5 N sideways at the end of a 185 mm lever bolted to the elbow tab holes. Pass: no cracks at the pocket, no lift of the link off the horn, no permanent set.
+**After printing:** strength is NEEDS_TEST. Do the spec §8 proof test with the MG996R fitted on its 4 tab screws, and record it in inspection.md:
+- (1) 1 kg at the elbow axis;
+- (2) 16 N square to the plate at 175 mm on a bar set at 60°.

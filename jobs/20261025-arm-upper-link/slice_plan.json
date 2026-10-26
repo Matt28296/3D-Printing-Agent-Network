@@ -9,9 +9,12 @@
   "fill_density": "40%",
   "fill_pattern": "gyroid",
   "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "aligned",
+  "brim_width": 0
  },
  "model": "part.stl",
  "copies": 1,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; perimeters/solid layers/infill raised to print_requirements.json (load path walls), gyroid for isotropic infill, 0.2 mm elephant-foot compensation paired with the 0.4 mm bottom chamfer."
+ "plates": 1,
+ "rationale": "SLICE for the round-6 upper link (RIB_TAPER 12). It replaces the round-3 slice, whose STL predates the back-face ribs. Profiles from config/printer.json: stock MK3S printer, 0.20mm QUALITY @MK3, Prusament PETG (spec §6 PETG = filament_type in print_requirements). Its 240 then 250 °C, bed 85 then 90 °C and 30-50 % part fan sit inside the requirements' 230-250 / 80-90 °C and the skill's PETG guidance, so they are not overridden. library/materials.csv and lessons.md are empty: no flow, temperature or xy_size_compensation overrides. Overrides meet print_requirements.json exactly: 5 perimeters, 5 top / 5 bottom layers, 40 % gyroid, 0.2 mm layers; elephant-foot compensation 0.2 pairs with the 0.4 mm bed chamfer. Orientation is in the STL (brief): flat, FRONT face on the bed, horn pocket, ribs and the 27° rib run-out rising from the top; no supports (mesh_check 0.0 % overhang, no bridges). 16.0 mm tall = 80 layers, on the grid. Seam: aligned (now stated explicitly; it is the profile default). Checked in the G-code: the outline's seam is at the horn-end corner (x ≈ -21), well away from the governing section at x 15 over the horn pocket (strength row 10, SF 3.39). The servo window's seam is on its far end wall, and each self-tap pilot has its own. Brim: none (brim_width 0): 3881 mm² on the bed holds a flat 146 × 34 plate, and a brim would leave a lip on the front face. 1 copy on 1 plate = spec §7 quantity 1; sliced 3.45 h against the 5 h limit."
 }

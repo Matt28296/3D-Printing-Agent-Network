@@ -4,19 +4,19 @@
   "errors": [],
   "warnings": [],
   "stats": {
-    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 01:22:06 UTC",
+    "generator": "PrusaSlicer 2.7.2 on 2026-10-26 at 17:34:25 UTC",
     "printer_model_check": "MK3S",
     "nozzle_check_mm": 0.4,
-    "print_time_s": 10722,
-    "print_time_h": 2.98,
-    "filament_g": 33.87,
-    "filament_mm": 11088.8,
+    "print_time_s": 12417,
+    "print_time_h": 3.45,
+    "filament_g": 38.64,
+    "filament_mm": 12649.48,
     "filament_type": "PETG",
     "layer_height": 0.2,
     "perimeters": 5.0,
     "fill_density": 40.0,
     "fill_pattern": "gyroid",
-    "layers": 50,
+    "layers": 80,
     "max_nozzle_c": 250.0,
     "max_bed_c": 90.0,
     "la_k_values": [
@@ -35,10 +35,10 @@
       ],
       "Z": [
         0.2,
-        59.0
+        65.0
       ]
     }
   },
-  "sha256": "c2d50e7acb4a6c71a70047880faff621b5d00f7ad38e179f3d433bf0a4244de6",
+  "sha256": "179740c3fd182896b86d8ae57b7fa5ed5e1b991d0a7bf0aaad3caf3746c32ce3",
   "validator_version": "1.0.0"
 }
