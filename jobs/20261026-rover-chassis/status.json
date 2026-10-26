@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 3 (third DESIGN failure): strength SF 0.60 (idler clamp yaw at reverse stall), plus the sliding nut, the 1 mm skin and the nacelle wall root in the drop",
+    "DESIGN": "round 4 in progress (approved by the user after the third failure): steel plates under the idler bolt head and nut, SKIN 2.0",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Third DESIGN failure. Proposed round 4: steel plates under the idler bolt head (21 \u00d7 10 \u00d7 2, recessed) and nut (14 \u00d7 8 \u00d7 2, in a taller nut slot), and SKIN 1.0 \u2192 2.0 mm. Waiting for the user's decision."
-  ],
-  "updated": "2026-10-26T10:25:32+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T10:27:28+00:00"
 }

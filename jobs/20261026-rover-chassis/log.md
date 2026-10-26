@@ -12,3 +12,4 @@
 - 2026-10-26T08:07Z · architect (as head-orchestrator) · status.json: stage DESIGN, DESIGN iterations 2; round 3 merged into robot-arm-test-build, fresh DFM and strength reviews next · ok
 - 2026-10-26T08:54Z · dfm-reviewer (round 3, independent) · design_review.md · PASS
 - 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · FAIL (lowest SF 0.60: idler clamp yaw under the Ø9 washer at a reverse stall; also the sliding nut, the 1 mm skin and the nacelle wall root in the 5 cm drop). Third DESIGN failure: escalated to the user
+- 2026-10-26T10:27Z · architect · user approved a fourth DESIGN round with the strength reviewer's fixes (steel plates under the idler bolt head and nut, SKIN 2.0); round 4 started · ok
