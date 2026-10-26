@@ -9,6 +9,12 @@ between the frame's lower rail and this front plate. Each jaw's neck passes thro
 the front plate: slot A (upper) is open at the -y end, slot B (lower) at the +y end, so the jaws
 slide in from the ends after the cover is screwed on.
 
+Round 5 (cover strength round 4: the anchor held the post's foot in x only by the preload's friction, against
+fdm-design-rules §4; with the preload gone the top wall fell to SF 1.37): a 90° V-ridge under the post's foot sits in a
+matching groove in the frame's rail block (0.1 clear per flank), so the foot is held in x by geometry and the M3 x 45 only
+holds the flank's lift in tension. The foot's flats rise 0.1 (TIE2_FOOT_Z 17.85). A Ø7 x 0.5 washer goes under the
+M3 x 45's head (BUILD_GUIDE).
+
 Round 4 (claw strength round 3: the reversed rack-B push, opening stall or crash on jaw B, left the cover only through
 the 3 mm top wall behind the lip, SF 1.23): the second tie's post is 8 thick (x 14.35..22.35), reaches down to the
 frame's rail block (z 17.75) and is anchored there by one vertical M3 x 45 through the top wall, the lip and the post
@@ -47,7 +53,8 @@ from cadlib import HOLE_COMP_DEFAULT, to_bed
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
 from claw_frame import (ACCESS_D, ANCHOR_XY, CORNER_FILLET, CORNER_FILLET_Y0, CRESCENT_Y, FRONT_SCREWS, FRONT_Z0, HALF_Y, LIP_X0,  # noqa: E402
                         M3_CLEAR, M25_CLEAR, NECK_Z, RAIL_IN, RAIL_X1, SLOT_A_END, SLOT_B_END, SLOT_CLR, SLOT_FILLET,
-                        TIE2_Y, TIE_X0, TIE_Y, TIE_Z, TOP_CHAMFER, TOP_SCREWS, TOP_X0, X_F0, X_F1, Z_TOP0, Z_TOP1, ZS)
+                        TIE2_Y, TIE_X0, TIE_Y, TIE_Z, TOP_CHAMFER, TOP_SCREWS, TOP_X0, VSEAT_CLR, VSEAT_D, VSEAT_XC,
+                        X_F0, X_F1, Z_TOP0, Z_TOP1, ZS)
 
 from hobby_parts import _teardrop_z, chamfer_plane_edges  # noqa: E402
 
@@ -73,7 +80,15 @@ SUP_B = (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)        # beside slot A's end / 
                                                         # piece (b)'s whole first layer; claw DFM round 3 fix 1)
 SUP_GAP = 0.25                               # one layer (0.2) and a bit, under each piece
 TIE2_POST_T = 8.0              # second tie's post, x 14.35..22.35 like the first tie's (claw strength round 3: 4 -> 8)
-TIE2_FOOT_Z = ZS - RAIL_IN     # 17.75: the post's full-depth part (y 24..32) stands on the frame's rail block (was 19.25)
+TIE2_FOOT_Z = ZS - RAIL_IN + VSEAT_CLR   # 17.85: the post's foot flats (y 24..32) stand 0.1 over the frame's rail
+                                         # block (z 17.75; round 4 17.75, round 3 19.25); the ridge below them locates
+# V-ridge under the post's foot (round 5, cover strength round 4; VSEAT_* in claw_frame.py): the frame groove's 90° V
+# raised VSEAT_CLR, i.e. 0.1 clear per flank (horizontal), virtual apex z 17.05 (0.8 under the flats), base x
+# 14.45..16.05. In print (G +y up) it is a vertical prism, its start a 45° lead-in that continues the post's underside.
+# The tip is cut flat at RIDGE_TIP_Z: the groove's bottom 0.25 (z 16.95..17.2, a 0.3 mm slot at its first layer) will
+# not print open in the frame, so a full-height ridge could bottom there and hold the cover up.
+RIDGE_APEX_Z = ZS - RAIL_IN - VSEAT_D + VSEAT_CLR   # 17.05: virtual apex (groove bottom 16.95 + 0.1)
+RIDGE_TIP_Z = RIDGE_APEX_Z + 0.2                     # 17.25: flat tip 0.4 wide, 0.05 over the groove's closed first layer
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -145,10 +160,11 @@ def second_tie():
     material starts just above the pass-through's 45° teardrop flanks (apex y 2k = 16.12)."""
     z0, z1, zp = ZS - TIE_Z, ZS + TIE_Z, ZS + RAIL_IN           # 19.25, 35.25, 36.75 (the post meets the lip)
     yp = TIE2_Y[0] - (zp - z0)                                  # 6.5: where the web's growth from the post starts
-    zf = TIE2_FOOT_Z                                            # 17.75: the post's foot on the rail block (round 4)
-    yf = TIE2_Y[0] - (zp - zf)                                  # 5.0: the post's 45° underside meets the lip here
+    zf = TIE2_FOOT_Z                                            # 17.85: the post's foot flats, 0.1 over the rail block
+    yf = TIE2_Y[0] - (zp - zf)                                  # 5.1: the post's 45° underside meets the lip here
     post = _yz_prism([(yf - 0.01, zp + 0.01), (HALF_Y, zp + 0.01), (HALF_Y, zf), (TIE2_Y[0], zf)], RAIL_X1 - TIE2_POST_T,
                      RAIL_X1 + 0.01)
+    post += ridge()
     web = _box(RAIL_X1, X_F0 + 0.01, yp, HALF_Y, z0, z1)
     s2 = math.sqrt(0.5)
     k2 = 2 * R_PASS / math.sqrt(2)                              # 16.12: teardrop apex
@@ -157,6 +173,18 @@ def second_tie():
     # from the front plate: y >= k2 - |z - ZS| + (X_F0 - x), one half-space per flank
     from_plate = (_halfspace(web, (X_F0, k2, ZS), (1, 1, 1)) + _halfspace(web, (X_F0, k2, ZS), (1, 1, -1)))
     return post + from_post + from_plate
+
+
+def ridge():
+    """The V-ridge under the second post's foot (round 5): the frame groove's 90° V raised VSEAT_CLR, cut flat at
+    RIDGE_TIP_Z, along y from the foot's start to the cover's +y end. Its -y end is the post's 45° underside carried on
+    down (y + z >= TIE2_Y[0] + TIE2_FOOT_Z), so in print it starts with a 45° lead-in over y 24..24.6."""
+    zf, za, zt = TIE2_FOOT_Z, RIDGE_APEX_Z, RIDGE_TIP_Z
+    top = zf + 0.01                                             # 0.01 into the post
+    pts = [(VSEAT_XC - (top - za), top), (VSEAT_XC + (top - za), top), (VSEAT_XC + (zt - za), zt),
+           (VSEAT_XC - (zt - za), zt)]
+    r = _xz_prism(pts, TIE2_Y[0] - 1.0, HALF_Y)
+    return _halfspace(r, (VSEAT_XC, TIE2_Y[0], zf), (0, 1, 1))
 
 
 def supports():

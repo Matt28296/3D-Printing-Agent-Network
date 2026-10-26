@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in progress (user-approved fifth attempt): ridge under the tie post locks into a frame V-groove; TIE2_FOOT_Z 17.85; \u00d87 washer under the M3 \u00d7 45",
+    "DESIGN": "round 5 built (user-approved V-seat): CAD DFM PASS 22/22, CAD-side strength NEEDS_TEST 3.01; independent recheck next (ridge-play sensitivity flagged)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

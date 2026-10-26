@@ -1,6 +1,44 @@
-VERDICT: FAIL
+VERDICT: PASS
 
-# DFM review (round 4): 20261026-arm-claw-cover
+# DFM recheck (round 5): 20261026-arm-claw-cover
+
+cad-engineer, 2026-10-26: the checks run on the round-5 geometry (round 4's required fix 1, user-approved). **This is the
+designer's own recheck, not an independent review**; the round-4 independent review follows unchanged below.
+
+**Change (model.py):**
+- `TIE2_FOOT_Z` 17.75 → **17.85**: the post's foot flats stand 0.1 over the frame's rail block.
+- **V-ridge** under the foot (`ridge()`): the frame groove's 90° V raised 0.1, so it is 0.1 clear per flank horizontally
+  (0.071 normal). Virtual apex z 17.05 (0.8 under the flats), base x 14.45–16.05, y 24–32, a 45° lead-in over y 24–24.6.
+- **The ridge's tip is cut flat at z 17.25** (0.4 wide, 0.6 under the flats). The groove's first layer in the frame is a
+  0.3 mm slot that will not print open (frame recheck item 3), so a full ridge would bottom there.
+- **Washer:** Ø7 × 0.5 under the M3 × 45's head (BUILD_GUIDE §1 and §4 step 9).
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| 1 | Bed fit, one watertight solid, min Z 0 | PASS | 39.85 × 57.5 × 64.0 mm, 1 solid as printed and as fitted, watertight (geometry.json, cad_checks) |
+| 2 | Orientation, load paths vs layers | PASS | Unchanged (standing on its −y end, G +y up). The ridge is a vertical prism in print: its cross-section lies in the layer plane, so its flank bearing and root shear and bending are in-plane (strength.md rows 41–44) |
+| 3 | Overhangs ≤ 45°, bridges | PASS | The ridge's lead-in continues the post's 45° underside (y + z ≥ 41.85). **Layer check of part.stl** (0.2 mm layers at mid-height, 0.02 mm raster, print z 50–64 over x 13–39.9 and G z 16.5–40; new material beyond the layer below grown 0.5 mm): **no new island**. The ridge grows 0.20–0.22 mm per 0.2 mm layer over print z 56.1–56.7, then stops. mesh_check: overhang 0.26 %, bed contact 703.6 mm², widest bridge 2.0 mm, as round 4. The round-4 whole-part findings (pillars A/B, slot A apex, pass-through apex) are unchanged: the rest of the part is untouched |
+| 4 | Walls and features | PASS | The ridge: 1.6 at its base, 0.6 tall, 0.4 flat tip; its tip is rounded by the nozzle, which only adds clearance. Anchor hole edge to the ridge's base 0.5 (cad_checks). The post's 2.2 mm walls round the hole are unchanged. `thin_wall_warnings: []` |
+| 5 | HOLE_COMP; horizontal holes | PASS | Unchanged: 3 × Ø3.6 (2 top + the anchor, now z 17.85–51.5), 2 × Ø3.0, Ø22.8, all teardrops (measure_holes, 270°) |
+| 6 | Fasteners per §4 | PASS | **Round 4's item 11 is fixed.** The post's foot is held in x by the ridge in the frame's groove; the M3 × 45 holds the flank's 45° lift in tension. No preload or friction is relied on, and a Ø7 × 0.5 washer spreads the head's clamp on the PETG top wall (strength: 4.80 sustained, was 2.34) |
+| 7 | Spec §3 dims are named parameters | PASS | `TIE2_FOOT_Z`, `RIDGE_APEX_Z`, `RIDGE_TIP_Z` (model.py) and `VSEAT_*`, `ANCHOR_WASHER` (claw_frame.py); the brief's critical-dimensions table has the row "V-ridge under the post's foot" |
+| 8 | cad_checks | PASS | 22/22 (exit 0), with new checks for the ridge (flanks ±0.05 at z 17.3 / 17.55 / 17.8, y 24.8 / 28 / 31.9; tip; lead-in), its fit in the frame's groove (0 mm³ overlap, 0.0707 mm normal gap per flank), the raised flats and underside, and the anchor hole's distance to the ridge |
+| 9 | Post against the racks over the stroke | PASS | The post (x ≤ 22.35, with the ridge) against jaw A, jaw B and the pinion, gaps 0–44 every 1 mm, exact solids: **0.25 mm**, as round 4 (≥ 0.2 required). The post's underside is 2.6 over the claw servo's case at y 5.9 (2.5 before) |
+| 10 | Anchor hardware clearance | PASS | Washer + head (Ø7 × 0.5 + Ø5.5 × 3, 0.5 higher than round 4's bare head): jaws over the stroke 3.16 (3.47 before), camera mount 3.91 (4.66), Brio 13.97 (14.25) |
+| 11 | Assembly sequence | PASS | `claw_sequence_check.py` re-run with the round-5 cover and frame: `ok`, 0 mm³ on every insertion path (the cover lowered 57 positions, its ridge entering the groove), the swept pinion, the stroke 0–44 every 1 mm and one tooth pitch in 0.1 mm steps |
+
+**Required fixes:** none.
+
+**Notes (not blocking)**
+1. **Play at the ridge** is the design's one sensitive point (strength.md: play 0.04 mm → 3.41, 0.05 → 2.83). The frame's
+   bulkhead top (z 48.5) lies exactly on a slice plane, so it can print 0.1 high or low and move the cover against the
+   groove by as much. BUILD_GUIDE §4 step 9's two feeler checks (0.1 at the top wall, 0.15 under the foot's flats) catch
+   either before any screw goes in. If the second fails, set `VSEAT_CLR` to 0 in claw_frame.py.
+2. **Re-slice.** The slice files in this folder are older than round 2.
+
+---
+
+# DFM review (round 4, history): 20261026-arm-claw-cover
 
 Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · fourth design attempt, user-approved
 

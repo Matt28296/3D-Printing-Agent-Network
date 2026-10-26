@@ -22,3 +22,5 @@
 - 2026-10-26T16:34Z · architect · spec updated for the change; recheck next · ok
 - 2026-10-26T17:30Z · design-reviewer + strength-reviewer (final recheck) · design_review.md, strength.md, strength_calc.py · recheck: DFM PASS, strength NEEDS_TEST 3.03 · held for the cover decision
 - 2026-10-26T17:40Z · architect · user approved the V-groove positive lock (fifth attempt) · cad-engineer started
+- 2026-10-26T18:30Z · cad-engineer (fifth attempt, user-approved) · model.py, cad_checks.py, strength_calc.py, design_brief.md, design_review.md, strength.md, geometry.json, part.step/stl; shared claw_frame.py, BUILD_GUIDE.md · ok (merged)
+- 2026-10-26T18:30Z · architect · spec §1 and §8 updated for round 5 · ok

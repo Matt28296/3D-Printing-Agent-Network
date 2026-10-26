@@ -9,8 +9,8 @@
     -32.0,
     0.0
   ],
-  "volume_mm3": 46397.22,
-  "area_mm2": 15104.77,
+  "volume_mm3": 46391.78,
+  "area_mm2": 15110.4,
   "solids": 1,
   "holes": [
     {
@@ -100,7 +100,7 @@
   ],
   "min_z_mm": 0.0,
   "watertight": true,
-  "mesh_faces": 6240,
+  "mesh_faces": 6252,
   "fits_bed": true,
   "bed_mm": [
     250,

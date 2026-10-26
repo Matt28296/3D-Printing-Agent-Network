@@ -1,6 +1,36 @@
 VERDICT: PASS
 
-# DFM review (round 4): 20261026-arm-claw-frame
+# DFM recheck (round 5): 20261026-arm-claw-frame
+
+cad-engineer, 2026-10-26: the checks run on the round-5 geometry (the cover's V-seat fix, user-approved). **This is the
+designer's own recheck, not an independent review**; the round-4 independent review follows unchanged below.
+
+**Change.** A 90° V-groove, 0.8 deep, along y in the rail block's top, for the cover's ridge (model.py `_groove()`):
+- x 14.45–16.05 at z 17.75, bottom z 16.95 on x 15.25, y 23.5–32, open through the block's +y end;
+- numbers shared through `VSEAT_*` in claw_frame.py;
+- the anchor pilot (Ø2.7 × 14 at (18.35, 28)) unchanged; 0.95 mm of block between it and the groove at the top.
+
+The round-4 review's note 1 gave the groove as x 14.35–15.95 (1.05 to the pilot). The approved fix (cover review and
+strength.md) is x 14.45–16.05, which keeps the cover's ridge 0.1 inside its post's back face; that is what was built.
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| 1 | Bed fit, one watertight solid, min Z 0 | PASS | 42.85 × 64.0 × 48.5 mm, 1 solid, watertight, `fits_bed: true` (geometry.json); 46391.78 mm³ (−5.4) |
+| 2 | Orientation, load paths vs layers | PASS | Unchanged (back face on the bed). The groove's flank takes the cover's +x push: bearing on the layer edges, and the block in front of it shears along the layer plane of the groove's bottom (interlayer). Both are rows in strength.md: 3.61 and 6.66 |
+| 3 | Overhangs, bridges | PASS | The groove opens upward in print: both flanks face up at 45°, so no overhang and no bridge. mesh_check: overhang 1.4 %, widest bridge 7.9 mm, the same as round 4. Sections of part.stl at the layers' mid-heights: the groove is 0.3 / 0.7 / 1.1 / 1.5 mm wide at z 17.1 / 17.3 / 17.5 / 17.7. **The 0.3 mm slot of its first layer will not print open,** so the printed bottom is about z 17.2. Kept as designed: a flat floor wide enough to print would push the mouth past the cover post's back face or under the 0.9 mm minimum wall to the pilot. The cover's ridge is cut flat at z 17.25 to stay above it (cover brief, round 5) |
+| 4 | Walls ≥ 1.8, none < 0.9 | PASS | Groove to anchor pilot: 0.95 at the block top (x 16.05–17.0), +1 mm per mm downward (cad_checks). It carries no hoop load of its own (the pilot's 2.65 walls are on its other sides); strength takes the push on the screw as a bound (shank bearing 16.7). `thin_wall_warnings: []` |
+| 5 | HOLE_COMP; holes | PASS | Unchanged: clamp Ø2.6, 3 × Ø2.7 pilots, 2 × Ø2.2 flat-topped front pilots (measure_holes) |
+| 6 | Bottom edges chamfered | PASS | Unchanged, 0.4 mm |
+| 7 | Fasteners per §4 | PASS | The cover's x hold is now geometric (ridge in groove); the M3 × 45 holds the flank's lift in tension, with a Ø7 × 0.5 washer under its head. 10.75 engaged in the 14 mm pilot. No preload is relied on |
+| 8 | Spec §3 dims are named parameters | PASS | `VSEAT_D`, `VSEAT_XC`, `VSEAT_Y0`, `VSEAT_CLR` (claw_frame.py), `GROOVE_Y` (model.py); the brief's critical-dimensions table has the row "V-groove (round 5)" |
+| 9 | cad_checks | PASS | 21/21 (exit 0), with two new checks: the groove (flanks ±0.05 at z 17.1 / 17.4 / 17.7, y 23.6 / 28 / 31.9; bottom; closed −y end; open +y end) and the 0.95 mm wall to the pilot |
+| 10 | Assembly | PASS | `claw_sequence_check.py` re-run: `ok`, 0 mm³ on every path, the stroke and the fine pitch. Cover ridge in this groove: 0 mm³ overlap, 0.0707 mm normal gap per flank (cover cad_checks) |
+
+**Required fixes:** none.
+
+---
+
+# DFM review (round 4, history): 20261026-arm-claw-frame
 
 Reviewer: dfm-reviewer (independent; did not design the part) · 2026-10-26 · fourth design attempt, user-approved
 

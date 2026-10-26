@@ -11,6 +11,8 @@ A 6 mm wrist plate, full width, with a 2.3 mm raised pad behind the bulkhead, cl
 
 **Round 4 (user-approved with the cover anchor): one Ø2.7 × 14 M3 pilot in the rail block at (18.35, 28) for the cover's M3 × 45 anchor; 2.65 mm wall round it.**
 
+**Round 5 (user-approved with the cover's V-seat): a 90° V-groove, 0.8 deep, along y in the rail block's top (x 14.45–16.05 at z 17.75, y 23.5–32, open at +y), 0.95 mm from the anchor pilot; the cover's M3 × 45 has a Ø7 × 0.5 washer, 10.75 mm engaged.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 40.85 × 64 × 48.5 mm (claw frame G: x −8…32.85, y ±32, z 0…48.5). Interfaces:
@@ -75,7 +77,7 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
   4. 7.5 N at the fingertips, sideways (±z) then ±y, 1 min each.
 
   Pass:
-  - no crack or whitening at the rail wall's root (along it and at its ends), the horn pocket, the clamp washer's seat, the bulkhead root, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
+  - no crack or whitening at the rail block's rack-side root (along it and at its +y end), the V-groove's flanks and the anchor pilot's mouth on the block top, the horn pocket, the clamp washer's seat (washer flat on the pad), the bulkhead root, the rib roots on the pad and the washer relief's foot, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
   - the frame doesn't lift off the horn;
   - the fingertips return to within 0.5 mm.
 ## 9. Notes and open questions

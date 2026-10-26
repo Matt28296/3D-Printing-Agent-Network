@@ -1,5 +1,13 @@
-"""Strength check, round 4: jobs/20261026-arm-claw-cover (front plate in two pieces + two ties, top wall, 8 mm lip, the
-second tie's 8 mm post seated on the frame's rail block and anchored there by one vertical M3 x 45).
+"""Strength check, round 5: jobs/20261026-arm-claw-cover (front plate in two pieces + two ties, top wall, 8 mm lip, the
+second tie's 8 mm post located on the frame's rail block by a 90° V-ridge in a V-groove and anchored there by one
+vertical M3 x 45 with a Ø7 x 0.5 washer under its head).
+
+Round 5 (the V-seat, user-approved fix of round 4's FAIL): the post's foot carries a 90° ridge (0.1 clear per flank,
+horizontal; tip cut flat at z 17.25) in a matching 0.8 mm groove in the rail block's top; the foot's flats stand 0.1 over
+the block (TIE2_FOOT_Z 17.85). A +x push on the foot is held by the ridge's flank (positive, by geometry); the 45° flank
+turns it into a lift equal to it (frictionless, the worst case), and the M3 x 45 holds that in tension. No preload is
+relied on: the frame model's x support at the foot is the ridge (mode 'locked'), the screw's tension is the lift plus
+the wedge's lift, and the snug preload is added on top only where it can only make a row worse (pull-out).
 
 Run from the project root:  python3 jobs/20261026-arm-claw-cover/strength_calc.py
 Plain python3: parameters come from claw_frame.py, this job's model.py, the jaw's model.py and tools/hobby_parts.py
@@ -212,24 +220,48 @@ wall(f"stall, one jaw blocked: rack A's +y end on the upper piece near slot A's 
 K_TOP_SOFT = 1.1e5
 K_T_LO, K_T_HI = 2.9e4, 1.0e5
 B_PLATE_WEBTOP, B_PLATE_APEX, B_PLATE_TOP = 24.1, 21.0, 25.5
-B_POST2 = 24.4               # round 4, probed at z 35.5: 195.1 mm2 net of the anchor hole / 8 (I_y 1090: b_eq 25.55)
+B_POST2 = 24.3               # round 5, probed at z 35.5: 194.3 mm2 net of the anchor hole / 8 (I_y 1086: b_eq 25.45)
 B_TW_FRONT = 25.5
 T_POST2 = P.TIE2_POST_T                                   # 8 (round 4; round 3: 4)
-ANCHOR_AS_BUILT = hasattr(C, "ANCHOR_XY") and P.TIE2_FOOT_Z <= C.ZS - C.RAIL_IN + 1e-6
+Z_BLOCK = C.ZS - C.RAIL_IN                                # 17.75: the frame's rail block top
+VSEAT = hasattr(C, "VSEAT_D") and hasattr(P, "RIDGE_TIP_Z")   # round 5: the foot's ridge in the block's V-groove
+ANCHOR_AS_BUILT = (hasattr(C, "ANCHOR_XY")
+                   and P.TIE2_FOOT_Z <= Z_BLOCK + (C.VSEAT_CLR if VSEAT else 0.0) + 1e-6)
 ANCHOR2 = ANCHOR_AS_BUILT                                 # the second post seated + screwed on the rail block (round 4)
-K_ANCHOR_X = 3000.0                                       # N/mm: the foot held in x (friction, or the shank once it bears)
+K_ANCHOR_X = 3000.0                                       # N/mm: the foot held in x (the ridge's flank; round 4: friction
+                                                          # or the shank once it bears)
 ANCHOR_KX = K_ANCHOR_X                                    # set to 0 for the slip phase (preload gone, gap still open)
 P_M3 = 150.0                                              # N, the anchor driven "snug only" (<= 0.09 N.m), assumption
 GAP_NOM = (C.M3_CLEAR - 3.0) / 2                          # 0.2: printed Ø3.4 hole round the Ø3 shank, centred
 GAP_MAX = (C.M3_CLEAR + P.HOLE_COMP - 3.0) / 2 + 0.1      # 0.4: CAD Ø3.6 + 0.1 position error (bound)
-Z_FOOT = C.ZS - C.RAIL_IN                                 # 17.75: the post's foot on the rail block
+Z_FOOT = P.TIE2_FOOT_Z if ANCHOR2 else Z_BLOCK            # 17.85: the post's foot flats (round 4: 17.75, on the block)
 D_HOLE = C.M3_CLEAR + P.HOLE_COMP                         # 3.6 CAD
-POST_FOOT_A, POST_FOOT_I = 63.1, 386.0                    # probed on the round 4 solid at z 19 (net of the hole)
+POST_FOOT_A, POST_FOOT_I = 62.4, 383.5                    # probed on the round 5 solid at z 19 (net of the hole)
 POST_WALL = 2.2                                           # probed: hole to either x face of the post (z 25, 40, 50)
-STACK = C.Z_TOP1 - Z_FOOT                                 # 33.75: top wall + lip + post under the head
-L_ANCHOR = 45.0 - STACK                                   # 11.25 engaged in the frame's 14 mm pilot
+STACK = C.Z_TOP1 - Z_BLOCK                                # 33.75: top wall + lip + post (+ the 0.1 flats gap) under the head
 HEAD_DK = 5.5                                             # ISO 4762 M3 socket head
-WASHER_M3 = (7.0, 0.5)                                    # ISO 7089 M3 washer, as on the MG996R tab screws
+WASHER_M3 = getattr(C, "ANCHOR_WASHER", (7.0, 0.5))      # ISO 7089 M3 washer, as on the MG996R tab screws
+WASHER_T = WASHER_M3[1] if VSEAT else 0.0                 # round 5: the washer is fitted (BUILD_GUIDE)
+L_ANCHOR = 45.0 - STACK - WASHER_T                        # 10.75 engaged in the frame's 14 mm pilot (11.25 without washer)
+if VSEAT:
+    # the V-seat (claw_frame.py VSEAT_*, this model's RIDGE_*): flanks in contact from the ridge's flat tip (z 17.25) up to
+    # the block top (z 17.75); the ridge's root is 1.6 wide at the flats (17.85).
+    # Where the flank force acts: the frame prints in 0.2 mm layers sliced at mid-height, so the groove's flank is a
+    # staircase whose layer-top corners stand 0.1 (horizontal) inside the CAD flank: z 17.4, 17.6 and 17.8 (the block's
+    # top layer, sliced at 17.7, prints to 17.8). The ridge (0.1 clear per flank in CAD) meets exactly those corners, so
+    # the flank's resultant is taken at their middle, z 17.6 (the CAD band's middle, 17.5, would give less moment).
+    FLANK_H = Z_BLOCK - P.RIDGE_TIP_Z                     # 0.5
+    FLANK_L = FLANK_H * math.sqrt(2)                      # 0.71 of flank on each side
+    RIDGE_B = 2 * (P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)        # 1.6
+    L_V = C.TIE2_Y[1] - (C.TIE2_Y[0] + (P.TIE2_FOOT_Z - P.RIDGE_TIP_Z))   # 7.4: full-depth ridge y 24.6..32 (lead-in ignored)
+    LAYER = 0.2
+    _corners = [LAYER * k for k in range(1, 200) if P.RIDGE_TIP_Z < LAYER * k <= Z_BLOCK + LAYER / 2 + 1e-9]
+    Z_XR = sum(_corners) / len(_corners)                  # 17.6 (corners 17.4, 17.6, 17.8)
+    # the flank's normal force (-1, +1)/sqrt2 per unit, at (VSEAT_XC + z_c - apex, z_c): its moment about the root's
+    # centroid (VSEAT_XC, the flats) is Fx (2 z_c - flats - apex): 0.3 Fx at z_c 17.6 (0.1 Fx at 17.5)
+    RIDGE_ARM = abs(2 * Z_XR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)
+else:
+    Z_XR = Z_FOOT
 TIE_W = C.TIE_Y[1] - C.TIE_Y[0]                          # 8
 WEB_H = 2 * C.TIE_Z                                       # 16
 Z_WEB0, Z_WEB1 = C.ZS - C.TIE_Z, C.ZS + C.TIE_Z          # 19.25, 35.25
@@ -362,11 +394,11 @@ def cover_frame(load_node, R, b_front, b_lip2, top_clamped, k_screw, screw_z, k_
     sup = {"BKa": rot, "BKb": rot, "GS": (0, 1, 2), "GBa": (0, 1, 2), "GBb": (0, 1, 2),
            "LPS": (1,) if screw_z else ()}
     if ANCHOR2:
-        # as built (round 4): the second post seated on the frame's rail block top (z 17.75) and clamped by the vertical
-        # M3 x 45: the foot is held there in x (preload friction, or the shank once the gap has closed: a 3 kN/mm spring;
-        # ANCHOR_KX 0 = sliding freely) and z (seat in compression, screw in tension: stiff)
-        nodes.update({"AN": (xp2, C.ZS - C.RAIL_IN), "GA": (xp2 - 10.0, C.ZS - C.RAIL_IN),
-                      "GZ": (xp2, C.ZS - C.RAIL_IN - 10.0)})
+        # as built: the second post on the frame's rail block, clamped by the vertical M3 x 45. Round 5: the foot is held
+        # in x by its ridge's flank in the block's V-groove (a 3 kN/mm spring at the flank band's middle, z 17.5) and in z
+        # by the flanks (compression) and the screw (tension): stiff. Round 4: preload friction or the shank at z 17.75;
+        # ANCHOR_KX 0 = sliding freely
+        nodes.update({"AN": (xp2, Z_XR), "GA": (xp2 - 10.0, Z_XR), "GZ": (xp2, Z_XR - 10.0)})
         members += [mem("P2B", "AN", WEB_H, TIE_W, "r11", True), ("AN", "GA", max(ANCHOR_KX, 1e-6) * 10.0, 1e-6, "anchor"),
                     ("AN", "GZ", 1e6 * 10.0, 1e-6, "anchor z")]   # seat (compression) / screw (tension), stiff
         sup.update({"GA": (0, 1, 2), "GZ": (0, 1, 2)})
@@ -432,26 +464,46 @@ def cover_sections(res, v, upper):
     if upper and "anchor" in res:
         # round 4: the anchor's reaction at the post's foot. Fx (x hold) and Fz (+ = the post lifts: screw tension)
         Fx, Fz = abs(res["anchor"][0]), res["anchor z"][0]
-        # the post alone below the web (z 17.75..19.25): 8 thick along x, 9.26 wide at z 19, net of the Ø3.6 hole on its
-        # centreline (probed: A 63.1 mm2, I_y 386 mm4); bending in the x-z plane over the 1.5 mm stub, Kt 2.5 at the web's
-        # bottom corner; in print these stresses run along the layers
-        M_f = Fx * (Z_WEB0 - Z_FOOT)
-        out["second post's foot below the web (z 17.75..19.25), the anchor's reaction (round 4)"] = (
-            max(Fz, 0.0) / POST_FOOT_A + KT_SHARP * M_f * (T_POST2 / 2) / POST_FOOT_I, ALLOW_XY, "XY",
-            f"8 x 9.26 net of the Ø{D_HOLE:.1f} hole (A {POST_FOOT_A}, I {POST_FOOT_I}), Fx {Fx:.1f} N, lift {Fz:+.1f} N, "
-            f"Kt {KT_SHARP}")
+        # the post alone below the web (round 5: flats z 17.85..19.25): 8 thick along x, 9.15 wide at z 19, net of the Ø3.6
+        # hole on its centreline (probed: A 62.4 mm2, I_y 383.5 mm4); bending in the x-z plane from the x reaction (at
+        # z 17.6, the ridge's flank) to the web, Kt 2.5 at the web's bottom corner; in print these run along the layers
+        # the wedge (round 5): the +x push rides up the groove's 45° flank, frictionless (worst): the ridge is pushed up by
+        # Fx as well, and the screw holds both in tension
+        lift_w = Fx if VSEAT else 0.0
+        M_f = Fx * (Z_WEB0 - Z_XR)
+        out[f"second post's foot below the web (z {Z_FOOT:.2f}..19.25), the anchor's reaction"] = (
+            (max(Fz, 0.0) + lift_w) / POST_FOOT_A + KT_SHARP * M_f * (T_POST2 / 2) / POST_FOOT_I, ALLOW_XY, "XY",
+            f"8 x 9.15 net of the Ø{D_HOLE:.1f} hole (A {POST_FOOT_A}, I {POST_FOOT_I}), Fx {Fx:.1f} N at z {Z_XR:.2f}, "
+            f"lift {Fz:+.1f} N + wedge {lift_w:.1f} N, Kt {KT_SHARP}")
         out["second post's foot: shear across it (z 19.25)"] = (
             1.5 * Fx / POST_FOOT_A, ALLOW_XY * 0.5, "XY shear", f"A {POST_FOOT_A}, Fx {Fx:.1f} N")
-        # M3 x 45 pull-out from the frame's Ø2.7 x 14 pilot: preload + the lift (the joint opens only past the preload)
-        T_scr = (P_M3 if CUR_MODE == "held" else 0.0) + max(Fz, 0.0)    # slip modes: the preload has gone
-        out[f"M3 x 45 anchor: pull-out from the frame's rail block ({L_ANCHOR:.2f} engaged), preload (if any) + lift"] = (
+        # M3 x 45 pull-out from the frame's Ø2.7 x 14 pilot: (preload) + the wedge's lift + the lift; round 5 adds the
+        # preload on top, conservatively, although nothing relies on it
+        T_scr = (P_M3 if CUR_MODE in ("held", "locked") else 0.0) + lift_w + max(Fz, 0.0)
+        out[f"M3 x 45 anchor: pull-out from the frame's rail block ({L_ANCHOR:.2f} engaged), preload (if any) + "
+            + ("wedge lift + lift" if VSEAT else "lift")] = (
             T_scr / (math.pi * 3.0 * L_ANCHOR), SHEAR_Z, "Z shear (frame)",
             f"screw {T_scr:.0f} N, thread cylinder Ø3 x {L_ANCHOR:.2f}")
-        # once the preload has gone, the shank bears on the post's hole (its -x wall, 2.2 to the post's face)
-        out["anchor shank bearing on the post's hole after a slip (Ø3 x 2d)"] = (
-            Fx / (3.0 * 6.0), BEARING, "bearing", f"Fx {Fx:.1f} N on Ø3 x 6")
-        out["post's 2.2 mm wall behind the hole: tear-out on the layer planes (y = const in print)"] = (
-            Fx / (2 * POST_WALL * 6.0), SHEAR_Z, "Z shear", f"Fx {Fx:.1f} N, 2 x {POST_WALL} x 6")
+        if VSEAT:
+            # the ridge (round 5). In print the ridge is a vertical prism (G y = print Z): its cross-section is in the
+            # layer plane, so its root (the plane z 17.85) is sheared and bent along the layers (in-plane allowables)
+            N_fl = Fx * math.sqrt(2)                                     # all on one 45° flank, frictionless
+            out["V-ridge: flank bearing on the groove's 45° flank (contact band z 17.25..17.75)"] = (
+                N_fl / (FLANK_L * L_V), BEARING, "bearing",
+                f"normal {N_fl:.1f} N on {FLANK_L:.2f} x {L_V:.1f} (the 0.6 lead-in ignored)")
+            out["V-ridge root at the foot's flats (z 17.85): shear"] = (
+                1.5 * Fx / (RIDGE_B * L_V), ALLOW_XY * 0.5, "XY shear", f"{RIDGE_B:.1f} x {L_V:.1f}, Fx {Fx:.1f} N")
+            out[f"V-ridge root at the foot's flats: the flank force's moment ({RIDGE_ARM:.2f} Fx, resultant at the printed "
+                f"layer corners, z {Z_XR:.1f}) + the wedge's compression, Kt 2.5"] = (
+                lift_w / (RIDGE_B * L_V) + KT_SHARP * 6 * Fx * RIDGE_ARM / (RIDGE_B ** 2 * L_V), ALLOW_XY, "XY",
+                f"{RIDGE_B:.1f} x {L_V:.1f}, M {Fx * RIDGE_ARM:.1f} N.mm, Kt {KT_SHARP} (the 135° root corners taken as "
+                f"sharp 90° ones); compression and bending added in magnitude")
+        else:
+            # once the preload has gone, the shank bears on the post's hole (its -x wall, 2.2 to the post's face)
+            out["anchor shank bearing on the post's hole after a slip (Ø3 x 2d)"] = (
+                Fx / (3.0 * 6.0), BEARING, "bearing", f"Fx {Fx:.1f} N on Ø3 x 6")
+            out["post's 2.2 mm wall behind the hole: tear-out on the layer planes (y = const in print)"] = (
+                Fx / (2 * POST_WALL * 6.0), SHEAR_Z, "Z shear", f"Fx {Fx:.1f} N, 2 x {POST_WALL} x 6")
     N, Mi, Mj, L = res["lip 1"]
     out["lip root at the top wall above the first tie"] = (sig(N, Mi, B_LIP1, C.GUIDE_T, KT_SHARP), ALLOW_XY, "XY",
                                                            f"b {B_LIP1} x {C.GUIDE_T:.0f}, Kt {KT_SHARP}")
@@ -496,7 +548,7 @@ def anchored(load_node, R, v, mode):
              bears (3 kN/mm). Linear in each phase, so the two solves superpose. Returns (res, R carried before bearing)."""
     global ANCHOR_KX, CUR_MODE
     CUR_MODE = mode
-    if not ANCHOR2 or mode == "held":
+    if not ANCHOR2 or mode in ("held", "locked"):          # 'locked' (round 5): the ridge holds x, no preload needed
         ANCHOR_KX = K_ANCHOR_X
         return cover_frame(load_node, R, *v), 0.0
     g = float(mode.split()[1])
@@ -512,7 +564,7 @@ def anchored(load_node, R, v, mode):
 
 
 CUR_MODE = "held"
-ANCHOR_MODES = ("held", f"slip {GAP_NOM:.2f}", f"slip {GAP_MAX:.2f}") if ANCHOR2 else ("held",)
+ANCHOR_MODES = (("locked",) if VSEAT else ("held", f"slip {GAP_NOM:.2f}", f"slip {GAP_MAX:.2f}")) if ANCHOR2 else ("held",)
 
 
 def cover_rows(case, load_node, R, req, rows=ROWS, variants=None, modes=None):
@@ -522,7 +574,8 @@ def cover_rows(case, load_node, R, req, rows=ROWS, variants=None, modes=None):
             res, _ = anchored(load_node, R, v, mode)
             for k, (s, a, d, sec) in cover_sections(res, v, load_node == "LD2").items():
                 if k not in worst or s / a > worst[k][0] / worst[k][1]:
-                    am = "" if not ANCHOR2 else ("; anchor held by its preload" if mode == "held" else
+                    am = "" if not ANCHOR2 else ("; foot held by the ridge in the groove" if mode == "locked" else
+                                                 "; anchor held by its preload" if mode == "held" else
                                                  f"; anchor preload gone, {mode.split()[1]} mm slip")
                     worst[k] = (s, a, d, f"{sec} [{vlabel(v)}{am}]")
     for k, (s, a, d, sec) in worst.items():
@@ -653,10 +706,15 @@ def head_area(od):
     return math.pi / 4 * (od ** 2 - HOLE_TD ** 2) - A_TD_TIP
 
 
-if ANCHOR2:
+if ANCHOR2 and VSEAT:
+    row(f"anchor M3 x 45 driven snug: Ø{WASHER_M3[0]:g} x {WASHER_M3[1]:g} washer under the socket head on the top wall, "
+        f"preload {P_M3:.0f} N (sustained)", f"{head_area(WASHER_M3[0]):.1f} mm2 round the Ø{HOLE_TD} teardrop (washer "
+        f"OD; BUILD_GUIDE §1)", "XY comp", P_M3 / head_area(WASHER_M3[0]), BEARING, SF_CYCLIC)
+elif ANCHOR2:
     row(f"anchor M3 x 45 driven snug: socket head (dk {HEAD_DK}) on the top wall, preload {P_M3:.0f} N (sustained)",
         f"{head_area(HEAD_DK):.1f} mm2 round the Ø{HOLE_TD} teardrop, no washer (BUILD_GUIDE lists none)", "XY comp",
         P_M3 / head_area(HEAD_DK), BEARING, SF_CYCLIC)
+if ANCHOR2:
     a_post = C.GUIDE_T * TIE_W - math.pi / 4 * D_HOLE ** 2
     row(f"anchor preload {P_M3:.0f} N through the stack (sustained): the 8 x 8 post round its Ø{D_HOLE:.1f} hole",
         f"{a_post:.0f} mm2 (the full-depth part only; the 45-degree part ignored)", "XY comp", P_M3 / a_post, ALLOW_XY,
@@ -664,6 +722,14 @@ if ANCHOR2:
     row(f"anchor preload {P_M3:.0f} N (sustained): M3 x 45 pull-out from the frame's rail block",
         f"thread cylinder Ø3 x {L_ANCHOR:.2f} (Ø2.7 x 14 pilot)", "Z shear (frame)",
         P_M3 / (math.pi * 3.0 * L_ANCHOR), SHEAR_Z, SF_CYCLIC)
+if ANCHOR2 and VSEAT:
+    # information (not in the verdict): if the ridge reaches its flanks before the top wall lands on the bulkhead, the
+    # snug preload seats it there. Bound: all of it on the two flanks. Local crushing of the flanks (the frame's 0.2 mm
+    # layer corners) is the seating itself: it is self-limiting (the top wall lands on the bulkhead within the 0.1 the
+    # flats stand clear) and it can only close the ridge's play, never open it; nothing relies on the preload
+    row("info: anchor preload seats the ridge, bound: all 150 N on the two 45° flanks (sustained; seating, self-limiting)",
+        f"normal {P_M3 / math.sqrt(2):.0f} N per flank on {FLANK_L:.2f} x {L_V:.1f}", "bearing",
+        P_M3 / math.sqrt(2) / (FLANK_L * L_V), BEARING, SF_CYCLIC, INFO)
 
 # ================================================================ 7. spec §8 proof push (round 4: the anchored cover)
 SF_PROOF = SF_SHORT / 1.5                                  # 2 at 1.5 x the service load (as every arm script)
@@ -699,34 +765,40 @@ print(f"cover: front plate {C.FRONT_T} (z {C.FRONT_Z0}..{C.Z_TOP0}), top wall {C
 print(f"rack thrust: grip one jaw {R_gc:.1f} (closed) / {R_go:.1f} N (open); crash {R_cc:.1f} / {R_co:.1f}; hand "
       f"{R_hand:.1f} (open)")
 print(f"two-zone cover frame, opening stall R {R_go:.1f} N, over the {len(VARIANTS)} variants"
-      + (", anchor held by its preload:" if ANCHOR2 else ":"))
+      + ((", foot held by the ridge in the groove:" if VSEAT else ", anchor held by its preload:") if ANCHOR2 else ":"))
 for node, name in (("LD2", "rack B on the upper piece"), ("LD1", "rack A on the lower piece")):
-    rs = [anchored(node, R_go, v, "held")[0] for v in VARIANTS]
+    rs = [anchored(node, R_go, v, ANCHOR_MODES[0])[0] for v in VARIANTS]
     S = [abs(r["screw"][0]) for r in rs]
     P1 = [max(abs(r["post 1"][1]), abs(r["post 1"][2])) for r in rs]
     P2 = [max(abs(r["post 2"][1]), abs(r["post 2"][2])) for r in rs]
     print(f"  {name}: M2.5 force {min(S):.0f}..{max(S):.0f} N; first post moment {min(P1):.0f}..{max(P1):.0f} N.mm; "
           f"second post moment {min(P2):.0f}..{max(P2):.0f} N.mm")
 if ANCHOR2:
-    print(f"anchor (as built): M3 x 45 at {tuple(C.ANCHOR_XY)}, stack {STACK:.2f}, {L_ANCHOR:.2f} engaged; post foot z {Z_FOOT}")
+    print(f"anchor (as built): M3 x 45 at {tuple(C.ANCHOR_XY)}, stack {STACK:.2f}"
+          + (f" + Ø{WASHER_M3[0]:g} x {WASHER_M3[1]:g} washer" if VSEAT else "") + f", {L_ANCHOR:.2f} engaged; post foot "
+          f"z {Z_FOOT:.2f}" + (f"; V-ridge flank band z {P.RIDGE_TIP_Z:.2f}..{Z_BLOCK:.2f} ({FLANK_L:.2f} of flank) over "
+                               f"{L_V:.1f}, root {RIDGE_B:.1f} wide; x held at z {Z_XR:.2f}" if VSEAT else ""))
     for node, name in (("LD2", "rack B on the upper piece"), ("LD1", "rack A on the lower piece")):
-        for R, lab in ((R_go, "opening stall"), (R_co, "crash")):
+        for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "spec §8 proof push")):
             for mode in ANCHOR_MODES:
                 out = [anchored(node, R, v, mode) for v in VARIANTS]
                 A = [abs(r["anchor"][0]) for r, _ in out]
                 Z = [r["anchor z"][0] for r, _ in out]
                 Rg = [rg for _, rg in out]
                 print(f"  {name}, {lab} {R:.1f} N, {mode:9s}: anchor x {min(A):5.1f}..{max(A):5.1f} N, z "
-                      f"{min(Z):+5.1f}..{max(Z):+5.1f} N (+ = lift); push carried before the shank bears "
-                      f"{min(Rg):.1f}..{max(Rg):.1f} N")
+                      f"{min(Z):+5.1f}..{max(Z):+5.1f} N (+ = lift)"
+                      + (f"; screw (wedge + lift) {max(a + max(z, 0.0) for a, z in zip(A, Z)):.1f} N, + preload "
+                         f"{max(a + max(z, 0.0) for a, z in zip(A, Z)) + P_M3:.1f} N" if VSEAT else
+                         f"; push carried before the shank bears {min(Rg):.1f}..{max(Rg):.1f} N"))
     fr = []
     for v in VARIANTS:
         ANCHOR_KX = 0.0
         fr.append(abs(cover_frame("LD2", 1.0, *v)["_u"]["AN"][0]))
     ANCHOR_KX = K_ANCHOR_X
-    print(f"  foot sliding freely (preload gone): {min(fr) * 1000:.1f}..{max(fr) * 1000:.1f} um per N of rack-B push, so "
-          f"{GAP_NOM:.2f} mm closes at {GAP_NOM / max(fr):.1f}..{GAP_NOM / min(fr):.1f} N and {GAP_MAX:.2f} mm at "
-          f"{GAP_MAX / max(fr):.1f}..{GAP_MAX / min(fr):.1f} N (opening stall {R_go:.1f}, crash {R_co:.1f}, hand {R_hand:.1f})")
+    print(f"  foot sliding freely (no x hold at all): {min(fr) * 1000:.1f}..{max(fr) * 1000:.1f} um per N of rack-B push"
+          + ("" if VSEAT else f", so {GAP_NOM:.2f} mm closes at {GAP_NOM / max(fr):.1f}..{GAP_NOM / min(fr):.1f} N and "
+             f"{GAP_MAX:.2f} mm at {GAP_MAX / max(fr):.1f}..{GAP_MAX / min(fr):.1f} N (opening stall {R_go:.1f}, crash "
+             f"{R_co:.1f}, hand {R_hand:.1f})"))
 print("\n| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
 print("|---|---|---|---|---|---|---|---|---|")
 table(ROWS)
@@ -769,61 +841,35 @@ print(f"  {'round 3 for reference: no anchor (post 2 as built, 8 thick, not seat
       f"most favourable variant {best:.2f}")
 ANCHOR2 = _saveA
 if ANCHOR2:
-    for modes in (("held",), (f"slip {GAP_NOM:.2f}",), (f"slip {GAP_MAX:.2f}",)):
+    (sf, k), best = reversed_worst(modes=ANCHOR_MODES)
+    print(f"  {'as built (round 5): foot held by the ridge in the groove (no preload)':78s}: lowest SF {sf:.2f} ({k}); "
+          f"most favourable variant {best:.2f}")
+    for modes in ((f"slip {GAP_NOM:.2f}",), (f"slip {GAP_MAX:.2f}",)):
         (sf, k), best = reversed_worst(modes=modes)
-        print(f"  {'as built, anchor ' + modes[0]:78s}: lowest SF {sf:.2f} ({k}); most favourable variant {best:.2f}")
+        print(f"  {'round 4 for reference: no ridge, preload gone, ' + modes[0]:78s}: lowest SF {sf:.2f} ({k}); most "
+              f"favourable variant {best:.2f}")
     print(f"What-if, the anchor's head on the top wall at the {P_M3:.0f} N preload (sustained, req 4):")
     for lab, od in ((f"bare socket head dk {HEAD_DK}", HEAD_DK), (f"+ M3 washer Ø{WASHER_M3[0]:g} x {WASHER_M3[1]:g}",
                                                                      WASHER_M3[0])):
-        L_w = L_ANCHOR - (WASHER_M3[1] if od == WASHER_M3[0] else 0.0)
-        print(f"  {lab:32s}: bearing SF {BEARING / (P_M3 / head_area(od)):.2f}; pull-out on the preload SF "
-              f"{SHEAR_Z / (P_M3 / (math.pi * 3.0 * L_w)):.2f} ({L_w:.2f} engaged)")
-    print(f"  preload that a bare head carries at SF 4: {BEARING / 4 * head_area(HEAD_DK):.0f} N")
-    # what the 'held' mode asks of the preload: clamp left at the seat = preload - lift, friction mu x that >= Fx
-    print("What-if, the clamp the seat's friction needs to hold the foot (preload - lift >= Fx / mu), worst variant:")
-    for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "spec §8 proof push")):
-        out = [anchored("LD2", R, v, "held")[0] for v in VARIANTS]
-        need = max(abs(r["anchor"][0]) / 0.3 + max(r["anchor z"][0], 0.0) for r in out)
-        need2 = max(abs(r["anchor"][0]) / 0.2 + max(r["anchor z"][0], 0.0) for r in out)
-        print(f"  {lab:20s} R {R:5.1f} N: preload >= {need:.0f} N at mu 0.3, {need2:.0f} N at mu 0.2 (snug assumed {P_M3:.0f} N)")
-    print("What-if, residual radial gap at the foot once the preload has gone (both reversed pushes, all variants):")
+        print(f"  {lab:32s}: bearing SF {BEARING / (P_M3 / head_area(od)):.2f}")
+    # the ridge's play: with 0.1 per flank (horizontal) in CAD, the frame's 0.2 mm layers (sliced at mid-height) put each
+    # layer's top corner 0.1 inside the groove's CAD flank, so the printed ridge meets those corners at the nominal seat.
+    # Any play left there (print tolerance, the bulkhead top's layer rounding) is free slide before the flank bears:
+    print("What-if, play left between the ridge and the groove's flank in x (preload gone; both reversed pushes, all "
+          "variants):")
     for gap in (0.0, 0.025, 0.04, 0.05, 0.075, 0.1):
         (sf, k), best = reversed_worst(modes=(f"slip {gap}",))
-        print(f"  gap {gap:5.3f} mm: lowest SF {sf:.2f} ({k})")
-    # the FIX: a 90-degree V-seat beside the anchor, so the foot is held in x by geometry and the screw's tension, not by
-    # friction. The frame's rail block gets a V-groove along y in its top: centre x 15.25, 0.8 deep (x 14.45..16.05 at the
-    # block top z 17.75, bottom z 16.95), y 23.5..32 (open at +y), 0.95 of block between its edge and the anchor pilot at
-    # the top. The post's foot gets the matching V-ridge (the same flanks; tip truncated 0.15 at z 17.10, so it never
-    # bottoms; x 14.35..16.15 where it meets the foot's flats), y 24..32 with a 45-degree lead-in over its first 0.8 (the
-    # post's underside); the foot's flats rise 0.1 (TIE2_FOOT_Z 17.85) so the flanks seat, not the flats. A +x push on the
-    # foot rides up a 45-degree flank: the screw holds it in tension (positive: no friction or preload needed); Fz added =
-    # Fx (frictionless, the worst case). The anchor pilot and the M3 x 45 do not change.
-    V_D, V_TRUNC, V_X0 = 0.8, 0.15, C.LIP_X0 + 0.1          # groove x 14.45..16.05 at the block top
-    L_V = (C.TIE2_Y[1] - C.TIE2_Y[0]) - V_D                 # 7.2: full-depth ridge, y 24.8..32
-    print(f"What-if, the FIX: 90-degree V-seat beside the anchor (x {V_X0:.2f}..{V_X0 + 2 * V_D:.2f}, {V_D} deep, along y "
-          f"over the post's foot): x held positively (gap 0); M3 x 45 + Ø7 x 0.5 washer:")
-    (sf, k), best = reversed_worst(modes=("slip 0.0",))
-    print(f"  cover frame model, both reversed pushes, all variants: lowest SF {sf:.2f} ({k}); most favourable {best:.2f}")
-    outs = [anchored(n, R, v, "slip 0.0")[0] for n in ("LD2",) for R in (R_go, R_proof) for v in VARIANTS]
-    Fx_max = max(abs(r["anchor"][0]) for r in outs[:len(VARIANTS)])
-    Fz_max = max(max(r["anchor z"][0], 0.0) for r in outs[:len(VARIANTS)])
-    Fx_pr = max(abs(r["anchor"][0]) for r in outs[len(VARIANTS):])
-    flank = (V_D - V_TRUNC) * math.sqrt(2)                  # 0.92 of flank on each side
-    N_fl = Fx_max * math.sqrt(2)                            # all on one 45-degree flank, frictionless
-    s_fl = N_fl / (flank * L_V)
-    s_root = 1.5 * Fx_max / (2 * V_D * L_V)                 # ridge root on the post's foot: in print a vertical plane
-    plug = (C.RAIL_X1 - (V_X0 + 2 * V_D)) * L_V - math.pi / 4 * (C.M3_PILOT + P.HOLE_COMP) ** 2
-    s_plug = 1.5 * Fx_max / plug                            # the frame's block in front of the groove, sheared off its
-    L45 = L_ANCHOR - WASHER_M3[1]                           # layers at the groove's bottom (interlayer, 6.25)
-    T45 = P_M3 + Fx_max + Fz_max
-    print(f"  anchor Fx {Fx_max:.1f} N, lift {Fz_max:.1f} N (opening stall); Fx {Fx_pr:.1f} N at the spec §8 proof push")
-    print(f"  flank bearing {s_fl:.2f} MPa on {flank:.2f} x {L_V:.1f}: SF {BEARING / s_fl:.1f} (req 3); ridge root 1.5 V / A "
-          f"{s_root:.2f} MPa along the layers: SF {ALLOW_XY / 2 / s_root:.1f}; the frame's block in front of the groove, "
-          f"{plug:.0f} mm2 at the groove's bottom, interlayer: SF {SHEAR_Z / s_plug:.1f}")
-    print(f"  M3 x 45 + washer: {L45:.2f} engaged; pull-out on the preload SF {SHEAR_Z / (P_M3 / (math.pi * 3.0 * L45)):.2f} "
-          f"(req 4); preload + wedge lift + lift {T45:.0f} N: SF {SHEAR_Z / (T45 / (math.pi * 3.0 * L45)):.2f} (req 3); head "
-          f"on the washer SF {BEARING / (P_M3 / head_area(WASHER_M3[0])):.2f} (req 4); the ridge's x play after seating = the "
-          f"stack's creep under the head (gap <= 0.025 keeps every row >= 4.5)")
+        print(f"  play {gap:5.3f} mm: lowest SF {sf:.2f} ({k})")
+    if VSEAT:
+        # the frame's side of the seat, for the frame's strength_calc.py (its section 6 states these numbers)
+        outs = {lab: [anchored("LD2", R, v, "locked")[0] for v in VARIANTS]
+                for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "proof push"))}
+        print("For the frame (worst of the variants): anchor Fx, lift, screw tension without / with the preload:")
+        for lab, rs in outs.items():
+            Fx_ = max(abs(r["anchor"][0]) for r in rs)
+            T_ = max(abs(r["anchor"][0]) + max(r["anchor z"][0], 0.0) for r in rs)
+            Fz_ = max(max(r["anchor z"][0], 0.0) for r in rs)
+            print(f"  {lab:14s}: Fx {Fx_:.1f} N, lift {Fz_:.1f} N, wedge + lift {T_:.1f} N, + preload {T_ + P_M3:.1f} N")
 print("What-if, strip under slot B (yaw stall, the worse of closed / open):")
 for d in (STRIP_D - 2.0, STRIP_D - 1.0, STRIP_D, STRIP_D + 2.0):
     w = max(strip_sf(d, F_YAW_Z, 0.0, C.NECK_Y), strip_sf(d, F_YAW_Z, C.STROKE, C.STROKE + C.NECK_Y))

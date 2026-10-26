@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 2,
+    "DESIGN": 3,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 in progress (user-approved with the cover fix): 90\u00b0 V-groove 0.8 deep in the rail block top",
+    "DESIGN": "round 5 built (V-groove): CAD DFM PASS 21/21, CAD-side strength NEEDS_TEST 3.03; independent recheck next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,

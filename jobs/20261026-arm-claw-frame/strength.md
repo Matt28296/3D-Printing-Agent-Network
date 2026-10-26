@@ -1,33 +1,51 @@
 VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-arm-claw-frame (round 4)
+# Strength check: 20261026-arm-claw-frame (round 5)
 
-strength-analyst (independent review of the round-4 geometry) · 2026-10-26 ·
-`python3 jobs/20261026-arm-claw-frame/strength_calc.py`. It is plain python3, run from the project root. It reads
-`claw_frame.py`, this job's `model.py`, `tools/cadlib.py`, `tools/hobby_parts.py`, the assembly's `torque_budget.json`,
-and this job's and the cover's `geometry.json`. No build123d.
+cad-engineer (round 5 design change, by the user-approved fix; the method is the strength-analyst's round 4, extended for
+the V-groove) · 2026-10-26 · `python3 jobs/20261026-arm-claw-frame/strength_calc.py`. It is plain python3, run from the
+project root. It reads `claw_frame.py`, this job's `model.py`, `tools/cadlib.py`, `tools/hobby_parts.py`, the assembly's
+`torque_budget.json`, and this job's and the cover's `geometry.json`. No build123d.
 
 ## Summary
 
-- **Every row passes. The verdict is NEEDS_TEST only because the allowables are placeholders.**
+- **Every verdict row passes. The verdict is NEEDS_TEST only because the allowables are placeholders.**
 - **Lowest SF 3.03**: the cover's top M3 × 10 screws pulling out of the bulkhead top, with no camera mount, under the
-  opening stall on jaw B (row 39).
-  - This bound row stays in. My cover review finds that the anchor's preload, once it has crept away, no longer holds
-    the post. The push then returns to the cover's top joint, as in round 3.
-  - It passes either way.
+  opening stall on jaw B (row 39). It is a bound kept since round 4 (all of the cover's moment on its top screws, as if
+  the post held nothing); with the ridge holding the foot it does not happen.
 - **Lowest SF of the frame's own load cases: 3.53**, floor punching under the Ø8 washer when the camera hits the desk
   (row 4). Unchanged.
-- **The anchor pilot (round 4) passes every new row.**
-  - Block's rack-side root with the pilot in its section: **5.93** (row 15). The pilot's own edge gives 2.0 × 0.98 MPa;
-    the root face governs.
-  - M3 × 45 pull-out on the 150 N snug preload: **4.42** (sustained, row 42). With the cover's lift: **4.14** (row 43).
-  - Thread forming plus preload in the 2.65 mm walls: **3.77**, at installation (row 46).
-  - The shank dragged +x by the whole push, if the cover's foot ever slides that far: bearing 16.7, wall tear-out 14.7,
-    block bent the other way 5.83.
-- **Spec §8 still matches,** with the cover's caveat: don't run step 1's opening push until the cover's fix is in (cover
-  report). The pass criteria need round 3's wording update (DFM note 2).
+- **Round 5: the V-groove takes the cover's push.** The cover's ridge bears on the groove's +x flank; the 45° flank lifts
+  the cover by as much, and the M3 × 45 holds that in tension. No preload is relied on.
+  - Flank bearing on the groove: **3.61** (row 48; proof 2.85, row 50).
+  - The block in front of the groove sheared off along the groove's bottom (interlayer): **6.66** (row 49).
+  - M3 × 45 pull-out, 10.75 engaged with the Ø7 × 0.5 washer: **4.22** on the preload (sustained, row 42); **3.42** with
+    the preload + the wedge's lift + the lift, 185 N (row 43); **3.26** at the proof push (row 45, req 2).
+  - Thread forming plus preload in the 2.65 mm walls: **3.75**, at installation (row 46).
+  - The block's rack-side root with the pilot: **5.93** (row 15), unchanged: the groove is at the block's top, above
+    every rack load.
+  - The bound with all of the push on the screw's shank stays: bearing 16.7, wall tear-out 14.7, block bent the other way
+    5.83.
+- **Spec §8 still matches.** The cover's caveat is gone: with the ridge in place, step 1's opening push is safe to run.
+  The pass criteria need round 3's wording update (DFM note 2), plus the groove.
 
-## What changed since round 3
+## What changed in round 5
+
+**Design**
+- A 90° V-groove, 0.8 deep, along y in the rail block's top: x 14.45–16.05 at z 17.75, bottom z 16.95, y 23.5–32, open
+  at +y. 0.95 mm of block stays between it and the anchor pilot at the top.
+- The anchor M3 × 45 gets a Ø7 × 0.5 washer: 10.75 engaged (was 11.25).
+
+**Method**
+- Forces from the cover's round-5 frame model (worst of 64 variants, the foot held by the ridge): Fx 25.6 N at the
+  opening stall (32.5 N at the proof push), lift 10.0 N (12.7 N); the screw carries Fx + lift = 35.1 N (44.5 N), plus the
+  snug preload where that makes a row worse.
+- New rows 48–51: flank bearing (all of Fx on one flank, frictionless: normal Fx √2 on the 0.71 mm band from the
+  cover's ridge tip, z 17.25, to the block top, over the ridge's full-depth 7.4 mm) and the block in front of the groove
+  sheared along the groove's bottom (z 16.95, a layer plane: interlayer 6.25 MPa, 41 mm² less the pilot).
+- Rows 44 and 45: the "preload crept away, foot sliding" lift of 120.8 N is gone; the ridge holds the foot.
+
+## What changed in round 4
 
 **Design (round 4)**
 - One Ø2.7 CAD × 14 M3 pilot in the rail block's top at (18.35, 28), z 3.75–17.75. It takes the cover's M3 × 45 anchor,
@@ -68,7 +86,7 @@ As round 3, plus the cover's anchor.
 | 7 | Weight ×3 incl. the ramp | 3 × 134 N·mm | Wrist joint | Cyclic, 4 |
 | 8 | SYS-04 overhung moment | 134 × 1.3 N·mm | Clamp preload | Sustained, 4 |
 | 9 | Yaw stall at the fingertip | 7.1 N along the wrist axis | Wrist joint + pull | Short-term, 3 |
-| 10 | **Cover anchor (new)** | M3 × 45 snug, 150 N; lift 10.1 N (120.8 N if the preload has gone); x drag ≤ 27.0 N | The pilot and the block round it | Sustained 4 / short-term 3 |
+| 10 | **Cover anchor and V-seat (round 5)** | M3 × 45 snug, 150 N; the cover's ridge on the groove's flank, Fx 25.6 N; screw Fx + lift 35.1 N | The groove's flank, the block in front of it, the pilot | Sustained 4 / short-term 3 |
 | 11 | Spec §8 proof | 32 N push, jaws 30: R 34.2 N | As 4 and 10 | Proof, 2 |
 
 ## Assumptions
@@ -76,7 +94,9 @@ As round 3, plus the cover's anchor.
 - **Layers.** The frame prints back face down, so its layers are z = const. Pull-out and punching are interlayer shear.
   Bending about the block's, bulkhead's and ribs' roots crosses the layers. Hoop stress round a vertical pilot runs
   along them.
-- **Anchor preload: 150 N** for "snug only (≤ 0.09 N·m)", as the cover analysis assumes.
+- **Anchor preload: 150 N** for "snug only (≤ 0.09 N·m)", as the cover analysis assumes. Not relied on; added to the
+  screw's tension only for pull-out.
+- **The V-seat's flank is frictionless** (worst case for the bearing and the lift).
 - **Thread forming** uses the same flank pressure as the MG90S rows, p_form 4.6 MPa (40 N·mm for an M2 over 5.5 mm, the
   same 0.25 radial interference). It is taken as a short-term installation event that relaxes afterwards. Lamé ring of
   r_i 1.25 and a 2.75 mm printed wall: × 1.22.
@@ -122,23 +142,28 @@ As round 3, plus the cover's anchor.
 | 31–36 | window strips + ribs, USB tug at y ±45 / camera ×3 | | Z | ≥ 3.87 | 3/4 | OK |
 | 37 | claw tab screw pull-out, 14 N | M2, 5.5 | Z shear | 15.64 | 3 | OK |
 | 38 | USB tug: M3 × 18 pull-out from the bulkhead top | | Z shear | 10.21 | 3 | OK |
-| 39 | **opening stall on jaw B: the cover's moment on its top M3 × 10 (bound if the anchor's preload has gone)** | M3, 7.0 | Z shear | **3.03** | 3 | OK |
+| 39 | **opening stall on jaw B: the cover's moment on its top M3 × 10 (bound: as if the post held nothing, kept since round 4)** | M3, 7.0 | Z shear | **3.03** | 3 | OK |
 | 40 | same, M3 × 18 with the camera mount | M3, 11.5 | Z shear | 4.97 | 3 | OK |
 | 41 | rack B pushes the cover's lower piece: M2.5 pull-out | 11 | Z shear | 4.98 | 3 | OK |
-| 42 | **new:** cover anchor snug, 150 N (sustained): pull-out | Ø3 × 11.25 | Z shear | **4.42** | 4 | OK |
-| 43 | **new:** anchor preload + lift 10.1 N, opening stall | | Z shear | 4.14 | 3 | OK |
-| 44 | **new:** anchor, preload gone: lift 120.8 N | | Z shear | 5.49 | 3 | OK |
-| 45 | **new:** anchor at the spec §8 proof push, the worse of 162.7 / 153.1 N | | Z shear | 4.07 | 2 | OK |
-| 46 | **new:** anchor driven, thread forming 4.6 + preload 0.82 MPa (short-term) | 2.65 CAD / 2.75 printed walls, Lamé × 1.22 | XY | **3.77** | 3 | OK |
-| 47 | **new:** anchor preload alone (sustained) | | XY | 25.16 | 4 | OK |
-| 48 | **new:** anchor dragged +x, 27.0 N: shank bearing | Ø3 × 6 | bearing | 16.67 | 3 | OK |
-| 49 | **new:** same, tear-out of the 2.65 wall to the front face | 2 × 2.65 × 6 | XY shear | 14.73 | 3 | OK |
-| 50 | **new:** same, block root bent +x by the pull at its top | b_eff 14.6, lever 11.75, Kt 2.5 | Z | 5.83 | 3 | OK |
-| 51–53 | **new:** the same three at the proof push, 34.2 N | | | 13.16 / 11.62 / 4.60 | 2 | OK |
+| 42 | cover anchor snug, 150 N (sustained): pull-out | Ø3 × 10.75 (washer) | Z shear | **4.22** | 4 | OK |
+| 43 | **round 5:** anchor, opening stall: preload + wedge lift + lift, 185.1 N | | Z shear | **3.42** | 3 | OK |
+| 44 | **round 5:** anchor, preload gone: wedge lift + lift 35.1 N | | Z shear | 18.04 | 3 | OK |
+| 45 | **round 5:** anchor at the spec §8 proof push: preload + wedge + lift, 194.5 N | | Z shear | 3.26 | 2 | OK |
+| 46 | anchor driven, thread forming 4.6 + preload 0.85 MPa (short-term) | 2.65 CAD / 2.75 printed walls, Lamé × 1.22 | XY | **3.75** | 3 | OK |
+| 47 | anchor preload alone (sustained) | | XY | 24.04 | 4 | OK |
+| 48 | **round 5:** V-groove, opening stall, Fx 25.6 N: the ridge on the groove's +x flank | normal 36.2 N on 0.71 × 7.4 | bearing | **3.61** | 3 | OK |
+| 49 | **round 5:** same, the block in front of the groove sheared along its bottom (z 16.95) | 41 mm², interlayer | Z shear | 6.66 | 3 | OK |
+| 50 | **round 5:** V-groove at the proof push, Fx 32.5 N: flank bearing | normal 46.0 N | bearing | 2.85 | 2 | OK |
+| 51 | **round 5:** same, the block in front of the groove | | Z shear | 5.24 | 2 | OK |
+| 52 | bound, all of the push (27.0 N) on the screw: shank bearing | Ø3 × 6 | bearing | 16.67 | 3 | OK |
+| 53 | same, tear-out of the 2.65 wall to the front face | 2 × 2.65 × 6 | XY shear | 14.73 | 3 | OK |
+| 54 | the cover's push, block root bent +x by it at its top | b_eff 14.6, lever 11.75, Kt 2.5 | Z | 5.83 | 3 | OK |
+| 55–57 | the same three at the proof push, 34.2 N | | | 13.16 / 11.62 / 4.60 | 2 | OK |
 
-**Lowest SF 3.03 (row 39, the top-screw bound). The frame's own cases: 3.53 (row 4). The anchor's: 3.77 (row 46).**
+**Lowest SF 3.03 (row 39, the top-screw bound). The frame's own cases: 3.53 (row 4). The anchor and groove's: 3.42
+(row 43).**
 
-Information rows (not in the verdict):
+Information rows (not in the verdict), rows 58–60:
 - the vice proof test through the pocket: 3.44;
 - the USB tug with the port centred: 10.56 / 6.77.
 
@@ -154,9 +179,9 @@ That table is not part of this verdict, as in round 3.
 
 - **It still matches.** The 1.5 × loads (32 N one-jaw pull and opening push, 15 N on the USB plug, 20 N on the Brio's
   end, 7.5 N at the fingertips) load every governing item here: the washer and floor, the rail block with the pilot, the
-  ribs, the strips and the anchor (rows 45, 51–53, all ≥ 4.07).
-- **Step 1's 32 N opening push on jaw B** loads this frame safely. On the as-built cover it can crack the cover's top wall
-  once the anchor slips (cover report, proof SF 1.08). Run it only after the cover's fix.
+  ribs, the strips, the anchor and the groove (rows 45, 50–51, 55–57, all ≥ 2.85 against 2).
+- **Step 1's 32 N opening push on jaw B** loads this frame safely, and since round 5 the cover too (cover strength.md:
+  every proof row ≥ 2.39). It can be run.
 - **The pass criteria still need round 3's wording update** (DFM note 2): "the rail block's rack-side root (along it and
   at its +y end)", "the rib roots on the pad and the washer relief's foot", "the washer lies flat on the pad". Add "the
-  anchor pilot's mouth on the block top".
+  anchor pilot's mouth and the V-groove's flanks on the block top".

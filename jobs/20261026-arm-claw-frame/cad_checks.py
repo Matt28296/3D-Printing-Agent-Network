@@ -50,6 +50,16 @@ check("rail block keeps 2.65 round the anchor pilot (front face x 22.35, +y end 
       and solid(14.6, 28, 12) and solid(18.35, 26.6, 12), "x 19.7..22.35, y 29.35..32 at z 12")
 check("anchor pilot clear of the +y front M2.5 pilot (x >= 20.85, y 22.9..25.1)",
       solid(20.9, 25.6, 3.0) and solid(19.7, 26.0, 3.9), "solid between them")
+xc, zb = ns["VSEAT_XC"], 17.75 - ns["VSEAT_D"]
+check("V-groove (round 5) in the rail block's top: 90°, 0.8 deep (bottom z 16.95) on x 15.25, x 14.45..16.05 at z 17.75, "
+      "y 23.5..32 open at +y", abs(xc - 15.25) < 1e-9 and abs(zb - 16.95) < 1e-9
+      and all(not solid(xc + s * (z - zb - 0.05), y, z) and solid(xc + s * (z - zb + 0.05), y, z)
+              for s in (-1, 1) for z in (17.1, 17.4, 17.7) for y in (23.6, 28.0, 31.9))
+      and solid(xc, 28, 16.9) and not solid(xc, 28, 17.0) and solid(xc, 23.4, 17.5) and not solid(xc, 23.6, 17.5)
+      and solid(14.4, 28, 17.7) and solid(16.1, 28, 17.7), "flanks probed ±0.05 at z 17.1 / 17.4 / 17.7, y 23.6 / 28 / 31.9")
+check("0.95 of block between the groove and the anchor pilot at the top (x 16.05..17.0), widening downward",
+      solid(16.1, 28, 17.7) and solid(16.95, 28, 17.7) and not solid(17.05, 28, 17.7) and solid(16.4, 28, 17.4)
+      and not solid(15.95, 28, 17.7), "x 16.05..17.0 at z 17.7")
 check("wrist plate top (rack B's guide) z 6.0", solid(30, 0, 5.9) and not solid(30, 0, 6.1))
 check("wrist plate front edge x 34.85", solid(34.8, 0, 3) and not solid(34.9, 0, 3))
 check("rail block from the bulkhead's front face (x 10) to x 22.35, z 6..17.75", solid(10.1, 0, 12) and solid(22.3, 31.9, 17.7)
