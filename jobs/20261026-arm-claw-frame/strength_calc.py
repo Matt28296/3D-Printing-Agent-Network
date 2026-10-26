@@ -1,14 +1,24 @@
-"""Strength check, round 7 CAD ENGINEER'S SELF-CHECK on the round 6 INDEPENDENT REVIEW's script: jobs/20261026-arm-claw-frame
+"""Strength check, round 7 INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-frame
 
-Round 7 (cad-engineer's self-check, not an independent review): the round 6 review's fix, user-approved. The cover's top
-screws (no camera) are M3 x 14 pan heads + ISO 7089 Ø7 x 0.5 washers (claw_frame.TOP_WASHER), not bare M3 x 10s: 10.45
-engaged below the bulkhead in CAD, 10.5 below the printed bulkhead (48.4) with the wall pulled down, 10.24 with the worst
-standing (0.259) left at the screw; the tip ends at z 38.0 in the 14 mm pilot (floor 34.45). The front M2.5 x 16s move
-to z 2.5 (FRONT_SCREWS) with a DIN 125 Ø6 x 0.5 washer each: 16 - 5 - 0.5 = 10.5 engaged (was 11), the stall's screw
-force 130 N at z 2.5 (was 108 N at z 3), the pilots' flat top at z 3.6 (2.4 skin to rack B's track, was 1.9). In this
-script: L_M3_BARE* and L_M25 follow the new hardware, the snug-preload pull-out row takes the worst standing (10.24),
-the pilot skin follows FRONT_SCREWS; the round 6 M3 x 10 rows and the camera case with a washer are information rows.
-Everything else is the reviewer's script, unchanged.
+Round 7 design (user-approved, merged at a8ae29c): the cover's top screws (no camera) are M3 x 14 pan heads + ISO 7089
+Ø7 x 0.5 washers; with the camera mount, M3 x 18 button heads, each also on a Ø7 x 0.5 washer (BUILD_GUIDE §1, §4 steps
+9 and 13); the front M2.5 x 16s at z 2.5 (FRONT_SCREWS) on DIN 125 Ø6 x 0.5 washers; the front pilots' flat top at
+z 3.6. The CAD engineer's round-7 update of this file was a self-check; this version recomputes it.
+
+What this review changes (hand checks in strength.md):
+- THE CAMERA BUILD'S M3 x 18 NOW HAVE WASHERS (BUILD_GUIDE §1 and step 13), so every camera row loses 0.5 of engagement:
+  11.45 -> 10.95 in CAD, 11.24 -> 10.74 with the worst standing left at the screw. The self-check kept the verdict rows on
+  the bare-head engagement and the washer case as information; here the verdict rows use the washer (snug pull-out 4.22)
+  and the bare case is information.
+- THE M2.5 UNDER THE ONE-JAW STALL: the pivot is the top of the wrist plate's 0.4 bed chamfer (z 0.4), not z 0: lever
+  (12.05 - 0.4) / (2.5 - 0.4), 150 N (the self-check: 130 N). Pull-out 3.44 (req 3). Still a conservative bound: the
+  first tie and the second M2.5 are ignored.
+- THE TOP M3 x 14 SNUG PULL-OUT (4.02, the lowest row): information rows for its two unmodelled lenient terms (the screw's
+  length tolerance, js15 -0.35 on 14 mm; the self-tapper's lead taper, ~1 mm of partial thread) beside its conservative
+  ones (the worst standing left at the screw while it carries 150 N, which closes it with 144 N; the interlayer shear
+  allowable on a thread cylinder that, in this vertical pilot, cuts through the layers rather than along one).
+  A what-if line gives the M3 x 16 + washer option.
+Everything else is the round 6 independent review's script with the round 7 hardware, re-run.
 
 Round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-frame
 (wrist plate + servo bulkhead + rail block + ribs + the cover's anchor pilot: Ø2.7 CAD x 14 at ANCHOR_XY (18.35, 28) in
@@ -486,8 +496,9 @@ row(f"one jaw blocked: tab screw pull-out {F_po:.0f} N (M2, {L_ENG} engaged)", "
 # ================================================================ 5. cover screws in the frame
 # round 6: the cover's top wall (48.5) stands 0.05 over the bulkhead top (48.45) in CAD, so 0.05 less is engaged
 TW_GAP = C.Z_TOP0 - BULK_TOP
-L_M3_CAM = 18.0 - (C.PAD_TOP - C.Z_TOP1) - C.TOP_T - TW_GAP   # M3 x 18 through the 3.5 pad + 3 top wall: 11.45 engaged
 TOP_WASHER = getattr(C, "TOP_WASHER", (0.0, 0.0))       # round 7: ISO 7089 Ø7 x 0.5 under each top M3 x 14 pan head
+# round 7 review: the camera's M3 x 18 button heads also sit on Ø7 x 0.5 washers (BUILD_GUIDE §1, steps 9 and 13)
+L_M3_CAM = 18.0 - (C.PAD_TOP - C.Z_TOP1) - C.TOP_T - TOP_WASHER[1] - TW_GAP   # 10.95 engaged in CAD (11.45 bare)
 L_TOP_SCREW = 14.0 if TOP_WASHER[0] else 10.0           # round 7: M3 x 14 (round 6: M3 x 10, bare)
 TOP_LAB = f"M3 x {L_TOP_SCREW:.0f}" + (f" + Ø{TOP_WASHER[0]:g} x {TOP_WASHER[1]:g} washer" if TOP_WASHER[0] else "")
 L_M3_BARE = L_TOP_SCREW - TOP_WASHER[1] - C.TOP_T - TW_GAP   # without the camera mount: 10.45 engaged in CAD (M3 x 10: 6.95)
@@ -508,14 +519,14 @@ T_cov = M_cov / (C.BULK_T / 2) / 2
 G_SCREW_W = 0.259
 L_M3_BARE_W = L_TOP_SCREW - TOP_WASHER[1] - C.TOP_T - G_SCREW_W   # 10.24 (round 6's M3 x 10: 6.74)
 L_M3_BARE_PR = L_TOP_SCREW - TOP_WASHER[1] - C.TOP_T          # 10.50 below the printed bulkhead, the wall pulled down
-L_M3_CAM_W = 18.0 - (C.PAD_TOP - C.Z_TOP1) - C.TOP_T - G_SCREW_W   # 11.24
+L_M3_CAM_W = 18.0 - (C.PAD_TOP - C.Z_TOP1) - C.TOP_T - TOP_WASHER[1] - G_SCREW_W   # 10.74 on the washer (11.24 bare)
 # review: the top joint's real tension, from the cover's frame model's own reactions (cover strength_calc.py, worst of
 # the 64 variants and both play modes): upper piece pushed 23.0 N (opening stall) / 24.5 N (spec §8 proof push) at the
 # +y screw; lower piece pushed 17.2 N (proof) at the -y screw. The old bound (all of the moment on the top screws, as if
 # the post held nothing: 136 N each) is what the cover gives with NO anchor (round 3's model: 284 N on one screw), so it
 # no longer describes the as-built joint; it stays as information.
 T_TOP_STALL, T_TOP_PROOF = 23.0, 24.5
-for lab, L_ in ((f"{TOP_LAB}, no camera", L_M3_BARE_W), ("M3 x 18 with the camera mount", L_M3_CAM_W)):
+for lab, L_ in ((f"{TOP_LAB}, no camera", L_M3_BARE_W), ("M3 x 18 + Ø7 washer with the camera mount", L_M3_CAM_W)):
     row(f"opening stall on jaw B, jaws open ({R_grip_open:.1f} N on the cover's upper piece): the top joint's tension "
         f"{T_TOP_STALL} N on the +y top screw (cover frame model, anchored; {lab})",
         f"M3, {L_:.2f} engaged (the worst standing at the screw)", "Z shear", T_TOP_STALL / (math.pi * 3.0 * L_),
@@ -530,18 +541,32 @@ P_SNUG_M3, P_SNUG_M25 = 150.0, 100.0
 row(f"top {TOP_LAB} (no camera) driven snug, {P_SNUG_M3:.0f} N preload (sustained): pull-out from the bulkhead top, "
     f"the worst standing ({G_SCREW_W}) left at the screw", f"thread cylinder Ø3 x {L_M3_BARE_W:.2f}", "Z shear",
     P_SNUG_M3 / (math.pi * 3.0 * L_M3_BARE_W), SHEAR_Z, SF_CYCLIC)
-row(f"top M3 x 18 through the camera mount driven snug, {P_SNUG_M3:.0f} N preload (sustained): pull-out",
-    f"thread cylinder Ø3 x {L_M3_CAM_W:.2f}", "Z shear", P_SNUG_M3 / (math.pi * 3.0 * L_M3_CAM_W), SHEAR_Z, SF_CYCLIC)
+row(f"top M3 x 18 + Ø7 x 0.5 washer through the camera mount driven snug, {P_SNUG_M3:.0f} N preload (sustained): "
+    f"pull-out, the worst standing left at the screw", f"thread cylinder Ø3 x {L_M3_CAM_W:.2f}", "Z shear",
+    P_SNUG_M3 / (math.pi * 3.0 * L_M3_CAM_W), SHEAR_Z, SF_CYCLIC)
 row(f"info: the same {TOP_LAB} preload pull-out as printed, the wall pulled down onto the 48.4 bulkhead",
     f"thread cylinder Ø3 x {L_M3_BARE_PR:.2f}", "Z shear", P_SNUG_M3 / (math.pi * 3.0 * L_M3_BARE_PR), SHEAR_Z, SF_CYCLIC,
     INFO)
+# review (round 7): the lowest row's unmodelled lenient terms, each on its own and together (the worst standing kept)
+SCREW_JS15 = 0.35                                         # ISO 4759-1 length tolerance js15 on 14 mm (+-0.35)
+TIP_LOST = 1.0                                            # ~half the lead taper of a pointed self-tapper, no full thread
+for lab, dl in ((f"screw at its js15 minimum length (-{SCREW_JS15})", SCREW_JS15),
+                (f"the lead taper's partial thread discounted ({TIP_LOST} mm)", TIP_LOST),
+                ("both", SCREW_JS15 + TIP_LOST)):
+    row(f"info, sensitivity: top {TOP_LAB} snug pull-out, worst standing, {lab}",
+        f"thread cylinder Ø3 x {L_M3_BARE_W - dl:.2f}", "Z shear", P_SNUG_M3 / (math.pi * 3.0 * (L_M3_BARE_W - dl)),
+        SHEAR_Z, SF_CYCLIC, INFO)
+row(f"info, sensitivity: the same row with the in-plane shear allowable ({ALLOW_XY / 2:.1f} MPa; the vertical pilot's thread "
+    f"cylinder cuts through the layers), worst standing, both lenient terms", f"thread cylinder Ø3 x "
+    f"{L_M3_BARE_W - SCREW_JS15 - TIP_LOST:.2f}", "XY shear",
+    P_SNUG_M3 / (math.pi * 3.0 * (L_M3_BARE_W - SCREW_JS15 - TIP_LOST)), ALLOW_XY / 2, SF_CYCLIC, INFO)
 row(f"info: round 6 BOM, top M3 x 10 bare (no camera) driven snug, {P_SNUG_M3:.0f} N preload (sustained): pull-out",
     f"thread cylinder Ø3 x {10.0 - C.TOP_T - TW_GAP:.2f} (CAD)", "Z shear",
     P_SNUG_M3 / (math.pi * 3.0 * (10.0 - C.TOP_T - TW_GAP)), SHEAR_Z, SF_CYCLIC, INFO)
-L_CAM_WASHER = L_M3_CAM_W - TOP_WASHER[1]                  # 10.74: the camera case's proposed Ø7 x 0.5 washer
-row(f"info: camera case with the proposed Ø7 x 0.5 washer under each M3 x 18 button head, {P_SNUG_M3:.0f} N preload "
-    f"(sustained): pull-out, the worst standing left at the screw", f"thread cylinder Ø3 x {L_CAM_WASHER:.2f}", "Z shear",
-    P_SNUG_M3 / (math.pi * 3.0 * L_CAM_WASHER), SHEAR_Z, SF_CYCLIC, INFO)
+L_CAM_BARE = L_M3_CAM_W + TOP_WASHER[1]                    # 11.24: the round 6 camera BOM (bare button heads)
+row(f"info: round 6 camera BOM, M3 x 18 bare button heads, {P_SNUG_M3:.0f} N preload (sustained): pull-out, the worst "
+    f"standing left at the screw", f"thread cylinder Ø3 x {L_CAM_BARE:.2f}", "Z shear",
+    P_SNUG_M3 / (math.pi * 3.0 * L_CAM_BARE), SHEAR_Z, SF_CYCLIC, INFO)
 for lab, L_ in (("bound, kept since round 4: all of the cover's moment on its top screws, as if the post held nothing "
                  f"({TOP_LAB}, CAD)", L_M3_BARE), ("the same bound, M3 x 18 with the camera (CAD)", L_M3_CAM),
                 (f"the same bound on the worst standing at the screw ({G_SCREW_W}), {TOP_LAB}", L_M3_BARE_W)):
@@ -552,13 +577,34 @@ M25_WASHER = getattr(C, "FRONT_WASHER", (0.0, 0.0))
 L_M25 = min(P.FRONT_PILOT_DEPTH, 16.0 - C.FRONT_T - M25_WASHER[1])
 SKIN_M25 = C.T_W - (C.FRONT_SCREWS[0][1] + d_pilot / 2)  # 2.4 (round 7; 1.9 at z 3)
 z_rbg = (C.T_W + (C.ZS - C.RACK_TIP)) / 2               # 12.05: rack B's front face resultant
-T_m25 = R_grip_open * z_rbg / C.FRONT_SCREWS[0][1]
+# round 7 review: the cover's front plate pivots on the wrist plate's front face at its lowest point, the top of this
+# part's 0.4 x 45° bed chamfer (z 0.4), not at z 0 (the self-check: 130 N)
+Z_PIVOT = P.BED_CHAMFER
+T_m25 = R_grip_open * (z_rbg - Z_PIVOT) / (C.FRONT_SCREWS[0][1] - Z_PIVOT)
+T_m25_0 = R_grip_open * z_rbg / C.FRONT_SCREWS[0][1]
 row(f"stall, one jaw blocked: rack B pushes the cover's lower piece forward ({R_grip_open:.1f} N at z {z_rbg:.1f}): "
-    f"M2.5 pull-out {T_m25:.0f} N (one screw at z {C.FRONT_SCREWS[0][1]:g})",
-    f"M2.5 x 16, {L_M25:.1f} engaged (14 mm pilot), {SKIN_M25:.1f} mm skin on top", "Z shear",
+    f"M2.5 pull-out {T_m25:.0f} N (one screw at z {C.FRONT_SCREWS[0][1]:g}, pivot z {Z_PIVOT:g}; the tie and the other "
+    f"screw ignored)", f"M2.5 x 16, {L_M25:.1f} engaged (14 mm pilot), {SKIN_M25:.1f} mm skin on top", "Z shear",
     T_m25 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_SHORT)
+row(f"info: the same with the pivot at z 0 (round 7 self-check): {T_m25_0:.0f} N", f"M2.5 x 16, {L_M25:.1f} engaged",
+    "Z shear", T_m25_0 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_SHORT, INFO)
 row(f"front M2.5 x 16 driven snug, {P_SNUG_M25:.0f} N preload (sustained): pull-out from the wrist plate's front edge",
     f"thread cylinder Ø2.5 x {L_M25:.1f}", "Z shear", P_SNUG_M25 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_CYCLIC)
+# review (round 7): at z 2.5 the front pilot's floor skin to the back face (the bed face) is 1.4 CAD (1.9 at z 3). Thread
+# forming (installation, short-term) as the MG90S and anchor rows (the same 0.25 radial interference, p_form) + the snug
+# preload's flank pressure; Lame peak with the thinnest wall all round (conservative: only the floor is thin). The pilot is
+# horizontal in print, so at its floor and its flat top the hoop runs along y, in the layers (25 MPa)
+r_i25 = C.M25_PILOT / 2                                   # 1.0 printed
+for lab_s, w_cad in (("floor skin to the back face", C.FRONT_SCREWS[0][1] - d_pilot / 2),
+                     ("top skin to rack B's track", SKIN_M25)):
+    w_pr = w_cad + P.HOLE_COMP / 2                        # the pilot prints Ø2.0, 0.1 smaller in radius
+    lame25 = ((r_i25 + w_pr) ** 2 + r_i25 ** 2) / ((r_i25 + w_pr) ** 2 - r_i25 ** 2)
+    p_cl25 = P_SNUG_M25 * math.tan(math.radians(30)) / (math.pi * 2.5 * L_M25)
+    row(f"front M2.5 driven: thread forming ({p_form:.1f} MPa) + preload ({p_cl25:.2f} MPa), short-term: {lab_s}",
+        f"{w_cad:.1f} CAD / {w_pr:.1f} printed, Lame peak x{lame25:.2f}, hoop along the layers", "XY",
+        (p_form + p_cl25) * lame25, ALLOW_XY, SF_SHORT)
+    row(f"front M2.5: preload alone (sustained; the forming pressure relaxes): {lab_s}", "as above", "XY",
+        p_cl25 * lame25, ALLOW_XY, SF_CYCLIC)
 
 # ================================================================ 6. the cover's anchor and V-seat in the rail block
 # One M3 x 45 socket head + Ø7 x 0.5 washer through the cover (top wall, lip, second post: 33.75 mm to the block top)
@@ -728,7 +774,8 @@ for name, rib in (("no ribs", (0.0, 0.0)), ("6 x 8 ribs", (6.0, 8.0)), ("6 x 10 
 print(f"What-if, the top M3 without the camera at the {P_SNUG_M3:.0f} N snug preload (pull-out, sustained req 4; engaged "
       f"below the printed bulkhead with the wall pulled down / with the worst standing {G_SCREW_W} left at the screw):")
 for lab, Ls, wt in (("M3 x 10, bare (round 6 BOM)", 10.0, 0.0), ("M3 x 10 + Ø7 x 0.5 washer", 10.0, 0.5),
-                    ("M3 x 12 + washer", 12.0, 0.5), ("M3 x 14 + washer (round 7)", 14.0, 0.5)):
+                    ("M3 x 12 + washer", 12.0, 0.5), ("M3 x 14 + washer (round 7)", 14.0, 0.5),
+                    ("M3 x 16 + washer (margin option)", 16.0, 0.5)):
     L0 = Ls - wt - C.TOP_T
     tip = C.Z_TOP1 + wt - Ls
     print(f"  {lab:28s}: engaged {L0:.2f} / {L0 - G_SCREW_W:.2f}: SF {SHEAR_Z / (P_SNUG_M3 / (math.pi * 3 * L0)):.2f} / "

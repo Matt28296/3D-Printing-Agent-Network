@@ -1,68 +1,86 @@
 VERDICT: PASS
 
-# DFM recheck (round 7, CAD engineer's self-check): 20261026-arm-claw-frame
+# DFM review (round 7, independent): 20261026-arm-claw-frame
 
-cad-engineer · 2026-10-26 · round 7: the round 6 independent reviews' fix (the cover's screws), user-approved. **This is
-the designer's own recheck, not an independent review; an independent review follows.** The round 6 independent review
-is kept below as history.
+dfm-reviewer + strength-analyst (independent; did not design the part) · 2026-10-26 · round 7 (front M2.5 pilots at
+z 2.5; the cover's screws on washers), merged at a8ae29c. The CAD engineer's round-7 recheck (designer's own, PASS) is
+replaced by this review. The round 6 independent review is kept below as history.
 
-**Strength (self-check): NEEDS_TEST** (strength.md). Every verdict row passes. The lowest against its requirement is row
-42: the cover's top M3 × 14 + washer pulling out of the bulkhead at its snug preload, **4.02** with the worst standing
-left at the screw (4.12 with the wall pulled down; round 6's bare M3 × 10: 2.73).
+**DFM: PASS. Strength: NEEDS_TEST** (strength.md): every verdict row passes; NEEDS_TEST only because the PETG
+allowables are placeholders. Lowest against its requirement: row 42, the cover's top M3 × 14 + washer pulling out of
+the bulkhead at its 150 N snug preload with the worst standing left at the screw, **4.02** (req 4). Lowest absolute
+verdict SF: 3.17 (row 58, the V-groove's flank under the opening stall, req 3). **No required fix.**
 
-**Change.**
-- claw_frame.py: `FRONT_SCREWS` z 3 → **2.5** (`FRONT_SCREW_Z`), so the cover's new Ø6 × 0.5 washers under the M2.5
-  heads clear jaw B's neck. `TOP_WASHER` and `FRONT_WASHER` are new (hardware only).
-- model.py: no edit to the geometry code. The two flat-topped Ø2.2 front pilots follow `FRONT_SCREWS` to z 2.5. Their
-  flat top is now at z 3.6: **2.4** to rack B's track (z 6; it was 1.9) and **1.4** to the back face (z 0). They are still
-  14 deep (x 20.85–34.85). The top M3 pilots are unchanged: Ø2.7 CAD, 14 deep, floor 34.45. Comments updated.
-- Hardware: the cover's top screws are M3 × 14 pan head + Ø7 × 0.5 washer (was a bare M3 × 10). The front screws are
-  M2.5 × 16 + Ø6 × 0.5 washer, 10.5 engaged (was 11).
+## Inputs and what I re-ran
 
-**Run here:**
-- `tools/cad_build.py`: 46 365.18 mm³, the same as round 6 (the pilots only moved).
-- `render.py`, `mesh_check.py`: overhang 1.4 %, widest bridge 7.9 mm, the front pilots' flat tops now bridge 0.91 at z
-  3.6, no thin walls.
-- `cad_checks.py`: 24/24, exit 0. New: the front pilots at z 2.5 with their skins and depth. The anchor-pilot probe now
-  also covers the space between it and the +y front pilot.
-- A scratch probe of the bulkhead round each top pilot (x 3.5–10, y ±3.25), over the screw's path (z 38.0–48.45) and the
-  whole pilot (34.45–48.45): the frame volume equals the box less the Ø2.7 pilot exactly, so nothing else is in the
-  screw's path. Under the floor (z 33.45–34.4) it is solid.
-- `claw_sequence_check.py`: `ok`. Exact-solid clearances, gaps 0–44 every 1 mm. `strength_calc.py`.
+- **This job:** spec.md, design_brief.md, model.py, cad_checks.py, geometry.json, mesh_check.json, the self-check's
+  files, and the round 6 review (below).
+- **Shared:** claw_frame.py (`FRONT_SCREW_Z`, `FRONT_SCREWS`, `TOP_WASHER`, `FRONT_WASHER`), BUILD_GUIDE §1 and §4
+  steps 9 and 13, the cover's model and review.
+- **Skills:** fdm-design-rules, strength-checks, build123d-cad, prusaslicer-settings.
+
+**Re-run here** (`/home/claude/.venv-cad/bin/python3`):
+- model.py rebuilt: 46 365.18 mm³ = geometry.json. The committed part.stl matches it (46 365.53, watertight).
+- `cad_checks.py`: 24 PASS, exit 0.
+- `tools/mesh_check.py`: overhang 1.4 %, bed contact 2534.7 mm², widest bridge 7.9 (the window roof), no thin walls,
+  fits bed. mesh_check.json is unchanged.
+- **My own scratch slice** of the committed part.stl with the arm's command (output in the scratchpad as a text file),
+  read back with my own parser.
+- Exact-solid clearances (with the cover's review) and `strength_calc.py`, rewritten for this review.
+
+## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
 | 1 | Bed fit, one watertight solid, min Z 0 | PASS | 42.85 × 64.0 × 48.45, 1 solid, `fits_bed` |
 | 2 | Orientation | PASS | Back face on the bed, unchanged |
-| 3 | Overhangs, bridges | PASS | mesh_check: 1.4 %, widest bridge 7.9 mm (the window roof); the front pilots' flat tops 0.91 wide at z 3.6 (were at 4.1) |
-| 4 | Mating datum off the slice planes | PASS | Bulkhead top 48.45, unchanged (cad_checks: 0.05 to the nearest plane) |
-| 5 | Front M2.5 pilots: walls and edges | PASS | z 2.5, Ø2.2 flat-topped at 3.6: 2.4 skin under rack B's track (frame strength row 22, SF 32), 1.4 to the back face, which is clear of the 0.4 bed chamfer. Clear of the anchor pilot: the front pilot reaches z 3.6 and x ≥ 20.85, the anchor pilot starts at z 3.75 and reaches x ≤ 19.7 |
-| 6 | Top M3 pilots for the M3 × 14 | PASS | 14.0 deep below BULK_TOP (floor 34.45; printed 14.0 deep, floor 34.4, per the round 6 slice). The M3 × 14 + 0.5 washer under a 3 mm top wall ends at z 38.0: 3.55 above the floor. 10.45 engaged in CAD, 10.5 below the printed bulkhead. Nothing but the pilot in the screw's path (probe above) |
-| 7 | Fasteners per §4 | PASS | The pilots take the screws they are sized for. Snug-preload pull-out: M3 × 14 4.02 (worst standing) / 4.12 (pulled down), M2.5 5.15; under the stall the M2.5 at z 2.5 takes 130 N: 3.96 (req 3). Camera case (M3 × 18): 4.41 bare; 4.22 if the proposed Ø7 washer goes under its button heads (see the cover's review, item 7b) |
-| 8 | Named parameters | PASS | `FRONT_SCREW_Z`, `FRONT_SCREWS`, `TOP_WASHER`, `FRONT_WASHER` (claw_frame.py); `TOP_PILOT_DEPTH`, `FRONT_PILOT_DEPTH` (model.py) |
-| 9 | Rack clearance (rail block) | PASS | Exact solids, gaps 0–44: the rail block is 0.250 from jaw B (unchanged) |
-| 10 | Assembly sequence | PASS | `claw_sequence_check.py`: `ok` |
+| 3 | Overhangs, bridges | PASS | mesh_check as above |
+| 4 | **Moved front M2.5 pilots** (Ø2.2 CAD, flat-topped, y ±24, **z 2.5**, x 20.85–34.85) | PASS | G-code, both pilots, at x 32: layers up to ;Z:1.4 solid (the **1.4 floor skin**, 7 layers), the void opening from the 1.4–1.6 layer, 2.2 wide at mid-height (the CAD circle), and closing at the 3.4–3.6 layer (1.1 wide). The 3.6–3.8 layer is solid across it: the **flat top at 3.6** is a 0.9–1.1 bridge. Above it, 12 solid layers to rack B's track at z 6: the **2.4 skin**. The pilots' mouths are at x 34.85, clear of the 0.4 bed chamfer, which reaches z 0.4 only. Clear of the anchor pilot (≥ 2.4 apart in 3-D; cad_checks probes) |
+| 5 | **The two skins under load** | PASS | New strength rows. Thread forming + preload, short-term: floor skin **3.40**, top skin 3.98. Preload alone, sustained: 25.9 / 30.3. The top skin under rack B's separating force: SF 32 (row 22). See strength.md |
+| 6 | Top M3 pilots for the M3 × 14 + Ø7 washer | PASS | Unchanged: Ø2.7 CAD, 14 deep, floor 34.45 (printed 34.4). Tip z 37.9–38.0: **3.5** above the floor. With the camera, M3 × 18 + washer: tip 37.4–37.5, 3.0 above it. A js15-long screw (+0.35) keeps ≥ 2.6 |
+| 7 | Front M2.5 engagement | PASS | 16 − 0.5 − 5.0 = **10.5** engaged; tip x 24.35, **3.5** inside the floor at x 20.85 |
+| 8 | Fasteners per §4 | PASS | The pilots take the screws they are sized for; every screw has a washer on the cover |
+| 9 | Named parameters | PASS | `FRONT_SCREW_Z`, `FRONT_SCREWS`, `TOP_WASHER`, `FRONT_WASHER` (claw_frame.py); `TOP_PILOT_DEPTH`, `FRONT_PILOT_DEPTH`, `BED_CHAMFER` (model.py) |
+| 10 | Rack clearance (rail block) | PASS | Exact solids, gap 0–44: 0.250 to jaw B. Jaw B to the front washers 0.500, to the heads 1.000. The washer is located by this part's pilot, as jaw B is by this part's plate, so the cover's standing does not reduce it |
+| 11 | Mating datum off the slice planes | PASS | Bulkhead top 48.45, unchanged. The last layer is ;Z:48.4 in my slice |
 
-## Spec text that needs to change (Architect)
+## Rulings on the two rows the brief asked about (strength.md has the detail)
 
-**§2, interfaces:** "2 × Ø2.2 flat-topped teardrop M2.5 pilots 10 deep in the wrist plate's front edge at (y ±24, z 3)"
-becomes:
+- **Row 42, 4.02: computed correctly; net conservative; passes.**
+  - Hand check: 150 / (π × 3 × 10.24) = 1.554 MPa; 6.25 / 1.554 = 4.02.
+  - Conservative: it holds the worst standing (0.259) at the screw while the screw carries 150 N. Closing that gap
+    takes only 144 N, so at 150 N the wall is down: 10.5 engaged, 4.12. It also takes the interlayer shear allowable
+    (6.25) for a thread cylinder that, in this vertical pilot, runs through the layers. With the in-plane 12.5 the row
+    is about 7.
+  - Lenient, not modelled before:
+    - the screw's js15 length tolerance (−0.35): 3.88;
+    - about 1 mm of partial thread in a pointed self-tapper's lead: 3.63;
+    - both: 3.49 on the interlayer allowable, 6.98 on the in-plane.
+  - These are information rows 72–75. The conservative terms outweigh them.
+  - Optional margin, hardware only: **M3 × 16 + Ø7 washer**. Engaged 12.24–12.5, SF 4.81–4.91; tip z 35.9–36.0, 1.5
+    above the floor (1.15 with a long screw).
+- **The M2.5 under the stall: 3.44, not 3.96** (row 44, req 3). It still passes.
+  - The bound pivots the cover's lower piece on this part's front face at its lowest point. That point is the top of
+    the 0.4 bed chamfer (z 0.4), not z 0.
+  - So the screw takes 27.0 × 11.65 / 2.1 = 150 N, not 130 N; pull-out 150 / (π × 2.5 × 10.5) = 1.82 MPa.
+  - The bound stays conservative overall: the first tie (y −32…−24) and the other M2.5 are ignored.
+  - The self-check's 130 N is info row 81.
+- **Camera build:** with the Ø7 washers now in the BOM, the M3 × 18 engagement is 10.95 in CAD and 10.74 with the worst
+  standing. The verdict row (43) is **4.22**; the self-check had it on the bare 11.24 (4.41).
 
-> 2 × Ø2.2 flat-topped teardrop M2.5 pilots 14 deep in the wrist plate's front edge at (y ±24, z 2.5) (flat top z 3.6:
-> 2.4 below rack B's track)
+## Required fix
 
-**§2, "Fasteners used":** replace "cover: 2 × M3 × 10 (or 2 × M3 × 18 button heads through the camera mount) into the top
-pilots, 2 × M2.5 × 12 pan head (head ≤ Ø5) into the front pilots." with:
+None.
 
-> cover: 2 × M3 × 14 pan head + Ø7 × 0.5 washers, snug only (or 2 × M3 × 18 button heads through the camera mount) into
-> the top pilots, 2 × M2.5 × 16 pan head (head ≤ Ø5) + DIN 125 Ø6 × 0.5 washers, snug only, into the front pilots
-> (10.5 mm engaged).
+## Notes (not blocking)
 
-**§8, the first Pass bullet (the anchor ligament, from the round 6 review):** after "the V-groove's flanks and the anchor
-pilot's mouth on the block top", add:
-
-> (checked once before the cover is fitted, after the M3 × 45 has been driven into the pilot and backed out to form its
-> thread: no split or bulge between the pilot and the groove)
+1. **Spec text (Architect), pre-existing:** §2 still gives the envelope as "40.85 × 64 × 48.5 (… x −8…32.85 …)" and §3
+   "Wrist plate front edge x 32.85". The model, cad_checks and claw_frame.py have had x 34.85 (FACE_W 12) since round 3,
+   with the bulkhead top at 48.45: 42.85 × 64 × 48.45, x −8…34.85, and the front edge at x 34.85.
+2. **BUILD_GUIDE §1** (cover's review): the top-screw row's "(10.5 / 11.5 mm engaged)" should read "(10.5 / 11.0 mm
+   engaged)", now that the M3 × 18 has a washer.
+3. **Re-slice** for the job: the committed G-code predates rounds 3–7.
+4. **The tab-pilot strips** (user-accepted 26 Oct 2026) are unchanged; spec §8 has the screw-strip check.
 
 ---
 
@@ -135,9 +153,12 @@ into the top pilots" with:
 
 Correct the stale "M2.5 × 12" in the same line to M2.5 × 16 (as the BOM).
 
+
 ---
 
 # History
+
+- **Round 7 self-check** (cad-engineer; git 327fd36 / a8ae29c): PASS. It is replaced by this review, which agrees on the geometry (the pilots at z 2.5, the 1.4 / 2.4 skins, read back from a slice here). Its strength rows had the M2.5 stall bound's pivot at z 0 (3.96; 3.44 here) and the camera rows on the bare-head engagement (4.41; 4.22 with the washer now in the BOM), and did not check the 1.4 floor skin under thread forming (3.40 here).
 
 - **Round 6 self-check** (cad-engineer; git 8527ef6 / 105aafe): PASS. It is replaced by this review, which agrees on the
   geometry.
