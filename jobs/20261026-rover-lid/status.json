@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 in review: RAIL_W 4.5, tie slots moved out",
+    "DESIGN": "round 4: DFM PASS; strength review running",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:18:14+00:00"
+  "updated": "2026-10-26T12:09:16+00:00"
 }

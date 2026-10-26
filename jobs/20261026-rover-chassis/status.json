@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4 in review (approved by the user after the third failure): 2 mm skin, steel plates under the idler bolt head and nut",
+    "DESIGN": "round 4: DFM PASS; strength review running (user-approved fourth round)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:18:14+00:00"
+  "updated": "2026-10-26T12:09:16+00:00"
 }
