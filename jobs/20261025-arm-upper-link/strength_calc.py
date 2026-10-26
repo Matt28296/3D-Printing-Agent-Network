@@ -1,14 +1,14 @@
-"""Strength check for jobs/20261025-arm-upper-link: Upper link (shoulder -> elbow) (round 5, independent re-check, 2026-10-26).
+"""Strength check for jobs/20261025-arm-upper-link: Upper link (shoulder -> elbow, 100 mm) (links round 5, independent re-check of the round-5 solids, 2026-10-26).
 
 Run from the project root:  python3 jobs/20261025-arm-upper-link/strength_calc.py
 Plain Python (no build123d). It reads the jobs' model.py, tools/hobby_parts.py, the shared claw_frame.py, each
 geometry.json and the assembly's torque_budget.json, sweeps the arm's poses for the yaw-stall, hand-push and weight
 cases, prints every check as a markdown table and ends with the verdict. strength.md explains every assumption.
 """
-# ===== shared arm model: the same block in the five arm strength_calc.py files (base, turntable, ring, upper link, =====
-# ===== forearm). Plain Python, no build123d: parameters from each job's model.py and the shared claw_frame.py     =====
-# ===== (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py, masses from     =====
-# ===== each job's geometry.json volume. Checked against assembly_check.chain() and torque_budget.json (see below). =====
+# ===== shared arm model (links round 5): the same block in the five arm strength_calc.py files (base, turntable,  =====
+# ===== ring, upper link, forearm). Plain Python, no build123d: parameters from each job's model.py and the shared  =====
+# ===== claw_frame.py (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py,     =====
+# ===== masses from each job's geometry.json volume. Checked against torque_budget.json (see model_check below).    =====
 import ast
 import json
 import math
@@ -134,18 +134,18 @@ CF = eval_constants(os.path.join(ASM, "claw_frame.py"))
 TB = json.load(open(os.path.join(ASM, "torque_budget.json")))
 TRAVEL = TB["travel_deg"]                         # shoulder 0..180, elbow -150..30 (SYS-03 fitting), wrist -90..90
 
-# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, measured
-# 2026-10-26 by this analyst, in each part's design frame). A volume change over 0.5 % prints a warning.
-CAD = {"20261025-arm-turntable": (89196.5, (0.0, -3.799, 33.048)),
-       "20261025-arm-upper-link": (39496.5, (39.615, 0.0, 5.064)),
-       "20261025-arm-forearm": (29235.2, (35.755, 0.0, 5.087)),
+# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, re-measured
+# on the round-5 solids by this review, in each part's design frame). A volume change over 0.5 % prints a warning.
+CAD = {"20261025-arm-turntable": (90736.5, (0.0, -4.089, 33.724)),          # round 5: 90 mm gussets
+       "20261025-arm-upper-link": (44066.2, (44.734, 0.0, 4.234)),          # round 5: 6 mm rail ribs
+       "20261025-arm-forearm": (32833.3, (40.570, 0.0, 4.215)),             # round 5: rail ribs and cross-rib
        "20261026-arm-claw-frame": (34760.0, (10.033, 0.453, 13.988)),
        "20261026-arm-claw-cover": (22526.4, (27.291, -2.495, 32.778)),
        "20261026-arm-claw-pinion": (2773.4, (0.0, 0.0, 5.135)),        # pinion frame: its z = claw +x
        "20261026-arm-claw-jaw": (16126.7, (44.114, -2.705, 37.923)),     # jaw A at gap 0; jaw B is it turned
        "20261026-arm-camera-mount": (10479.9, (-8.231, -3.094, 66.085)),
-       "20261025-arm-base": (89630.6, (0.534, 0.299, -12.615)),
-       "20261025-arm-turntable-ring": (13333.5, (0.0, 0.0, 7.813)),
+       "20261025-arm-base": (94469.6, (-0.731, 0.262, -12.251)),           # round 5: tab pads
+       "20261025-arm-turntable-ring": (13284.1, (0.0, 0.0, 7.806)),         # round 5: washer reliefs (build() volume)
        "20261025-arm-esp32-cradle": (11498.6, (13.187, 26.581, -15.296))}
 STALE = []
 for _job, (_v0, _c) in CAD.items():
@@ -453,6 +453,24 @@ def servo_mount(s, clearance, end_clearance=None, lead="notch", pilot_shift=0.0)
     return m
 
 
+def rect_section(rects):
+    """Composite section from rectangles (b, z0, z1): area, centroid z, I about the centroidal axis, z range."""
+    A = sum(b * (z1 - z0) for b, z0, z1 in rects)
+    zc = sum(b * (z1 - z0) * (z0 + z1) / 2 for b, z0, z1 in rects) / A
+    I = sum(b * (z1 - z0) ** 3 / 12 + b * (z1 - z0) * ((z0 + z1) / 2 - zc) ** 2 for b, z0, z1 in rects)
+    return SimpleNamespace(A=A, zc=zc, I=I, zmin=min(r[1] for r in rects), zmax=max(r[2] for r in rects))
+
+
+def first_moment(rects, zc, za, zb):
+    """First moment about zc of the parts of the rectangles between za and zb (za < zb)."""
+    q = 0.0
+    for b, z0, z1 in rects:
+        lo, hi = max(z0, za), min(z1, zb)
+        if hi > lo:
+            q += b * (hi - lo) * ((lo + hi) / 2 - zc)
+    return q
+
+
 def splitting(S_n, d_thread, d_mean, L, lig):
     """Hoop stress in a thin strip beside a tapped pilot. The thread's radial pressure is p = S tan30 / (pi d_mean L)
     (frictionless 60° thread); the strip is taken as the wall of a thick ring round the thread (Lamé):
@@ -519,7 +537,8 @@ def model_check():
         print(s)
 # ===================================================== end of the shared block =====================================================
 
-# ============================================ 20261025-arm-upper-link (round 5) ============================================
+
+# ========================================= 20261025-arm-upper-link (links round 5) =========================================
 JOB = "20261025-arm-upper-link"
 P = UL
 HS = ES = MG996R                            # shoulder horn servo, elbow servo
@@ -535,9 +554,9 @@ NOTCH_FAR = (P.L + EM.notches[1][0], P.L + EM.notches[1][1])             # 67.4 
 D_PIL_PRINT = ES.screw_pilot_d              # 2.6 printed (2.8 CAD)
 D_THREAD = 2.9                              # M3 (ST2.9) self-tapper, major diameter
 D_MEAN = (D_THREAD + D_PIL_PRINT) / 2
-L_ENG = 12.0 - 0.5 - ES.tab_t               # M3 x 12 + Ø7 x 0.5 washer through the 2.5 mm tab: 9 mm in the 10 mm plate
+L_ENG = 12.0 - 0.5 - ES.tab_t               # M3 x 12 + Ø7 x 0.5 washer through the 2.5 mm tab: 9 mm (the pilot is 16 deep now)
 L_BEAR = 2 * D_THREAD
-LIG_CAD = min(EM.ligaments)                 # notch -> nearest pilot, 1.85 CAD (DFM round 4: 2.05 printed)
+LIG_CAD = min(EM.ligaments)                 # notch -> nearest pilot, 1.84 CAD (2.05 printed)
 LIG = LIG_CAD - max(D_THREAD - EM.d_pilot, 0.0) / 2
 TAB_EDGE = ES.width / 2                     # 9.85
 TAB_LEVER_W = ES.hole_dy / 2 + TAB_EDGE     # 14.85: twisting about the link axis pries a tab about its long edge
@@ -545,20 +564,23 @@ TAB_LEVER_L = ES.hole_dx / 2 + ES.tab_span / 2   # 51.25: prying about the far t
 R_FAR = math.hypot(P.L - PIL_FAR, ES.hole_dy / 2)
 R_NEAR = math.hypot(PIL_NEAR - P.L, ES.hole_dy / 2)
 SUM_R2 = 2 * (R_FAR ** 2 + R_NEAR ** 2)
-# twisting split between the two MG996R tabs: each tab has two screws across its width, so a tab joint is stiff in twist
-# (est. 0.5-2.4e6 N.mm/rad); the near tab's path runs through the window rails as a frame (est. 0.85e5). The far tab takes
-# 87-97 %: all of it is put on the far tab's outer screw (lever 14.85, the inner screw ignored); 15 % goes through the rails.
-TOR_FAR, TOR_RAILS = 1.0, 0.15
-RAIL_W = P.HALF_W - EM.win_hw               # 6.85
 B, T = 2 * P.HALF_W, P.T
-I_RAILS = 2 * RAIL_W * T ** 3 / 12
-I_RAIL1 = RAIL_W * T ** 3 / 12
-I_RAILS_IP = 2 * (T * RAIL_W ** 3 / 12 + T * RAIL_W * (EM.win_hw + RAIL_W / 2) ** 2)
+RAIL_W = P.HALF_W - EM.win_hw               # 6.85
+TR = T + P.RIB_H                            # round 5: rails 6.85 x 16 (plate 10 + back-face rib 6) from x 64.2 to 117
+X_TOE = P.RIB_X0 - P.RIB_TAPER              # 58.2: the ribs' 45° run-out meets the back face
+# twisting split between the two MG996R tabs: each tab has two screws across its width, so a tab joint is stiff in twist
+# (est. 0.5-2.4e6 N.mm/rad); the near tab's path runs in series through the window rails as a frame (round 4 est. 0.85e5
+# with 10 mm rails; x (16 / 10)^3 = 3.5e5 with the ribs). The far tab's outer screw is checked with all of it (lever 14.85);
+# the rails now take 11-29 % instead of 3-13 %: 0.30 is used (round 4 used 0.15).
+TOR_FAR, TOR_RAILS = 1.0, 0.30
+I_RAILS = 2 * RAIL_W * TR ** 3 / 12
+I_RAIL1 = RAIL_W * TR ** 3 / 12
+I_RAILS_IP = 2 * (TR * RAIL_W ** 3 / 12 + TR * RAIL_W * (EM.win_hw + RAIL_W / 2) ** 2)
 L_WIN, D_RAILS = WIN_X1 - WIN_X0, 2 * (EM.win_hw + RAIL_W / 2)
 PIN = (PIL_NEAR - WIN_X0) / (PIL_NEAR - PIL_FAR)               # rails' share of the far-row moment (tab rows as pins)
 X_NOTCH = (NOTCH_FAR[0] + NOTCH_FAR[1]) / 2
 PIN_NOTCH = (PIL_NEAR - X_NOTCH) / (PIL_NEAR - PIL_FAR)
-KT_CORNER, KT_HOLE = 2.5, 2.0
+KT_CORNER, KT_HOLE, KT_TOE = 2.5, 2.0, 2.0  # window / notch corner; pilot hole; the 45° run-out's foot (a 135° corner)
 POCKET_W = 6.9                              # horn pocket width at x 15 (arm 6.3 + 0.5 clearance + HOLE_COMP)
 
 
@@ -571,20 +593,31 @@ def sec_pocket():
 
 I_X15, C_X15 = sec_pocket()
 I_FULL = B * T ** 3 / 12
-I_ROW = (B - 2 * EM.d_pilot) * T ** 3 / 12
-I_NOTCH = (B - 2 * EM.notches[1][2]) * T ** 3 / 12
+RIBS = [(2 * RAIL_W, -P.RIB_H, 0.0)]                                  # both ribs, back face z -6 .. 0 (frame U)
+SEC_ROW = rect_section([(B - 2 * EM.d_pilot, 0.0, T)] + RIBS)       # far pilot row x 65.6: plate less 2 pilots + ribs
+SEC_NOTCH = rect_section([(B - 2 * EM.notches[1][2], 0.0, T)] + RIBS)   # far lead notch (between the ribs) + ribs
+SEC_RIB0 = rect_section([(B, 0.0, T)] + RIBS)                         # full depth starts, x 64.2
+SEC_RAIL1 = rect_section([(RAIL_W, -P.RIB_H, T)])                     # one rail in the window
+Q_RIBS = abs(first_moment([(B, 0.0, T)] + RIBS, SEC_RIB0.zc, -P.RIB_H, 0.0))
+Q_RAIL_ROOT = abs(first_moment([(RAIL_W, -P.RIB_H, T)], SEC_RAIL1.zc, -P.RIB_H, 0.0))
 I_IP_FULL = T * B ** 3 / 12
-CAD_I = {"x15": 2596.5, "x30": 2829.5, "row": 2362.9, "notch": 2446.2, "rails": 1137.9}   # build123d sections
+CAD_I = {"x15": 2596.5, "x30": 2829.5, "toe": 2860.8, "rib0": 7083.5, "row": 6686.1, "notch": 6800.9,
+         "rails": 4666.4}           # build123d sections of the round-5 solid at x 15, 30, 58.3, 64.3, 65.6, 68.45, 70
 ALPHA = 0.267 + (0.282 - 0.267) * (B / T - 3.0) / 1.0     # torsion coefficient, b/t 3 -> 4 (Roark)
+
+
+def c_max(sec):
+    return max(sec.zmax - sec.zc, sec.zc - sec.zmin)
 
 
 def s_tab(F, M):
     return TOR_FAR * abs(M[0]) / TAB_LEVER_W + abs(M[1]) / (2 * TAB_LEVER_L) + abs(F[2]) / 4
 
 
-def rails(F, M):
-    oop = PIN * abs(M[1]) * (T / 2) / I_RAILS + TOR_RAILS * abs(M[0]) * L_WIN / (2 * D_RAILS) * (T / 2) / I_RAIL1
-    return KT_CORNER * oop
+def rail_moment(F, M):
+    """Out-of-plane moment in the busier rail at the window's far end: half the pinned-row share of M_y plus the
+    differential bending that carries the rails' share of the twist."""
+    return PIN * abs(M[1]) / 2 + TOR_RAILS * abs(M[0]) * L_WIN / (2 * D_RAILS)
 
 
 def hoop(S, lig):
@@ -595,36 +628,61 @@ def pullout(S):
     return S / (math.pi * D_PIL_PRINT * L_ENG)
 
 
-absM = lambda k: (lambda F, M: abs(M[k]))
+# stress functions (MPa) of a section's force F and moment M, in the link's axes; the sweep keeps the worst of each
+STRESS = {
+    "horn": lambda F, M: (abs(M[1]) / LEV_TILT_ARMS + abs(M[0]) / LEV_TILT_HUB + abs(F[2])) / (math.pi * D_WASHER * FLOOR),
+    "x15": lambda F, M: KT_HOLE * abs(M[1]) * C_X15 / I_X15,
+    "tors": lambda F, M: abs(M[0]) / (ALPHA * B * T ** 2),
+    "x30": lambda F, M: abs(M[1]) * (T / 2) / I_FULL,
+    "toe": lambda F, M: KT_TOE * abs(M[1]) * (T / 2) / I_FULL,
+    "ribroot": lambda F, M: KT_TOE * (abs(M[1]) * Q_RIBS / SEC_RIB0.I / 2
+                                      + TOR_RAILS * abs(M[0]) * L_WIN / (2 * D_RAILS) * Q_RAIL_ROOT / SEC_RAIL1.I)
+    / (RAIL_W * P.RIB_TAPER),
+    "row": lambda F, M: KT_HOLE * abs(M[1]) * c_max(SEC_ROW) / SEC_ROW.I,
+    "notch": lambda F, M: KT_CORNER * PIN_NOTCH * abs(M[1]) * c_max(SEC_NOTCH) / SEC_NOTCH.I,
+    "rails": lambda F, M: KT_CORNER * rail_moment(F, M) * c_max(SEC_RAIL1) / SEC_RAIL1.I,
+    "railshear": lambda F, M: (abs(M[1]) / (PIL_NEAR - PIL_FAR) / 2 + TOR_RAILS * abs(M[0]) / D_RAILS) * Q_RAIL_ROOT
+    / (SEC_RAIL1.I * RAIL_W),
+    "pull": lambda F, M: pullout(s_tab(F, M)),
+    "split": lambda F, M: hoop(PRELOAD_SNUG_N + s_tab(F, M), LIG),
+}
 U_items = [i for i in ITEMS if i[2] == "U"]
+beyond = lambda x: link_beyond("U", JOB, x, P.X0, P.X1, exclude=("upper link",))
+pick = lambda *ks: {k: STRESS[k] for k in ks}
 probes = {
     "horn": Probe("shoulder-horn joint", "U", (0.0, 0.0, HORN_DEPTH),
-                  own_items=[i for i in U_items if i[0] != "shoulder horn + clamp"],
-                  checks={"S": lambda F, M: abs(M[1]) / LEV_TILT_ARMS + abs(M[0]) / LEV_TILT_HUB + abs(F[2])}),
-    "x15": Probe("x 15 over the pocket", "U", (15.0, 0.0, T / 2),
-                 own_items=link_beyond("U", JOB, 15.0, P.X0, P.X1, exclude=("upper link",)),
-                 checks={"My": absM(1), "Mx": absM(0), "Mz": absM(2)}),
-    "x30": Probe("x 30 full section", "U", (30.0, 0.0, T / 2),
-                 own_items=link_beyond("U", JOB, 30.0, P.X0, P.X1, exclude=("upper link",)),
-                 checks={"My": absM(1), "Mx": absM(0)}),
-    "row": Probe("far elbow-pilot row", "U", (PIL_FAR, 0.0, T / 2),
-                 own_items=link_beyond("U", JOB, PIL_FAR, P.X0, P.X1, exclude=("upper link",)),
-                 checks={"My": absM(1), "rails": rails}),
-    "tabs": Probe("elbow tab plane", "U", (X_SERVO, 0.0, P.T),
-                  own_items=[i for i in U_items if i[0] == "elbow MG996R"],
-                  checks={"S": s_tab, "Mx": absM(0), "My": absM(1)}),
+                  own_items=[i for i in U_items if i[0] != "shoulder horn + clamp"], checks=pick("horn")),
+    "x15": Probe("x 15 over the pocket", "U", (15.0, 0.0, T / 2), own_items=beyond(15.0), checks=pick("x15", "tors")),
+    "x30": Probe("x 30 full section", "U", (30.0, 0.0, T / 2), own_items=beyond(30.0), checks=pick("x30")),
+    "toe": Probe(f"x {X_TOE:.1f}, foot of the ribs' run-out", "U", (X_TOE, 0.0, T / 2), own_items=beyond(X_TOE),
+                 checks=pick("toe")),
+    "rib0": Probe(f"x {P.RIB_X0:.1f}, ribs at full depth", "U", (P.RIB_X0, 0.0, T / 2), own_items=beyond(P.RIB_X0),
+                  checks=pick("ribroot")),
+    "row": Probe("far elbow-pilot row", "U", (PIL_FAR, 0.0, T / 2), own_items=beyond(PIL_FAR),
+                 checks=pick("row", "notch", "rails", "railshear")),
+    "tabs": Probe("elbow tab plane", "U", (X_SERVO, 0.0, P.T), own_items=[i for i in U_items if i[0] == "elbow MG996R"],
+                  checks=pick("pull", "split")),
 }
+TAPERS = (10.0, 12.0)                        # what-if: a longer run-out, its foot further in (full depth still at x 64.2)
+for L_ in TAPERS:
+    probes[f"toe{L_:g}"] = Probe(f"x {P.RIB_X0 - L_:.1f}", "U", (P.RIB_X0 - L_, 0.0, T / 2), own_items=beyond(P.RIB_X0 - L_),
+                                 checks=pick("toe"))
 model_check()
 print(f"upper link: elbow MG996R window x {WIN_X0:.2f}-{WIN_X1:.2f}, pilot rows x {PIL_FAR:.2f} / {PIL_NEAR:.2f}, far notch "
       f"x {NOTCH_FAR[0]:.2f}-{NOTCH_FAR[1]:.2f}; notch -> pilot strip {LIG_CAD:.2f} CAD ({LIG:.2f} behind the thread); "
-      f"rails {RAIL_W:.2f} x {T:g}; pin share at the window's far end {PIN:.3f}, at the notch {PIN_NOTCH:.3f}")
-print(f"sections (out of plane): x15 I {I_X15:.0f} (CAD {CAD_I['x15']}), full {I_FULL:.0f} (CAD {CAD_I['x30']}), pilot row "
-      f"{I_ROW:.0f} (CAD {CAD_I['row']}), notch {I_NOTCH:.0f} (CAD {CAD_I['notch']}), rails {I_RAILS:.0f} (CAD {CAD_I['rails']})")
+      f"rails {RAIL_W:.2f} x {TR:g} (ribs {P.RIB_H:g} deep, x {P.RIB_X0:.1f}-{P.RIB_X1:g}, run-out to x {X_TOE:.1f}); pin share "
+      f"at the window's far end {PIN:.3f}, at the notch {PIN_NOTCH:.3f}")
+print(f"sections (out of plane, I mm4): x15 {I_X15:.0f} (CAD {CAD_I['x15']}), full {I_FULL:.0f} (CAD x30 {CAD_I['x30']}, "
+      f"x58.3 {CAD_I['toe']}), ribs at full depth {SEC_RIB0.I:.0f} (CAD {CAD_I['rib0']}), pilot row {SEC_ROW.I:.0f} (CAD "
+      f"{CAD_I['row']}), notch {SEC_NOTCH.I:.0f} (CAD {CAD_I['notch']}), rails {2 * SEC_RAIL1.I:.0f} (CAD {CAD_I['rails']})")
 n = sweep(list(probes.values()))
 print(f"{n} poses swept (shoulder {TRAVEL['shoulder']}, elbow {TRAVEL['elbow']}, wrist {TRAVEL['wrist']}, {STEP_DEG} deg)")
-for k, pr in probes.items():
-    print(f"  {pr.name}: " + "; ".join(f"{m} " + ", ".join(f"{c} {pr.get(m, c)[0]:.0f}" for c in pr.checks)
-                                     for m in ("weight", "yaw", "hand")))
+
+
+def swept(k, c, lbl, dirn, allow_mpa, modes=MODES):
+    for mode, (mlbl, req) in modes.items():
+        row(mlbl, f"{lbl} ({where(probes[k], mode, c)})", dirn, probes[k].get(mode, c)[0], allow_mpa, req)
+
 
 # --- local cases -----------------------------------------------------------------------------------------------------
 p_horn = 3 * STALL_MG996R_NMM / (2 * HORN_DEPTH * (HS.horn_arm_len + HS.horn_tip_d / 2) ** 2)
@@ -632,7 +690,7 @@ row("shoulder stall 1079 N.mm", "horn-pocket wall bearing (arm flanks, triangula
     BEARING_MPA, SF_STATIC)
 row("shoulder stall 1079 N.mm", "in-plane bending, full section (M <= stall)", "XY",
     STALL_MG996R_NMM * (B / 2) / I_IP_FULL, ALLOW_XY_MPA, SF_STATIC)
-row("shoulder stall 1079 N.mm", f"in-plane bending of the window rails (Kt {KT_CORNER})", "XY",
+row("shoulder stall 1079 N.mm", f"in-plane bending of the window rails, {RAIL_W:.2f} x {TR:g} (Kt {KT_CORNER})", "XY",
     KT_CORNER * STALL_MG996R_NMM * P.HALF_W / I_RAILS_IP, ALLOW_XY_MPA, SF_STATIC)
 F_stall = STALL_MG996R_NMM * R_FAR / SUM_R2
 row("elbow stall 1079 N.mm", f"far tab pilot bearing, F {F_stall:.1f} N", "bearing", F_stall / (D_PIL_PRINT * L_BEAR),
@@ -641,91 +699,91 @@ row("elbow stall 1079 N.mm", f"notch -> pilot strip {LIG:.2f}: tear-out, F {F_st
     F_stall / (2 * LIG * L_BEAR), allow(False, True), SF_STATIC)
 
 # --- swept cases -----------------------------------------------------------------------------------------------------
-for mode, (lbl, req) in MODES.items():
-    pr = probes["horn"]
-    row(lbl, f"clamped shoulder-horn joint: Ø{D_WASHER:g} washer pull-through, floor {FLOOR:g} (S {pr.get(mode, 'S')[0]:.0f} N; "
-        f"{where(pr, mode, 'S')})", "Z shear", pr.get(mode, "S")[0] / (math.pi * D_WASHER * FLOOR), allow(True, True), req)
-for mode, (lbl, req) in MODES.items():
-    pr = probes["x15"]
-    row(lbl, f"x 15 over the pocket, out of plane (Kt 2 arm-screw hole; M {pr.get(mode, 'My')[0]:.0f})", "XY",
-        KT_HOLE * pr.get(mode, "My")[0] * C_X15 / I_X15, ALLOW_XY_MPA, req)
-pr = probes["x30"]
-row(MODES["yaw"][0], f"x 30 full section, out of plane (M {pr.get('yaw', 'My')[0]:.0f})", "XY",
-    pr.get("yaw", "My")[0] * (T / 2) / I_FULL, ALLOW_XY_MPA, SF_STATIC)
-for mode, (lbl, req) in MODES.items():
-    pr = probes["row"]
-    M = pr.get(mode, "My")[0]
-    row(lbl, f"far elbow-pilot row x {PIL_FAR:.1f}, out of plane (Kt 2; M {M:.0f}; {where(pr, mode, 'My')})", "XY",
-        KT_HOLE * M * (T / 2) / I_ROW, ALLOW_XY_MPA, req)
-    row(lbl, f"far lead notch x {NOTCH_FAR[0]:.1f}-{NOTCH_FAR[1]:.1f}, net {B - 2 * EM.notches[1][2]:.1f} (Kt {KT_CORNER}; "
-        f"{PIN_NOTCH:.2f} M)", "XY", KT_CORNER * PIN_NOTCH * M * (T / 2) / I_NOTCH, ALLOW_XY_MPA, req)
-    row(lbl, f"window rails 2 x {RAIL_W:.2f} at the far window end, tab rows as pins (Kt {KT_CORNER}; {where(pr, mode, 'rails')})",
-        "XY", pr.get(mode, "rails")[0], ALLOW_XY_MPA, req)
-for mode, (lbl, req) in MODES.items():
-    pr = probes["x15"]
-    row(lbl, f"plate torsion, full width (T {pr.get(mode, 'Mx')[0]:.0f})", "Z shear",
-        pr.get(mode, "Mx")[0] / (ALPHA * B * T ** 2), allow(True, True), req)
-for mode, (lbl, req) in MODES.items():
-    pr = probes["tabs"]
-    S = pr.get(mode, "S")[0]
-    row(lbl, f"elbow MG996R tab screw pull-out, S {S:.0f} N (L {L_ENG:g}, Ø{D_PIL_PRINT:g}; {where(pr, mode, 'S')})",
-        "Z shear", pullout(S), allow(True, True), req)
-    row(lbl, f"notch -> pilot strip {LIG:.2f}: splitting, snug preload {PRELOAD_SNUG_N:.0f} N + {S:.0f} N", "XY",
-        hoop(PRELOAD_SNUG_N + S, LIG), ALLOW_XY_MPA, req)
+swept("horn", "horn", f"clamped shoulder-horn joint: Ø{D_WASHER:g} washer pull-through, floor {FLOOR:g}", "Z shear",
+      allow(True, True))
+swept("x15", "x15", "x 15 over the pocket, out of plane (Kt 2 arm-screw hole)", "XY", ALLOW_XY_MPA)
+swept("x15", "tors", "plate torsion, full width at x 15", "Z shear", allow(True, True))
+swept("x30", "x30", "x 30 full section, out of plane", "XY", ALLOW_XY_MPA, modes={"yaw": MODES["yaw"]})
+swept("toe", "toe", f"x {X_TOE:.1f}, plain plate at the foot of the ribs' 45° run-out (Kt {KT_TOE})", "XY", ALLOW_XY_MPA)
+swept("rib0", "ribroot", f"rib root: the ribs' force fed into the plate across the layers over the {P.RIB_TAPER:g} mm run-out "
+      f"(Kt {KT_TOE})", "Z shear", allow(True, True))
+swept("row", "row", f"far elbow-pilot row x {PIL_FAR:.1f}, plate + ribs, out of plane (Kt {KT_HOLE})", "XY", ALLOW_XY_MPA)
+swept("row", "notch", f"far lead notch x {NOTCH_FAR[0]:.1f}-{NOTCH_FAR[1]:.1f}, plate + ribs (Kt {KT_CORNER}; "
+      f"{PIN_NOTCH:.2f} M)", "XY", ALLOW_XY_MPA)
+swept("row", "rails", f"window rails {RAIL_W:.2f} x {TR:g} at the far window end, tab rows as pins, {TOR_RAILS:.2f} of the "
+      f"twist (Kt {KT_CORNER})", "XY", ALLOW_XY_MPA)
+swept("row", "railshear", "window rails: interlayer shear at the rib's root (z 0)", "Z shear", allow(True, True))
+swept("tabs", "pull", f"elbow MG996R tab screw pull-out (L {L_ENG:g}, Ø{D_PIL_PRINT:g})", "Z shear", allow(True, True))
+swept("tabs", "split", f"notch -> pilot strip {LIG:.2f}: splitting, snug preload {PRELOAD_SNUG_N:.0f} N + screw tension", "XY",
+      ALLOW_XY_MPA)
 row("spec §8: tab screws driven snug", f"notch -> pilot strip {LIG:.2f}: splitting at {PRELOAD_SNUG_N:.0f} N", "XY",
     hoop(PRELOAD_SNUG_N, LIG), ALLOW_XY_MPA, SF_SUSTAINED)
 
+# --- spec §8 proof tests (as written in round 5), as rows at the proof SF --------------------------------------------------------
+L_BAR = 175.0                                # bar on the elbow horn in place of the forearm
+BENCH_POSE, F_BENCH = (0, -60, 0), 16.0
+bar = dict(body="F", point=(L_BAR, 0.0, 0.0), weight=False)
+PT = [("row", "rails", "window rails"), ("row", "row", "far pilot row"), ("row", "notch", "far lead notch"),
+      ("rib0", "ribroot", "rib root"), ("toe", "toe", "run-out foot"), ("x15", "x15", "x 15 bending"),
+      ("x15", "tors", "plate torsion"), ("horn", "horn", "shoulder-horn joint"), ("tabs", "pull", "elbow tab screw pull-out"),
+      ("tabs", "split", "notch strip splitting")]
+lbl_b = f"spec §8 proof (2): {F_BENCH:g} N at {L_BAR:g} mm, bar at {-BENCH_POSE[1]}°"
+for k, c, lbl_ in PT:
+    row(lbl_b, lbl_, "Z shear" if c in ("tors", "horn", "pull", "ribroot") else "XY",
+        probes[k].checks[c](*test_loads(probes[k], BENCH_POSE, F_BENCH, **bar)),
+        allow(True, True) if c in ("tors", "horn", "pull", "ribroot") else ALLOW_XY_MPA, SF_PROOF)
+F1 = 9.81
+row("spec §8 proof (1): 1 kg at the elbow axis, in plane", "in-plane bending at x 15 (Kt 2)", "XY",
+    KT_HOLE * F1 * (P.L - 15.0) * (B / 2) / I_IP_FULL, ALLOW_XY_MPA, SF_PROOF)
+
 # --- advisory ----------------------------------------------------------------------------------------------------------
-k_tab = 5.0e4                                # one MG996R tab prying about y (its own bending), N.mm/rad
-phi_r = E_MPA * I_RAILS / (PIL_NEAR - PIL_FAR)
-kk = k_tab / phi_r
-m2 = -(kk / 6) / (1 + kk / 2)
-Q = 1 / (1 + kk * (1 / 3 + m2 / 2) + m2)
-share_spring = Q * PIN + m2 * Q
 pr = probes["row"]
-row(MODES["yaw"][0], f"window rails with tab springs ({share_spring:.2f} of the row moment instead of {PIN:.2f})", "XY",
-    pr.get("yaw", "rails")[0] * share_spring / PIN, ALLOW_XY_MPA, SF_STATIC, info=True)
+row(MODES["yaw"][0], f"window rails with round 4's twist share (0.15 instead of {TOR_RAILS:.2f})", "XY",
+    KT_CORNER * (pr.get("yaw", "rails")[4][1] and
+                 (PIN * abs(pr.get("yaw", "rails")[4][1]) / 2 + 0.15 * abs(pr.get("yaw", "rails")[4][0]) * L_WIN / (2 * D_RAILS)))
+    * c_max(SEC_RAIL1) / SEC_RAIL1.I, ALLOW_XY_MPA, SF_STATIC, info=True)
 row(f"yaw-stall sweep with a {CLONE_FACTOR * 11:.0f} kgf.cm clone MG996R", "window rails", "XY",
     pr.get("yaw", "rails")[0] * CLONE_FACTOR, ALLOW_XY_MPA, SF_STATIC, info=True)
+row(f"yaw-stall sweep with a {CLONE_FACTOR * 11:.0f} kgf.cm clone MG996R", "x 15 over the pocket", "XY",
+    probes["x15"].get("yaw", "x15")[0] * CLONE_FACTOR, ALLOW_XY_MPA, SF_STATIC, info=True)
+S_yaw = probes["tabs"].get("yaw", "pull")[0] * math.pi * D_PIL_PRINT * L_ENG
 row(f"yaw-stall sweep, tab screws over-tightened to {PRELOAD_TIGHT_N:.0f} N", f"notch -> pilot strip {LIG:.2f}: splitting",
-    "XY", hoop(PRELOAD_TIGHT_N + probes["tabs"].get("yaw", "S")[0], LIG), ALLOW_XY_MPA, SF_STATIC, info=True)
+    "XY", hoop(PRELOAD_TIGHT_N + S_yaw, LIG), ALLOW_XY_MPA, SF_STATIC, info=True)
 
 worst, fails = report(JOB)
-print("\nWHAT-IF (the yaw stall governs):")
-rails_yaw = probes["row"].get("yaw", "rails")[0]
-rails_hand = probes["row"].get("hand", "rails")[0]
-for h in (4.0, 6.0, 8.0):
-    t2 = T + h                               # ribs as wide as the rails: every term of rails() scales with (T / t2)^2
-    scale = (T / 2 / I_RAILS) / ((t2 / 2) / (2 * RAIL_W * t2 ** 3 / 12))
-    print(f"  rails with {h:g} mm back-face ribs (rails {RAIL_W:.2f} x {t2:g}): yaw SF {ALLOW_XY_MPA / (rails_yaw / scale):.2f}, "
-          f"hand SF {ALLOW_XY_MPA / (rails_hand / scale):.2f}, weight x2 SF "
-          f"{ALLOW_XY_MPA / (probes['row'].get('weight', 'rails')[0] / scale):.2f}")
 
-# --- proof tests (spec §8 as this review would write it) ------------------------------------------------------------------
-print("\nPROOF TEST (spec §8 as this review would write it). Ratio = test value / yaw-stall service value at the same check.")
-L_BAR = 175.0                                # bar on the elbow horn in place of the forearm: elbow axis to fingertips 173.4
-PT = [("row", "rails", "window rails"), ("tabs", "S", "elbow tab screw"), ("row", "My", "far pilot row"),
-      ("x15", "My", "x 15 bending"), ("x15", "Mx", "plate torsion"), ("horn", "S", "shoulder-horn joint")]
-bar = dict(body="F", point=(L_BAR, 0.0, 0.0), weight=False)
-print(f"  bench: shoulder horn in a vice, plate vertical, elbow MG996R fitted; a bar on the elbow horn in place of the "
-      f"forearm, pushed along the elbow shaft {L_BAR:g} mm from the elbow axis")
+# --- what would pass ---------------------------------------------------------------------------------------------------------
+print(f"\nWHAT-IF: a longer run-out (RIB_TAPER), the ribs still at full depth from x {P.RIB_X0:.1f}. The rib-root stress scales with "
+      f"{P.RIB_TAPER:g} / RIB_TAPER; SF 3 required (4 weight x2), 2 at the §8 bench test and at the turntable's arm-up test:")
+rr = {m: probes["rib0"].get(m, "ribroot")[0] for m in MODES}
+rr_b = probes["rib0"].checks["ribroot"](*test_loads(probes["rib0"], BENCH_POSE, F_BENCH, **bar))
+rr_a = {nm: probes["rib0"].checks["ribroot"](*test_loads(probes["rib0"], pose, F_N)) for nm, (pose, F_N) in ARM_TESTS.items()}
+for L_ in (P.RIB_TAPER,) + TAPERS:
+    k = P.RIB_TAPER / L_
+    toe = probes["toe"] if L_ == P.RIB_TAPER else probes[f"toe{L_:g}"]
+    print(f"  RIB_TAPER {L_:g} (foot at x {P.RIB_X0 - L_:.1f}, {math.degrees(math.atan(P.RIB_H / L_)):.0f}°): rib root yaw SF "
+          f"{allow(True, True) / (rr['yaw'] * k):.2f}, hand {allow(True, True) / (rr['hand'] * k):.2f}, weight x2 "
+          f"{allow(True, True) / (rr['weight'] * k):.2f}; §8 bench test {allow(True, True) / (rr_b * k):.2f}; arm-up test "
+          + ", ".join(f"{allow(True, True) / (v * k):.2f}" for v in rr_a.values())
+          + f"; plain plate at the foot (Kt {KT_TOE}) yaw SF {ALLOW_XY_MPA / toe.get('yaw', 'toe')[0]:.2f}")
+
+# --- proof-test summary ------------------------------------------------------------------------------------------------------
+print("\nPROOF TEST (spec §8 as written in round 5). Ratio = test value / yaw-stall service value at the same check.")
+print(f"  (1) shoulder horn in a vice, 1 kg at the elbow axis in plane: elbow deflection "
+      f"{F1 * P.L ** 3 / (3 * E_MPA * I_IP_FULL):.2f} mm (spec: < 2 mm)")
+print(f"  (2) {lbl_b}: " + ", ".join(f"{lbl} {test_ratio(probes[k], c, BENCH_POSE, F_BENCH, **bar):.2f}" for k, c, lbl in PT))
 for e in (0, -60, -90):
     pose = (0, e, 0)
     F_r = force_for(lambda F: test_ratio(probes["row"], "rails", pose, F, **bar), PROOF_RATIO)
-    F_s = force_for(lambda F: test_ratio(probes["tabs"], "S", pose, F, **bar), PROOF_RATIO)
-    print(f"    bar at {-e} deg to the link: {PROOF_RATIO:g} x at the rails with {F_r:.1f} N, at the tab screw with {F_s:.1f} N")
-BENCH_POSE, F_BENCH = (0, -60, 0), 16.0
-print(f"  chosen: bar at {-BENCH_POSE[1]} deg, {F_BENCH:g} N: " + ", ".join(
-    f"{lbl} {test_ratio(probes[k], c, BENCH_POSE, F_BENCH, **bar):.2f}" for k, c, lbl in PT))
-S_t = probes["tabs"].checks["S"](*test_loads(probes["tabs"], BENCH_POSE, F_BENCH, **bar))
-print(f"    notch -> pilot strip {LIG:.2f}: screw tension {S_t:.0f} N, splitting SF "
-      f"{ALLOW_XY_MPA / hoop(PRELOAD_SNUG_N + S_t, LIG):.2f} (required {SF_PROOF:g} at a proof load)")
+    F_x = force_for(lambda F: test_ratio(probes["x15"], "x15", pose, F, **bar), PROOF_RATIO)
+    F_s = force_for(lambda F: test_ratio(probes["tabs"], "pull", pose, F, **bar), PROOF_RATIO)
+    print(f"      bar at {-e} deg: {PROOF_RATIO:g} x at the rails with {F_r:.1f} N, at x 15 with {F_x:.1f} N, at the tab screw "
+          f"with {F_s:.1f} N")
+SF_YAW = {(k, c): (allow(True, True) if c in ("tors", "horn", "pull", "ribroot") else ALLOW_XY_MPA) / probes[k].get("yaw", c)[0]
+          for k, c, _ in PT}
 for name, (pose, F_N) in ARM_TESTS.items():
-    print(f"  turntable/base test ({name}, {F_N:g} N, servos powered): " + ", ".join(
-        f"{lbl} {test_ratio(probes[k], c, pose, F_N):.2f}" for k, c, lbl in PT))
-for lbl_, F_, L_ in (("spec §8 (2) as written: 21 N at the elbow axis", 21.0, 0.0),):
-    r = test_ratio(probes["row"], "rails", (0, 0, 0), F_, body="F", point=(L_, 0.0, 0.0), weight=False)
-    print(f"  {lbl_}: window rails {r:.2f}")
-T_lever = 7.5 * 185.0
-print(f"  spec §8 (2) as written: 7.5 N on a 185 mm lever = {T_lever:.0f} N.mm of torsion against the yaw-stall "
-      f"{probes['x15'].get('yaw', 'Mx')[0]:.0f}: ratio {T_lever / probes['x15'].get('yaw', 'Mx')[0]:.2f}")
+    for F_ in (F_N, 11.0):
+        rat = {(k, c): test_ratio(probes[k], c, pose, F_) for k, c, _ in PT}
+        print(f"  turntable/base test ({name}, {F_:g} N, servos powered): " + ", ".join(
+            f"{lbl} {rat[(k, c)]:.2f}" + (f" (SF {SF_YAW[(k, c)] / rat[(k, c)]:.2f})" if rat[(k, c)] > 0.01 else "")
+            for k, c, lbl in PT))

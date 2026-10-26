@@ -1,14 +1,14 @@
-"""Strength check for jobs/20261025-arm-turntable-ring: Turntable support ring (round 5, independent re-check, 2026-10-26).
+"""Strength check for jobs/20261025-arm-turntable-ring: Turntable support ring (links round 5, independent re-check of the round-5 solids, 2026-10-26).
 
 Run from the project root:  python3 jobs/20261025-arm-turntable-ring/strength_calc.py
 Plain Python (no build123d). It reads the jobs' model.py, tools/hobby_parts.py, the shared claw_frame.py, each
 geometry.json and the assembly's torque_budget.json, sweeps the arm's poses for the yaw-stall, hand-push and weight
 cases, prints every check as a markdown table and ends with the verdict. strength.md explains every assumption.
 """
-# ===== shared arm model: the same block in the five arm strength_calc.py files (base, turntable, ring, upper link, =====
-# ===== forearm). Plain Python, no build123d: parameters from each job's model.py and the shared claw_frame.py     =====
-# ===== (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py, masses from     =====
-# ===== each job's geometry.json volume. Checked against assembly_check.chain() and torque_budget.json (see below). =====
+# ===== shared arm model (links round 5): the same block in the five arm strength_calc.py files (base, turntable,  =====
+# ===== ring, upper link, forearm). Plain Python, no build123d: parameters from each job's model.py and the shared  =====
+# ===== claw_frame.py (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py,     =====
+# ===== masses from each job's geometry.json volume. Checked against torque_budget.json (see model_check below).    =====
 import ast
 import json
 import math
@@ -134,18 +134,18 @@ CF = eval_constants(os.path.join(ASM, "claw_frame.py"))
 TB = json.load(open(os.path.join(ASM, "torque_budget.json")))
 TRAVEL = TB["travel_deg"]                         # shoulder 0..180, elbow -150..30 (SYS-03 fitting), wrist -90..90
 
-# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, measured
-# 2026-10-26 by this analyst, in each part's design frame). A volume change over 0.5 % prints a warning.
-CAD = {"20261025-arm-turntable": (89196.5, (0.0, -3.799, 33.048)),
-       "20261025-arm-upper-link": (39496.5, (39.615, 0.0, 5.064)),
-       "20261025-arm-forearm": (29235.2, (35.755, 0.0, 5.087)),
+# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, re-measured
+# on the round-5 solids by this review, in each part's design frame). A volume change over 0.5 % prints a warning.
+CAD = {"20261025-arm-turntable": (90736.5, (0.0, -4.089, 33.724)),          # round 5: 90 mm gussets
+       "20261025-arm-upper-link": (44066.2, (44.734, 0.0, 4.234)),          # round 5: 6 mm rail ribs
+       "20261025-arm-forearm": (32833.3, (40.570, 0.0, 4.215)),             # round 5: rail ribs and cross-rib
        "20261026-arm-claw-frame": (34760.0, (10.033, 0.453, 13.988)),
        "20261026-arm-claw-cover": (22526.4, (27.291, -2.495, 32.778)),
        "20261026-arm-claw-pinion": (2773.4, (0.0, 0.0, 5.135)),        # pinion frame: its z = claw +x
        "20261026-arm-claw-jaw": (16126.7, (44.114, -2.705, 37.923)),     # jaw A at gap 0; jaw B is it turned
        "20261026-arm-camera-mount": (10479.9, (-8.231, -3.094, 66.085)),
-       "20261025-arm-base": (89630.6, (0.534, 0.299, -12.615)),
-       "20261025-arm-turntable-ring": (13333.5, (0.0, 0.0, 7.813)),
+       "20261025-arm-base": (94469.6, (-0.731, 0.262, -12.251)),           # round 5: tab pads
+       "20261025-arm-turntable-ring": (13284.1, (0.0, 0.0, 7.806)),         # round 5: washer reliefs (build() volume)
        "20261025-arm-esp32-cradle": (11498.6, (13.187, 26.581, -15.296))}
 STALE = []
 for _job, (_v0, _c) in CAD.items():
@@ -453,6 +453,24 @@ def servo_mount(s, clearance, end_clearance=None, lead="notch", pilot_shift=0.0)
     return m
 
 
+def rect_section(rects):
+    """Composite section from rectangles (b, z0, z1): area, centroid z, I about the centroidal axis, z range."""
+    A = sum(b * (z1 - z0) for b, z0, z1 in rects)
+    zc = sum(b * (z1 - z0) * (z0 + z1) / 2 for b, z0, z1 in rects) / A
+    I = sum(b * (z1 - z0) ** 3 / 12 + b * (z1 - z0) * ((z0 + z1) / 2 - zc) ** 2 for b, z0, z1 in rects)
+    return SimpleNamespace(A=A, zc=zc, I=I, zmin=min(r[1] for r in rects), zmax=max(r[2] for r in rects))
+
+
+def first_moment(rects, zc, za, zb):
+    """First moment about zc of the parts of the rectangles between za and zb (za < zb)."""
+    q = 0.0
+    for b, z0, z1 in rects:
+        lo, hi = max(z0, za), min(z1, zb)
+        if hi > lo:
+            q += b * (hi - lo) * ((lo + hi) / 2 - zc)
+    return q
+
+
 def splitting(S_n, d_thread, d_mean, L, lig):
     """Hoop stress in a thin strip beside a tapped pilot. The thread's radial pressure is p = S tan30 / (pi d_mean L)
     (frictionless 60° thread); the strip is taken as the wall of a thick ring round the thread (Lamé):
@@ -519,19 +537,25 @@ def model_check():
         print(s)
 # ===================================================== end of the shared block =====================================================
 
-# ========================================== 20261025-arm-turntable-ring (round 5) ==========================================
+
+# ======================================= 20261025-arm-turntable-ring (links round 5) =======================================
 JOB = "20261025-arm-turntable-ring"
 P = job_params(JOB)
 WALL_T = P.R_OUT - P.R_IN                   # 3
+R_RELIEF = P.WASHER_D / 2 + P.WASHER_CLR    # 4: round 5's Ø8 washer relief round each tab screw, from the tab's top up
+WALL_RELIEF = (P.TAB_R - R_RELIEF) - P.R_IN  # 2.5: the wall left beside each relief
+RELIEF_CHORD = 2 * math.sqrt(R_RELIEF ** 2 - (P.TAB_R - P.R_OUT) ** 2)   # 3.9 mm of the wall's length is thinned
 R_MID = (P.R_IN + P.R_OUT) / 2              # 42.5: contact force line (the disk first touches the outer edge, r 44)
 ARC = 10.0                                  # contact patch along the ring (assumption; an elastic estimate gives ≈20)
 MU_PTFE, MU_WORN = 0.1, 0.3                 # PTFE tape on the ring top; PETG on PETG once the tape wears through
 SEG = 2 * P.H                               # wall segment that resists the friction force edgewise (assumption)
-KT_ROOT = 2.5                               # wall root on the tab layer: sharp corner
+KT_ROOT = 2.5                               # wall root on the tab layer, and the relief's floor corner: sharp
 D_SHANK = 3.0                               # M3 x 6 self-tapper in the Ø3.4 (printed) tab hole
 HOLE_CAD = P.TAB_HOLE + HOLE_COMP           # 3.6
 EDGE = P.TAB_D / 2 - HOLE_CAD / 2           # tab hole to the tab's edge: 2.7
-HEAD_D, WASHER_D = 5.5, 7.0                 # M3 pan head; Ø7 x 0.5 washer (the servo tab screws' size)
+HEAD_D = 5.5                                # M3 pan head
+WASHER_T = 0.5                              # Ø7 x 0.5 washer under each head (round 5, spec §2)
+D_PLATE_PILOT = 2.6                         # the base's ring pilots (printed), through its 4 mm top plate
 TT_items = [i for i in ITEMS if i[2] == "TT"]
 probes = {"disk": Probe("disk underside (Z 16.5)", "TT", (0.0, 0.0, TT.Z0),
                         own_items=[i for i in TT_items if not i[0].startswith("base disc horn")],
@@ -540,46 +564,61 @@ model_check()
 print(f"ring: r {P.R_IN:g}-{P.R_OUT:g}, {P.H:.1f} tall, running gap {P.RUN_GAP:g} mm under the disk (Z {P.TURNTABLE_Z:g}); "
       f"the disk touches it after {math.degrees(P.RUN_GAP / P.R_OUT):.2f}° of tilt (0.3 mm with the tape: "
       f"{math.degrees(0.3 / P.R_OUT):.2f}°)")
+print(f"  round 5: Ø{2 * R_RELIEF:g} relief round each tab screw from Z {P.TAB_T:g} up: the wall is {WALL_RELIEF:.2f} thick over "
+      f"{RELIEF_CHORD:.1f} mm of its length there; the Ø{P.WASHER_D:g} washer seats flat on the tab top (its inner edge at "
+      f"r {P.TAB_R - P.WASHER_D / 2:.1f}, the wall's outer face line r {P.R_OUT:g}), {P.WASHER_CLR:g} mm inside the relief")
 n = sweep(list(probes.values()))
 print(f"{n} poses swept (shoulder {TRAVEL['shoulder']}, elbow {TRAVEL['elbow']}, wrist {TRAVEL['wrist']}, {STEP_DEG} deg)")
 pr = probes["disk"]
 print("  overturning moment on the disk: " + "; ".join(f"{MODES[m][0]} {pr.get(m, 'Mh')[0]:.0f} N.mm ({where(pr, m, 'Mh')})"
                                                     for m in MODES))
 
-# the ring takes the whole overturning moment (servo output ignored): R = M / r_mid
-cases = [(lbl, req, pr.get(mode, "Mh")[0] / R_MID, mode) for mode, (lbl, req) in MODES.items()]
-cases.append(("20 N knock on the turntable rim (spec)", SF_STATIC, 20.0 * TT.DISK_R / R_MID, "rim"))
-for lbl, req, R, mode in cases:
-    row(lbl, f"ring wall bearing under the disk, R {R:.1f} N on a {ARC:g} mm arc (compression)", "bearing",
-        R / (ARC * WALL_T), BEARING_MPA, req)
+
+def wall_rows(lbl, req, R, info=False):
+    """The wall where the disk lands on it. Verdict: the thinned wall beside a relief (2.5) all along the patch and the
+    segment, which is conservative (the relief thins 3.9 mm of the 32 mm segment)."""
+    t = WALL_RELIEF
+    row(lbl, f"ring wall bearing under the disk, R {R:.1f} N on a {ARC:g} mm arc of the {t:g} mm wall at a relief", "bearing",
+        R / (ARC * t), BEARING_MPA, req, info=info)
     Ff = MU_WORN * R
-    row(lbl, f"wall edgewise bending from friction {MU_WORN} R, {SEG:.0f} mm segment (Kt {KT_ROOT})", "Z",
-        KT_ROOT * 6 * Ff * P.H / (WALL_T * SEG ** 2), allow(True), req)
-    row(lbl, "interlayer shear in the wall from that friction", "Z shear", 1.5 * Ff / (WALL_T * SEG), allow(True, True), req)
+    s0 = KT_ROOT * 6 * Ff * P.H / (WALL_T * SEG ** 2)                      # wall root, Z 0, 3 thick
+    s3 = KT_ROOT * 6 * Ff * (P.H - P.TAB_T) / (t * SEG ** 2)               # relief floor, Z 3, 2.5 thick
+    where_ = "at the relief's floor (Z 3, 2.5 thick)" if s3 >= s0 else "at the root (Z 0, 3 thick)"
+    row(lbl, f"wall edgewise bending from friction {MU_WORN} R, {SEG:.0f} mm segment, {where_} (Kt {KT_ROOT})", "Z",
+        max(s0, s3), allow(True), req, info=info)
+    row(lbl, f"interlayer shear in the {t:g} mm wall from that friction", "Z shear", 1.5 * Ff / (t * SEG), allow(True, True),
+        req, info=info)
     Ft = Ff * P.R_OUT / P.TAB_R
+    return Ft
+
+
+# the ring takes the whole overturning moment (servo output ignored): R = M / r_mid
+cases = [(lbl, req, pr.get(mode, "Mh")[0] / R_MID) for mode, (lbl, req) in MODES.items()]
+cases.append(("20 N knock on the turntable rim (spec)", SF_STATIC, 20.0 * TT.DISK_R / R_MID))
+for lbl, req, R in cases:
+    Ft = wall_rows(lbl, req, R)
     row(lbl, f"one tab carries the friction torque: bearing on the M3 shank, F {Ft:.1f} N", "bearing",
         Ft / (D_SHANK * P.TAB_T), BEARING_MPA, req)
     row(lbl, f"tab tear-out to its edge ({EDGE:.1f} mm)", "XY shear", Ft / (2 * EDGE * P.TAB_T), allow(False, True), req)
-A_head = math.pi / 4 * (HEAD_D ** 2 - HOLE_CAD ** 2)
-row("assembly: M3 x 6 driven snug, no washer", f"pan head Ø{HEAD_D:g} on the tab at {PRELOAD_SNUG_N:.0f} N (sustained)", "bearing",
-    PRELOAD_SNUG_N / A_head, BEARING_MPA, SF_SUSTAINED)
+A_washer = math.pi / 4 * (P.WASHER_D ** 2 - HOLE_CAD ** 2)
+row(f"assembly: M3 x 6 driven snug, Ø{P.WASHER_D:g} x {WASHER_T:g} washer (round 5)",
+    f"washer on the tab at {PRELOAD_SNUG_N:.0f} N (sustained)", "bearing", PRELOAD_SNUG_N / A_washer, BEARING_MPA, SF_SUSTAINED)
 
-# --- advisory: the rim proof test, the washer fix, the thread in the base plate ------------------------------------------
-F_RIM = PROOF_RATIO * pr.get("yaw", "Mh")[0] / TT.DISK_R          # 1.5 x the yaw-stall ring load, applied at the rim
+# --- spec §8 proof test: the base's rim test, 77 N straight down at the rim, servo unpowered ---------------------------------------
+F_RIM = 77.0
 R_proof = F_RIM * TT.DISK_R / R_MID
-lbl_p = f"proof test (corrected): {F_RIM:.0f} N on the rim"
-row(lbl_p, f"ring wall bearing, R {R_proof:.1f} N", "bearing", R_proof / (ARC * WALL_T), BEARING_MPA, SF_PROOF, info=True)
-row(lbl_p, "wall edgewise bending from friction", "Z", KT_ROOT * 6 * MU_WORN * R_proof * P.H / (WALL_T * SEG ** 2), allow(True),
-    SF_PROOF, info=True)
-row(lbl_p, "tab tear-out from the friction torque", "XY shear",
-    MU_WORN * R_proof * P.R_OUT / P.TAB_R / (2 * EDGE * P.TAB_T), allow(False, True), SF_PROOF, info=True)
-A_washer = math.pi / 4 * (WASHER_D ** 2 - HOLE_CAD ** 2)
-row("assembly: M3 x 6 driven snug, FIX: Ø7 washer", f"washer on the tab at {PRELOAD_SNUG_N:.0f} N", "bearing",
-    PRELOAD_SNUG_N / A_washer, BEARING_MPA, SF_SUSTAINED, info=True)
-row("assembly: M3 x 6 just snug (100 N), no washer", "pan head on the tab", "bearing", 100.0 / A_head, BEARING_MPA,
-    SF_SUSTAINED, info=True)
-D_PLATE_PILOT = 2.6                          # the base's ring pilots (printed), through its 4 mm top plate
-for lbl_w, L_w in (("no washer", 6.0 - P.TAB_T), ("with the Ø7 x 0.5 washer", 6.0 - P.TAB_T - 0.5)):
+lbl_p = f"spec §8 proof: {F_RIM:g} N on the rim ({F_RIM * TT.DISK_R / pr.get('yaw', 'Mh')[0]:.2f} x the yaw-stall ring load)"
+Ft_p = wall_rows(lbl_p, SF_PROOF, R_proof)
+row(lbl_p, "tab tear-out from the friction torque", "XY shear", Ft_p / (2 * EDGE * P.TAB_T), allow(False, True), SF_PROOF)
+
+# --- advisory --------------------------------------------------------------------------------------------------------------------
+A_head = math.pi / 4 * (HEAD_D ** 2 - HOLE_CAD ** 2)
+row("assembly: M3 x 6 driven snug, no washer (round 4)", f"pan head Ø{HEAD_D:g} on the tab at {PRELOAD_SNUG_N:.0f} N", "bearing",
+    PRELOAD_SNUG_N / A_head, BEARING_MPA, SF_SUSTAINED, info=True)
+R_yaw = pr.get("yaw", "Mh")[0] / R_MID
+row(MODES["yaw"][0], f"ring wall bearing on the full {WALL_T:g} mm wall (away from the reliefs)", "bearing",
+    R_yaw / (ARC * WALL_T), BEARING_MPA, SF_STATIC, info=True)
+for lbl_w, L_w in (("no washer (round 4)", 6.0 - P.TAB_T), (f"Ø7 x {WASHER_T:g} washer (round 5)", 6.0 - P.TAB_T - WASHER_T)):
     row(f"assembly: M3 x 6 driven snug, {lbl_w}", f"thread in the base plate, {L_w:g} mm engaged, at {PRELOAD_SNUG_N:.0f} N",
         "Z shear", PRELOAD_SNUG_N / (math.pi * D_PLATE_PILOT * L_w), allow(True, True), 1.0, info=True)
 
@@ -588,3 +627,5 @@ R_static = pr.get("weight", "Mh")[0] / DYN / R_MID
 print("\nFRICTION while yawing with the arm straight out (static moment, ring taking all of it): "
       + ", ".join(f"μ {mu}: {mu * R_static * P.R_OUT:.0f} N.mm" for mu in (MU_PTFE, MU_WORN))
       + f" against the yaw servo's {STALL_MG996R_NMM:.0f} N.mm stall (the 250 °/s² ramp asks 60-85 more)")
+print("RING SCREWS IN SERVICE: the disk only ever presses down on the ring and the friction acts in its plane, so the three "
+      "M3 x 6 carry no tension in service; only their snug preload loads the 2.5 mm of thread in the base (advisory rows).")
