@@ -53,10 +53,10 @@ Round 3's walking stance tucks the tibia 18.7° in, so the foot load now bends t
 
 ## 8. Acceptance criteria (measurable)
 - [ ] Foot tips of all six legs touch the ground together in the walking stance (±2 mm)
-- [ ] **Proof test (strength round 1):**
+- [ ] **Proof test (strength round 3):**
   1. **Set-up.** Fit the tibia on its horn on an MG90S clamped in a vice, with the M2 × 12 clamp screw **snug (0.05 N·m)**. Hold the tibia horizontal, with a stop on the far side of the hub so the servo gears do not carry the moment.
   2. **Load.** Hang **1 kg** from the foot tip for **1 min**.
-  3. **Shove.** Push **3 N** sideways at the tip, each way, for 10 s.
+  3. **Shove.** Push **6 N** sideways at the tip, each way, for 10 s (1.5 × the 4.0 N a coxa stall puts on the foot).
 
   Pass:
   - no cracks or whitening around the pocket or the arm-screw hole;

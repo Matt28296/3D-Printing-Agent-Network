@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 in review (round 2 DFM PASS, strength NEEDS_TEST): screw holes follow the moved columns, lead notches and tie slots, switch hole",
+    "DESIGN": "pass (DFM PASS round 3; strength NEEDS_TEST, proof test in spec \u00a78)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T07:56:16+00:00"
+  "updated": "2026-10-26T09:32:12+00:00"
 }

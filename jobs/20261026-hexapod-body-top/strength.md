@@ -1,143 +1,112 @@
 VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-hexapod-body-top
+# Strength check: 20261026-hexapod-body-top, round 3
 
-strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-body-top/strength_calc.py`
+Independent strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-body-top/strength_calc.py` (about 30 s;
+needs build123d, trimesh and scipy, like `cad_checks.py`)
 
-**NEEDS_TEST** (placeholder allowables only). No geometry change is needed.
+**NEEDS_TEST: placeholder allowables only. No change to the geometry is needed.**
 
-- **Lowest SF: 3.27**, at the root of the ESP32 seat's side rail. A jumper pulled sideways at 10 N pushes the board
-  edge against one rail, bending its root across the layers. This matches the rover lid, which uses the same seat.
-- **Next lowest: 4.77**, at the PCA9685 post root when a servo lead is pulled sideways.
-- **Lifting the robot by one end of the deck: SF 5.01.** The section through the cable slots at x 46 carries the
-  whole 579 g below the deck, at × 2.
-- **Every other row: SF 6 or more.**
+- **Lowest SF 3.27: the ESP32 seat's side rail** when a jumper is pulled sideways (10 N). This is unchanged from
+  round 2.
+- **Round 3 lowered one row.** In the one-end lift, the worst section is now at the **rear**: through the cable slots
+  at x −46.5, beside the new Ø12 switch hole. There, 61.9 mm of the deck's 104 mm width is left. The row went from
+  5.01 (front, 579 g below the deck) to **3.54** (748 g below the deck), and **3.25** at the change-set mass (815 g
+  below the deck).
+- **The six lead notches** (10 × 5, r1.5) sit at the long edges, outside every critical section. A lead pulled 10 N
+  at a notch gives SF 5.00.
+- Every other row is 4.77 or more.
 
-## Print orientation and critical sections
+## What changed since strength round 1
 
-**Orientation.** The deck prints flat. Deck bending, header bearing on the window and tie-slot shear all run along the
-layers (XY). The seat rails and PCA9685 posts stand up from the deck, so their root bending runs across the layers
-(Z). Screw-head push-through shears the layers (Z shear).
+- **No geometry change was required.** The proof test was extended to the two lowest rows; it is in spec §8.
+- **Round-3 changes:**
+  - screw holes moved with the columns to (±36, ±25): the drop span between them is now 72 mm;
+  - six lead notches with tie slots;
+  - a Ø12 switch hole at (−50, 0).
+  - The designer's estimate of "≈ 3.8" for the heavier robot's handling was right in kind. The lift by one end lands
+    at 3.54, and the rear section beside the switch governs.
 
-**Sections checked:**
-- Handling, robot lifted by both long edges: the deck at the column line, through the cable slots.
-- Handling, robot lifted by one end: the deck through the cable slots at x 46.
-- Deck-screw heads: plug shear and bearing.
-- USB plug, 10 N: header strips bearing on the window end.
-- Jumper pulled sideways, 10 N: the side rail, loaded over half the board length.
-- Jumpers pushed on from below: the zip-tie slot ligament.
-- PCA9685: post root under a 10 N sideways lead pull, and M2.5 screw pull-out when unplugging.
-- Drop on 6 feet at 17.2 g: deck bending between the columns, through the ESP32 window.
+## Load cases
 
-## Load cases (re-derived; the same block runs at the top of all five hexapod `strength_calc.py`)
+The same block as all five round-3 checks (details in the coxa's `strength.md`):
+- **Robot mass 840 g**, 906 g with every round-3 change.
+- **The deck group is 91 g:** deck 36.2, two PCA9685 18, ESP32 10, buck 2, switch 15, half the harness 10. The UBEC
+  stands on the bottom plate.
+- **Below the deck: 748 g**, 815 g at the change-set mass.
 
-Inputs: `hex_frame.py`, `tools/hobby_parts.py`, the five `model.py` files (top-level constants read with `ast`) and the
-five `geometry.json` volumes. The leg frames are rebuilt as in `leg_frames()` of `assembly_check.py`; the feet match
-`assembly_check.json` to 0.1 mm. In the neutral stance the foot is 77.0 mm out from the coxa axis, **15.8 mm to the
-side of it** (the tibia's mid-plane sits two link thicknesses in front of the coxa line), and 87.0 mm below the coxa
-bracket's back face. The body underside is 96.4 mm up.
-
-| Load | Spec §4 | Re-derived here | Duration, SF |
-|---|---|---|---|
-| Robot mass | ≈ 0.6 kg | **683 g (6.70 N)**. Printed parts at solid volume × 1.27 g/cm³, **infill factor 1.0** (an upper bound: with 3–4 perimeters and 5 top/bottom layers on 3–7 mm plates the slicer will report ≈ 75–90 %): bottom 95.8, top 46.6, coxa 6 × 10.3, femur 6 × 7.7, tibia 6 × 8.9 = 304 g. Bought: 18 × MG90S 241, LiPo 65, 2 × PCA9685 18, ESP32 10, UBEC 15, wiring, screws and buck 30 | — |
-| Foot load on a tripod | 6 N / 3 = 2 N | CG at the body centre, shares from the real foot positions. The middle leg of a tripod carries 41.5 % in the stance and up to **43.3 %** over the coded ±15° coxa sweep (47.5 % at MAX_COXA 30°): **2.90 N** | sustained (robot stopped on a tripod, or one foot 2 mm high): SF 4 |
-| Walking | 4 N (2 N × 2) | 2 × 2.90 = **5.80 N** up | cyclic: SF 4 |
-| Foot scrub (missed by the spec) | — | `hexapod_test.ino` sweeps the stance coxae ±15° with femur and tibia fixed. The front and rear feet cannot follow those arcs while the body moves straight, so they slide every step. Friction μ 0.5 × 2.90 N in the worst horizontal direction, limited by each servo's stall | cyclic: SF 4 |
-| Servo stalls | 216 N·mm per joint | Each stall applied at the foot (femur ±4.8 N vertical = 216/45; coxa 2.8 N tangential = 216/77; knee 3.1 N radial = 216/70; with 2.90 N up), and each stall torque straight into its horn pocket and tab screws | short-term: SF 3 |
-| Sideways shove | 3 N at a foot | 3 N in any horizontal direction, with 0–2.90 N up | short-term: SF 3 |
-| 20 cm drop | "3 × weight over 6 feet, ≈ 3 N per foot" | E = m·g·h = **1.34 J**. Stated stopping distance if the legs held: **δ = 10 mm** (servo backlash and position band ≈ 4 mm at the foot, horn/link/floor flex ≈ 3 mm, carpet ≈ 3 mm). A linear stop gives 281 N peak: **47 N per foot landing flat on 6 feet, 94 N on 3**. A leg cannot push that hard. Its femur and knee servos back-drive at T_bd ≈ 2 × stall = 432 N·mm (assumed: gear losses act in both directions). That caps the vertical foot force at 2·T_bd/L_F = **19.2 N**, with ≤ 6.2 N of inward friction, which a splaying landing supplies. Both landings therefore load each foot to 19.2 N plus up to 6.2 N radial. The rest of the energy goes into back-driving the servos over 12 mm of body travel (6 feet) or 26 mm (3 feet), inside the 49 mm ground clearance. The spec's 3 N per foot implies a 100–400 mm stop, so it is not used | short-term: SF 3 |
-| Drop inertia of the body | — | Support load factor at the cap: 6 × 19.2 / 6.70 = **17.2 g** on 6 feet, 8.6 g on 3 | short-term: SF 3 |
-| Handling | top plate only | Robot lifted by the top plate, × 2. Robot lifted by one leg: that leg's femur servo back-drives at the same 19.2 N, so the drop envelope covers it | short-term: SF 3 |
-| Assembly (missed by the spec) | — | M2 horn clamp screw **snug, 0.05 N·m ≈ 125 N** preload (verdict rows; F = T / (0.2 d)). BUILD_GUIDE's "firmly", taken as 0.1 N·m ≈ 250 N, is advisory | short-term: SF 3 |
-| Temperature | 40 °C | PETG softens at ≈ 70 °C: 30 °C margin, OK | — |
-
-**How the drop result depends on the back-drive assumption.** At 1.5 × stall the cap is 14.4 N per foot; at 1 × stall
-it is 9.6 N. At 1 × stall a 3-foot landing runs out of travel: the body reaches the floor after 49 mm with ≈ 0.25 J
-left. The lowest points are the coxa brackets' vertical plates, which then take the rest of the impact edge-on. The
-proof drop test settles which case applies.
+| Case | Load | Duration, SF |
+|---|---|---|
+| Handling: lifted by the long edges | the robot below the deck × 2 = 14.7 N, half per edge, cantilevered from the column line (27 mm) | 3 |
+| Handling: lifted by one end | 14.7 N; sections scanned every 0.5 mm through both ends' cable slots (x ±44 … ±57), lever to the deck's end | 3 |
+| USB plug | 10 N along x | 3 |
+| Jumper pulled sideways / pushed on from below | 10 N / 20 N | 3 |
+| Servo lead pulled sideways / board unplugged | 10 N / 15 N | 3 |
+| Drop on 6 feet | deck group at 6 × 19.2 / 8.24 N = **14.0 g** (round 2: 17.2 g) | 3 |
+| Sustained | deck group at 1 g | 4 |
+| Lead pulled at a notch | 10 N | 3 |
 
 ## Assumptions
 
-- **Envelope search.** Every case searches its whole foot-force envelope: the vertical load, the size and direction of
-  the friction, and every servo torque within its cap. Each section takes its own worst point. A leg's internal loads
-  depend only on the foot force expressed in the coxa frame, so one leg covers all six.
-- **Section properties.** They come from the `model.py` parameters. They were cross-checked against sections cut from
-  the CAD (trimesh) and agree within 1 %.
-- **Clamped horn joints.** These follow the arm review, with one change.
-  - Capacity is washer pull-through (π·D_w·t_floor) plus the anti-rotation arm screw (Ø1.2 drilled, 3 mm engaged at
-    r 13; assumed), taken against the interlayer shear allowable.
-  - The pivot is the horn hub's edge (r 3.6), not the arm tip. The 1.6 mm arm of a micro horn cannot carry the pivot
-    force.
-  - When the far side of the hub lifts, the arm screw is on the pressed side and adds nothing.
-  - The M2 thread in the metal spline, and the horn itself, are bought parts. They are left to the proof test.
-- **Tab screws.**
-  - Pull-out is τ = F / (π · 1.5 · L), using the printed Ø1.5 pilot and the engaged length: an M2×8 through the 2.5 mm
-    tab, limited by the plate thickness.
-  - Rocking about the screw line pivots on the tab edge, 6 mm from the screws. Rocking along the servo uses the 27.8 mm
-    screw spacing.
-  - Servo bodies bearing on the window walls get no credit. A 0.2 mm clearance does not close before the screws carry
-    the load.
-- **Stress concentration factors (Kt):**
-  - 2.5 at sharp internal or window corners;
-  - 2.0 at holes in PETG and at the 45° gusset tip;
-  - 1.5 at rounded pocket edges and 45° ramps;
-  - 1.6 at the r2.5 hub–arm fillet.
+- **Printed:** 3 perimeters (1.26 mm), 1.0 mm top and bottom skins over a 1 mm core of 20 % gyroid. The core counts at
+  stiffness ρ² = 0.04 and strength ρ^1.5 = 0.09.
+  - On a 3 mm deck the as-printed section modulus is 0.94–0.97 × solid.
+  - Sections come from the built solid, within 0.05 % of build123d's exact section areas (checked at x −46.5 and
+    x 0).
+  - The seat rails (2.5 mm wide) and the PCA9685 post walls (1.55 mm) are all perimeter, so they count as solid.
+- **Kt** 2.5 at the cable-slot corners and the rail and post roots, as in round 1.
+- **Deck screw heads:** M3 pan, Ø5.5 (assumed).
 
 ## Allowables and sources
 
-`library/materials.csv` has no rows and `inputs/` has no printed-specimen datasheet, so these are the strength-checks
-**placeholders** for PETG. **NEEDS_TEST is the best verdict possible.**
+Placeholders (no rows in `library/materials.csv`, no datasheet):
+- along / across the layers: 25 / 12.5 MPa;
+- in-plane / interlayer shear: 12.5 / 6.25 MPa;
+- bearing: 25 MPa.
 
-| Quantity | Value | Source |
-|---|---|---|
-| Tension or bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
-| Tension or bending across the layers (Z) | 12.5 MPa | 0.5 × in-plane (placeholder) |
-| Shear: in-plane / interlayer (pull-out, washer pull-through, tear-out in standing walls) | 12.5 / 6.25 MPa | 0.5 × normal (Tresca), as in the arm and rover reviews |
-| Bearing (compression on a layer face or a wall) | 25 MPa | in-plane value: compression does not separate the layers |
-| E | 1.8 GPa | skill placeholder |
+NEEDS_TEST is the best possible verdict.
 
-Required SF: 3 for short-term loads, 4 for cyclic or sustained loads. Service temperature 40 °C against ≈ 70 °C
-softening: OK.
+## Results (as specified, as printed)
 
-## Results (copied from `python3 strength_calc.py`)
+| # | Case | Section | Dir | Stress | Allow. | SF | Req. | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 1 | lifted by the long edges, 14.7 N | deck at the column line y 25 (cable slots, Kt 2.5) | XY | 3.12 | 25.0 | 8.01 | 3 | OK |
+| 2 | lifted by one end, 14.7 N | deck at x −46.5, rear cable slots beside the switch hole (Kt 2.5) | XY | 7.07 | 25.0 | 3.54 | 3 | OK |
+| 3 | handling | screw-head plug shear, 3 mm deck | Z shear | 0.14 | 6.25 | 44.13 | 3 | OK |
+| 4 | handling | screw-head bearing | XY | 0.54 | 25.0 | 46.25 | 3 | OK |
+| 5 | USB plug 10 N | header strips on the window end face | XY | 0.80 | 25.0 | 31.25 | 3 | OK |
+| 6 | jumper pulled sideways 10 N | seat side-rail root over half the board (Kt 2.5) | Z | 3.82 | 12.5 | **3.27** | 3 | OK |
+| 7 | jumpers pushed on from below 20 N | zip-tie slot ligament | XY shear | 0.83 | 12.5 | 15.00 | 3 | OK |
+| 8 | servo lead pulled sideways 10 N | PCA9685 post root (4 posts, Kt 2.5) | Z | 2.62 | 12.5 | 4.77 | 3 | OK |
+| 9 | board unplugged 15 N | M2.5 pull-out (2 screws, 4.4 mm) | Z shear | 0.25 | 6.25 | 25.34 | 3 | OK |
+| 10 | sustained, deck group at 1 g | deck between the columns through the ESP32 window (span 72, Kt 2.5) | XY | 0.22 | 25.0 | 113.55 | 4 | OK |
+| 11 | drop on 6 feet, 14.0 g | same section | XY | 3.09 | 25.0 | 8.10 | 3 | OK |
+| 12 | drop | screw-head bearing, 4 screws | XY | 0.23 | 25.0 | 108.22 | 3 | OK |
+| 13 | lead pulled 10 N at a notch | ligament beside the notch (r1.5, Kt 1.5) | XY | 5.00 | 25.0 | 5.00 | 3 | OK |
 
-| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
-|---|---|---|---|---|---|---|---|
-| 1 | handling: lifted by the long edges (11.4 N): deck at the column line y 25 (cable slots, Kt 2.5) | XY | 2.39 | 25.00 | 10.45 | 3 | OK |
-| 2 | handling: lifted by one end (11.4 N): deck through the cable slots x 46 (Kt 2.5) | XY | 4.99 | 25.00 | 5.01 | 3 | OK |
-| 3 | handling: screw-head plug shear through the 3 mm deck (2 screws carry it) | Z shear | 0.11 | 6.25 | 57.06 | 3 | OK |
-| 4 | handling: screw-head bearing on the deck (2 screws) | XY | 0.42 | 25.00 | 59.80 | 3 | OK |
-| 5 | USB plug 10 N along x: header strips on the window end face (2 x 2.5 x 2.5) | XY | 0.80 | 25.00 | 31.25 | 3 | OK |
-| 6 | jumper pulled sideways 10 N: side rail root over half the board (25.8 mm, Kt 2.5) | Z | 3.82 | 12.50 | 3.27 | 3 | OK |
-| 7 | jumpers pushed on from below: zip-tie slot ligament (20 N) | XY shear | 0.83 | 12.50 | 15.00 | 3 | OK |
-| 8 | servo lead pulled sideways 10 N: PCA9685 post root (Ø5.5/Ø2.4, 4 posts, Kt 2.5) | Z | 2.62 | 12.50 | 4.77 | 3 | OK |
-| 9 | PCA9685 unplugging 15 N at one end: M2.5 pull-out (2 screws, Ø2.2 pilot, 4.4 mm) | Z shear | 0.25 | 6.25 | 25.34 | 3 | OK |
-| 10 | sustained: deck group at 1 g: deck between the columns through the ESP32 window (span 80, b 71, Kt 2.5) | XY | 0.24 | 25.00 | 103.40 | 4 | OK |
-| 11 | drop on 6 feet: deck group at 17.2 g: deck between the columns through the ESP32 window (span 80, b 71, Kt 2.5) | XY | 4.16 | 25.00 | 6.02 | 3 | OK |
-| 12 | drop: screw-head bearing, deck group at 17.2 g over 4 screws | XY | 0.32 | 25.00 | 77.04 | 3 | OK |
+**Lowest SF 3.27 (required 3), at row 6.**
 
-**lowest SF 3.27 (required 3) at: jumper pulled sideways 10 N: side rail root over half the board (25.8 mm, Kt 2.5)**
+Advisory:
+- the round-2 section (front, x 46, no switch hole): 4.01;
+- solid sections at the rear section: 3.64;
+- **at the change-set mass (906 g): lifted by one end 3.25, by the long edges 7.36.**
 
-## Servo torques
+## Proof test
 
-**The femur servos do not have enough margin** (details and fixes in the femur report):
+**Spec §8's test matches the verdict, with one change: lift by the rear end, with weight added.**
 
-- Standing evenly on all six feet, each femur servo holds 50 N·mm (23 % of stall).
-- Stopped on a tripod, it holds 125–143 N·mm (58–66 %) continuously.
-- Walking pushes it past stall: × 2 dynamics give 121 %, and outward foot scrub gives 107 %.
+1. **Lift by both long edges,** 5 times: as written.
+2. **Lift by one end, changed.** Lift by the **rear (switch) end** of the deck only, so the robot hangs from that
+   edge. Hold **1 min** with **0.8 kg** added to the bottom plate, for example a bag hung from the strap slots.
+   - That is 2 × the static load below the deck: the design case.
+   - As written ("lift it once by one end"), the test reaches only half the design load and doesn't name the weaker
+     end.
+   - Do it after the body-bottom's Ø10 columns are in: the columns bend in this test too.
+3. **USB,** 5 times: as written.
+4. **Side push on the ESP32: 2 kg (≈ 20 N, 2 × the jumper case),** each way for 10 s: as written. This proves the
+   lowest row, row 6, at 2 ×.
 
-The cheapest fix is in software: turn the tibia 18.7° inward so the foot sits midway between the femur axis and the
-knee. That splits the moment, 30 % on the femur and 30 % on the knee.
-
-## Proof test (spec §8, extended to the two lowest rows)
-
-1. **Lift by both long edges.** Lift the assembled robot by the top plate 5 times, holding both long edges.
-2. **Lift by one end.** Then lift it once by one end of the deck only, so the robot hangs from that edge.
-3. **USB.** Plug and unplug USB 5 times.
-4. **Side push on the ESP32.** Push the seated ESP32 sideways with **2 kg (≈ 20 N, 2 × the jumper-pull case)** at
-   mid-length, for 10 s each way.
-
-Pass:
-- no cracks or whitening at the screw holes, the cable-slot corners, the PCA9685 post roots, or the seat rails and
-  ledges;
+Pass, as written:
+- no cracks or whitening at the screw holes, the cable-slot corners, the lead notches, the PCA9685 post roots, the
+  seat rails or the ledges; the switch hole is added to this list;
 - the board stays on both ledges.

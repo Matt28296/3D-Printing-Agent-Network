@@ -56,9 +56,9 @@ Round-3 mass raises the handling case by up to 31 % (lowest strength SF 5.01 →
 - [ ] Both PCA9685 boards sit on their posts; the deck comes off with them fitted (screw heads ≥ 1.75 mm from the boards)
 - [ ] ESP32 seats with jumpers on every pin
 - [ ] Each leg's three leads lie in that leg's notch and tie there
-- [ ] **Proof test (strength round 1):**
+- [ ] **Proof test (strength round 3):**
   1. **Lift by both long edges:** lift the assembled robot by the top plate 5 times, holding both long edges.
-  2. **Lift by one end:** then lift it once by one end of the deck only, so the robot hangs from that edge.
+  2. **Lift by one end:** lift it by the **rear (switch) end** of the deck only, so the robot hangs from that edge, and hold **1 min** with **0.8 kg** added to the bottom plate (for example a bag hung from the strap slots): 2 × the static load below the deck. Do this with the final body-bottom columns fitted.
   3. **USB:** plug and unplug USB 5 times.
   4. **Side push on the ESP32:** push the seated ESP32 sideways with **2 kg (≈ 20 N, 2 × the jumper-pull case)** at mid-length, for 10 s each way.
 

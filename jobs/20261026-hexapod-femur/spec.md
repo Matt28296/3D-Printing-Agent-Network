@@ -67,10 +67,10 @@ Round-3 mass (812–877 g) raises the walking and servo loads by 19–28 %; the 
 
 ## 8. Acceptance criteria (measurable)
 - [ ] The tibia MG90S goes into the window from the back, spline first; its tab screws bite from the back
-- [ ] **Proof test (strength round 1):**
+- [ ] **Proof test (strength round 3):**
   1. **Set-up.** Fit the femur on its horn on an MG90S clamped in a vice, with the M2 × 12 clamp screw **snug (0.05 N·m)**. Fit the tibia servo and the tibia, with the femur level and the tibia hanging straight down. Put a stop **above the femur's rear end** (behind the horn), so the femur servo's gears do not carry the moment.
-  2. **Load.** Hang **1 kg** from the foot tip for **1 min**. With the tibia vertical, this loads the femur root like the foot does, torsion included.
-  3. **Shove.** Push **3 N** sideways at the foot tip, each way, for 10 s.
+  2. **Load.** Hang **1.5 kg** from the foot tip for **1 min** (2 × the walking foot load at 906 g). With the tibia vertical, this loads the femur root like the foot does, torsion included. Then turn the servo over in the vice, move the stop to the other side, and repeat: a hanging weight pulls the foot opposite to the ground's push, and the horn clamp tips on a different side each way.
+  3. **Shove.** Push **6 N** sideways at the foot tip, each way, for 10 s (1.5 × the 4.0 N a coxa stall puts there).
 
   Pass:
   - no cracks or whitening at the pocket, the window corners or the pilots;

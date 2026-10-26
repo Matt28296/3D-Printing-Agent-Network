@@ -1,204 +1,149 @@
 VERDICT: NEEDS_TEST
 
-# Strength check: 20261026-hexapod-femur (×6)
+# Strength check: 20261026-hexapod-femur (×6), round 3
 
-strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-femur/strength_calc.py`
+Independent strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-femur/strength_calc.py` (about 30 s; needs
+build123d, trimesh and scipy, like `cad_checks.py`)
 
-**NEEDS_TEST** (placeholder allowables only).
+**NEEDS_TEST: placeholder allowables only. No change to the geometry is needed.**
+- **Lowest SF 4.19:** the clamp washer pulled through the 5 mm horn floor at the snug preload (assembly), as printed.
+- **Lowest service SF 4.50:** the horn clamp under a servo stall.
+- **Drop rows:** 7.31 or more.
 
-- **Lowest SF 4.59:** washer bearing on the 5 mm horn floor at a snug clamp preload (assembly case).
-- **Lowest service-load SF 4.84:** plate torsion in the servo-capped drop. The torsion arises because the tibia's
-  mid-plane sits 16.4 mm in front of the femur's.
-- Every service-load row is at SF 4.84 or more, and the clamp pull-through at the snug preload is 4.71. **No geometry change is needed.**
+The round-3 changes help the femur:
+- **Less torsion.** With the tibia servo reversed, the tibia's mid-plane is 10.1 mm in front of the femur's (16.4 mm
+  in round 2).
+- **Small in-plane moment in the tucked stance.** The vertical foot load's moment changes sign at x ≈ 22.5 along the
+  femur, so it never exceeds the femur or knee servo torque (≤ 432 N·mm, the back-drive cap).
 
-Two conditions:
-1. **Clamp screw torque.** Drive the M2×12 clamp screw **snug (≈ 0.05 N·m)**, not "firmly" as BUILD_GUIDE §3 says.
-   At 0.1 N·m the washer pull-through on the 5 mm floor drops to SF 2.36.
-2. **Femur servo margin.** The femur *servos* do not have enough torque margin (see "Servo torques" below). This is a
-   system problem; the femur plate itself is fine.
+The spec §8 proof test needs three small changes (bottom).
 
-## Print orientation and critical sections
+## What changed since strength round 1
 
-- **Orientation.** The femur is printed flat with the horn pocket on the bed. In-plane bending (the 19 mm-deep
-  section) and out-of-plane bending (7 mm) both run along the layers (XY). Torsion is counted as interlayer shear, to be
-  conservative.
-- **Tibia-servo tab pilots.** These are vertical, so pull-out shears the layers (Z shear), while pilot bearing and
-  ligament tear-out stay in-plane.
-- **Sections checked:**
-  - the horn clamp (5 mm floor) and the horn-pocket bearing at the femur stall;
-  - the plate over the pocket at x 13 (Kt 2, at the drilled hole for the horn-arm screw);
-  - the full section at x 16.5;
-  - the inner tibia-servo pilot row at x 25.75 (Kt 2);
-  - plate torsion;
-  - the tibia-servo tab screws (pull-out over 5.5 mm, bearing, and the 1.60 mm ligament to the window);
-  - the knee stall into the pilots;
-  - the clamp preload;
-  - the window rails on their own (advisory: the servo case, bolted at both tab rows, carries the moment across the
-    window).
+- **Clamp screw snug ≈ 0.05 N·m** (round 1's condition): in spec §2 and BUILD_GUIDE §3 step 6. Rows 27–28.
+- **Femur servo margin** (round 1's system note): the tucked stance. Round-3 servo torques are below.
+- **Tibia servo reversed** (B1 option 2): tabs on the back face, M2 × 8 from the back, 5.5 mm engaged. A push towards
+  the coxa now pulls the screws out rather than bearing. Rows 18–23 cover both directions: the stall case and the
+  shove push either way.
+- **SYS-5 tie slot** at (20, −6): the section through it is in the table (x 20.0). It doesn't govern.
 
-## Load cases (re-derived; the same block runs at the top of all five hexapod `strength_calc.py`)
+## Load cases
 
-Inputs: `hex_frame.py`, `tools/hobby_parts.py`, the five `model.py` files (top-level constants read with `ast`) and the
-five `geometry.json` volumes. The leg frames are rebuilt as in `leg_frames()` of `assembly_check.py`; the feet match
-`assembly_check.json` to 0.1 mm. In the neutral stance the foot is 77.0 mm out from the coxa axis, **15.8 mm to the
-side of it** (the tibia's mid-plane sits two link thicknesses in front of the coxa line), and 87.0 mm below the coxa
-bracket's back face. The body underside is 96.4 mm up.
+The same block as all five round-3 checks (details in the coxa's `strength.md`):
+- **Robot mass 840 g:** 334 g printed (layer model calibrated on the round-2 slices) + 506 g bought (BUILD_GUIDE §1).
+  906 g with every round-3 change.
+- **Lone-leg share up to 0.435** (CG within ±3 mm).
+- **Sustained 3.58 N**, walking ×2 = 7.16 N, over every planted foot of the 30 and 40 mm IK gaits.
+- **Foot friction** µ 0.5, servos ≤ stall.
+- **Shove** 3 N.
+- **Servo stalls** one at a time (at the stance: 9.6 N vertical, 4.0 N tangential, 3.1 N radial).
+- **20 cm drop:** 19.2 N up per foot (femur and knee back-driven at 2 × stall), with radial friction.
+- **Assembly:** clamp screw snug, 125 N.
+- Temperature 40 °C against ≈ 70 °C: OK.
 
-| Load | Spec §4 | Re-derived here | Duration, SF |
-|---|---|---|---|
-| Robot mass | ≈ 0.6 kg | **683 g (6.70 N)**. Printed parts at solid volume × 1.27 g/cm³, **infill factor 1.0** (an upper bound: with 3–4 perimeters and 5 top/bottom layers on 3–7 mm plates the slicer will report ≈ 75–90 %): bottom 95.8, top 46.6, coxa 6 × 10.3, femur 6 × 7.7, tibia 6 × 8.9 = 304 g. Bought: 18 × MG90S 241, LiPo 65, 2 × PCA9685 18, ESP32 10, UBEC 15, wiring, screws and buck 30 | — |
-| Foot load on a tripod | 6 N / 3 = 2 N | CG at the body centre, shares from the real foot positions. The middle leg of a tripod carries 41.5 % in the stance and up to **43.3 %** over the coded ±15° coxa sweep (47.5 % at MAX_COXA 30°): **2.90 N** | sustained (robot stopped on a tripod, or one foot 2 mm high): SF 4 |
-| Walking | 4 N (2 N × 2) | 2 × 2.90 = **5.80 N** up | cyclic: SF 4 |
-| Foot scrub (missed by the spec) | — | `hexapod_test.ino` sweeps the stance coxae ±15° with femur and tibia fixed. The front and rear feet cannot follow those arcs while the body moves straight, so they slide every step. Friction μ 0.5 × 2.90 N in the worst horizontal direction, limited by each servo's stall | cyclic: SF 4 |
-| Servo stalls | 216 N·mm per joint | Each stall applied at the foot (femur ±4.8 N vertical = 216/45; coxa 2.8 N tangential = 216/77; knee 3.1 N radial = 216/70; with 2.90 N up), and each stall torque straight into its horn pocket and tab screws | short-term: SF 3 |
-| Sideways shove | 3 N at a foot | 3 N in any horizontal direction, with 0–2.90 N up | short-term: SF 3 |
-| 20 cm drop | "3 × weight over 6 feet, ≈ 3 N per foot" | E = m·g·h = **1.34 J**. Stated stopping distance if the legs held: **δ = 10 mm** (servo backlash and position band ≈ 4 mm at the foot, horn/link/floor flex ≈ 3 mm, carpet ≈ 3 mm). A linear stop gives 281 N peak: **47 N per foot landing flat on 6 feet, 94 N on 3**. A leg cannot push that hard. Its femur and knee servos back-drive at T_bd ≈ 2 × stall = 432 N·mm (assumed: gear losses act in both directions). That caps the vertical foot force at 2·T_bd/L_F = **19.2 N**, with ≤ 6.2 N of inward friction, which a splaying landing supplies. Both landings therefore load each foot to 19.2 N plus up to 6.2 N radial. The rest of the energy goes into back-driving the servos over 12 mm of body travel (6 feet) or 26 mm (3 feet), inside the 49 mm ground clearance. The spec's 3 N per foot implies a 100–400 mm stop, so it is not used | short-term: SF 3 |
-| Drop inertia of the body | — | Support load factor at the cap: 6 × 19.2 / 6.70 = **17.2 g** on 6 feet, 8.6 g on 3 | short-term: SF 3 |
-| Handling | top plate only | Robot lifted by the top plate, × 2. Robot lifted by one leg: that leg's femur servo back-drives at the same 19.2 N, so the drop envelope covers it | short-term: SF 3 |
-| Assembly (missed by the spec) | — | M2 horn clamp screw **snug, 0.05 N·m ≈ 125 N** preload (verdict rows; F = T / (0.2 d)). BUILD_GUIDE's "firmly", taken as 0.1 N·m ≈ 250 N, is advisory | short-term: SF 3 |
-| Temperature | 40 °C | PETG softens at ≈ 70 °C: 30 °C margin, OK | — |
-
-**How the drop result depends on the back-drive assumption.** At 1.5 × stall the cap is 14.4 N per foot; at 1 × stall
-it is 9.6 N. At 1 × stall a 3-foot landing runs out of travel: the body reaches the floor after 49 mm with ≈ 0.25 J
-left. The lowest points are the coxa brackets' vertical plates, which then take the rest of the impact edge-on. The
-proof drop test settles which case applies.
+In the femur's frame F (x along the femur, z out of the front face), the stance foot is at (28.1, −67.9, 13.6):
+- the vertical foot force bends the femur in its own 19 mm plane;
+- torsion is F × 10.1 mm.
 
 ## Assumptions
 
-- **Envelope search.** Every case searches its whole foot-force envelope: the vertical load, the size and direction of
-  the friction, and every servo torque within its cap. Each section takes its own worst point. A leg's internal loads
-  depend only on the foot force expressed in the coxa frame, so one leg covers all six.
-- **Section properties.** They come from the `model.py` parameters. They were cross-checked against sections cut from
-  the CAD (trimesh) and agree within 1 %.
-- **Clamped horn joints.** These follow the arm review, with one change.
-  - Capacity is washer pull-through (π·D_w·t_floor) plus the anti-rotation arm screw (Ø1.2 drilled, 3 mm engaged at
-    r 13; assumed), taken against the interlayer shear allowable.
-  - The pivot is the horn hub's edge (r 3.6), not the arm tip. The 1.6 mm arm of a micro horn cannot carry the pivot
-    force.
-  - When the far side of the hub lifts, the arm screw is on the pressed side and adds nothing.
-  - The M2 thread in the metal spline, and the horn itself, are bought parts. They are left to the proof test.
-- **Tab screws.**
-  - Pull-out is τ = F / (π · 1.5 · L), using the printed Ø1.5 pilot and the engaged length: an M2×8 through the 2.5 mm
-    tab, limited by the plate thickness.
-  - Rocking about the screw line pivots on the tab edge, 6 mm from the screws. Rocking along the servo uses the 27.8 mm
-    screw spacing.
-  - Servo bodies bearing on the window walls get no credit. A 0.2 mm clearance does not close before the screws carry
-    the load.
-- **Stress concentration factors (Kt):**
-  - 2.5 at sharp internal or window corners;
-  - 2.0 at holes in PETG and at the 45° gusset tip;
-  - 1.5 at rounded pocket edges and 45° ramps;
-  - 1.6 at the r2.5 hub–arm fillet.
+- **Printed:** 4 perimeters (1.67 mm band), 1.0 mm top and bottom skins, 50 % gyroid core. The core counts at
+  stiffness ρ² = 0.25 and strength ρ^1.5 = 0.35 (rover-wheel review).
+  - Sections are rastered from the built solid. Areas agree with build123d's exact sections within 0.6 %.
+  - As printed, the in-plane second moment is 0.71–0.83 × solid (0.83 through the tie slot, whose perimeters fill
+    the section); the out-of-plane one is 0.81–0.83 × solid.
+- **Bending** is taken on the composite section (biaxial, unsymmetric). Kt:
+  - 1.5 over the horn hub;
+  - 2.0 at the arm-screw hole (x 13), the tie slot (x 20) and the inner pilot row (x 25.6).
+- **Torsion,** as printed: the perimeter/skin tube alone carries it (Bredt; the core is ignored).
+  - The side walls carry it across the layers.
+  - The skins carry it along the layers.
+  - Solid Roark values are advisory.
+- **Horn clamp:** the predecessor's model.
+  - The joint tips on the horn hub's edge, r 3.6.
+  - Capacity is the Ø6 washer's plug shear through the whole link, z 0–7: 84 mm² as printed (94 solid), 524 N.
+- **Tibia servo:** a rigid body on its two screws.
+  - Pull-out = roll over the tab edges (6.1 mm) + pitch over the screw spacing + any pull off the back face.
+  - The case gets no credit in the window. The window rails alone are advisory: the case, bolted at both tab rows,
+    carries the window's torsion through the tab couples, which the screw rows check.
 
 ## Allowables and sources
 
-`library/materials.csv` has no rows and `inputs/` has no printed-specimen datasheet, so these are the strength-checks
-**placeholders** for PETG. **NEEDS_TEST is the best verdict possible.**
+Placeholders (no rows in `library/materials.csv`, no datasheet in `inputs/`):
+- along / across the layers: 25 / 12.5 MPa;
+- in-plane / interlayer shear: 12.5 / 6.25 MPa;
+- bearing: 25 MPa;
+- infill core: ρ^1.5 × these;
+- E: 1.8 GPa.
 
-| Quantity | Value | Source |
+So NEEDS_TEST is the best possible verdict.
+
+## Results (as specified, as printed)
+
+| # | Case | Section | Dir | Stress | Allow. | SF | Req. | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 1 | femur stall 216 N·mm | horn arm on the pocket wall | XY | 1.59 | 25.0 | 15.74 | 3 | OK |
+| 2 | sustained 3.58 N | horn clamp: Ø6 washer pull-through | Z shear | 0.14 | 6.25 | 45.40 | 4 | OK |
+| 3 | walking 7.16 N | horn clamp | Z shear | 0.28 | 6.25 | 22.70 | 4 | OK |
+| 4 | foot friction | horn clamp | Z shear | 0.61 | 6.25 | 10.22 | 4 | OK |
+| 5 | shove | horn clamp | Z shear | 0.94 | 6.25 | 6.66 | 3 | OK |
+| 6 | stall | horn clamp | Z shear | 1.39 | 6.25 | 4.50 | 3 | OK |
+| 7 | drop 19.2 N | horn clamp | Z shear | 0.74 | 6.25 | 8.44 | 3 | OK |
+| 8 | sustained | worst section: x 25.6, inner pilot row (Kt 2) | XY | 0.43 | 25.0 | 58.63 | 4 | OK |
+| 9 | walking | x 25.6 | XY | 0.85 | 25.0 | 29.31 | 4 | OK |
+| 10 | foot friction | x 13, arm-screw hole (Kt 2) | XY | 1.85 | 25.0 | 13.49 | 4 | OK |
+| 11 | shove | x 13 | XY | 2.83 | 25.0 | 8.83 | 3 | OK |
+| 12 | stall | x 4, over the horn hub (Kt 1.5) | XY | 2.08 | 25.0 | 12.02 | 3 | OK |
+| 13 | drop | x 25.6 | XY | 2.80 | 25.0 | 8.94 | 3 | OK |
+| 14 | walking | torsion x 16.5, skin tube | Z shear | 0.21 | 6.25 | 30.17 | 4 | OK |
+| 15 | shove | torsion | Z shear | 0.70 | 6.25 | 8.89 | 3 | OK |
+| 16 | stall | torsion | Z shear | 1.08 | 6.25 | 5.80 | 3 | OK |
+| 17 | drop | torsion | Z shear | 0.56 | 6.25 | 11.21 | 3 | OK |
+| 18 | sustained | tibia-servo tab screw pull-out (M2 × 8 from the back, 5.5 mm) | Z shear | 0.16 | 6.25 | 39.16 | 4 | OK |
+| 19 | walking | tab screw pull-out | Z shear | 0.32 | 6.25 | 19.58 | 4 | OK |
+| 20 | foot friction | tab screw pull-out | Z shear | 0.56 | 6.25 | 11.14 | 4 | OK |
+| 21 | shove | tab screw pull-out | Z shear | 0.84 | 6.25 | 7.43 | 3 | OK |
+| 22 | stall | tab screw pull-out | Z shear | 1.32 | 6.25 | 4.73 | 3 | OK |
+| 23 | drop | tab screw pull-out | Z shear | 0.85 | 6.25 | 7.31 | 3 | OK |
+| 24 | drop | tab pilot bearing | XY | 2.03 | 25.0 | 12.29 | 3 | OK |
+| 25 | drop | pilot → window ligament 1.45 mm CAD | XY shear | 0.24 | 12.5 | 51.12 | 3 | OK |
+| 26 | knee stall 216 N·mm | pilot bearing, 2 screws 27.8 apart | XY | 0.74 | 25.0 | 33.78 | 3 | OK |
+| 27 | assembly, snug 125 N | Ø6 washer pull-through (as printed) | Z shear | 1.49 | 6.25 | 4.19 | 3 | OK |
+| 28 | assembly, snug | Ø6 washer bearing on the clamp hole's perimeter ring | bearing | 5.44 | 25.0 | 4.59 | 3 | OK |
+
+**Lowest SF 4.19 (required 3), at row 27.**
+
+Advisory:
+
+| Case | Section | SF |
 |---|---|---|
-| Tension or bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
-| Tension or bending across the layers (Z) | 12.5 MPa | 0.5 × in-plane (placeholder) |
-| Shear: in-plane / interlayer (pull-out, washer pull-through, tear-out in standing walls) | 12.5 / 6.25 MPa | 0.5 × normal (Tresca), as in the arm and rover reviews |
-| Bearing (compression on a layer face or a wall) | 25 MPa | in-plane value: compression does not separate the layers |
-| E | 1.8 GPa | skill placeholder |
+| assembly, "firm" 0.1 N·m (250 N) | washer pull-through, as printed | 2.09: keep "snug" |
+| shove / drop, window rails alone, servo case ignored (Kt 2.5, solid) | rails | 1.31 / 1.56 (see Assumptions) |
+| drop with friction in any direction (beyond the spec) | tab screw pull-out / horn clamp / torsion | 2.45 / 2.36 / 3.07 |
+| any combination of stalled servos (beyond the spec) | tab screws / clamp / torsion | 3.55 / 3.72 / 4.77 |
+| walking at the change-set mass, 906 g | clamp / worst section / tab screws | 21.05 / 27.18 / 18.15 |
 
-Required SF: 3 for short-term loads, 4 for cyclic or sustained loads. Service temperature 40 °C against ≈ 70 °C
-softening: OK.
+## Proof test
 
-## Results (copied from `python3 strength_calc.py`)
+**Spec §8's test is the right kind; three changes bring it to the loads.**
+1. **Set-up:** as written. The femur sits on its horn on an MG90S clamped in a vice, clamp screw snug (0.05 N·m),
+   with the tibia servo (reversed) and the tibia fitted. The femur is level, the tibia hangs straight down, and a stop
+   bears on the femur's rear end.
+2. **Load: 1.5 kg** (was 1 kg) at the foot tip for **1 min**.
+   - This is 2 × the walking foot load (7.7 N at 906 g), the top of the skill's 1.5–2 ×. The femur root then sees
+     about 660 N·mm in plane.
+   - Then **turn the servo over in the vice, move the stop to the other side, and repeat.** A hanging weight pulls the
+     foot opposite to the ground's push, and the horn clamp tips on a different side each way.
+3. **Side push: 6 N** (was 3 N) at the foot tip, each way, for 10 s: 1.5 × the 4.0 N a coxa stall puts there. This
+   covers the stall rows (clamp 4.50, tab screws 4.73) and the tab screws' pull-out direction.
 
-| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
-|---|---|---|---|---|---|---|---|
-| 1 | femur stall 216 N·mm: horn-arm bearing on the pocket wall | XY | 1.59 | 25.00 | 15.74 | 3 | OK |
-| 2 | sustained 2.90 N: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 0.14 | 6.25 | 45.73 | 4 | OK |
-| 3 | walking 5.80 N: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 0.27 | 6.25 | 22.87 | 4 | OK |
-| 4 | scrub: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 0.55 | 6.25 | 11.46 | 4 | OK |
-| 5 | shove 3 N: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 0.98 | 6.25 | 6.36 | 3 | OK |
-| 6 | stalls: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 0.92 | 6.25 | 6.77 | 3 | OK |
-| 7 | drop 19.2 N: femur horn clamp (Ø6 washer, 5 mm floor + arm screw) | Z shear | 1.11 | 6.25 | 5.61 | 3 | OK |
-| 8 | sustained 2.90 N: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 0.44 | 25.00 | 56.39 | 4 | OK |
-| 9 | walking 5.80 N: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 0.89 | 25.00 | 28.19 | 4 | OK |
-| 10 | scrub: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 1.59 | 25.00 | 15.75 | 4 | OK |
-| 11 | shove 3 N: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 2.81 | 25.00 | 8.90 | 3 | OK |
-| 12 | stalls: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 2.31 | 25.00 | 10.81 | 3 | OK |
-| 13 | drop 19.2 N: plate over the horn pocket x 13, arm-screw hole (Kt 2) | XY | 2.55 | 25.00 | 9.82 | 3 | OK |
-| 14 | walking 5.80 N: full section x 16.5, 19.0 x 7.0 | XY | 0.39 | 25.00 | 63.67 | 4 | OK |
-| 15 | walking 5.80 N: inner tibia-servo pilot row x 25.75 (Kt 2) | XY | 0.53 | 25.00 | 47.10 | 4 | OK |
-| 16 | walking 5.80 N: plate torsion, full 19.0 x 7.0 section (Z shear) | Z shear | 0.39 | 6.25 | 16.01 | 4 | OK |
-| 17 | shove 3 N: full section x 16.5, 19.0 x 7.0 | XY | 1.20 | 25.00 | 20.87 | 3 | OK |
-| 18 | shove 3 N: inner tibia-servo pilot row x 25.75 (Kt 2) | XY | 2.18 | 25.00 | 11.44 | 3 | OK |
-| 19 | shove 3 N: plate torsion, full 19.0 x 7.0 section (Z shear) | Z shear | 1.06 | 6.25 | 5.92 | 3 | OK |
-| 20 | drop 19.2 N: full section x 16.5, 19.0 x 7.0 | XY | 1.00 | 25.00 | 25.12 | 3 | OK |
-| 21 | drop 19.2 N: inner tibia-servo pilot row x 25.75 (Kt 2) | XY | 2.24 | 25.00 | 11.16 | 3 | OK |
-| 22 | drop 19.2 N: plate torsion, full 19.0 x 7.0 section (Z shear) | Z shear | 1.29 | 6.25 | 4.84 | 3 | OK |
-| 23 | sustained 2.90 N: tibia-servo tab screw pull-out (M2x8, 5.5 mm, vertical pilot) | Z shear | 0.12 | 6.25 | 51.94 | 4 | OK |
-| 24 | scrub: tibia-servo tab screw pull-out (M2x8, 5.5 mm, vertical pilot) | Z shear | 0.49 | 6.25 | 12.87 | 4 | OK |
-| 25 | shove 3 N: tibia-servo tab screw pull-out (M2x8, 5.5 mm, vertical pilot) | Z shear | 0.88 | 6.25 | 7.14 | 3 | OK |
-| 26 | drop 19.2 N: tibia-servo tab screw pull-out (M2x8, 5.5 mm, vertical pilot) | Z shear | 0.91 | 6.25 | 6.89 | 3 | OK |
-| 27 | drop: tibia-servo tab pilot bearing | XY | 2.06 | 25.00 | 12.12 | 3 | OK |
-| 28 | drop: pilot-to-window ligament 1.60 tear-out, whole radial force on one screw | XY shear | 0.28 | 12.50 | 45.37 | 3 | OK |
-| 29 | knee stall 216 N·mm: tab pilot bearing (2 screws, 27.8 apart) | XY | 0.74 | 25.00 | 33.78 | 3 | OK |
-| 30 | assembly: clamp screw snug 0.05 N·m (125 N): washer pull-through, 5.0 mm femur floor | Z shear | 1.33 | 6.25 | 4.71 | 3 | OK |
-| 31 | assembly: clamp screw snug (125 N): washer bearing on the floor | XY | 5.44 | 25.00 | 4.59 | 3 | OK |
-
-**lowest SF 4.59 (required 3) at: assembly: clamp screw snug (125 N): washer bearing on the floor**
-
-Advisory (not in the verdict):
-
-| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |
-|---|---|---|---|---|---|
-| assembly: clamp screw 'firmly' 0.1 N·m (250 N): washer pull-through, 5.0 mm femur floor | Z shear | 2.65 | 6.25 | 2.36 | 3 |
-| walking 5.80 N: window rails alone, servo case ignored (Kt 2.5) | XY | 0.81 | 25.00 | 30.69 | 4 |
-| shove 3 N: window rails alone, servo case ignored (Kt 2.5) | XY | 5.32 | 25.00 | 4.70 | 3 |
-| drop 19.2 N: window rails alone, servo case ignored (Kt 2.5) | XY | 6.57 | 25.00 | 3.80 | 3 |
-
-## Servo torques (static, N·mm; MG90S stall 216 N·mm at 6 V)
-
-| pose / load | coxa | femur | knee | femur / stall |
-|---|---|---|---|---|
-| neutral stance, 6 feet (1.12 N) | 0 | 50 | 0 | 23% |
-| neutral stance, tripod (2.78 N) | 0 | 125 | 0 | 58% |
-| walking pose, gait ±15° (2.90 N) | 0 | 131 | 0 | 60% |
-| walking pose, MAX_COXA ±30° (3.18 N) | 0 | 143 | 0 | 66% |
-| walking pose + foot scrub mu 0.5 outward (2.90 N) | 23 | 232 | 102 | 107% |
-| walking pose x2 dynamics (5.80 N) | 0 | 261 | 0 | 121% |
-| tibia 18.7° inward, foot midway (2.90 N) | 0 | 65 | 65 | 30% |
-
-**The femur servos do not have enough margin.**
-- **Standing evenly on all six feet:** each femur holds 50 N·mm (23 % of stall). That is fine.
-- **Stopped on a tripod:** the femur holds **125–143 N·mm (58–66 %)** continuously. That is the middle leg's 41.5–47.5 %
-  share at the 45 mm femur lever. Micro servos held this close to stall run hot and drift; a common target for
-  continuous holding is about ⅓ of stall.
-- **Walking:** peaks go past stall. The × 2 dynamics give 261 N·mm (121 %). Foot scrub pushing the foot outward gives
-  232 N·mm (107 %). Expect the body to sag at each tripod change.
-- **Knee and coxa servos:** lightly loaded in the coded gait, ≤ 102 N·mm (47 %), and that only under scrub. In the
-  neutral pose a vertical foot load passes through the knee axis and gives no coxa torque.
-- **Mass:** the coxa's required changes add ≈ 14 % to the robot mass, and every number here rises with it.
-
-Fixes, cheapest first:
-1. **Change the gait pose (software).** Stand and walk with the tibia turned **18.7° inward**, so the foot sits midway
-   between the femur axis and the knee. The moment then splits: femur 65 and knee 65 N·mm (30 % each) at the same
-   2.90 N. The body drops 3.7 mm unless the femur is raised slightly to match.
-2. **Use proper inverse kinematics (software).** Move the stance feet in straight lines so they stop scrubbing (this
-   removes the 107 % case), and soften the tripod hand-over so the dynamic peak stays well under × 2.
-3. **Change the hardware.** Fit femur servos with about twice the torque (a ≈ 4–5 kg·cm metal-gear micro servo), or
-   shorten the femur. L_F 45 → 30 cuts femur torque by a third, but changes the leg geometry and the assembly check.
-
-## Proof test (spec §8, made specific)
-
-The spec's test is the right size: 1 kg at the knee is about 1 × the drop cap at the femur root. It needs a way to stop
-the femur servo back-driving, a defined clamp torque, and a measurable pass criterion.
-
-1. **Set-up.**
-   - Fit the femur on its horn on an MG90S clamped in a vice, with the M2×12 clamp screw **snug (0.05 N·m)**.
-   - Fit the tibia servo and the tibia, with the femur level and the tibia hanging straight down.
-   - Put a stop **above the femur's rear end** (behind the horn), so the femur servo's gears do not carry the moment.
-2. **Load.** Hang **1 kg** from the foot tip for **1 min**. With the tibia vertical, this loads the femur root like the
-   foot does, torsion included.
-3. **Shove.** Push **3 N** sideways at the foot tip, each way, for 10 s.
-
-Pass:
+Pass, as written:
 - no cracks or whitening at the pocket, the window corners or the pilots;
 - no gap over 0.2 mm (feeler gauge) between the femur and the horn;
 - after unloading, the knee returns to within 0.3 mm of where it started.
+
+## Servo torques (system context)
+
+At 840 g with the CG margin, static over the 30/40 mm gaits: femur 94 N·mm (43 % of stall), knee 107 N·mm (50 %).
+×2 walking takes the knee to stall at a 40 mm stride. Walk at 30 mm, as the assembly plan chose, and watch the case
+temperatures.

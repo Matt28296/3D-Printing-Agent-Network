@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 2,
+    "DESIGN": 3,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 in review (round 1 DFM FAIL; round 2 DFM pass after doc fixes, strength FAIL): T_BODY 6, coxa servos reversed (B1 option 2), new mounts and columns",
+    "DESIGN": "FAIL round 3 (third DESIGN failure): strength SF 2.03 < 3 (strip outside each coxa window, tab-screw bearing, columns)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
-  "updated": "2026-10-26T07:56:16+00:00"
+  "open_questions": [
+    "Third DESIGN failure. Proposed round 4: MARGIN 4 to 8, snug tab screws with Nyloc nuts, columns \u00d88 to \u00d810 (checked together: SF 3.22), then re-run the assembly check. Waiting for the user's decision."
+  ],
+  "updated": "2026-10-26T09:32:12+00:00"
 }

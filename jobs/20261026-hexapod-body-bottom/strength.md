@@ -1,204 +1,192 @@
 VERDICT: FAIL
 
-# Strength check: 20261026-hexapod-body-bottom
+# Strength check: 20261026-hexapod-body-bottom, round 3
 
-strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-body-bottom/strength_calc.py`
+Independent strength-analyst · 2026-10-26 · `python3 jobs/20261026-hexapod-body-bottom/strength_calc.py` (about 2 min;
+needs build123d, trimesh and scipy, like `cad_checks.py`)
 
-**FAIL. 3 of 23 rows fail, all at the six coxa-servo mounts. The lowest SF is 1.71.**
+**FAIL. 4 of 27 rows fail. The lowest SF is 2.03, at the strip outside each coxa window's outboard end, in the 20 cm
+drop.** The spec (§4) asked for the reversed mount to be re-checked: its load path is new in round 3, and it doesn't
+pass.
 
-- **Plate strip outside each coxa window's outer end** (7.45 mm deep × 4 mm, between the window and the outline
-  edge). The coxa servo's outer tab pushes this strip up while the inner tab screw pulls the plate down. That is the
-  whole leg moment, 82 mm × F_up, over a 27.8 mm tab spacing. **Walking: SF 3.84 (needs 4). Drop: SF 1.71.**
-- **Coxa-servo tab screws** (M2×8 self-tapping, 4 mm engaged): pull-out **SF 1.94** in the drop. The tangential foot
-  offset of 15.8 mm also rocks the servo about its screw line.
+1. **The strip outside each coxa window's outboard end.**
+   - The tabs now sit on the plate's top face, so the outboard M2 screw pulls the strip **up**, through its own
+     clearance hole.
+   - In the drop that is 51 N. The section through the hole is 4.5 mm net of the 7.3 mm strip.
+   - **Drop: SF 2.03 at the hole, 2.27 at the window's corners.** Walking passes (5.58 / 6.24).
+   - Two things made it worse than round 1's T_BODY 6 check (3.23):
+     - Round 1 had the tab bearing on the strip, with no hole in the section.
+     - The tucked stance reaches the drop cap with no inward friction, so the uplift rose from 45 to 51 N.
+   - It fails under every reasonable model: 2.68 with a shorter span, 2.15 with solid sections. So the geometry has
+     to change.
+2. **Tab-screw washer bearing at assembly.** Each M2 head bears on the plate's underside through an M2 washer,
+   14.2 mm² (the hole is slotted).
+   - Snug, 0.05 N·m ≈ 125 N: 8.83 MPa, **SF 2.83**.
+   - BUILD_GUIDE §3's "tighten to a firm stop", about 0.1 N·m: **SF 1.42**.
+3. **Columns, robot lifted by the deck and tipped 90°.** **SF 2.29** as printed (2.85 solid).
+   - The robot below the deck is now 748 g; round 2 had 578 g (+30 %).
+   - Round 1's 3.69 used the same model at 578 g with solid sections.
 
-Everything else passes with room to spare:
-- plate mid-span through the LiPo strap slots: SF ≥ 4.6;
-- columns: handling SF 3.69, drop SF 6.95;
-- column screws: SF 45;
-- pilots and ligaments: SF ≥ 19.
+**Everything else passes.** Washer pull-through 6.23 in the drop; screw bearing and ligament ≥ 34; plate mid-span
+≥ 7.03; column tension 65; buckling 143; deck-screw pull-out 35.
 
-## Print orientation and critical sections
+## Required changes, checked as a set (at 906 g, with the coxa's change)
 
-- **Orientation.** Printed flat with the tab face on the bed. Plate bending, pilot bearing and ligament tear-out
-  around the vertical tab pilots run along the layers (XY). Tab-screw pull-out shears the layers (Z shear).
-- **Columns.** Ø8 × 40, standing, with r1.5 root fillets (Kt 1.5). Bending and tension at the root act across the
-  layers (Z).
-- **Sections checked:**
-  - for each coxa mount: tab-screw pull-out, pilot bearing (stall and drop), the 1.60 mm pilot-to-window ligament, and
-    the plate strip outside the window, modelled as fixed-fixed over the window width plus one plate thickness each
-    side (the plate carries on beside the window at every mount); a rigid-inclusion model (rover precedent) is
-    advisory;
-  - plate mid-span, on the hull chord through a strap slot (133 mm net, Kt 2.5): tripod span when walking and in a
-    3-foot landing, left–right span in a 6-foot landing;
-  - columns: handling with the robot lifted by the deck and tipped 90°, tension, drop inertia of the deck group
-    (105 g at 17.2 g, landing tilted 20°), buckling;
-  - pull-out of the M3 deck screws from the columns.
+1. **Deepen the strip: `MARGIN` 4 → 8** (`model.py`). The strip outside each window goes from 7.25 to 11.25 mm deep.
+   - Drop: **3.37** at the hole, **3.39** at the corners.
+   - Walking: 8.60 / 8.65.
+   - The plate gains 10.6 g printed.
+   - `MARGIN` 7 gives only 3.04 / 3.10, too close. `MARGIN` 6 fails (2.68).
+   - A local outboard extension that gives the same 11.25 mm strip at each window's outboard end is equivalent.
+   - The plate's outline moves 4 mm out all round, so re-run `assembly_check.py`. By my estimate the femur at +90°
+     (C x ≥ 22.5) still clears the new edge (u 17.4) by about 5 mm.
+2. **Tab screws snug, ≤ 0.045 N·m** (≈ 110 N): washer bearing **3.22**.
+   - Put this in BUILD_GUIDE §3 step 5 and spec §2, in place of "tighten to a firm stop".
+   - Use **nylon-insert (Nyloc) M2 nuts**, so the nuts hold without preload. PETG creeps (fdm-design-rules), so
+     preload is not counted on for strength anyway.
+   - A larger washer doesn't fit the outboard screw. Its Ø5 washer already reaches the servo's gear boss (r 5.9) and
+     the window's end.
+3. **Columns Ø8 → Ø10** (`COLUMN_D`; r1.5 root fillets kept): **3.68**. Ø9 gives only 2.84.
+   - Re-check the LiPo passage between the column fillet feet: 37 mm against the 35 mm pack, 1 mm each side.
+   - Re-check the corner coxa servos' inner tab nuts. By my estimate they keep about 2.4 / 1.2 mm to the column and
+     its fillet foot (the assembly plan has 3.4 / 2.2 at Ø8).
+   - Sensitivity: if the deck's clamp on the column tops (one M3 each) is counted, the root moment is about 0.7 × the
+     cantilever's and Ø8 gives 3.28. I don't count it, because the M3 joint's preload is not counted on in PETG.
 
-## Load cases (re-derived; the same block runs at the top of all five hexapod `strength_calc.py`)
+With these three changes every row passes; the lowest is the strip in the drop, 3.37.
 
-Inputs: `hex_frame.py`, `tools/hobby_parts.py`, the five `model.py` files (top-level constants read with `ast`) and the
-five `geometry.json` volumes. The leg frames are rebuilt as in `leg_frames()` of `assembly_check.py`; the feet match
-`assembly_check.json` to 0.1 mm. In the neutral stance the foot is 77.0 mm out from the coxa axis, **15.8 mm to the
-side of it** (the tibia's mid-plane sits two link thicknesses in front of the coxa line), and 87.0 mm below the coxa
-bracket's back face. The body underside is 96.4 mm up.
+## What changed since strength round 1
 
-| Load | Spec §4 | Re-derived here | Duration, SF |
-|---|---|---|---|
-| Robot mass | ≈ 0.6 kg | **683 g (6.70 N)**. Printed parts at solid volume × 1.27 g/cm³, **infill factor 1.0** (an upper bound: with 3–4 perimeters and 5 top/bottom layers on 3–7 mm plates the slicer will report ≈ 75–90 %): bottom 95.8, top 46.6, coxa 6 × 10.3, femur 6 × 7.7, tibia 6 × 8.9 = 304 g. Bought: 18 × MG90S 241, LiPo 65, 2 × PCA9685 18, ESP32 10, UBEC 15, wiring, screws and buck 30 | — |
-| Foot load on a tripod | 6 N / 3 = 2 N | CG at the body centre, shares from the real foot positions. The middle leg of a tripod carries 41.5 % in the stance and up to **43.3 %** over the coded ±15° coxa sweep (47.5 % at MAX_COXA 30°): **2.90 N** | sustained (robot stopped on a tripod, or one foot 2 mm high): SF 4 |
-| Walking | 4 N (2 N × 2) | 2 × 2.90 = **5.80 N** up | cyclic: SF 4 |
-| Foot scrub (missed by the spec) | — | `hexapod_test.ino` sweeps the stance coxae ±15° with femur and tibia fixed. The front and rear feet cannot follow those arcs while the body moves straight, so they slide every step. Friction μ 0.5 × 2.90 N in the worst horizontal direction, limited by each servo's stall | cyclic: SF 4 |
-| Servo stalls | 216 N·mm per joint | Each stall applied at the foot (femur ±4.8 N vertical = 216/45; coxa 2.8 N tangential = 216/77; knee 3.1 N radial = 216/70; with 2.90 N up), and each stall torque straight into its horn pocket and tab screws | short-term: SF 3 |
-| Sideways shove | 3 N at a foot | 3 N in any horizontal direction, with 0–2.90 N up | short-term: SF 3 |
-| 20 cm drop | "3 × weight over 6 feet, ≈ 3 N per foot" | E = m·g·h = **1.34 J**. Stated stopping distance if the legs held: **δ = 10 mm** (servo backlash and position band ≈ 4 mm at the foot, horn/link/floor flex ≈ 3 mm, carpet ≈ 3 mm). A linear stop gives 281 N peak: **47 N per foot landing flat on 6 feet, 94 N on 3**. A leg cannot push that hard. Its femur and knee servos back-drive at T_bd ≈ 2 × stall = 432 N·mm (assumed: gear losses act in both directions). That caps the vertical foot force at 2·T_bd/L_F = **19.2 N**, with ≤ 6.2 N of inward friction, which a splaying landing supplies. Both landings therefore load each foot to 19.2 N plus up to 6.2 N radial. The rest of the energy goes into back-driving the servos over 12 mm of body travel (6 feet) or 26 mm (3 feet), inside the 49 mm ground clearance. The spec's 3 N per foot implies a 100–400 mm stop, so it is not used | short-term: SF 3 |
-| Drop inertia of the body | — | Support load factor at the cap: 6 × 19.2 / 6.70 = **17.2 g** on 6 feet, 8.6 g on 3 | short-term: SF 3 |
-| Handling | top plate only | Robot lifted by the top plate, × 2. Robot lifted by one leg: that leg's femur servo back-drives at the same 19.2 N, so the drop envelope covers it | short-term: SF 3 |
-| Assembly (missed by the spec) | — | M2 horn clamp screw **snug, 0.05 N·m ≈ 125 N** preload (verdict rows; F = T / (0.2 d)). BUILD_GUIDE's "firmly", taken as 0.1 N·m ≈ 250 N, is advisory | short-term: SF 3 |
-| Temperature | 40 °C | PETG softens at ≈ 70 °C: 30 °C margin, OK | — |
+| Round-1 required change | Round 3 | |
+|---|---|---|
+| T_BODY 4 → 6 | `hex_frame.T_BODY` 6 | made |
+| M2 × 12 machine screws + nuts in Ø2.4 CAD clearance holes | made, but with the servo **reversed** (B1 option 2): head + Ø5 washer under the plate, nut on the tab inside the body | load path re-checked here (rows 1–19) |
+| Proof test into spec §8 | in spec §8 | see "Proof test" |
 
-**How the drop result depends on the back-drive assumption.** At 1.5 × stall the cap is 14.4 N per foot; at 1 × stall
-it is 9.6 N. At 1 × stall a 3-foot landing runs out of travel: the body reaches the floor after 49 mm with ≈ 0.25 J
-left. The lowest points are the coxa brackets' vertical plates, which then take the rest of the impact edge-on. The
-proof drop test settles which case applies.
+Round 3 also moved the middle mounts to y ±56 and the columns to (±36, ±25), and added six tie slots.
+- Every mount's outboard edge is still 7.25 mm past its window: probed at all six mounts.
+- The tie slots sit beside the windows (S0 u 2.3–5.7, v −15…−17), about 9 mm from the strip's corner support. They
+  are not in a checked section.
+
+## Load cases
+
+The same block as the coxa's `strength.md`, rebuilt by `strength_calc.py`:
+- **Robot mass 840 g:** 334 g printed (layer model, calibrated on the four round-2 slices) + 506 g bought (itemised
+  from BUILD_GUIDE §1). 906 g with every round-3 change.
+- **Lone-leg share up to 0.435** (CG anywhere within ±3 mm).
+- **Sustained 3.58 N up**, walking ×2 = 7.16 N, every planted foot of the 30/40 mm IK gaits.
+- **Foot friction:** µ 0.5 × 3.58 N in any direction, servos ≤ stall.
+- **Shove:** 3 N with 0 … 3.58 N up.
+- **Servo stalls**, one at a time.
+- **20 cm drop:** 19.2 N up per foot at the servo back-drive cap (2 × stall), with radial friction.
+- **Plate mid-span drop:** body deceleration 6 × 19.2 / 8.24 N = **14.0 g** on 6 feet, 7.0 g on 3.
+- **Handling:** robot lifted by the deck, ×2.
+- **Assembly:** tab screws snug, 0.05 N·m ≈ 125 N (F = T / 0.2d).
+- Service temperature 40 °C against PETG's ≈ 70 °C: OK.
+
+**The mount (reversed).** In the coxa servo's frame S0 (fixed to the plate):
+- **Pitch.** The foot force's moment about the inboard screw line lifts the outboard end. The outboard screw carries
+  it in tension, pivoting conservatively on the other screw, 27.8 mm away. At the stance in the drop:
+  19.2 N × 73.8 mm / 27.8 = **51 N**.
+- **Roll** about the screw line goes to the tab edges, 6.1 mm off, and adds to the screw tension. It is a local couple
+  on the strip, so it does not bend it.
+- **Strip.** The strip outside the window is a fixed-fixed beam over the window width + one plate thickness each side
+  (24.8 mm), the predecessor's model, loaded at mid-span by the uplift. Two sections are taken from the solid:
+  - **at the hole:** 4.54 mm of material, I 76.6 mm⁴ as printed (81.1 solid), Kt 2;
+  - **at the window's corners:** 7.29 mm, I 107.1 mm⁴ (130.5 solid), Kt 2.5, sharp corners.
 
 ## Assumptions
 
-- **Envelope search.** Every case searches its whole foot-force envelope: the vertical load, the size and direction of
-  the friction, and every servo torque within its cap. Each section takes its own worst point. A leg's internal loads
-  depend only on the foot force expressed in the coxa frame, so one leg covers all six.
-- **Section properties.** They come from the `model.py` parameters. They were cross-checked against sections cut from
-  the CAD (trimesh) and agree within 1 %.
-- **Clamped horn joints.** These follow the arm review, with one change.
-  - Capacity is washer pull-through (π·D_w·t_floor) plus the anti-rotation arm screw (Ø1.2 drilled, 3 mm engaged at
-    r 13; assumed), taken against the interlayer shear allowable.
-  - The pivot is the horn hub's edge (r 3.6), not the arm tip. The 1.6 mm arm of a micro horn cannot carry the pivot
-    force.
-  - When the far side of the hub lifts, the arm screw is on the pressed side and adds nothing.
-  - The M2 thread in the metal spline, and the horn itself, are bought parts. They are left to the proof test.
-- **Tab screws.**
-  - Pull-out is τ = F / (π · 1.5 · L), using the printed Ø1.5 pilot and the engaged length: an M2×8 through the 2.5 mm
-    tab, limited by the plate thickness.
-  - Rocking about the screw line pivots on the tab edge, 6 mm from the screws. Rocking along the servo uses the 27.8 mm
-    screw spacing.
-  - Servo bodies bearing on the window walls get no credit. A 0.2 mm clearance does not close before the screws carry
-    the load.
-- **Stress concentration factors (Kt):**
-  - 2.5 at sharp internal or window corners;
-  - 2.0 at holes in PETG and at the 45° gusset tip;
-  - 1.5 at rounded pocket edges and 45° ramps;
-  - 1.6 at the r2.5 hub–arm fillet.
+- **Printed construction:** 3 perimeters (band 1.26 mm), 1.0 mm top and bottom skins, 25 % gyroid core. The core is a
+  cellular solid: stiffness ρ² = 0.06, strength ρ^1.5 = 0.13 (rover-wheel review).
+  - Each layer is rasterised from the built solid.
+  - Around each tab-screw hole, the hole's perimeter ring covers 85 % of the washer's radius, so the washer bears
+    on solid material.
+- **Section properties** come from the build123d solid. Rastered areas agree with build123d's exact sections within
+  0.05 %, except the strip through the slotted hole: +1.08 %, because its 1.1 mm ligament is the hardest to raster.
+  A 1 % excess can't move the `MARGIN` 8 result (3.37) below 3.
+- **No bolt preload is counted for strength.** The servo case gets no credit in its window (0.1–0.2 mm clearance).
+- **Columns:** cantilevers from the plate when the robot hangs from the deck on its side; deck joint taken as a pin.
+- **Plate mid-span:** a point load at the centre on the strap-slot chord (132.8 mm net), Kt 2.5. The load is what
+  rests on the plate: deck group, LiPo, UBEC and half the plate, 223 g.
+- **Drop cap:** 2 × stall back-drive, an assumption (spec, DR05). The drop test on carpet settles it.
 
 ## Allowables and sources
 
-`library/materials.csv` has no rows and `inputs/` has no printed-specimen datasheet, so these are the strength-checks
-**placeholders** for PETG. **NEEDS_TEST is the best verdict possible.**
+`library/materials.csv` has no rows and `inputs/` has no datasheet, so these are **placeholders** and NEEDS_TEST is
+the best possible verdict.
 
-| Quantity | Value | Source |
+| Quantity | Value (MPa) | Source |
 |---|---|---|
-| Tension or bending along the layers (XY) | 25 MPa | skill placeholder, PETG |
-| Tension or bending across the layers (Z) | 12.5 MPa | 0.5 × in-plane (placeholder) |
-| Shear: in-plane / interlayer (pull-out, washer pull-through, tear-out in standing walls) | 12.5 / 6.25 MPa | 0.5 × normal (Tresca), as in the arm and rover reviews |
-| Bearing (compression on a layer face or a wall) | 25 MPa | in-plane value: compression does not separate the layers |
-| E | 1.8 GPa | skill placeholder |
+| Along layers / across layers | 25 / 12.5 | placeholder, PETG |
+| Shear, in-plane / interlayer | 12.5 / 6.25 | 0.5 × normal |
+| Bearing | 25 | in-plane value |
+| Infill core | ρ^1.5 × the above (0.13 at 25 %) | Gibson–Ashby |
 
-Required SF: 3 for short-term loads, 4 for cyclic or sustained loads. Service temperature 40 °C against ≈ 70 °C
-softening: OK.
+## Results: the design as specified (as printed)
 
-## Results (copied from `python3 strength_calc.py`)
+| # | Case | Section | Dir | Stress | Allow. | SF | Req. | OK? |
+|---|---|---|---|---|---|---|---|---|
+| 1 | sustained 3.58 N | strip at the outboard screw hole (net 4.5 of 7.3 mm, Kt 2) | XY | 2.24 | 25.0 | 11.16 | 4 | OK |
+| 2 | sustained | strip at the window's corners (7.3 mm, Kt 2.5) | XY | 2.00 | 25.0 | 12.49 | 4 | OK |
+| 3 | walking 7.16 N | strip at the hole | XY | 4.48 | 25.0 | 5.58 | 4 | OK |
+| 4 | walking | strip at the corners | XY | 4.00 | 25.0 | 6.24 | 4 | OK |
+| 5 | foot friction | strip at the hole | XY | 3.80 | 25.0 | 6.59 | 4 | OK |
+| 6 | foot friction | strip at the corners | XY | 3.39 | 25.0 | 7.37 | 4 | OK |
+| 7 | shove | strip at the hole | XY | 5.16 | 25.0 | 4.85 | 3 | OK |
+| 8 | shove | strip at the corners | XY | 4.61 | 25.0 | 5.43 | 3 | OK |
+| 9 | stall | strip at the hole | XY | 6.02 | 25.0 | 4.15 | 3 | OK |
+| 10 | stall | strip at the corners | XY | 5.38 | 25.0 | 4.65 | 3 | OK |
+| **11** | **drop 19.2 N** | **strip at the hole (uplift 51 N)** | **XY** | **12.32** | **25.0** | **2.03** | **3** | **FAIL** |
+| **12** | **drop** | **strip at the corners** | **XY** | **11.01** | **25.0** | **2.27** | **3** | **FAIL** |
+| 13 | walking | Ø5 washer pulled through the plate by the outboard screw | Z shear | 0.44 | 6.25 | 14.34 | 4 | OK |
+| 14 | shove | washer pull-through | Z shear | 0.59 | 6.25 | 10.67 | 3 | OK |
+| 15 | drop | washer pull-through | Z shear | 1.00 | 6.25 | 6.23 | 3 | OK |
+| 16 | drop | screw bearing in the clearance hole | XY | 0.30 | 25.0 | 82.63 | 3 | OK |
+| 17 | drop | window → hole ligament 1.1 mm CAD, whole radial force on one screw | XY shear | 0.36 | 12.5 | 34.61 | 3 | OK |
+| 18 | coxa stall 216 N·mm | screws bearing in their holes | XY | 0.65 | 25.0 | 38.61 | 3 | OK |
+| **19** | **assembly, snug 125 N** | **Ø5 washer bearing on the plate underside (14.2 mm²)** | **bearing** | **8.83** | **25.0** | **2.83** | **3** | **FAIL** |
+| 20 | walking ×2, tripod span | plate mid-span through a strap slot (Kt 2.5) | XY | 0.42 | 25.0 | 59.43 | 4 | OK |
+| 21 | drop on 3 feet, 7.0 g | plate mid-span | XY | 1.47 | 25.0 | 16.95 | 3 | OK |
+| 22 | drop on 6 feet, 14.0 g | plate mid-span | XY | 3.55 | 25.0 | 7.03 | 3 | OK |
+| **23** | **handling, lifted by the deck and tipped 90°** | **column root above the r1.5 fillet (3.67 N at 40 mm, Kt 1.5)** | **Z** | **5.45** | **12.5** | **2.29** | **3** | **FAIL** |
+| 24 | handling | column tension | Z | 0.19 | 12.5 | 65.28 | 3 | OK |
+| 25 | drop, landing tilted 20° | column root (deck 91 g at 14.0 g) | Z | 1.59 | 12.5 | 7.85 | 3 | OK |
+| 26 | drop | column buckling, K 2: P_cr 449 N against 3.1 N | XY | 0.17 | 25.0 | 143.07 | 3 | OK |
+| 27 | handling | M3 × 8 deck screw pull-out from a column | Z shear | 0.18 | 6.25 | 34.77 | 3 | OK |
 
-| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
-|---|---|---|---|---|---|---|---|
-| 1 | sustained 2.90 N: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 0.66 | 6.25 | 9.49 | 4 | OK |
-| 2 | walking 5.80 N: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 1.32 | 6.25 | 4.74 | 4 | OK |
-| 3 | scrub: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 1.33 | 6.25 | 4.70 | 4 | OK |
-| 4 | shove 3 N: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 2.05 | 6.25 | 3.05 | 3 | OK |
-| 5 | stalls: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 1.85 | 6.25 | 3.37 | 3 | OK |
-| 6 | drop 19.2 N: coxa-servo tab screw pull-out (M2x8, 4 mm in the plate) | Z shear | 3.22 | 6.25 | 1.94 | 3 | **FAIL** |
-| 7 | coxa stall 216 N·mm: tab pilot bearing | XY | 1.29 | 25.00 | 19.31 | 3 | OK |
-| 8 | drop: tab pilot bearing | XY | 0.78 | 25.00 | 32.11 | 3 | OK |
-| 9 | drop: pilot-to-window ligament 1.60 tear-out, whole radial force on one screw | XY shear | 0.48 | 12.50 | 25.93 | 3 | OK |
-| 10 | walking x2, tripod: plate mid-span, 217 g at the centre, section through a strap slot (b 133, Kt 2.5) | XY | 0.70 | 25.00 | 35.76 | 4 | OK |
-| 11 | drop on 3 feet (8.6 g), tripod span: plate mid-span, 217 g at the centre, section through a strap slot (b 133, Kt 2.5) | XY | 3.00 | 25.00 | 8.32 | 3 | OK |
-| 12 | drop on 6 feet (17.2 g), left-right rows: plate mid-span, 217 g at the centre, section through a strap slot (b 133, Kt 2.5) | XY | 5.43 | 25.00 | 4.60 | 3 | OK |
-| 13 | sustained 2.90 N: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5) | XY | 3.25 | 25.00 | 7.68 | 4 | OK |
-| 14 | walking 5.80 N: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5) | XY | 6.51 | 25.00 | 3.84 | 4 | **FAIL** |
-| 15 | scrub: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5) | XY | 4.61 | 25.00 | 5.42 | 4 | OK |
-| 16 | shove 3 N: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5) | XY | 6.63 | 25.00 | 3.77 | 3 | OK |
-| 17 | drop 19.2 N: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5) | XY | 14.61 | 25.00 | 1.71 | 3 | **FAIL** |
-| 18 | handling: lifted by the deck, tipped 90°: column root bending (2.84 N at 40 mm, Kt 1.5) | Z | 3.39 | 12.50 | 3.69 | 3 | OK |
-| 19 | handling: lifted by the deck: column tension (2.84 N, Kt 1.5) | Z | 0.08 | 12.50 | 147.56 | 3 | OK |
-| 20 | drop on 6 feet, landing tilted 20°: column root bending (deck 105 g at 17.2 g, Kt 1.5) | Z | 1.80 | 12.50 | 6.95 | 3 | OK |
-| 21 | drop: column buckling, K 2: P_cr 558 N vs 4.4 N | XY | 0.20 | 25.00 | 126.65 | 3 | OK |
-| 22 | handling: M3x8 self-tapping pull-out from a column (2 screws carry it, Ø2.6 pilot, 5 mm) | Z shear | 0.14 | 6.25 | 44.96 | 3 | OK |
-| 23 | sustained: column under the deck group (compression) | XY | 0.01 | 25.00 | 4900.90 | 4 | OK |
+**Lowest SF 2.03 (required 3) at row 11.**
 
-**lowest SF 1.71 (required 3) at: drop 19.2 N: plate strip outside the coxa window (7.45 deep x 4.0, span 20.6, Kt 2.5)**
+Advisory:
 
-Advisory (not in the verdict):
+| Case | Section | SF |
+|---|---|---|
+| assembly at BUILD_GUIDE's "firm stop" (~0.1 N·m, 250 N) | washer bearing | 1.42 |
+| drop, strip span window + one thickness (18.8 mm) | strip at the hole | 2.68 |
+| drop, solid sections | strip at the hole | 2.15 |
+| drop with friction in any direction (beyond the spec) | strip at the hole | 1.89 |
+| any combination of stalled servos (beyond the spec) | strip at the hole | 3.53 |
+| handling, deck restraining the column tops (0.7 × cantilever) | column root | 3.28 |
 
-| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |
-|---|---|---|---|---|---|
-| walking 5.80 N: plate round a coxa window, rigid-inclusion model (r 16.1, Kt 2.5) | XY | 4.51 | 25.00 | 5.54 | 4 |
-| drop 19.2 N: plate round a coxa window, rigid-inclusion model (r 16.1, Kt 2.5) | XY | 9.56 | 25.00 | 2.61 | 3 |
+Change set at 906 g: the `MARGIN` sweep shows 6 → 2.68 / 2.82, 7 → 3.04 / 3.10, 8 → **3.37 / 3.39** (drop: hole /
+corners). Tab screws at 0.045 N·m: **3.22**. Columns Ø9 → 2.84, Ø10 → **3.68**.
 
-## Required changes (the script checks them as one set; all rows pass)
+## Proof test
 
-1. **Plate thickness.** T_BODY 4 → **6 mm** (`hex_frame.py`). Results:
-   - strip outside each coxa window: walking 3.84 → **7.24**, drop 1.71 → **3.23**;
-   - plate mid-span: drop 4.60 → 10.4.
+Once the changes are made, the verdict becomes NEEDS_TEST. **Spec §8's test covers the strip but not the columns.** It
+should read:
 
-   Knock-on effects:
-   - The columns start on the new top face, so the deck rises 2 mm. The LiPo rises 2 mm with it, so the gap for the
-     ESP32 leads does not change.
-   - Re-run `assembly_check.py`.
-
-   An alternative is MARGIN 4 → 10, which deepens the strip to 13.45 mm (drop ≈ 3.1). It grows the plate to about
-   167 × 143 mm and moves its edge closer to the raised femurs, so the assembly sweep would need re-checking.
-2. **Coxa-servo tab screws.** Use **M2×12 machine screws through the 2.0 mm tab holes, with an M2 washer and nut on
-   the plate top**, in Ø2.4 CAD clearance holes instead of the Ø1.7 self-tapping pilots. Drop results: pull-out 1.94
-   becomes nut bearing **3.84**, and plug shear through the 6 mm plate becomes **7.76**.
-
-   Self-tapping screws cannot reach SF 3 here: an M2×8 in a 6 mm plate (5.5 mm engaged) only gets to 2.67. The nuts
-   are reachable from above before the LiPo and the top plate go on.
-
-Required-change set as computed by the script (advisory rows):
-
-| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |
-|---|---|---|---|---|---|
-| FIX T_BODY 6: walking 5.80 N: plate strip outside the coxa window | XY | 3.46 | 25.00 | 7.24 | 4 |
-| FIX T_BODY 6: drop 19.2 N: plate strip outside the coxa window | XY | 7.75 | 25.00 | 3.23 | 3 |
-| FIX T_BODY 6: drop on 6 feet (17.2 g): plate mid-span through a strap slot | XY | 2.41 | 25.00 | 10.36 | 3 |
-| FIX through-bolt + nut: walking 5.80 N: nut bearing on the plate top (M2 nut 4 AF) | XY | 2.66 | 25.00 | 9.40 | 4 |
-| FIX through-bolt + nut: walking 5.80 N: nut plug shear through T_BODY 6 | Z shear | 0.33 | 6.25 | 18.98 | 4 |
-| FIX through-bolt + nut: shove 3 N: nut bearing on the plate top (M2 nut 4 AF) | XY | 4.14 | 25.00 | 6.04 | 3 |
-| FIX through-bolt + nut: shove 3 N: nut plug shear through T_BODY 6 | Z shear | 0.51 | 6.25 | 12.20 | 3 |
-| FIX through-bolt + nut: drop 19.2 N: nut bearing on the plate top (M2 nut 4 AF) | XY | 6.51 | 25.00 | 3.84 | 3 |
-| FIX through-bolt + nut: drop 19.2 N: nut plug shear through T_BODY 6 | Z shear | 0.81 | 6.25 | 7.76 | 3 |
-
-## Servo torques
-
-**The femur servos do not have enough margin** (details and fixes in the femur report):
-
-- Standing evenly on all six feet, each femur servo holds 50 N·mm (23 % of stall).
-- Stopped on a tripod, it holds 125–143 N·mm (58–66 %) continuously.
-- Walking pushes it past stall: × 2 dynamics give 121 %, and outward foot scrub gives 107 %.
-
-The cheapest fix is in software: turn the tibia 18.7° inward so the foot sits midway between the femur axis and the
-knee. That splits the moment, 30 % on the femur and 30 % on the knee.
-
-## Proof test (for the revised plate; adjusts spec §8)
-
-1. **Standing load.** Stand the assembled robot on **all six feet** (servos powered, neutral stance). Add **500 g** on
-   the top plate for 1 min. Each femur then holds ≈ 87 N·mm.
-
-   Do not do this on a tripod: the femur servos would stall.
-2. **Drop test.**
-   - Drop it from **20 cm** onto a carpeted floor 3 times, landing flat on 6 feet.
-   - Then drop it 3 more times, tilted so it lands on one side's 3 feet.
+1. **Standing load:** as written (six feet, +500 g on the deck, 1 min). It is harmless, but it loads the strip only to
+   about 0.3 × walking, so it doesn't prove the strip.
+2. **Handling (new):** lift the robot by the deck and turn it on its side (deck vertical). Hold **1 min** with
+   **0.8 kg** hung from the bottom plate's lower edge: about 2 × the static load on the columns.
+3. **Drop:** as written. 3 × 20 cm landing flat on 6 feet, then 3 × 20 cm tilted onto one side's 3 feet, onto carpet.
+   This is the strip's governing case (51 N uplift per mount).
+   - Run it on **spare coxa servos**, or only after the leg test in the assembly spec §8 has passed (DR05 SYS-6).
+   - Mark each nut with paint first.
 
 Pass:
-- no cracks or whitening at the coxa windows, especially at the strip outside each window's outer end;
-- no cracks at the nut seats or the column roots;
+- no cracks or whitening at the coxa windows, especially the strip at each outboard screw and the window corners;
+- none at the column roots;
 - no servo tab lifting off the plate (0.2 mm feeler gauge);
-- the nuts are still tight.
+- no nut turned (paint marks).

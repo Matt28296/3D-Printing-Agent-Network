@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 2,
+    "DESIGN": 3,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 3 in review (rounds 1 and 2 FAIL): strength set, lead notch with shifted pilot (B1 option 1); a third failure escalates to the user",
+    "DESIGN": "FAIL round 3 (third DESIGN failure): DFM #6 lead-notch flat top; strength SF 2.91 < 3 (washer pull-through in the drop at 50 % infill)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
-  "updated": "2026-10-26T07:56:16+00:00"
+  "open_questions": [
+    "Third DESIGN failure. Proposed round 4: 45\u00b0 roof on the lead notch (DFM) and print at 100 % infill (strength, SF 4.22, no geometry change). Waiting for the user's decision."
+  ],
+  "updated": "2026-10-26T09:32:12+00:00"
 }
