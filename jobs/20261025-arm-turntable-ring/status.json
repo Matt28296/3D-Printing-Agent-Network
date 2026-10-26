@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 0,
+    "DESIGN": 1,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "reopened 2026-10-26 (deep review 03 SYS-05): running gap 1.5 \u2192 0.4 mm with PTFE tape; in review",
+    "DESIGN": "FAIL round 4 DFM, documentation only: design_brief.md still gives the old ring (15.0 \u00b1 0.2 mm, 1.5 mm gap); spec and model are right (16.1 \u00b1 0.15, 0.4 mm gap); strength review running",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:56:21+00:00"
+  "updated": "2026-10-26T11:38:01+00:00"
 }

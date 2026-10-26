@@ -17,3 +17,5 @@
 - 2026-10-26T06:55:40Z · strength-analyst · round 4 (claw v2 + Brio): strength_calc.py takes the end effector from the claw jobs (172 g, fingertip 76.15, MG90S wrist), rerun; strength.md gets a Round 4 section; lowest SF 4.36 -> 4.29; 10 N USB-tug advisory 2.27 (cable must be anchored at the base) · NEEDS_TEST
 - 2026-10-26T10:25Z · design-lead · round 3 (01 B1/S2/S3, 03 SYS-04/SYS-05/SYS-16): shoulder window lead notches at both ends with 45° tops; Ø25 disc horn under the disk, M3 x 14 ISO 4762 clamp; SYS-04 moment 290-335 N.mm in the spec (was 100); spec and brief updated; built, mesh-checked, rendered, holes measured · ok
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 4 in review; arm round merged (28d9365), fresh DFM and strength reviews next · ok
+- 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (true 45° notch tops; 3D minimum wall 1.775 mm CAD)
+- 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok

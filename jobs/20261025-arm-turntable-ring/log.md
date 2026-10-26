@@ -14,3 +14,5 @@
 - 2026-10-26T06:55:40Z · strength-analyst · round 4 (claw v2 + Brio): strength_calc.py takes the end effector from the claw jobs (172 g, fingertip 76.15, MG90S wrist), rerun; strength.md gets a Round 4 section; lowest SF 3.39 (unchanged); USB-tug advisory 6.03 · NEEDS_TEST
 - 2026-10-26T10:25Z · design-lead · round 3 (03 SYS-05): running gap 1.5 -> 0.4 mm (H 16.1) + PTFE tape: the ring now shares the overturning moment. Ring CAD changed: the job reopens for DFM and strength; spec and brief updated; built, mesh-checked, rendered · ok
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, reopened 2026-10-26 (deep review 03 SYS-05); arm round merged (28d9365), fresh DFM and strength reviews next · ok
+- 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · FAIL (brief's dimension table and Risks line give the old 15.0 mm ring and 1.5 mm gap)
+- 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok

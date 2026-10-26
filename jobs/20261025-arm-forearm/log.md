@@ -17,3 +17,5 @@
 - 2026-10-26T06:55:40Z · strength-analyst · round 4 (claw v2 + Brio): strength_calc.py takes the end effector from the claw jobs (172 g, fingertip 76.15, MG90S wrist), rerun; strength.md gets a Round 4 section; lowest SF 3.28 -> 3.78 (wrist now MG90S); USB-tug advisory 3.07 · NEEDS_TEST
 - 2026-10-26T10:25Z · design-lead · round 3 (01 B1/B2/S1, 03 SYS-03/SYS-04/SYS-18): wrist servo SG90 -> MG90S (22.8 x 12.2), lead notch + moved pilot (notch_shift_pilot); fitted 60° below the upper link (elbow window -150..+30); spec (SG90 -> MG90S) and brief updated; built, mesh-checked, rendered, holes measured · ok
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 4 in review; arm round merged (28d9365), fresh DFM and strength reviews next · ok
+- 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · FAIL (MG90S tab-pilot walls 1.34 / 1.45 mm CAD < 1.8; fix: pilots out 1.6 / ≥ 0.2 mm, or a user-accepted deviation)
+- 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
