@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-idler",
-  "stage": "DESIGN",
+  "stage": "AWAITING_APPROVAL",
   "kind": "part",
   "iterations": {
     "DESIGN": 1,
@@ -9,12 +9,12 @@
   "gates": {
     "SPEC": "pass",
     "DESIGN": "pass (round 5: DFM PASS; strength NEEDS_TEST, lowest SF 4.19); slice waits for the chassis",
-    "SLICE": "stale: the round 4 slice (2 per plate, 1.16 h) predates the hub change",
+    "SLICE": "pass (round 5 geometry: 2 per plate \u00d7 1, 1.03 h, 9.6 g; validator 0 errors, 0 warnings; audit PASS; preflight updated)",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T14:22:17+00:00"
+  "updated": "2026-10-26T14:25:43+00:00"
 }
