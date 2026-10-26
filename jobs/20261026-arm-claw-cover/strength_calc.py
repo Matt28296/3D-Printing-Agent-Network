@@ -1,41 +1,47 @@
-"""Strength check, round 6, CAD ENGINEER'S SELF-CHECK (an independent review follows): jobs/20261026-arm-claw-cover
+"""Strength check, round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-cover
 (front plate in two pieces + two ties, top wall, 8 mm lip, the second tie's 8 mm post located on the frame's rail block by
 a 90° V-ridge in a V-groove and anchored there by one vertical M3 x 45 with a Ø7 x 0.5 washer under its head).
 
-Round 6 design (the round 5 review's required fix, user-approved: ridge-first contact): VSEAT_CLR 0, so the ridge is the
-groove's own V (virtual apex 16.95, flanks line to line in CAD); the foot's flats decoupled and raised, TIE2_FOOT_Z =
-ZS - RAIL_IN + FOOT_CLR 0.30 = 18.05, with the ridge's 45° flanks carried on up to them (root 2.2 wide); the tip at 17.35
-(absolute); the frame's bulkhead top at 48.45 (prints 48.4, off the slice plane). As printed (round 6 scratch slice, read
-back: frame bulkhead 48.4, block 17.8, groove corners 0.1 inside the CAD flank; the cover's ridge, tip and flats to CAD)
-the ridge reaches both flanks first: play 0 at nominal and RSS, 0.029 at the worst-case stack (which BUILD_GUIDE §4 step
-9's 0.03 feeler rejects). The verdict rows therefore run 'locked' (zero play, the preload added to the screw where it
-makes a row worse) AND at the worst-case play with the preload gone; the worse of the two is reported. The M3 x 45's
-engagement is taken with the worst-case float of the top wall after seating (10.49 instead of 10.75).
+Round 6 design (ridge-first contact): VSEAT_CLR 0 (virtual apex 16.95), the foot's flats at 18.05 (FOOT_CLR 0.30), the
+ridge's flanks carried up to them, its tip at 17.35, the frame's bulkhead top at 48.45. The CAD engineer's round-6 update
+of this file was a self-check; this version recomputes it.
 
-Round 5 design (user-approved fix of round 4's FAIL): the post's foot carries a 90° ridge (0.1 clear per flank in CAD,
-horizontal; tip cut flat at z 17.25) in a matching 0.8 mm groove in the rail block's top; the foot's flats stand 0.1 over
-the block in CAD (TIE2_FOOT_Z 17.85). A +x push on the foot is held by the ridge's flank once it bears; the 45° flank
-turns it into a lift equal to it (frictionless, the worst case), and the M3 x 45 holds that in tension.
-
-What this review adds (strength-analyst, independent of the CAD engineer's round-5 self-check):
-- THE SEAT AS PRINTED (section "the V-seat AS PRINTED" below). The frame was sliced with the arm's own command and the G-code
-  read back: its bulkhead top (CAD 48.5, on a slice plane) prints at 48.4 and its rail block top (CAD 17.75) at 17.8.
-  So the cover stops on the foot's flats or on the ridge, not on the top wall, and the ridge's x play is
-  -0.05 + the groove's layer-corner rounding + the two flanks' print errors: about zero nominal, but up to ~0.08 mm
-  (RSS) / ~0.13 mm (worst case) with realistic MK3 tolerances. Play over 0.04 mm takes every frame-model row's lowest
-  SF under 3 (the slip what-if). The verdict rows are therefore run at the realistic (RSS-adverse) play, not at zero.
-- The ridge's root: Kt 1.7 (a bead-filled 135° re-entrant corner, r/h 0.15..0.25) instead of 2.5, with the flank force
-  at the printed corners' resultant (z 17.6); the bound with all of it on the top corner (z 17.8) is an info row.
-- A fix (what-if, computed): VSEAT_CLR 0 (ridge flanks on the CAD groove flanks), the foot's flats decoupled and raised
-  to 0.3 over the CAD block (TIE2_FOOT_Z 18.05, flanks carried on to them), the tip at 17.35, and the frame's bulkhead
-  top off the slice plane (48.45, still prints 48.4). The ridge then always reaches both flanks first (zero play even at
-  the worst-case stack, ~0.03), and BUILD_GUIDE's top-wall feeler can prove it.
+What this review changes or adds (every number below is recomputed here; slice facts from the reviewer's own slice):
+- SLICE FACTS, read back from the reviewer's own scratch slice of both committed part.stl files with the arm's command
+  (PrusaSlicer 2.7.2, Arachne, 0.20mm QUALITY @MK3, Prusament PETG, each job's slice_overrides.ini):
+  frame: bulkhead and both ribs end at ;Z:48.4, rail block top 17.8 (both sides of the groove, and at -y), groove walls
+  at half-widths 0.15 / 0.35 / 0.55 / 0.75 in the layers ending 17.2 / 17.4 / 17.6 / 17.8 (external perimeters
+  14.875/15.625, 14.675/15.825, 14.475/16.025, 14.275/16.225, w 0.45), the layer below 17.0 solid; the 17.0..17.2 layer
+  is an OPEN 0.3 mm slot between two external perimeters, so the groove's floor is 17.0 at |x - 15.25| < 0.15 and 17.2 at
+  0.15..0.35 (the tip faces the latter).
+  cover: ridge flanks, tip (17.35) and flats (18.05) print to CAD (external perimeter 0.225 inside each face); the
+  0.2 x 0.2 bump behind the post's back face does NOT print (the outline runs from the flank straight onto the post's
+  face), so the ridge's root is 2.0 wide (x 14.35..16.35), not 2.2; the top wall's underside is at 48.5.
+- THE SEAT STACK. The round-6 self-check put no tolerance on the bulkhead's printed top or on the tip / slot surfaces.
+  With +-0.05 on EVERY printed surface (the brief), plus the ridge flank +-0.05 normal (+-0.0707 vertical) and corner
+  radius 0.05..0.10, the ridge lands first at nominal and RSS (play 0); the worst case is 0.079 by the top wall (which
+  BUILD_GUIDE §4 step 9's 0.03 feeler rejects) and 0.029 by the tip on the groove's 17.2 layer (which no feeler can
+  see). Verdict rows: 'locked' (play 0) and the worst ACCEPTED play 0.029, the worse of the two.
+- WHICH CORNERS CARRY. Seated 0.056 above its CAD seat, the ridge's tip is at 17.406: the groove's 17.4 corner (its
+  tangent point at z 17.378) lies beyond the tip, so only the 17.6 and 17.8 corners carry at first contact (the self-check
+  counted 3 and took the band from the CAD tip). The anchor's 150 N then crushes them until the 17.4 corner joins; the
+  band and the resultant are taken after that seating, with a flow stress of 80 MPa (2 x the self-check's 40: the
+  SMALLEST crush, so the narrowest band). The resultant stays at the two upper corners (z 17.7): arm 0.5 Fx about
+  the printed root's centroid (x 15.35; the root is 2.0 wide).
+- THE TOP JOINT. Reactions are now read from the frame model (frame2d returns them), so the top M3s' real tension under
+  every reversed push is computed; the frame's 'all of the moment on the top screws' row is reduced to information.
+- SNUG PRELOADS, SUSTAINED (the project's rule: the anchor here, the ring, the links): new rows for the top M3 pan heads
+  on the top wall (no washer) and the front M2.5 pan heads on the front plate, at the snug preloads the arm uses (M3
+  150 N, M2 / M2.5 100 N).
+- THE FORCED CLOSURE. The top wall stands 0.06..0.10 proud of the printed bulkhead after the anchor seats it (more at
+  RSS); the top M3s pull it down by bending the top wall behind the lip. Information rows (displacement-controlled, it
+  relaxes), with numbers.
 
 Run from the project root:  python3 jobs/20261026-arm-claw-cover/strength_calc.py
 Plain python3: parameters come from claw_frame.py, this job's model.py, the jaw's model.py and tools/hobby_parts.py
 (ast module). No build123d needed. Section widths quoted as "probed" were measured on the round 3 solid (design())
-with thin slabs, and the second post's on the round 4 solid; the script states them as numbers so it runs without the
-CAD venv.
+with thin slabs, and the second post's on the round 4 / round 6 solid; the script states them as numbers so it runs
+without the CAD venv.
 
 Round 4 (independent re-check of the as-built anchor):
 - the anchor is in the model as built (ANCHOR2 = ANCHOR_AS_BUILT, from ANCHOR_XY in claw_frame.py);
@@ -267,124 +273,144 @@ WASHER_M3 = getattr(C, "ANCHOR_WASHER", (7.0, 0.5))      # ISO 7089 M3 washer, a
 WASHER_T = WASHER_M3[1] if VSEAT else 0.0                 # round 5: the washer is fitted (BUILD_GUIDE)
 L_ANCHOR = 45.0 - STACK - WASHER_T                        # 10.75 engaged in the frame's 14 mm pilot (11.25 without washer)
 LAYER = 0.2
-# ---------------------------------------------------------------- the V-seat AS PRINTED (round 5 review; round 6 re-read)
-# Round 6 scratch slice (CAD engineer) of BOTH round-6 part.stl files with the arm's own command (slice_settings.json:
-# PrusaSlicer 2.7.2, 0.20mm QUALITY @MK3, Prusament PETG, each job's slice_overrides.ini; first layer 0.2, every layer
-# sliced at its mid-height, Arachne perimeters), G-code read back; not a job file:
-#   frame: last layer ;Z:48.4: the bulkhead top (CAD 48.45 since round 6, 0.05 under the slice plane 48.5) prints at 48.4,
-#          and so do both ribs. The rail block top (CAD 17.75) prints at 17.8. The groove's external perimeters (frame
-#          y 26, centre x 15.25, w 0.45) put its walls at half-widths 0.15 / 0.35 / 0.55 / 0.75 in the layers ending
-#          17.2 / 17.4 / 17.6 / 17.8 (the round 5 review's numbers); the 0.3 mm first layer is a slot that closes up.
-#   cover: external perimeters 0.225 (w 0.45) inside the CAD faces at layers G y 25.9 / 27.9 / 30.1: the ridge's flanks,
-#          its tip (17.35) and the foot's flats (18.05) print to CAD.
+# ---------------------------------------------------------------- the V-seat AS PRINTED (independent review, round 6)
+# Reviewer's own scratch slice (not a job file) of both committed part.stl files with the arm's command, G-code read back
+# (header). Printed: frame bulkhead + ribs top 48.4; rail block top 17.8; the groove's layer walls at half-widths 0.15 /
+# 0.35 / 0.55 / 0.75 in the layers ending 17.2 / 17.4 / 17.6 / 17.8, so each layer's top corner stands 0.1 (horizontal)
+# inside the CAD flank (corner half-width z_top - 17.05); the 17.0..17.2 layer an OPEN 0.3 slot between two external
+# perimeters (floor 17.0 inside |dx| < 0.15, the layer's top 17.2 at 0.15..0.35, which the ridge's flat tip faces). The
+# cover: ridge flanks, tip and flats to CAD; the 0.2 x 0.2 bump behind the post's back face does not print.
 Z_BULK_PR = 48.4                 # printed bulkhead top
 Z_BLOCK_PR = 17.8                # printed rail block top
-Z_SLOT_TOP = 17.2                # top of the groove's closed first layer
+Z_SLOT_TOP = 17.2                # the groove's 17.0..17.2 layer top beside its open slot (what the tip faces)
 Z_GROOVE_APEX = Z_BLOCK - C.VSEAT_D if VSEAT else Z_BLOCK    # 16.95
+K_ROUND = 2 - math.sqrt(2)       # a corner radius r drops a 45° flank's contact by (2 - sqrt2) r, vertically
+R_BEAD = (0.05, 0.075, 0.10)     # bead corner radius: low / nominal / high (the brief)
+# Tolerances, each a 3-sigma bound: +-0.05 on EVERY printed surface (the brief). As a vertical seat height:
+TOL = {"ridge": 0.05 * math.sqrt(2),   # the ridge's 45° flank, +-0.05 normal -> +-0.0707 vertical
+       "groove": 0.05,                 # the groove's vertical layer walls (horizontal error = vertical seat error at 45°)
+       "cover": 0.05,                  # the cover's top-wall underside (relative to its ridge, same print plane)
+       "bulk": 0.05,                   # the frame's bulkhead top (top-layer surface; the self-check had none)
+       "tip": 0.05, "slot": 0.05,      # the ridge's flat tip; the groove's 17.2 layer top (the self-check had none)
+       "flats": 0.05, "block": 0.05}   # the foot's flats; the rail block's top
+FEELER_IN = 0.03                 # BUILD_GUIDE §4 step 9: this feeler MUST enter at the top wall before any screw
+STOPS = ("top wall on the bulkhead", "ridge tip on the groove's 17.2 layer", "foot flats on the rail block")
+GAPKEY = dict(zip(STOPS, ("top_gap", "tip_gap", "flat_gap")))
+INVOLVE = dict(zip(STOPS, (("ridge", "groove", "bulk", "cover"), ("ridge", "groove", "tip", "slot"),
+                           ("ridge", "groove", "flats", "block"))))
+
+
+def seat(e=None, r=R_BEAD[1]):
+    """Where the cover stops on the PRINTED frame. Every stop is a height h (vertical shift of the rigid cover from its
+    CAD seat) at which it touches; the cover rests at the highest. e: signed errors (+ = more material on that surface).
+    Returns the governing stop, the ridge's play (h over the ridge's own h = horizontal clearance per flank, 45°) and the
+    gap each stop is left with (what a feeler would read)."""
+    e = e or {}
+    h = {"ridge on both flanks": LAYER / 2 - K_ROUND * r + e.get("ridge", 0) + e.get("groove", 0),
+         STOPS[0]: (Z_BULK_PR - C.Z_TOP0) + e.get("bulk", 0) + e.get("cover", 0),
+         STOPS[1]: (Z_SLOT_TOP - P.RIDGE_TIP_Z) + e.get("tip", 0) + e.get("slot", 0),
+         STOPS[2]: (Z_BLOCK_PR - P.TIE2_FOOT_Z) + e.get("flats", 0) + e.get("block", 0)}
+    gov = max(h, key=h.get)
+    H = h[gov]
+    out = {"by": gov, "h": H, "play": H - h["ridge on both flanks"], "ridge_h": h["ridge on both flanks"]}
+    out.update({GAPKEY[k]: H - h[k] for k in STOPS})
+    return out
+
+
+def seat_cases():
+    """Nominal; RSS (per competing stop: its nominal gap less the RSS of the tolerances it involves, the corner radius
+    nominal -> high as one more term); worst case (every tolerance at a limit: 256 sign vertices x 3 radii), with and
+    without BUILD_GUIDE step 9's 0.03 feeler (which rejects a build whose top wall carries the cover)."""
+    nom = seat()
+    rr = K_ROUND * (R_BEAD[2] - R_BEAD[1])
+    rss = {k: nom[GAPKEY[k]] - math.sqrt(sum(TOL[t] ** 2 for t in INVOLVE[k]) + rr ** 2) for k in STOPS}
+    keys = list(TOL)
+    worst, worst_acc = (0.0, nom), (0.0, nom)
+    top_hi, top_lo = (nom["top_gap"], nom), (nom["top_gap"], nom)
+    for bits in range(1 << len(keys)):
+        e = {k: (TOL[k] if bits >> i & 1 else -TOL[k]) for i, k in enumerate(keys)}
+        for r in R_BEAD:
+            s_ = seat(e, r)
+            if s_["play"] > worst[0] + 1e-12:
+                worst = (s_["play"], s_)
+            if s_["top_gap"] >= FEELER_IN - 1e-12 and s_["play"] > worst_acc[0] + 1e-12:
+                worst_acc = (s_["play"], s_)
+            if s_["top_gap"] > top_hi[0]:
+                top_hi = (s_["top_gap"], s_)
+            if s_["top_gap"] < top_lo[0]:
+                top_lo = (s_["top_gap"], s_)
+    rss_top_hi = nom["top_gap"] + math.sqrt(sum(TOL[t] ** 2 for t in INVOLVE[STOPS[0]]) + rr ** 2)
+    return {"nominal": nom, "rss_margin": rss, "worst": worst, "worst_accepted": worst_acc,
+            "top_gap_range": (top_lo[0], top_hi[0]), "top_gap_rss_hi": rss_top_hi}
+
+
+def corners_on_flank(lift, r=R_BEAD[1]):
+    """The groove's printed layer corners that the seated ridge's flank actually touches: a rounded corner's tangent
+    point (on the 45° flank) is at z_top - (1 - 1/sqrt2) r; it carries if that lies between the ridge's tip and flats."""
+    tip, top = P.RIDGE_TIP_Z + lift, P.TIE2_FOOT_Z + lift
+    return [round(LAYER * k, 3) for k in range(1, 200) if Z_SLOT_TOP < LAYER * k <= Z_BLOCK_PR + 1e-9
+            and tip <= LAYER * k - (1 - 1 / math.sqrt(2)) * r <= top]
+
+
+def seating(P_clamp, flow, lift=None, r=R_BEAD[1]):
+    """Descent of the ridge (vertical, mm) when P_clamp (N) presses it into the groove's printed corners, each crushed
+    flat at `flow` MPa (contact width sqrt2 x its own descent, both flanks): F = sum over carrying corners of
+    2 flow L_V (d - d_k); a lower corner joins once the tip has come down to its tangent point. Returns
+    (descent, number of corners carrying per flank)."""
+    lift = LIFT_NOM if lift is None else lift
+    tip0 = P.RIDGE_TIP_Z + lift
+    starts = sorted(max(0.0, tip0 - (z - (1 - 1 / math.sqrt(2)) * r)) for z in (17.4, 17.6, 17.8))
+    k1 = 2 * flow * L_V
+    lo, hi = 0.0, 1.0
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        F = sum(k1 * (mid - s0) for s0 in starts if mid > s0)
+        lo, hi = (mid, hi) if F < P_clamp else (lo, mid)
+    d = (lo + hi) / 2
+    return d, sum(1 for s0 in starts if d > s0)
+
+
 if VSEAT:
-    # the V-seat (claw_frame.py VSEAT_*, this model's RIDGE_*): the ridge's flanks bear on the groove's printed layer
-    # corners from its flat tip (z 17.35) up to the printed block top (17.8): 0.45 tall, 0.64 of flank on each side. The
-    # ridge's root is 2.2 wide at the flats (18.05).
-    # Where the flank force acts: the frame prints in 0.2 mm layers sliced at mid-height, so the groove's flank is a
-    # staircase whose layer-top corners stand 0.1 (horizontal) inside the CAD flank: z 17.4, 17.6 and 17.8 (the block's
-    # top layer, sliced at 17.7, prints to 17.8). The ridge meets exactly those corners, so the flank's resultant is taken
-    # at their middle, z 17.6.
-    FLANK_H = Z_BLOCK_PR - P.RIDGE_TIP_Z                  # 0.45
-    FLANK_L = FLANK_H * math.sqrt(2)                      # 0.64 of flank on each side
-    RIDGE_B = 2 * (P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)        # 2.2
+    LIFT_NOM = LAYER / 2 - K_ROUND * R_BEAD[1]            # 0.056: the ridge's printed seat above its CAD seat
+    # the ridge's root as printed: x 14.35..16.35 (the bump behind the post's back face does not print), 2.0 wide
+    X_RIDGE1 = C.VSEAT_XC + (P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)          # 16.35
+    RIDGE_B = X_RIDGE1 - C.LIP_X0                                     # 2.0 (the self-check: 2.2)
+    RIDGE_X0 = (X_RIDGE1 + C.LIP_X0) / 2                              # 15.35: its centroid
     L_V = C.TIE2_Y[1] - (C.TIE2_Y[0] + (P.TIE2_FOOT_Z - P.RIDGE_TIP_Z))   # 7.3: full-depth ridge y 24.7..32 (lead-in ignored)
-    _corners = [LAYER * k for k in range(1, 200) if P.RIDGE_TIP_Z < LAYER * k <= Z_BLOCK + LAYER / 2 + 1e-9]
-    Z_XR = sum(_corners) / len(_corners)                  # 17.6 (corners 17.4, 17.6, 17.8)
-    # the flank's normal force (-1, +1)/sqrt2 per unit, at (VSEAT_XC + z_c - apex, z_c): its moment about the root's
-    # centroid (VSEAT_XC, the flats) is Fx (2 z_c - flats - apex): 0.2 Fx at z_c 17.6 (round 6; round 5 0.3 Fx)
-    RIDGE_ARM = abs(2 * Z_XR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)
+    SEAT = seat_cases()
+    PLAY_NOM = round(SEAT["nominal"]["play"], 3)            # 0
+    PLAY_RSS = 0.0 if min(SEAT["rss_margin"].values()) > 0 else round(-min(SEAT["rss_margin"].values()), 3)
+    PLAY_WORST = round(SEAT["worst"][0], 3)                 # every tolerance at a limit (any build)
+    PLAY_ACC = round(SEAT["worst_accepted"][0], 3)          # the worst a build that passes step 9's 0.03 feeler can have
+    CORNERS0 = corners_on_flank(LIFT_NOM)                   # first contact: 17.6 and 17.8 only
+    # seating by the anchor's 150 N (BUILD_GUIDE: anchor first, snug): the corners crush; 80 MPa = the least crush
+    SEAT_D = {fl: seating(P_M3, fl) for fl in (40.0, 80.0)}
+    D_MIN = SEAT_D[80.0][0]
+    TIP_SEATED = P.RIDGE_TIP_Z + LIFT_NOM - D_MIN           # the tip after seating (least crush)
+    FLANK_H = Z_BLOCK_PR - TIP_SEATED                       # contact band height: the tip to the groove's top corner
+    FLANK_L = FLANK_H * math.sqrt(2)
+    FLANK_H0 = Z_BLOCK_PR - (P.RIDGE_TIP_Z + LIFT_NOM)      # the same at first contact, before any crush (information)
+    # where the flank force acts: the two upper corners carry from first contact, the 17.4 one only after crushing, so
+    # the resultant is taken at their middle, z 17.7 (the self-check: 17.6 with three)
+    Z_XR = sum(CORNERS0) / len(CORNERS0)
+    # its moment about the printed root's centroid (x 15.35, the flats): Fx (2 z_c - flats - apex) on the +x flank,
+    # plus (15.35 - 15.25) on the -x flank: the worse is used
+    RIDGE_ARM = abs(2 * Z_XR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z) + abs(RIDGE_X0 - C.VSEAT_XC)
+    # the top wall's standing over the printed bulkhead at the ridge: before the screws, and after the anchor's seating
+    G_TOP = SEAT["nominal"]["top_gap"]                      # 0.156
+    G_TOP_RSS = SEAT["top_gap_rss_hi"]                      # RSS-high
+    G_TOP_W = SEAT["top_gap_range"][1]                      # worst-case high
+    G_AFTER = {lab: tuple(max(0.0, g - d) for g in (G_TOP, G_TOP_RSS, G_TOP_W)) for lab, d in
+               (("least crush, 80 MPa", D_MIN), ("40 MPa", SEAT_D[40.0][0]))}
+    FLOAT_W = G_AFTER["least crush, 80 MPa"][2]            # worst top-wall standing after the anchor alone
+    # M3 x 45 engagement, measured from the PRINTED block top (17.8): the head's seat is at 51.5 + (the cover's height
+    # above its CAD seat) = 51.5 + (standing - 0.1); the tip 45 - 0.5 (washer) below that
+    L_ANCHOR_EFF = Z_BLOCK_PR - (C.Z_TOP1 + (FLOAT_W - (C.Z_TOP0 - Z_BULK_PR)) + WASHER_T - 45.0)
 else:
     Z_XR = Z_FOOT
-KT_RIDGE = 1.7      # review: the ridge's root corners are 135° re-entrant corners, filled by the printed bead (r ~0.1..0.15
-                    # against a 0.7 tall ridge -> 1.7 in the strength-checks table), not sharp 90° ones
-# Each groove layer's top corner stands LAYER/2 = 0.1 inside the CAD flank (horizontal): corner half-width z - 17.05.
-# Its bead is rounded (stadium edge, radius up to h/2 = 0.1): a radius r moves the 45° ridge's contact (2 - sqrt2) r
-# further out, horizontally.
-K_ROUND = 2 - math.sqrt(2)       # 0.586
-R_BEAD = (0.05, 0.075, 0.10)     # corner radius: low / nominal / high (round 5 reviewer's assumption)
-# Realistic MK3 / PETG tolerances (round 5 reviewer's assumption, no library data yet), each a 3-sigma bound:
-TOL_RIDGE_N = 0.05               # the ridge's flank, normal to its 45° face (cover, in the print plane) -> x sqrt2
-TOL_GROOVE = 0.05                # the groove's layer walls (frame, vertical perimeter walls), horizontal
-TOL_COVER = 0.05                 # the cover's top-wall underside to its foot, 31 mm in the print plane (contour + scale)
-
-
-def seat(apex_cad, z_flat, z_tip, e_c=0.0, e_rh=0.0, e_g=0.0, r=R_BEAD[1], z_bulk=Z_BULK_PR):
-    """The cover lowered onto the PRINTED frame. U = its top wall underside (48.5 in CAD). Returns where it stops and
-    the ridge's x play there (horizontal, per flank). apex_cad: the ridge's virtual apex with U = 48.5.
-    e_c > 0: the foot printed lower against the top wall; e_rh > 0: the ridge fatter (per flank, horizontal);
-    e_g > 0: the groove's walls stand further in (per wall); r: the groove corners' rounding."""
-    u0 = C.Z_TOP0
-    corner = Z_GROOVE_APEX + LAYER / 2                     # 17.05: corner half-width = z - 17.05
-    stops = {"ridge on both flanks": u0 + corner + e_rh + e_g - K_ROUND * r - apex_cad + e_c,
-             "top wall on the bulkhead": z_bulk,
-             "foot flats on the block": u0 + (Z_BLOCK_PR - z_flat) + e_c,
-             "ridge tip on the closed first layer": u0 + (Z_SLOT_TOP - z_tip) + e_c}
-    gov = max(stops, key=stops.get)
-    U = stops[gov]
-    u_r = stops["ridge on both flanks"]
-    return {"U": U, "by": gov, "play": max(0.0, U - u_r), "interf": u_r - z_bulk, "top_gap": U - z_bulk,
-            "flat_gap": U - stops["foot flats on the block"], "tip_gap": U - stops["ridge tip on the closed first layer"]}
-
-
-def seat_cases(apex_cad, z_flat, z_tip, z_bulk=Z_BULK_PR):
-    """Nominal; RSS-adverse (the 3-sigma ellipsoid point that maximises the play, for each stop that can govern);
-    worst case (every tolerance at its limit, adverse). Each: (play, the seat dict)."""
-    tol = {"e_c": TOL_COVER, "e_rh": TOL_RIDGE_N * math.sqrt(2), "e_g": TOL_GROOVE}
-    nom = seat(apex_cad, z_flat, z_tip, z_bulk=z_bulk)
-    # the play a stop leaves, (stop height) - (ridge contact height), is linear in the errors:
-    #   top wall:  z_bulk - 48.5 - 17.05 + apex - e_rh - e_g - e_c + K r
-    #   flats:     17.8 - z_flat - 17.05 + apex - e_rh - e_g + K r          (e_c cancels)
-    #   tip:       17.2 - z_tip - 17.05 + apex - e_rh - e_g + K r           (e_c cancels)
-    # RSS-adverse = nominal + sqrt(sum of (tolerance x sensitivity)^2), the corner radius nominal -> high as one term
-    corner = Z_GROOVE_APEX + LAYER / 2
-    rr = K_ROUND * (R_BEAD[2] - R_BEAD[1])
-    base = {"top wall on the bulkhead": (z_bulk - C.Z_TOP0 - corner + apex_cad, ("e_c", "e_rh", "e_g")),
-            "foot flats on the block": (Z_BLOCK_PR - z_flat - corner + apex_cad, ("e_rh", "e_g")),
-            "ridge tip on the closed first layer": (Z_SLOT_TOP - z_tip - corner + apex_cad, ("e_rh", "e_g"))}
-    best_rss = (0.0, nom, "none")
-    for stop, (g0, ks) in base.items():
-        g = g0 + K_ROUND * R_BEAD[1] + math.sqrt(sum(tol[k] ** 2 for k in ks) + rr ** 2)
-        if g > best_rss[0]:
-            best_rss = (g, nom, stop)
-    worst = (0.0, nom)
-    for sc in (-1, 1):
-        for sr in (-1, 1):
-            for sg in (-1, 1):
-                for r in R_BEAD:
-                    s = seat(apex_cad, z_flat, z_tip, z_bulk=z_bulk, r=r, e_c=sc * tol["e_c"], e_rh=sr * tol["e_rh"],
-                             e_g=sg * tol["e_g"])
-                    if s["play"] >= worst[0]:
-                        worst = (s["play"], s)
-    hi = max((seat(apex_cad, z_flat, z_tip, z_bulk=z_bulk, r=r, e_c=sc * tol["e_c"], e_rh=sr * tol["e_rh"],
-                   e_g=sg * tol["e_g"])["interf"] for sc in (-1, 1) for sr in (-1, 1) for sg in (-1, 1) for r in R_BEAD))
-    rss_hi = nom["interf"] + math.sqrt(sum(tol[k] ** 2 for k in tol) + (K_ROUND * 0.025) ** 2)
-    return {"nominal": (nom["play"], nom), "RSS": best_rss, "worst": worst, "interf_hi_rss": rss_hi, "interf_hi": hi}
-
-
-if VSEAT:
-    SEAT_NOW = seat_cases(P.RIDGE_APEX_Z, P.TIE2_FOOT_Z, P.RIDGE_TIP_Z)     # round 6 as built
-    PLAY_RSS = round(SEAT_NOW["RSS"][0], 3)               # 0 with ridge-first contact
-    PLAY_WORST = round(SEAT_NOW["worst"][0], 3)           # 0.029: the worst-case stack (step 9's 0.03 feeler rejects it)
-    # round 5 for reference: apex 17.05 (VSEAT_CLR 0.1), flats 17.85 (tied to it), tip 17.25 (apex + 0.2)
-    R5 = {"apex": Z_GROOVE_APEX + 0.1, "flat": Z_BLOCK + 0.1, "tip": Z_GROOVE_APEX + 0.3}
-    SEAT_R5 = seat_cases(R5["apex"], R5["flat"], R5["tip"])
-    # Seating: the ridge holds the top wall up until the screws crush the groove's layer corners: 3 corners a flank
-    # crushed flat at ~40 MPa (PETG compressive flow, assumption), contact width sqrt2 x the interference
-    K_CRUSH = 2 * 40.0 * len(_corners) * L_V              # N per mm of vertical interference (~1750)
-    SEATING = {}
-    for lab, Fc in (("anchor alone, 150 N", P_M3), ("anchor + the +y top screw's share (0.77 x 150 N)", P_M3 * 1.77)):
-        ic = Fc / K_CRUSH
-        SEATING[lab] = (ic, max(0.0, SEAT_NOW["nominal"][1]["interf"] - ic), max(0.0, SEAT_NOW["interf_hi"] - ic))
-    FLOAT_W = SEATING["anchor alone, 150 N"][2]          # worst-case float of the top wall after the anchor alone (0.256)
-    L_ANCHOR_EFF = L_ANCHOR - FLOAT_W                     # 10.49: the M3 x 45's engagement with that float
-else:
-    PLAY_RSS = PLAY_WORST = FLOAT_W = 0.0
+    PLAY_NOM = PLAY_RSS = PLAY_WORST = PLAY_ACC = FLOAT_W = 0.0
     L_ANCHOR_EFF = L_ANCHOR
+KT_RIDGE = 1.7      # the ridge's root corners: 135° re-entrant corners filled by the printed bead (strength-checks 1.7)
 TIE_W = C.TIE_Y[1] - C.TIE_Y[0]                          # 8
 WEB_H = 2 * C.TIE_Z                                       # 16
 Z_WEB0, Z_WEB1 = C.ZS - C.TIE_Z, C.ZS + C.TIE_Z          # 19.25, 35.25
@@ -467,6 +493,9 @@ def frame2d(nodes, members, supports, loads, ties=()):
         f = [sum(k[p][q] * ul[q] for q in range(6)) for p in range(6)]
         out[tag] = (f[3], -f[2], f[5], L)
     out["_u"] = {n: (u[3 * idx[n]], u[3 * idx[n] + 1], u[3 * idx[n] + 2]) for n in names}   # node displacements (mm, rad)
+    # review: support reactions (K u - F at every restrained dof; 0 at free ones), the force the support puts ON the node
+    out["_r"] = {n: tuple((sum(K[3 * idx[n] + d][q] * u[q] for q in range(nd)) - F[3 * idx[n] + d])
+                          if 3 * idx[n] + d in fixed else 0.0 for d in range(3)) for n in names}
     return out
 
 
@@ -543,6 +572,24 @@ def sig(N, M, b, t, kt):
     return abs(N) / (b * t) + kt * 6 * abs(M) / (b * t * t)
 
 
+# review: the top joint's own reactions -> the top M3s' tension. Per zone, the joint at BK (x 10, z 50) puts (Rx, Rz, M)
+# on the cover: the bulkhead top (x 3.5..10) can only push up, the M3 (x 6.75) can only pull down. The least tension that
+# balances it: T = max(0, -Rz, M / 3.25, (-M - 6.5 Rz) / 3.25) (M about x 10, counter-clockwise with x right, z up).
+X_SCREW_TOP = C.TOP_SCREWS[0][0]                            # 6.75
+LEV_F, LEV_R = C.X_B - X_SCREW_TOP, X_SCREW_TOP - (C.X_B - C.BULK_T)   # 3.25 to the front edge, 3.25 to the rear edge
+M3_PAN_DK = 5.6                                             # ISO 7049 ST2.9 / ISO 7045 M3 pan head
+A_M3_PAN = math.pi / 4 * (M3_PAN_DK ** 2 - C.M3_CLEAR ** 2) - (C.M3_CLEAR / 2) ** 2 * (1 - math.pi / 4)
+
+
+def top_screw_T(res):
+    out = []
+    for z_, bk in (("+", "BKa"), ("-", "BKb")):
+        Rx, Rz, Mr = res["_r"][bk]
+        M = Mr + res[f"top joint {z_}"][1]
+        out.append(max(0.0, -Rz, M / LEV_F, (-M - (LEV_F + LEV_R) * Rz) / LEV_R))
+    return tuple(out)                                       # (zone + screw at y 14, zone - screw at y -23)
+
+
 def cover_sections(res, v, upper):
     """Stress at every checked section for one solved variant: {label: (stress, allow, dir, section text)}."""
     bf, bl, tc, ks, sz, kt = v
@@ -559,6 +606,11 @@ def cover_sections(res, v, upper):
         s_tw, ALLOW_XY, "XY", f"{B_TW_BACK:.0f} per zone x {T_TW_BACK:.1f}, Kt {KT_LIP_BACK}")
     out["top wall over the bulkhead, through the M3 holes (x 6.75)"] = (
         s_scr, ALLOW_XY, "XY", f"{B_NET_SCREW:.1f} net per zone x {T_TW_BACK:.1f}, Kt 2 (hole)")
+    # review: the top M3s' tension from the joint (service load only; the snug preload is its own sustained row)
+    Tp, Tm = top_screw_T(res)
+    out["top M3 pan head on the top wall, the joint's own tension (no preload)"] = (
+        max(Tp, Tm) / A_M3_PAN, BEARING, "XY comp", f"T {max(Tp, Tm):.0f} N (y 14: {Tp:.0f}, y -23: {Tm:.0f}) on the "
+        f"Ø{M3_PAN_DK} pan head, {A_M3_PAN:.1f} mm2")
     if upper:
         N, Mi, Mj, L = res["plate leg"]                      # FF2 (z 35.25) -> PLT (z 48.5)
         M_apex = Mi + (Mj - Mi) * (z_apex - Z_WEB1) / L
@@ -615,14 +667,14 @@ def cover_sections(res, v, upper):
             # the ridge (round 5). In print the ridge is a vertical prism (G y = print Z): its cross-section is in the
             # layer plane, so its root (the plane of the flats) is sheared and bent along the layers (in-plane allowables)
             N_fl = Fx * math.sqrt(2)                                     # all on one 45° flank, frictionless
-            out[f"V-ridge: flank bearing on the groove's 45° flank (contact band z {P.RIDGE_TIP_Z:.2f}..{Z_BLOCK_PR:.2f}, "
-                f"the printed layer corners)"] = (
+            out[f"V-ridge: flank bearing on the groove's 45° flank (contact band z {TIP_SEATED:.2f}..{Z_BLOCK_PR:.2f}: "
+                f"the seated tip, after the anchor's least crush, to the printed top corner)"] = (
                 N_fl / (FLANK_L * L_V), BEARING, "bearing",
                 f"normal {N_fl:.1f} N on {FLANK_L:.2f} x {L_V:.1f} (the {P.TIE2_FOOT_Z - P.RIDGE_TIP_Z:.1f} lead-in ignored)")
             out[f"V-ridge root at the foot's flats (z {P.TIE2_FOOT_Z:.2f}): shear"] = (
                 1.5 * Fx / (RIDGE_B * L_V), ALLOW_XY * 0.5, "XY shear", f"{RIDGE_B:.1f} x {L_V:.1f}, Fx {Fx:.1f} N")
-            out[f"V-ridge root at the foot's flats: the flank force's moment ({RIDGE_ARM:.2f} Fx, resultant at the printed "
-                f"layer corners, z {Z_XR:.1f}) + the wedge's compression, Kt {KT_RIDGE}"] = (
+            out[f"V-ridge root at the foot's flats (printed, x 14.35..16.35): the flank force's moment ({RIDGE_ARM:.2f} Fx, "
+                f"resultant at the two upper corners, z {Z_XR:.1f}) + the wedge's compression, Kt {KT_RIDGE}"] = (
                 lift_w / (RIDGE_B * L_V) + KT_RIDGE * 6 * Fx * RIDGE_ARM / (RIDGE_B ** 2 * L_V), ALLOW_XY, "XY",
                 f"{RIDGE_B:.1f} x {L_V:.1f}, M {Fx * RIDGE_ARM:.1f} N.mm, Kt {KT_RIDGE} (bead-filled 135° root corners); "
                 f"compression and bending added in magnitude")
@@ -661,8 +713,8 @@ def _combine(r1, f1, r2, f2):
     """Member results r1 x f1 + r2 x f2 (linear superposition of two solves; L from r1)."""
     out = {}
     for k, v in r1.items():
-        if k == "_u":
-            out[k] = {n: tuple(f1 * a + f2 * b for a, b in zip(v[n], r2["_u"][n])) for n in v}
+        if k in ("_u", "_r"):
+            out[k] = {n: tuple(f1 * a + f2 * b for a, b in zip(v[n], r2[k][n])) for n in v}
         else:
             w = r2[k]
             out[k] = (f1 * v[0] + f2 * w[0], f1 * v[1] + f2 * w[1], f1 * v[2] + f2 * w[2], v[3])
@@ -692,10 +744,12 @@ def anchored(load_node, R, v, mode):
 
 
 CUR_MODE = "held"
-# round 6: the verdict rows run with the ridge's play AS PRINTED. Ridge-first contact gives zero play at nominal and RSS
-# ('locked': the ridge holds x, the preload added to the screw), and PLAY_WORST at the worst-case stack (the foot slides
-# that far before the flank bears, the preload gone); every row takes the worse of the two
-ANCHOR_MODES = (("locked", f"slip {PLAY_WORST:.3f}") if VSEAT else ("held", f"slip {GAP_NOM:.2f}", f"slip {GAP_MAX:.2f}")) \
+# review: the verdict rows run with the ridge's play AS PRINTED. Ridge-first contact gives zero play at nominal and RSS
+# ('locked': the ridge holds x, the preload added to the screw where that is worse). The worst case with every tolerance
+# at a limit is the top wall landing first (PLAY_WORST), which BUILD_GUIDE §4 step 9's 0.03 feeler rejects; the worst a
+# build that PASSES step 9 can have is the tip bottoming on the groove's 17.2 layer (PLAY_ACC), which no feeler sees: the
+# foot slides that far before the flank bears (preload gone). Every row takes the worse of 'locked' and PLAY_ACC.
+ANCHOR_MODES = (("locked", f"slip {PLAY_ACC:.3f}") if VSEAT else ("held", f"slip {GAP_NOM:.2f}", f"slip {GAP_MAX:.2f}")) \
     if ANCHOR2 else ("held",)
 
 
@@ -708,7 +762,8 @@ def cover_rows(case, load_node, R, req, rows=ROWS, variants=None, modes=None):
                 if k not in worst or s / a > worst[k][0] / worst[k][1]:
                     am = "" if not ANCHOR2 else ("; ridge on both flanks, play 0 (nominal, RSS)" if mode == "locked"
                                                  else "; anchor held by its preload" if mode == "held" else
-                                                 f"; ridge play {mode.split()[1]} mm (worst-case stack, preload gone)"
+                                                 f"; ridge play {mode.split()[1]} mm (worst build step 9 accepts: "
+                                                 f"tip bottomed; preload gone)"
                                                  if VSEAT else f"; anchor preload gone, {mode.split()[1]} mm slip")
                     worst[k] = (s, a, d, f"{sec} [{vlabel(v)}{am}]")
     for k, (s, a, d, sec) in worst.items():
@@ -870,11 +925,58 @@ if ANCHOR2 and VSEAT:
     # resultant is ~17.6 (the verdict row). Bound: a ridge seated on the top corner alone (the corners' own print scatter)
     # puts it at 17.8, arm |2 x 17.8 - flats - apex|.
     FX_LOCK = max(abs(anchored("LD2", R_go, v, "locked")[0]["anchor"][0]) for v in VARIANTS)
-    ARM_TOP = abs(2 * Z_BLOCK_PR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)
+    ARM_TOP = abs(2 * Z_BLOCK_PR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z) + abs(RIDGE_X0 - C.VSEAT_XC)
     row(f"info, bound: opening stall with zero play, Fx {FX_LOCK:.1f} N all on the groove's top layer corner (z "
         f"{Z_BLOCK_PR}): V-ridge root at the flats, Kt {KT_RIDGE}",
         f"{RIDGE_B:.1f} x {L_V:.1f}, M {FX_LOCK * ARM_TOP:.1f} N.mm (arm {ARM_TOP:.2f})", "XY",
         FX_LOCK / (RIDGE_B * L_V) + KT_RIDGE * 6 * FX_LOCK * ARM_TOP / (RIDGE_B ** 2 * L_V), ALLOW_XY, SF_SHORT, INFO)
+    # review: the flank bearing with NO seating credit (the band from the tip at first contact, two corners): the
+    # verdict row above takes the band after the anchor's least crush (80 MPa), which BUILD_GUIDE's anchor-first order
+    # guarantees before any service load
+    row(f"info: opening stall, Fx {FX_LOCK:.1f} N: V-ridge flank bearing at FIRST contact, no seating credit (band z "
+        f"{P.RIDGE_TIP_Z + LIFT_NOM:.3f}..{Z_BLOCK_PR}, corners {CORNERS0})",
+        f"normal {FX_LOCK * math.sqrt(2):.1f} N on {FLANK_H0 * math.sqrt(2):.2f} x {L_V:.1f}", "bearing",
+        FX_LOCK / (FLANK_H0 * L_V), BEARING, SF_SHORT, INFO)
+
+# ================================================================ 6b. snug preloads of the cover's other screws (review)
+# The project's rule (anchor here, turntable ring, links): a snug self-tapper's preload on a printed seat is a sustained
+# load, SF 4. M3 snug 150 N (the anchor's figure), M2 / M2.5 snug 100 N (the frame's tab screws' figure).
+P_M25 = 100.0
+A_M25_W6 = math.pi / 4 * (6.0 ** 2 - HOLE_PR ** 2) - (HOLE_PR / 2) ** 2 * (1 - math.pi / 4)
+row(f"top M3 x 10 pan heads (BOM: no washer) driven snug, {P_M3:.0f} N preload (sustained): bearing on the top wall",
+    f"Ø{M3_PAN_DK} pan head on the Ø{C.M3_CLEAR} teardrop, {A_M3_PAN:.1f} mm2", "XY comp", P_M3 / A_M3_PAN, BEARING,
+    SF_CYCLIC)
+row(f"front M2.5 x 16 pan heads driven snug, {P_M25:.0f} N preload (sustained): bearing on the front plate",
+    f"Ø{HEAD_D:.0f} pan head on the Ø{HOLE_PR} teardrop, {A_HEAD:.1f} mm2", "XY comp", P_M25 / A_HEAD, BEARING, SF_CYCLIC)
+
+# ================================================================ 6c. the proud top wall pulled down by the top M3s (review)
+# After the anchor seats the ridge (least crush, 80 MPa) the top wall still stands G_AFTER over the printed bulkhead at
+# the ridge. The cover rests on the ridge (y 24.7..32, centre 28.35) and on the bulkhead at its -y end, so the gap at a
+# top screw is that x (y_s + 32) / (28.35 + 32): 0.76 at y 14, 0.15 at y -23. Driving the M3 closes it two ways in series:
+# bending the top wall behind the lip (cantilever from the lip's back face, x 14.35, to the screw, L 7.6, b_eff 2L + dk)
+# and tilting the whole cover (crushing the ridge's corners further, 3 corners at 80 MPa, through the lever ratio). The
+# bending takes k_tilt / (k_bend + k_tilt) of it. Displacement-controlled: it relaxes with creep. Information rows.
+L_TW = C.LIP_X0 - X_SCREW_TOP                              # 7.6
+B_TW_EFF = 2 * L_TW + M3_PAN_DK                            # 20.8
+K_BEND = 3 * E_MPA * (B_TW_EFF * C.TOP_T ** 3 / 12) / L_TW ** 3
+Y_RIDGE_C = (C.TIE2_Y[0] + (P.TIE2_FOOT_Z - P.RIDGE_TIP_Z) + C.TIE2_Y[1]) / 2   # 28.35
+K_TILT = 2 * 80.0 * 3 * L_V * ((Y_RIDGE_C + C.HALF_Y) / (C.TOP_SCREWS[1][1] + C.HALF_Y)) ** 2
+SHARE = K_TILT / (K_BEND + K_TILT)
+FORCED = {}
+if VSEAT:
+    for (y_s, lab) in ((C.TOP_SCREWS[1][1], "+y screw (y 14)"), (C.TOP_SCREWS[0][1], "-y screw (y -23)")):
+        f_t = (y_s + C.HALF_Y) / (Y_RIDGE_C + C.HALF_Y)
+        for case, g in zip(("nominal", "RSS-high", "worst"), G_AFTER["least crush, 80 MPa"]):
+            d_b = SHARE * f_t * g
+            FORCED[(lab, case)] = (f_t * g, d_b, K_BEND * d_b, 3 * E_MPA * C.TOP_T * d_b / (2 * L_TW ** 2))
+    for case in ("nominal", "RSS-high"):
+        gap, d_b, F_, s_ = FORCED[("+y screw (y 14)", case)]
+        row(f"info: the +y top M3 pulls the proud top wall down ({case}: {gap:.3f} at the screw after the anchor's "
+            f"seating; {SHARE:.2f} of it bends the wall, {F_:.0f} N): top face at the lip's back face, tension "
+            f"(displacement-controlled, relaxes)", f"cantilever L {L_TW:.1f}, b_eff {B_TW_EFF:.1f} x {C.TOP_T:.0f}, "
+            f"E {E_MPA:.0f}, Kt 1 (smooth face)", "XY", s_, ALLOW_XY, SF_CYCLIC, INFO)
+        row(f"info: the same, {case}: the re-entrant corner under it (lip back face / top wall underside), compression",
+            f"Kt {KT_SHARP}", "XY comp", KT_SHARP * s_, BEARING, SF_SHORT, INFO)
 
 # ================================================================ 7. spec §8 proof push (round 4: the anchored cover)
 SF_PROOF = SF_SHORT / 1.5                                  # 2 at 1.5 x the service load (as every arm script)
@@ -922,7 +1024,7 @@ if ANCHOR2:
     print(f"anchor (as built): M3 x 45 at {tuple(C.ANCHOR_XY)}, stack {STACK:.2f}"
           + (f" + Ø{WASHER_M3[0]:g} x {WASHER_M3[1]:g} washer" if VSEAT else "") + f", {L_ANCHOR:.2f} engaged in CAD "
           f"({L_ANCHOR_EFF:.2f} with the worst-case float); post foot "
-          f"z {Z_FOOT:.2f}" + (f"; V-ridge flank band z {P.RIDGE_TIP_Z:.2f}..{Z_BLOCK_PR:.2f} ({FLANK_L:.2f} of flank) over "
+          f"z {Z_FOOT:.2f}" + (f"; V-ridge flank band z {TIP_SEATED:.3f}..{Z_BLOCK_PR:.2f} ({FLANK_L:.2f} of flank) over "
                                f"{L_V:.1f}, root {RIDGE_B:.1f} wide; x held at z {Z_XR:.2f}" if VSEAT else ""))
     for node, name in (("LD2", "rack B on the upper piece"), ("LD1", "rack A on the lower piece")):
         for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "spec §8 proof push")):
@@ -947,33 +1049,43 @@ if ANCHOR2:
              f"{R_co:.1f}, hand {R_hand:.1f})"))
 
 
-def seat_report(lab, apex, z_flat, z_tip, S):
-    n, w = S["nominal"][1], S["worst"][1]
-    print(f"  {lab}: ridge apex {apex:.2f}, flats {z_flat:.2f}, tip {z_tip:.2f} (CAD, top wall at 48.5)")
-    print(f"    nominal (corner r {R_BEAD[1]}): stops on the {n['by']}, U {n['U']:.3f}: play {n['play']:.3f}; top-wall gap "
-          f"{n['top_gap']:.3f}, gap under the flats {n['flat_gap']:.3f}, tip over the closed first layer "
-          f"{n['tip_gap']:.3f}; ridge contact height above the bulkhead {n['interf']:+.3f}")
-    print(f"    RSS-adverse: play {S['RSS'][0]:.3f} (left by the {S['RSS'][2]})")
-    print(f"    worst case (every tolerance at its limit): play {S['worst'][0]:.3f}, stops on the {w['by']}; the "
-          f"BUILD_GUIDE feelers would then read: top wall {w['top_gap']:.3f}, under the flats {w['flat_gap']:.3f}")
-    lo = n["interf"] - math.sqrt(TOL_COVER ** 2 + 2 * TOL_RIDGE_N ** 2 + TOL_GROOVE ** 2
-                                 + (K_ROUND * (R_BEAD[2] - R_BEAD[1])) ** 2)
-    print(f"    ridge contact above the bulkhead (+ = the ridge holds the top wall up before the screws): nominal "
-          f"{n['interf']:+.3f}, RSS {lo:+.3f}..{S['interf_hi_rss']:+.3f}, worst ..{S['interf_hi']:+.3f}")
+def seat_line(lab, s_):
+    print(f"    {lab:34s}: stops on the {s_['by']}; play {s_['play']:.3f}; top-wall gap {s_['top_gap']:.3f}, tip over "
+          f"the 17.2 layer {s_['tip_gap']:.3f}, flats over the block {s_['flat_gap']:.3f}")
 
 
 if ANCHOR2 and VSEAT:
-    print("\nThe V-seat AS PRINTED (round 6 slice: frame bulkhead top 48.4, rail block top 17.8, groove corners at the "
-          "layer tops; the cover to CAD; tolerances: ridge flank +-%.2f normal, groove walls +-%.2f, cover top wall to "
-          "foot +-%.2f, corner radius %.3f..%.2f):" % (TOL_RIDGE_N, TOL_GROOVE, TOL_COVER, R_BEAD[0], R_BEAD[2]))
-    seat_report("as built (round 6, ridge-first)", P.RIDGE_APEX_Z, P.TIE2_FOOT_Z, P.RIDGE_TIP_Z, SEAT_NOW)
-    for lab, (ic, fl_n, fl_w) in SEATING.items():
-        print(f"    seating by the {lab}: crushes ~{ic:.3f} mm (K {K_CRUSH:.0f} N/mm) -> top wall left proud of the "
-              f"bulkhead: nominal {fl_n:.3f}, worst {fl_w:.3f}")
-    print(f"    M3 x 45 engaged {L_ANCHOR:.2f} in CAD, {L_ANCHOR_EFF:.2f} with the worst float after the anchor alone")
-    seat_report("round 5 for reference", R5["apex"], R5["flat"], R5["tip"], SEAT_R5)
-    print(f"  verdict rows below: the worse of 'locked' (play 0, nominal and RSS; preload on the screw) and the "
-          f"worst-case play {PLAY_WORST:.3f} mm (preload gone)")
+    print("\nThe V-seat AS PRINTED (reviewer's slice: bulkhead 48.4, rail block 17.8, groove corners 0.1 inside the CAD "
+          "flank, open 0.3 slot in the 17.0..17.2 layer; cover to CAD). Tolerances (3 sigma): " +
+          ", ".join(f"{k} +-{v:.3f}" for k, v in TOL.items()) + f"; corner radius {R_BEAD[0]}..{R_BEAD[2]}:")
+    seat_line("nominal (r 0.075)", SEAT["nominal"])
+    print("    RSS margin of the ridge over each other stop (> 0: the ridge lands first): "
+          + "; ".join(f"{k} {v:+.3f}" for k, v in SEAT["rss_margin"].items()))
+    seat_line("worst case, any build", SEAT["worst"][1])
+    seat_line("worst case step 9 accepts (0.03 in)", SEAT["worst_accepted"][1])
+    print(f"    play: nominal {PLAY_NOM:.3f}, RSS {PLAY_RSS:.3f}, worst {PLAY_WORST:.3f} (top wall first: step 9 rejects "
+          f"it), worst accepted {PLAY_ACC:.3f} (tip first: no feeler sees it)")
+    print(f"    top-wall gap before the screws: nominal {G_TOP:.3f}, RSS-high {G_TOP_RSS:.3f}, range "
+          f"{SEAT['top_gap_range'][0]:.3f}..{SEAT['top_gap_range'][1]:.3f}")
+    print(f"    corners on the flank at first contact (lift {LIFT_NOM:.3f}, tip {P.RIDGE_TIP_Z + LIFT_NOM:.3f}): {CORNERS0}")
+    for fl, (d, n) in SEAT_D.items():
+        print(f"    anchor's {P_M3:.0f} N seating at {fl:.0f} MPa flow: descent {d:.3f}, {n} corners per flank carrying; "
+              f"tip at {P.RIDGE_TIP_Z + LIFT_NOM - d:.3f}")
+    for lab, (gn, gr, gw) in G_AFTER.items():
+        print(f"    top wall over the printed bulkhead after the anchor ({lab}): nominal {gn:.3f}, RSS-high {gr:.3f}, "
+              f"worst {gw:.3f}")
+    print(f"    flank band for the bearing rows: {FLANK_H:.3f} tall ({FLANK_L:.3f} of flank) after the least crush; "
+          f"{FLANK_H0:.3f} at first contact (information); ridge root {RIDGE_B:.2f} wide, resultant z {Z_XR:.2f}, "
+          f"arm {RIDGE_ARM:.2f} Fx")
+    print(f"    M3 x 45 engaged from the printed block top: {L_ANCHOR_EFF:.2f} with the worst standing after the anchor "
+          f"({FLOAT_W:.3f}); {L_ANCHOR:.2f} in CAD")
+    print("    the proud top wall pulled down by the top M3s (gap at the screw after seating; bend share "
+          f"{SHARE:.2f}, k_bend {K_BEND:.0f} N/mm, k_tilt {K_TILT:.0f} N/mm):")
+    for (lab, case), (g, d_b, F_, s_) in FORCED.items():
+        print(f"      {lab:16s} {case:8s}: gap {g:.3f}, wall bent {d_b:.3f}, screw force to close {F_:.0f} N, top-face "
+              f"stress {s_:.1f} MPa (corner {KT_SHARP * s_:.1f} MPa compression)")
+    print(f"  verdict rows below: the worse of 'locked' (play 0: nominal, RSS, every build step 9 accepts but the tip "
+          f"case) and the worst accepted play {PLAY_ACC:.3f} mm (preload gone)")
 print("\n| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
 print("|---|---|---|---|---|---|---|---|---|")
 table(ROWS)
@@ -1017,7 +1129,7 @@ print(f"  {'round 3 for reference: no anchor (post 2 as built, 8 thick, not seat
 ANCHOR2 = _saveA
 if ANCHOR2:
     (sf, k), best = reversed_worst(modes=ANCHOR_MODES)
-    print(f"  {'as built (round 6): ridge-first, locked + worst-case play ' + f'{PLAY_WORST:.3f}':78s}: lowest SF {sf:.2f} "
+    print(f"  {'as built (round 6): ridge-first, locked + worst accepted play ' + f'{PLAY_ACC:.3f}':78s}: lowest SF {sf:.2f} "
           f"({k}); most favourable variant {best:.2f}")
     for modes in ((f"slip {GAP_NOM:.2f}",), (f"slip {GAP_MAX:.2f}",)):
         (sf, k), best = reversed_worst(modes=modes)
@@ -1037,18 +1149,18 @@ if ANCHOR2:
     if VSEAT:
         print("The as-built seat's play cases (as printed) -> lowest SF over the frame model (both reversed pushes, all "
               "variants):")
-        for lab, (pl, *_rest) in (("nominal", SEAT_NOW["nominal"]), ("RSS-adverse", SEAT_NOW["RSS"]),
-                                  ("worst case", SEAT_NOW["worst"])):
+        for lab, pl in (("nominal", PLAY_NOM), ("RSS", PLAY_RSS), ("worst accepted by step 9", PLAY_ACC),
+                        ("worst, any build (step 9 rejects)", PLAY_WORST)):
             (sf, k), best = reversed_worst(modes=(f"slip {pl:.3f}",))
-            print(f"  {lab:12s} play {pl:.3f} mm: lowest SF {sf:.2f} ({k})")
+            print(f"  {lab:34s} play {pl:.3f} mm: lowest SF {sf:.2f} ({k})")
         (sf, k), best = reversed_worst(modes=("locked",))
         print(f"  zero play, 'locked': lowest SF {sf:.2f} ({k})")
         # the ridge's rows at the opening stall and the proof push (Fx from the zero-play frame model), with the bound of
         # all the flank force on the groove's top layer corner
         FXP = max(abs(anchored("LD2", R_proof, v, "locked")[0]["anchor"][0]) for v in VARIANTS)
-        armT = abs(2 * Z_BLOCK_PR - P.TIE2_FOOT_Z - P.RIDGE_APEX_Z)
-        print(f"The ridge (apex {P.RIDGE_APEX_Z:.2f}, flats {P.TIE2_FOOT_Z:.2f}: root {RIDGE_B:.1f} wide; tip "
-              f"{P.RIDGE_TIP_Z:.2f}; flank band {FLANK_L:.2f} x {L_V:.1f}):")
+        armT = ARM_TOP
+        print(f"The ridge (apex {P.RIDGE_APEX_Z:.2f}, flats {P.TIE2_FOOT_Z:.2f}: printed root {RIDGE_B:.1f} wide; "
+              f"seated tip {TIP_SEATED:.3f}; flank band {FLANK_L:.2f} x {L_V:.1f}):")
         for Fx_, lab, req in ((FX_LOCK, "opening stall", SF_SHORT), (FXP, "spec §8 proof push", SF_SHORT / 1.5)):
             brg = Fx_ * math.sqrt(2) / (FLANK_L * L_V)
             sh = 1.5 * Fx_ / (RIDGE_B * L_V)
@@ -1067,7 +1179,53 @@ if ANCHOR2:
                 Fz_ = max(max(r["anchor z"][0], 0.0) for r in rs)
                 print(f"  {lab:14s} {mode:11s}: Fx {Fx_:.1f} N, lift {Fz_:.1f} N, wedge + lift {T_:.1f} N, + preload "
                       f"{T_ + P_M3:.1f} N")
+# review: the top M3s' tension from the frame model's own top-joint reactions (replaces the frame's 'all of the moment on
+# the top screws' bound), worst over the variants and the two play modes, per case
+if ANCHOR2:
+    print("For the frame: the top M3s' tension from the top joint (worst of the variants and modes; y 14 / y -23):")
+    TOPT = {}
+    for node, nm in (("LD2", "upper piece (rack B pushed)"), ("LD1", "lower piece (rack A pushed)")):
+        for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "proof push")):
+            Ts = [top_screw_T(anchored(node, R, v, m)[0]) for m in ANCHOR_MODES for v in VARIANTS]
+            TOPT[(nm, lab)] = (max(t[0] for t in Ts), max(t[1] for t in Ts))
+            print(f"  {nm:28s} {lab:14s}: {TOPT[(nm, lab)][0]:6.1f} / {TOPT[(nm, lab)][1]:6.1f} N")
+    _a2 = ANCHOR2
+    ANCHOR2 = False
+    Ts = [top_screw_T(cover_frame("LD2", R_go, *v)) for v in VARIANTS]
+    ANCHOR2 = _a2
+    print(f"  for reference, no anchor at all (round 3): upper piece, opening stall: {max(t[0] for t in Ts):.1f} / "
+          f"{max(t[1] for t in Ts):.1f} N")
+print("What-if, the snug preloads (sustained, req 4): heads and fixes")
+print(f"  top M3 pan head Ø{M3_PAN_DK} bare, {P_M3:.0f} N: SF {BEARING / (P_M3 / A_M3_PAN):.2f}; on a Ø7 x 0.5 washer: SF "
+      f"{BEARING / (P_M3 / head_area(7.0)):.2f}")
+print(f"  front M2.5 pan head Ø5, {P_M25:.0f} N: SF {BEARING / (P_M25 / A_HEAD):.2f}; on a Ø6 x 0.5 washer: SF "
+      f"{BEARING / (P_M25 / A_M25_W6):.2f} (the washer needs the screws at z 2.5: at z 3 it touches jaw B's neck, "
+      f"exact solids); preload for SF 4 on the bare head: {BEARING / 4 * A_HEAD:.0f} N")
+for z_s in (3.0, 2.5):
+    T_s = R_go * z_rbg / z_s
+    print(f"  M2.5 at z {z_s}: the stall's {T_s:.0f} N on one screw: bare head SF {BEARING / (T_s / A_HEAD):.2f}, on the "
+          f"Ø6 washer {BEARING / (T_s / A_M25_W6):.2f}, pull-out (11 engaged) {SHEAR_Z / (T_s / (math.pi * 2.5 * L_M25)):.2f}")
 print("What-if, strip under slot B (yaw stall, the worse of closed / open):")
 for d in (STRIP_D - 2.0, STRIP_D - 1.0, STRIP_D, STRIP_D + 2.0):
     w = max(strip_sf(d, F_YAW_Z, 0.0, C.NECK_Y), strip_sf(d, F_YAW_Z, C.STROKE, C.STROKE + C.NECK_Y))
     print(f"  strip {d:.2f} deep (FRONT_Z0 {ZB0 - d:+.0f}): SF {ALLOW_Z / w:.2f}")
+
+# review: rack A rides under the top wall, so the cover's height sets rack A's mesh with the frame-held pinion. The cover
+# rests on the ridge at +y (height = standing - 0.1 over CAD) and on the printed bulkhead at -y (48.4: -0.1, down to -0.2
+# with the bulkhead and underside errors). Backlash change 2 da tan20 per mesh; tip clearance 0.40 + da; contact ratio
+# with the rack's addendum 0.85 - da (both members topped 0.15 m).
+if VSEAT:
+    al = math.radians(20.0)
+    r_b, r_a = C.R_P * math.cos(al), C.R_TIP
+    rec = math.sqrt(r_a ** 2 - r_b ** 2) - C.R_P * math.sin(al)
+    p_b = math.pi * C.M * math.cos(al)
+    print("Rack A's mesh against the cover's height (da = rack A's guide over its CAD height):")
+    for lab, da in (("-y end, top wall on the printed bulkhead, worst low", -0.2),
+                    ("-y end, top wall on the printed bulkhead (48.4)", Z_BULK_PR - C.Z_TOP0),
+                    ("+y end, after the anchor, nominal", G_AFTER["least crush, 80 MPa"][0] - 0.1),
+                    ("+y end, after the anchor, RSS-high", G_AFTER["least crush, 80 MPa"][1] - 0.1),
+                    ("+y end, after the anchor, worst", G_AFTER["least crush, 80 MPa"][2] - 0.1),
+                    ("+y end, before any screw, worst", G_TOP_W - 0.1)):
+        eps = ((C.M - C.TIP_RELIEF - da) / math.sin(al) + rec) / p_b
+        print(f"  {lab:52s} da {da:+.3f}: backlash {C.BACKLASH + 2 * da * math.tan(al):.3f}, tip clearance "
+              f"{0.40 + da:.3f}, contact ratio {eps:.2f}")

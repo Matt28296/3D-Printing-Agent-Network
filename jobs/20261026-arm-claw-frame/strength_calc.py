@@ -1,13 +1,20 @@
-"""Strength check, round 6, CAD ENGINEER'S SELF-CHECK (an independent review follows): jobs/20261026-arm-claw-frame
+"""Strength check, round 6, INDEPENDENT REVIEW (strength-analyst; did not design the part): jobs/20261026-arm-claw-frame
 (wrist plate + servo bulkhead + rail block + ribs + the cover's anchor pilot: Ø2.7 CAD x 14 at ANCHOR_XY (18.35, 28) in
 the rail block's top, for the cover's M3 x 45, and the 90° V-groove beside it that locates the cover's post).
 
-Round 6 (the round 5 review's fix, user-approved): the bulkhead and rib tops drop to BULK_TOP 48.45 (off the slice
-plane; prints at 48.4 as before). The cover's ridge-first seat (VSEAT_CLR 0, flats 18.05, tip 17.35) changes this part's
-loads only through the cover's numbers: the ridge bears on 0.64 x 7.3 of flank (tip 17.35 to the printed block top
-17.8); the worst-case stack leaves 0.029 mm of play (wedge + lift 60.2 / 69.5 N, preload gone) instead of round 5's
-0.082 (106 / 115 N); the M3 x 45 is engaged 10.49 (10.75 less the cover's worst-case float after seating, 0.256). The
-top M3s lose 0.05 of engagement (the top wall now stands 0.05 over the bulkhead in CAD). Bulkhead levers use BULK_TOP.
+Round 6 (ridge-first contact): the bulkhead and rib tops at BULK_TOP 48.45 (off the slice plane). The CAD engineer's
+round-6 update of this file was a self-check; this version recomputes it. What the review changes:
+- slice facts from the reviewer's own scratch slice of the committed part.stl (arm's command, G-code read back): the
+  bulkhead and both ribs end at ;Z:48.4, the rail block top at 17.8, the groove's walls at half-widths 0.15 / 0.35 /
+  0.55 / 0.75 (layers ending 17.2..17.8), an open 0.3 slot in the 17.0..17.2 layer, the anchor pilot's and the top
+  pilots' external perimeters at r 1.57 (Ø2.7 CAD), the pilots 14.0 deep (floor ;Z:34.4);
+- the cover's forces from the reviewer's cover script: 'locked' (play 0: nominal, RSS) and the worst build BUILD_GUIDE
+  step 9 accepts (play 0.029, the ridge's tip bottomed; preload gone);
+- the ridge bears from its seated tip (17.354, after the anchor's least crush) to the printed block top: 0.446 tall;
+- the M3 x 45's engagement measured from the PRINTED block top with the worst standing after seating: 10.56;
+- the top M3s: the joint's real tension from the cover's frame model (<= 24.5 N) replaces the old bound (136 N, all of
+  the moment on the top screws, as if the post held nothing: information now), and their snug preload is checked as a
+  sustained load (the project's rule), as is the front M2.5s'.
 
 Round 5 (the V-seat): a 90° V-groove 0.8 deep along y in the rail block's top (x 14.45..16.05 at z 17.75, y 23.5..32)
 takes the cover's ridge. The cover's +x push enters the block on the groove's +x flank once the ridge bears; the 45°
@@ -478,20 +485,39 @@ row(f"USB tug {F_TUG:.0f} N along x at the plug: M3 x 18 pull-out from the bulkh
 z_rb = ((C.ZS - C.NECK_Z[0] + C.SLOT_CLR) + (C.ZS - C.RACK_TIP)) / 2
 M_cov = R_grip_open * ((C.Z_TOP0 + C.Z_TOP1) / 2 - z_rb)
 T_cov = M_cov / (C.BULK_T / 2) / 2
-for lab, L_ in (("M3 x 10, no camera", L_M3_BARE), ("M3 x 18 with the camera mount", L_M3_CAM)):
-    row(f"new path: opening stall on jaw B, jaws open ({R_grip_open:.1f} N on the cover's upper piece): the cover's "
-        f"overturning moment {M_cov:.0f} N.mm on its top screws, {T_cov:.0f} N each ({lab}; bound: as if the post held "
-        f"nothing, kept since round 4)", f"M3, {L_:.2f} engaged (CAD)", "Z shear", T_cov / (math.pi * 3.0 * L_), SHEAR_Z,
-        SF_SHORT)
-# round 6, info: the same bound as printed with the cover's worst-case float. The bulkhead prints at 48.4, so the M3 x 10
-# reaches 7.0 - (the top wall's gap over the printed bulkhead at the screw). After seating, that gap is at most the
-# cover's worst-case float at the ridge with the +y top screw's share, 0.190 (cover strength_calc.py), applied here at
-# the screw as a bound (the screw itself pulls the wall down; nominal float 0.005)
-FLOAT_SCREW_W = 0.190
-L_M3_BARE_W = 10.0 - C.TOP_T - FLOAT_SCREW_W
-row(f"info, bound on the bound above: M3 x 10, no camera, as printed with the cover's worst-case float {FLOAT_SCREW_W} at "
-    f"the screw", f"M3, {L_M3_BARE_W:.2f} engaged", "Z shear", T_cov / (math.pi * 3.0 * L_M3_BARE_W), SHEAR_Z, SF_SHORT,
-    INFO)
+# review (round 6): the M3s' engagement as printed. The bulkhead prints at 48.4, so an M3 x 10 under a 3 mm top wall
+# reaches 7.0 below it when the screw has pulled the wall down onto it, and 7.0 - g if it has not. After the anchor's
+# seating the wall stands at most G_SCREW_W over the bulkhead at the +y screw (cover strength_calc.py: 0.259, worst stack,
+# least crush), so 6.74 is the least an M3 x 10 can have; M3 x 18 through the 3.5 mm camera pad: 11.24.
+G_SCREW_W = 0.259
+L_M3_BARE_W = 10.0 - C.TOP_T - G_SCREW_W                  # 6.74
+L_M3_CAM_W = 18.0 - (C.PAD_TOP - C.Z_TOP1) - C.TOP_T - G_SCREW_W   # 11.24
+# review: the top joint's real tension, from the cover's frame model's own reactions (cover strength_calc.py, worst of
+# the 64 variants and both play modes): upper piece pushed 23.0 N (opening stall) / 24.5 N (spec §8 proof push) at the
+# +y screw; lower piece pushed 17.2 N (proof) at the -y screw. The old bound (all of the moment on the top screws, as if
+# the post held nothing: 136 N each) is what the cover gives with NO anchor (round 3's model: 284 N on one screw), so it
+# no longer describes the as-built joint; it stays as information.
+T_TOP_STALL, T_TOP_PROOF = 23.0, 24.5
+for lab, L_ in (("M3 x 10, no camera", L_M3_BARE_W), ("M3 x 18 with the camera mount", L_M3_CAM_W)):
+    row(f"opening stall on jaw B, jaws open ({R_grip_open:.1f} N on the cover's upper piece): the top joint's tension "
+        f"{T_TOP_STALL} N on the +y top screw (cover frame model, anchored; {lab})",
+        f"M3, {L_:.2f} engaged (the worst standing at the screw)", "Z shear", T_TOP_STALL / (math.pi * 3.0 * L_),
+        SHEAR_Z, SF_SHORT)
+row(f"spec §8 proof push: the top joint's tension {T_TOP_PROOF} N on the +y top screw (M3 x 10)",
+    f"M3, {L_M3_BARE_W:.2f} engaged", "Z shear", T_TOP_PROOF / (math.pi * 3.0 * L_M3_BARE_W), SHEAR_Z, SF_SHORT / 1.5)
+# review: the snug preload of the top screws (sustained, the project's rule; the anchor's 150 N) and of the front M2.5s
+# (100 N, as the M2 tab screws)
+P_SNUG_M3, P_SNUG_M25 = 150.0, 100.0
+L_M3_BARE_CAD = 10.0 - C.TOP_T - TW_GAP                    # 6.95 (CAD; 7.0 printed with the wall pulled down)
+row(f"top M3 x 10 (no camera) driven snug, {P_SNUG_M3:.0f} N preload (sustained): pull-out from the bulkhead top",
+    f"thread cylinder Ø3 x {L_M3_BARE_CAD:.2f}", "Z shear", P_SNUG_M3 / (math.pi * 3.0 * L_M3_BARE_CAD), SHEAR_Z, SF_CYCLIC)
+row(f"top M3 x 18 through the camera mount driven snug, {P_SNUG_M3:.0f} N preload (sustained): pull-out",
+    f"thread cylinder Ø3 x {L_M3_CAM_W:.2f}", "Z shear", P_SNUG_M3 / (math.pi * 3.0 * L_M3_CAM_W), SHEAR_Z, SF_CYCLIC)
+for lab, L_ in (("bound, kept since round 4: all of the cover's moment on its top screws, as if the post held nothing "
+                 "(M3 x 10, CAD)", L_M3_BARE), ("the same bound, M3 x 18 with the camera (CAD)", L_M3_CAM),
+                (f"the same bound on the worst standing at the screw ({G_SCREW_W}), M3 x 10", L_M3_BARE_W)):
+    row(f"info, {lab}: opening stall on jaw B, the cover's overturning moment {M_cov:.0f} N.mm, {T_cov:.0f} N each",
+        f"M3, {L_:.2f} engaged", "Z shear", T_cov / (math.pi * 3.0 * L_), SHEAR_Z, SF_SHORT, INFO)
 # front M2.5 x 16 into 14 mm pilots: 11 engaged (round 3)
 L_M25 = P.FRONT_PILOT_DEPTH - 3.0
 z_rbg = (C.T_W + (C.ZS - C.RACK_TIP)) / 2               # 12.05: rack B's front face resultant
@@ -499,35 +525,42 @@ T_m25 = R_grip_open * z_rbg / C.FRONT_SCREWS[0][1]
 row(f"stall, one jaw blocked: rack B pushes the cover's lower piece forward ({R_grip_open:.1f} N at z {z_rbg:.1f}): "
     f"M2.5 pull-out {T_m25:.0f} N (one screw)", f"M2.5 x 16, {L_M25:.0f} engaged (14 mm pilot), 1.9 mm skins", "Z shear",
     T_m25 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_SHORT)
+row(f"front M2.5 x 16 driven snug, {P_SNUG_M25:.0f} N preload (sustained): pull-out from the wrist plate's front edge",
+    f"thread cylinder Ø2.5 x {L_M25:.0f}", "Z shear", P_SNUG_M25 / (math.pi * 2.5 * L_M25), SHEAR_Z, SF_CYCLIC)
 
 # ================================================================ 6. the cover's anchor and V-seat in the rail block
 # One M3 x 45 socket head + Ø7 x 0.5 washer through the cover (top wall, lip, second post: 33.75 mm to the block top)
 # into a Ø2.7 CAD (2.5 printed) x 14 pilot in the block's top at (18.35, 28): 10.75 engaged in CAD (round 4: 11.25, no
-# washer). Round 6 (ridge-first contact): the ridge holds the cover's top wall up until the screws seat it by crushing the
-# groove's layer corners; with the worst-case stack the top wall is left 0.256 proud after the anchor alone (cover
-# strength_calc.py), so 10.49 engaged (FLOAT_W), used in every pull-out row.
+# washer). Round 6 review: the engagement is measured from the PRINTED block top (17.8, the pilot's mouth): the head's
+# seat is at 51.5 + (the cover's height over its CAD seat, = the top wall's standing over the printed bulkhead - 0.1),
+# the tip 44.5 below it. With the worst standing after the anchor's own seating (0.339, cover strength_calc.py: worst
+# stack, least crush) that is 10.56 (the self-check took 10.75 - 0.256 = 10.49 from the CAD block top).
 # Walls round the pilot (probed on the round 4 solid at z 6, 12, 17): 2.65 to the block's front face (x 22.35) and to
 # its +y end (y 32), 7.5 behind it, 6.65 towards -y; floor 3.75. Round 5: the V-groove's +x edge is 0.95 from the pilot
 # at the block top (x 16.05 against 17.0), widening downward at 45°.
-# Forces from the cover's frame model (cover strength_calc.py round 6; worst of 64 variants):
-#   'locked' (zero play: nominal and RSS): Fx 25.6 N (opening stall), 16.3 N (crash), 32.5 N (spec §8 proof push); lift
-#   10.0 / 6.4 / 12.7 N. The 45° flank adds a lift equal to Fx (frictionless, worst), so the screw carries Fx + lift:
-#   35.1 / 22.3 / 44.5 N, plus the snug preload (added conservatively; nothing relies on it).
-#   worst-case stack (play 0.029 mm, preload gone): wedge + lift 60.2 N (opening stall) / 69.5 N (proof push).
+# Forces from the cover's frame model (cover strength_calc.py, this review; worst of 64 variants):
+#   'locked' (zero play: nominal, RSS and every accepted build but the tip case): Fx 25.7 N (opening stall), 16.4 N
+#   (crash), 32.6 N (spec §8 proof push); lift 10.0 / 6.4 / 12.7 N. The 45° flank adds a lift equal to Fx (frictionless,
+#   worst), so the screw carries Fx + lift: 35.2 / 22.4 / 44.6 N, plus the snug preload (added; nothing relies on it).
+#   the worst build BUILD_GUIDE step 9 accepts (tip bottomed on the groove's 17.2 layer, play 0.029 mm, preload gone):
+#   wedge + lift 60.3 N (opening stall) / 69.7 N (proof push).
 COVER_P = consts(ROOT / "jobs" / "20261026-arm-claw-cover" / "model.py", {**CF_ENV, "HOLE_COMP_DEFAULT": HOLE_COMP_DEFAULT})
 if ANCHOR_D > 0:
     P_M3 = 150.0                                           # N, "snug only" (<= 0.09 N.m), as the cover's analysis
     WASHER_T = getattr(C, "ANCHOR_WASHER", (7.0, 0.5))[1] if hasattr(C, "VSEAT_D") else 0.0
-    FLOAT_W = 0.256                                        # cover strength_calc.py round 6: worst-case float, anchor alone
+    FLOAT_W = 0.339                                        # cover strength_calc.py review: worst standing after the anchor
+    Z_BLOCK_PR = 17.8                                      # printed block top (reviewer's slice)
+    Z_BULK_PR = 48.4                                       # printed bulkhead top (reviewer's slice)
     L_AN_CAD = 45.0 - (C.Z_TOP1 - Z_BLOCK) - WASHER_T      # 10.75 engaged in CAD (11.25 without the washer)
-    L_AN = L_AN_CAD - FLOAT_W                              # 10.49
+    L_AN = Z_BLOCK_PR - (C.Z_TOP1 + (FLOAT_W - (C.Z_TOP0 - Z_BULK_PR)) + WASHER_T - 45.0)   # 10.56
     A_TH = math.pi * 3.0 * L_AN
-    FX_STALL, FX_PROOF = 25.6, 32.5                        # cover strength_calc.py round 6 output (N), 'locked'
-    T_STALL, T_PROOF = 35.1, 44.5                          # wedge lift + lift (N), the same output
-    T_STALL_W, T_PROOF_W = 60.2, 69.5                      # the same at the worst-case play 0.029 mm, preload gone
+    FX_STALL, FX_PROOF = 25.7, 32.6                        # cover strength_calc.py review output (N), 'locked'
+    T_STALL, T_PROOF = 35.2, 44.6                          # wedge lift + lift (N), the same output
+    T_STALL_W, T_PROOF_W = 60.3, 69.7                      # the same at the worst accepted play 0.029 mm, preload gone
     R_PROOF = 34.2                                         # spec §8 proof push on jaw B, jaws 30 open (cover analysis)
     row(f"cover anchor M3 x 45 driven snug, {P_M3:.0f} N preload (sustained): pull-out from the block",
-        f"thread cylinder Ø3 x {L_AN:.2f} ({L_AN_CAD:.2f} in CAD, less the worst-case float {FLOAT_W})", "Z shear",
+        f"thread cylinder Ø3 x {L_AN:.2f} (from the printed block top, the cover {FLOAT_W} proud of the printed bulkhead; "
+        f"{L_AN_CAD:.2f} in CAD)", "Z shear",
         P_M3 / A_TH, SHEAR_Z, SF_CYCLIC)
     row(f"cover anchor under the opening stall: preload + the wedge's lift + the cover's lift ({T_STALL} N; foot held by "
         f"the ridge)", f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", (P_M3 + T_STALL) / A_TH, SHEAR_Z, SF_SHORT)
@@ -535,11 +568,12 @@ if ANCHOR_D > 0:
         f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", T_STALL / A_TH, SHEAR_Z, SF_SHORT)
     row(f"cover anchor, spec §8 proof push {R_PROOF} N: preload + wedge + lift {T_PROOF} N",
         f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", (P_M3 + T_PROOF) / A_TH, SHEAR_Z, SF_SHORT / 1.5)
-    # round 6: the worst-case stack leaves 0.029 mm of play (preload gone): the foot slides that far before the flank
-    # bears, and the cover's frame model sends more lift to the screw
+    # review: the worst build BUILD_GUIDE step 9 accepts leaves 0.029 mm of play (the tip bottomed on the groove's 17.2
+    # layer; preload gone): the foot slides that far before the flank bears, and the cover's frame model sends more lift
+    # to the screw
     for T_, lab, req in ((T_STALL_W, "opening stall", SF_SHORT), (T_PROOF_W, f"spec §8 proof push {R_PROOF} N",
                                                                     SF_SHORT / 1.5)):
-        row(f"cover anchor, worst-case ridge play 0.029 mm (preload gone): wedge + lift {T_} N under the {lab}",
+        row(f"cover anchor, the worst accepted ridge play 0.029 mm (preload gone): wedge + lift {T_} N under the {lab}",
             f"thread cylinder Ø3 x {L_AN:.2f}", "Z shear", T_ / A_TH, SHEAR_Z, req)
     # hoop stress in the 2.65 mm walls: the pilot is vertical in a flat print, so the hoop runs along the layers (25 MPa).
     # Thread forming (at installation, short-term) as the frame's MG90S rows: p_form = 2 T / (mu pi d^2 L), the same
@@ -553,16 +587,17 @@ if ANCHOR_D > 0:
         "XY", (p_form + p_cl) * lame_a, ALLOW_XY, SF_SHORT)
     row(f"cover anchor: preload alone (sustained; the forming pressure relaxes)", f"as above", "XY", p_cl * lame_a, ALLOW_XY,
         SF_CYCLIC)
-    # the V-groove takes the cover's x push on its +x flank. Round 6: the ridge (tip 17.35, cover model RIDGE_TIP_Z) bears
-    # on the groove's printed layer corners up to the printed block top (17.8): 0.45 tall, 0.64 of flank; over y 24.7..32
-    # (7.3, the ridge's full-depth length, flats at 18.05). The block's material in front of the groove (x 16.05..22.35,
-    # less the pilot) is pushed +x: interlayer shear on the plane of the groove's bottom.
+    # the V-groove takes the cover's x push on its +x flank. Review: the ridge lands 0.056 above its CAD seat (the
+    # groove's corners stand 0.1 inside the CAD flank, rounded r 0.075), so at first contact its tip is at 17.406 and only
+    # the 17.6 and 17.8 corners carry; the anchor's 150 N then crushes them (least crush, 80 MPa: 0.052) and the tip
+    # settles at 17.354 (cover strength_calc.py). The bearing band runs from there to the printed block top (17.8): 0.446
+    # tall, 0.63 of flank, over y 24.7..32 (7.3). The block's material in front of the groove (x 16.05..22.35, less the
+    # pilot) is pushed +x: interlayer shear on the plane of the groove's bottom.
     if hasattr(C, "VSEAT_D"):
-        Z_BLOCK_PR = 17.8                                     # printed block top (round 6 scratch slice, read back)
-        z_tip = COVER_P["RIDGE_TIP_Z"]                        # 17.35
+        z_tip = 17.354                                        # the ridge's tip after the anchor's least crush (cover)
         z_flats = COVER_P["TIE2_FOOT_Z"]                      # 18.05
-        FL = (Z_BLOCK_PR - z_tip) * math.sqrt(2)              # 0.64
-        L_G = C.TIE2_Y[1] - (C.TIE2_Y[0] + (z_flats - z_tip))   # 7.3
+        FL = (Z_BLOCK_PR - z_tip) * math.sqrt(2)              # 0.63
+        L_G = C.TIE2_Y[1] - (C.TIE2_Y[0] + (z_flats - COVER_P["RIDGE_TIP_Z"]))   # 7.3
         x_g1 = C.VSEAT_XC + C.VSEAT_D                         # 16.05: the groove's +x edge at the block top
         A_plug = (C.RAIL_X1 - x_g1) * L_G - math.pi / 4 * ANCHOR_D ** 2
         w_top = (ANCHOR_X - ANCHOR_D / 2) - x_g1              # 0.95: groove to pilot at the block top
@@ -578,10 +613,13 @@ if ANCHOR_D > 0:
         # the screw's shank: bounded by the shank rows below (all of the push on the shank)
         # review: the same ligament DOES carry the pilot's thread-forming pressure (it is the pilot's wall on the groove
         # side). Lame on the thinnest ring it leaves, printed: pilot Ø2.5, groove edge 16.0 at the top layer (half-width
-        # 0.75 at 17.7..17.8) -> 18.35 - 1.25 - 16.0 = 1.10 (CAD 0.95). Info, not verdict: it acts only at installation,
-        # only on the top ~0.8 mm of a 10.5 mm engagement and on the groove side's ~90° of the circumference; a split
-        # there is backed by the screw itself for the flank push, and losing that thread costs at most ~0.2 mm-equivalent
-        # of engagement (round 6, with the worst-case float: pull-out on the preload 4.12 -> ~4.04, still >= 4).
+        # 0.75 at 17.7..17.8) -> 18.35 - 1.25 - 16.0 = 1.10 (CAD 0.95). Reviewer's slice: at y 28 the top layer prints
+        # it as the groove's external perimeter (w 0.52, edge 15.99) beside the pilot's (w 0.48, edge 17.03): two bonded
+        # beads, 1.04 of material even before the hole closes to Ø2.5. Info, not verdict (ruling in strength.md): it acts
+        # only at installation, only on the top ~0.8 mm of a 10.6 mm engagement and on the groove side's ~90° of the
+        # circumference; a split there is backed by the screw itself for the flank push (the crack closes in
+        # compression), and losing that thread costs ~0.2 mm-equivalent of engagement (pull-out on the preload 4.15 ->
+        # ~4.07, still >= 4). Pre-forming the thread before the cover goes on makes it inspectable (strength.md).
         w_lig = ANCHOR_X - C.M3_PILOT / 2 - (C.VSEAT_XC + (Z_BLOCK - 0.05 - (Z_BLOCK - C.VSEAT_D)))   # 1.10 printed
         lame_l = ((r_i + w_lig) ** 2 + r_i ** 2) / ((r_i + w_lig) ** 2 - r_i ** 2)
         row(f"info: cover anchor driven: thread forming ({p_form:.1f} MPa) + preload ({p_cl:.2f} MPa) in the ligament "
@@ -653,3 +691,14 @@ for name, rib in (("no ribs", (0.0, 0.0)), ("6 x 8 ribs", (6.0, 8.0)), ("6 x 10 
     rr = rib if rib[0] else None
     sfs = [s for yp in (-Y_PORT, Y_PORT) for s in strip_rows("w", F_TUG, yp, PLUG[1], SF_SHORT, rows=[], rib=rr or (1e-6, 1e-6))]
     print(f"  {name:24s}: lowest SF {min(sfs):.2f}")
+# review: the top screws without the camera, at the snug preload (sustained, req 4): which screw and washer pass. The
+# washer costs 0.5 of engagement; the 14 mm pilot (floor 34.45) takes up to an M3 x 14 + washer with 3.5 to spare.
+print(f"What-if, the top M3 without the camera at the {P_SNUG_M3:.0f} N snug preload (pull-out, sustained req 4; engaged "
+      f"below the printed bulkhead with the wall pulled down / with the worst standing {G_SCREW_W} left at the screw):")
+for lab, Ls, wt in (("M3 x 10, bare (BOM)", 10.0, 0.0), ("M3 x 10 + Ø7 x 0.5 washer", 10.0, 0.5),
+                    ("M3 x 12 + washer", 12.0, 0.5), ("M3 x 14 + washer", 14.0, 0.5)):
+    L0 = Ls - wt - C.TOP_T
+    tip = C.Z_TOP1 + wt - Ls
+    print(f"  {lab:28s}: engaged {L0:.2f} / {L0 - G_SCREW_W:.2f}: SF {SHEAR_Z / (P_SNUG_M3 / (math.pi * 3 * L0)):.2f} / "
+          f"{SHEAR_Z / (P_SNUG_M3 / (math.pi * 3 * (L0 - G_SCREW_W))):.2f}; tip z {tip:.2f} (pilot floor "
+          f"{BULK_TOP - P.TOP_PILOT_DEPTH:.2f})")

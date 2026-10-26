@@ -1,170 +1,299 @@
-VERDICT: NEEDS_TEST
+VERDICT: FAIL
 
-# Strength check: 20261026-arm-claw-cover (round 6, CAD engineer's self-check)
+# Strength check (round 6, independent review): 20261026-arm-claw-cover
 
-cad-engineer · 2026-10-26 · `python3 jobs/20261026-arm-claw-cover/strength_calc.py` (plain python3, from the project
-root, about 60 s). **This is the designer's own check of the round-6 change, not an independent review; an independent
-review follows.** The method, the 64-variant cover frame model and the as-printed seat stack-up are the round 5
-reviewer's (strength-analyst); this round applies the reviewer's fix and re-runs them on the new geometry. The round 5
-independent review is kept below as history.
+strength-analyst (independent; did not design the part) · 2026-10-26 · round 6 (ridge-first contact), merged at
+105aafe · `python3 jobs/20261026-arm-claw-cover/strength_calc.py` (plain python3, from the project root, about 60 s).
+The CAD engineer's round-6 self-check of this file is replaced. Every number here is recomputed: the slice facts from my
+own scratch slice (scratchpad, not a job file), the geometry from the models, the rest from the script.
 
 ## Verdict
 
-**Every verdict row passes. NEEDS_TEST only because the allowables are placeholders** (no library row for PETG).
+**FAIL, on two snug-preload rows (sustained, req 4). The round-6 seat itself works.**
 
-- **Lowest SF 3.01** (row 102): the M2.5 pan head on the front plate under rack B's push (one jaw blocked). Unchanged
-  since round 3, at the limit.
-- **Next:** 3.03, the plate strips at the ties' webs (rows 29 and 83, unchanged); **3.20**, the ridge's flank bearing
-  under the opening stall (row 42).
-- **Sustained rows (req 4):** the washer on the top wall 4.80 (row 110); the post round its hole 8.97 (row 111); the
-  M3 × 45 pull-out on the preload **4.12** (row 112, with 10.49 engaged: the top wall's worst-case float after seating).
-  The cyclic row (both jaws stalled) is 10.60.
-- **Proof rows (req 2):** lowest 2.39 (the plate strips at the ties' webs), the ridge's flank bearing 2.53.
-- **The seat as printed:** the ridge always reaches both flanks first. Play **0** at nominal and RSS, **0.029 mm** at the
-  worst-case stack (which BUILD_GUIDE §4 step 9's 0.03 feeler rejects). Every frame-model row is run at both and the
-  worse is reported.
+- **Lowest SF 2.49 (row 119, FAIL):** the two top M3 × 10 **bare pan heads** on the 3 mm top wall at the snug preload
+  (150 N, the anchor's own figure). That is 10.1 MPa on 14.9 mm². The project rule (the anchor in round 5, the turntable
+  ring, the links) is a Ø7 × 0.5 washer under every snug M3 head on PETG. The frame fails the same screw's pull-out
+  (6.95 engaged, SF 2.73; frame strength.md).
+- **Row 120, FAIL: 3.26.** The two front M2.5 × 16 bare pan heads on the front plate at their snug preload (100 N, the
+  frame's tab-screw figure), on 13.1 mm².
+- **Every other verdict row passes.** The lowest are:
+  - 3.01, row 108: the M2.5 pan head under the one-jaw stall (short-term);
+  - 3.03, rows 30 and 87: the plate strips at the ties' webs;
+  - 3.16, row 44: the ridge's flank bearing under the opening stall.
 
-## The round 6 change (the reviewer's fix, user-approved)
+  The sustained rows are the anchor's washer 4.80 (row 116), the post round its hole 8.97 (row 117) and the M3 × 45
+  pull-out on the preload 4.15 (row 118). The cyclic row is 10.60. The lowest proof rows (req 2) are 2.39 (the plate
+  strips) and 2.50 (the ridge bearing).
+- **Placeholder allowables.** With the fix below, the verdict would be NEEDS_TEST, not PASS: there is no library row
+  for PETG.
 
-| # | Change | Where | Value |
-|---|---|---|---|
-| 1 | Ridge flanks onto the CAD groove flanks | claw_frame.py | `VSEAT_CLR` 0.1 → **0.0** (ridge virtual apex 17.05 → **16.95**) |
-| 2 | Foot's flats decoupled and raised | cover model.py | `TIE2_FOOT_Z` = ZS − RAIL_IN + `FOOT_CLR` **0.30** = **18.05**; the ridge's 45° flanks run on to the flats: base x 14.15–16.35, 2.2 wide, 0.2 behind the post's back face and 0.2 from the anchor hole |
-| 3 | Ridge tip | cover model.py | `RIDGE_TIP_Z` **17.35**, absolute (0.8 wide, 0.15 over the groove's closed first layer) |
-| 4 | Bulkhead top off the slice plane | frame model.py, `BULK_TOP` in claw_frame.py | **48.45** (prints 48.4, as before); the cover's `Z_TOP0` stays 48.5 |
-| 5 | Assembly order and check | BUILD_GUIDE §4 step 9 | anchor first; a 0.03 feeler must enter at the top wall before any screw, a 0.3 must not after them |
+## Required fix (smallest, with numbers)
 
-## The seat as printed
+1. **Top screws without the camera:** **M3 × 14 pan head + Ø7 × 0.5 washer (ISO 7089)**, snug only (≤ 0.09 N·m, as the
+   anchor). This replaces the M3 × 10.
+   - Head on the washer: 28.8 mm², **SF 4.80**.
+   - Engaged 10.50 below the printed bulkhead (10.24 if the worst standing, 0.259, is left at the screw): pull-out
+     **4.12 / 4.02**.
+   - The tip ends at z 38.0, 3.55 above the 14 mm pilot's floor (34.45).
+   - The head is 12.8 from the jaws (exact solids).
+   - With the camera, the M3 × 18 button heads stay. Their head is on the camera mount's pad, and their pull-out on
+     the preload is 4.41 (frame).
+   - An M3 × 10 or × 12 with the washer does not pass: pull-out 2.55 / 3.34.
+2. **Front M2.5 screws.** A standard washer does not fit at z 3: a DIN 125 Ø6 × 0.5 washer touches jaw B's neck
+   (0.000, exact solids). There are two ways to fix it:
+   - (a) **The smallest:** BUILD_GUIDE §4 step 9 and the BOM say "drive each M2.5 until the head seats, then stop
+     (≤ 0.04 N·m)". That gives a preload ≤ 82 N and head bearing SF ≥ 4.0. This is no harder to follow than the
+     anchor's "≤ 0.09 N·m".
+   - (b) **The robust one:** `FRONT_SCREWS` z 3 → **2.5** in claw_frame.py, plus DIN 125 **Ø6 × 0.5** washers. This
+     changes both models.
+     - Clearance to jaw B: 0.50 in CAD, 0.26 with the worst standing.
+     - Head bearing 21.7 mm²: SF 5.42 on the preload; 4.17 under the stall, whose screw force rises to 130 N at
+       z 2.5.
+     - Pull-out 4.15.
+     - The frame's front pilots keep a 2.4 skin on top and 1.4 underneath.
 
-**Slice facts (round 6).** I sliced both round-6 part.stl files with the arm's own command into the scratchpad
-(PrusaSlicer 2.7.2, 0.20mm QUALITY @MK3, Prusament PETG, each job's slice_overrides.ini) and read the G-code back:
+   **I recommend (b).** z 2.75 is not enough: 0.25 in CAD, 0.01 with the worst standing.
+
+## 1. The seat as printed: is the ridge really the first contact?
+
+**My slice** (PrusaSlicer 2.7.2, Arachne, 0.20mm QUALITY @MK3, Prusament PETG, each job's slice_overrides.ini; the
+committed part.stl files, which match a rebuild of model.py to 0.4 mm³). Read back from the G-code:
 
 | Feature | CAD | Printed | Evidence |
 |---|---|---|---|
-| Frame bulkhead top (and both ribs) | 48.45 | **48.4** | last layer `;Z:48.4`; the face is 0.05 from both slice planes (48.3, 48.5) |
-| Frame rail block top | 17.75 | **17.8** | highest layer with extrusion over x 16.7–22.3 and 10.1–14.3, y 24–32: `;Z:17.8` |
-| Groove walls, layers ending 17.2 / 17.4 / 17.6 / 17.8 | 45° flank | half-widths 0.15 / 0.35 / 0.55 / 0.75 | external-perimeter centrelines at frame y 26 (w 0.45), centred on x 15.25 |
-| Cover foot flats | 18.05 | **18.05** | external perimeter at G z 18.275 (w 0.45) in the layers at G y 25.9 / 27.9 / 30.1 |
-| Cover ridge tip | 17.35 | **17.35** | external perimeter at G z 17.575, x 14.943–15.557 |
-| Cover ridge flanks | 45° | to CAD | external perimeter 0.225 normal inside both flanks |
+| Frame bulkhead top and both ribs | 48.45 | **48.4** | last layer `;Z:48.4`; extrusion over x 3.6–9.9 at every y, and on both ribs, ends there |
+| Frame rail block top | 17.75 | **17.8** | front of the groove, behind it, and at −y |
+| Groove walls, layers ending 17.2 / 17.4 / 17.6 / 17.8 | 45° | half-widths **0.15 / 0.35 / 0.55 / 0.75** | external perimeters 14.875/15.625, 14.675/15.825, 14.475/16.025, 14.275/16.225 (w 0.45) at y 25, 26, 30, 31.5 |
+| Groove's 17.0–17.2 layer | — | **an open 0.3 slot** | two external perimeters, bead edges 15.10 / 15.40; the layer below (17.0) is solid. It is not "closed": the tip faces this layer's top (17.2) at 0.15–0.35 off the centre line |
+| Cover ridge flanks, tip, flats | 45°, 17.35, 18.05 | **to CAD** | external perimeter 0.225 inside each (tip path z 17.575, flats 18.275) |
+| Cover 0.2 × 0.2 bump behind the post's face | x 14.15–14.35 | **not printed** | the outline runs from the flank (14.527, 17.991) straight onto the post's face (14.575, 18.039): the printed root is **2.0** wide, not 2.2 |
+| Cover top wall underside | 48.5 | 48.5 | perimeter at 48.725 |
 
-**Stack-up** (the reviewer's model and tolerances: ridge flank ±0.05 normal, groove walls ±0.05, cover top wall to foot
-±0.05, corner radius 0.05 / 0.075 / 0.10, each a 3σ bound):
+**Stack model.** Each stop is a height at which the rigid cover touches; it rests on the highest. Tolerances are 3σ,
+±0.05 on **every** printed surface as the brief says:
+- the ridge flank ±0.05 normal (±0.0707 vertical);
+- the groove's walls ±0.05;
+- the cover's underside ±0.05;
+- the bulkhead top ±0.05;
+- the tip ±0.05 and the 17.2 layer ±0.05;
+- the flats ±0.05 and the block ±0.05;
+- the bead corner radius 0.05–0.10.
 
-| Case | Stops on | Ridge play | Top wall over the printed bulkhead before the screws | Flats over the block | Tip over the closed first layer |
+The self-check had no tolerance on the bulkhead top, the tip or the slot.
+
+| Case | Stops on | Play (per flank, mm) | Top wall over the printed bulkhead | Tip over the 17.2 layer | Lowest frame-model SF |
 |---|---|---|---|---|---|
-| Nominal | ridge on both flanks | **0** | **0.156** | 0.306 | 0.206 |
-| RSS-adverse | ridge on both flanks | **0** | 0.055 … 0.257 | — | — |
-| Worst case | the top wall on the bulkhead (the 0.03 feeler cannot enter: step 9 stops the build) | **0.029** | 0.000 (… 0.341 at the other extreme) | 0.200 | — |
-| Round 5, for reference | the flats on the block | 0.082 RSS / 0.129 worst | 0.056 | 0.006 | 0.006 |
+| Nominal (r 0.075) | ridge, both flanks | **0** | 0.156 | 0.206 | 3.16 (ridge bearing, 'locked') |
+| RSS | ridge, both flanks (margins: top wall +0.043, tip +0.093, flats +0.193) | **0** | ≥ 0.043 | ≥ 0.093 | 3.16 |
+| Worst, any build | the top wall | **0.079** | 0.000 | 0.250 | **1.89** (top wall behind the lip). **BUILD_GUIDE step 9 rejects this build** (0.03 feeler cannot enter) |
+| Worst a build passing step 9 can have | the ridge's tip on the 17.2 layer | **0.029** | 0.150 | 0.000 | 4.04 (less push reaches the ridge) |
 
-**Seating** (crush rate ~1750 N/mm: 3 corners a flank × 7.3 mm, flattened at ~40 MPa, assumption):
-- the anchor alone (150 N) crushes ~0.086: the top wall is left 0.070 proud (nominal), 0.256 (worst);
-- with the +y top screw's share (0.77 × 150 N) ~0.152: 0.005 / 0.190.
-- The M3 × 45 is therefore taken as engaged **10.49** (10.75 − 0.256) in every pull-out row.
+**Ruling on the play:**
+- Ridge-first holds at nominal and RSS.
+- Play 0.079 is possible only when every tolerance is at its limit, and that build fails step 9.
+- What step 9 cannot see is the tip bottoming: 0.029 at the absolute worst. At that play the frame model's lowest SF
+  is 4.04.
+- The verdict rows therefore run at 'locked' (play 0) and at 0.029, and take the worse. The self-check's 0.029 was the
+  right number by coincidence: it came from the top-wall case with the bulkhead held at exactly 48.4.
 
-**Play → SF** (preload gone; both reversed pushes, all 64 variants, every frame-model section including the ridge's):
+**Which corners carry.**
+- The groove's printed corners stand 0.1 inside the CAD flank. Rounded r 0.075, they let the ridge land **0.056** above
+  its CAD seat, so its tip is at 17.406.
+- A rounded corner touches the flank at z_top − 0.29 r. The 17.4 corner (17.378) is beyond the tip, so **only the 17.6
+  and 17.8 corners carry at first contact**. The self-check counted three and took the band from the CAD tip.
+- The anchor's 150 N then crushes them. At 80 MPa, which gives the least crush, the ridge sinks 0.052, the 17.4 corner
+  joins, and the tip settles at 17.354 (0.095 / 17.311 at 40 MPa).
+- The anchor goes in first and snug (BUILD_GUIDE), before any service load. So the verdict bearing rows use the band
+  after the least crush: 0.446 tall, 0.63 of flank, **SF 3.16** (stall) and 2.50 (proof).
+- At first contact, with no crush credit, it would be 2.79 (info row 164).
+- The flank force's resultant is taken at the two upper corners (z 17.7). On the printed 2.0-wide root that gives an
+  arm of 0.50 Fx: root bending **4.00**, shear 4.73. With all of it on the top corner (arm 0.70), 3.10 (info row 163).
 
-| Play (mm) | 0 | 0.025 | 0.04 | 0.05 | 0.075 | 0.1 |
-|---|---|---|---|---|---|---|
-| Lowest SF | 3.20 (ridge flank bearing) | 3.93 | 3.41 | 2.83 | 1.99 | 1.54 |
+**Seating and the top wall's standing** (over the printed bulkhead, at the ridge):
 
-At the worst-case stack's 0.029 the lowest is 4.08 (the ridge's flank bearing, since less push reaches it).
+| | Nominal | RSS-high | Worst |
+|---|---|---|---|
+| Before any screw | 0.156 | 0.269 | 0.391 |
+| After the anchor, least crush (80 MPa) | 0.104 | 0.217 | 0.339 |
+| After the anchor, 40 MPa | 0.061 | 0.174 | 0.296 |
 
-## The ridge (Fx from the zero-play frame model)
+The M3 × 45's engagement is counted from the **printed** block top: **10.56** with the worst standing. The self-check
+had 10.49, taken from the CAD block top less the whole float.
 
-| Row | Opening stall, Fx 25.6 N (req 3) | Proof push, Fx 32.5 N (req 2) |
-|---|---|---|
-| Flank bearing, 0.64 × 7.3 band (tip 17.35 to the printed block top 17.8) | **3.20** | 2.53 |
-| Root shear, 2.2 × 7.3 | 5.22 | 4.12 |
-| Root bending, resultant at the printed corners (z 17.6, arm 0.20 Fx), Kt 1.7 | 8.12 | 6.41 |
-| Root bending, bound: all of it on the top corner (arm 0.60), info row 153 | 4.14 | 3.27 |
+## 2. The frame's 3.004 bound row and the 2.94 info row
 
-These are the reviewer's "THE FIX" numbers, now verdict rows (42–44, 125–127). Info row 152 (the 150 N preload
-crushing the flanks' layer corners, SF 1.09) is the seating itself: self-limiting, it only closes play, and its creep
-relaxes a preload that nothing relies on (the round 5 ruling). It stays information.
+I added the support reactions to the frame solver and read the top joint off the model directly. Per zone, the least M3
+tension that balances it is `T = max(0, −Rz, M/3.25, (−M − 6.5 Rz)/3.25)`. Worst of the 64 variants and both play modes:
 
-## What changed in strength_calc.py (round 6)
+| Push | Case | +y screw (y 14) | −y screw (y −23) |
+|---|---|---|---|
+| Rack B on the upper piece | opening stall / crash / proof | **23.0** / 21.1 / 24.5 N | 4.7 / 4.3 / 5.0 N |
+| Rack A on the lower piece | opening stall / crash / proof | 8.7 / 5.5 / 11.0 N | 13.6 / 8.6 / 17.2 N |
+| The same cover with no anchor at all (round 3) | opening stall | 20.2 N | **283.8 N** |
 
-- `ANCHOR_AS_BUILT` reads `FOOT_CLR` (the flats are no longer tied to `VSEAT_CLR`).
-- The flank band runs from the tip to the **printed** block top (17.8): 0.45 tall, 0.64 of flank; `L_V` 7.3; root 2.2.
-- Post foot section re-probed on the round-6 solid at z 19: A 60.7 mm², I 373.5 mm⁴ (round 5: 62.4 / 383.5).
-- The seat section re-read from the round-6 slice; `SEAT_NOW` is the as-built ridge-first seat; round 5 is printed
-  for reference.
-- `ANCHOR_MODES` = ('locked', 'slip 0.029'): zero play with the preload on the screw, and the worst-case play with
-  the preload gone. Each row takes the worse.
-- Pull-out rows use `L_ANCHOR_EFF` 10.49 (the worst-case float after the anchor alone).
-- The reviewer's "THE FIX" what-if block is replaced by the as-built ridge rows and the forces for the frame (below).
+**Ruling: the bound is too conservative and belongs in neither verdict.** Its 136 N per screw (all 886 N·mm on the top
+screws, "as if the post held nothing") is the unanchored cover's load path. With the ridge in the groove, the push leaves
+through the post. The real top-screw tension is ≤ 24.5 N, so pull-out is SF ≥ 16 even at the worst standing.
 
-**Forces for the frame** (worst of the variants; the frame's strength_calc.py quotes them):
+The 2.94 info row compounds that bound with a standing left at the screw, so it is a bound on a bound. I recompute it at
+the worst standing after seating (6.74 engaged, 2.91) and keep it as information only.
 
-| Case | Mode | Fx | Lift | Wedge + lift | + preload |
-|---|---|---|---|---|---|
-| Opening stall | locked | 25.6 | 10.0 | 35.1 | 185.1 |
-| Opening stall | slip 0.029 | 20.1 | 42.5 | 60.2 | 210.2 |
-| Crash | locked | 16.3 | 6.4 | 22.3 | 172.3 |
-| Proof push | locked | 32.5 | 12.7 | 44.5 | 194.5 |
-| Proof push | slip 0.029 | 27.0 | 45.2 | 69.5 | 219.5 |
+What does govern the top screws is their own snug preload (the required fix).
 
-## Load cases
+## 3. The top wall's standing: what it does
 
-As round 4: the stall is 216 N·mm through the 20-tooth pinion, 21.6 N on one rack or 10.8 N per jaw. Each rack cocks in
-its 0.25 mm gaps and reacts its finger's moment with end forces R = F × (x_load − 28.6) / span.
+**Rack A's guide and backlash.** Rack A rides under the top wall, so the cover's height sets its mesh with the
+frame-held pinion. The cover rests on the ridge at +y and on the printed bulkhead at −y. Backlash per mesh is 0.40 +
+2 da tan 20°:
 
-| # | Case | Load | Where it lands | Type, SF req |
+| Where | da (mm) | Backlash | Tip clearance | Contact ratio |
 |---|---|---|---|---|
-| 1 | Stall, one jaw blocked (spec) | 21.6 N 3 mm from the tip: R 19.8–27.0 N | Rack A forward on the upper piece and back on the lip; rack B on the lower piece | Short-term, 3 |
-| 2 | Stall, both jaws | half of 1 | As 1 | Cyclic, 4 |
-| 3 | Crash | 13 N at the tip, finger pushed shut: R 12.6–17.2 N, reversed | Rack B on the upper piece's bottom strip (reaction on the frame through the post's foot); rack A on the lower piece's top strip | Short-term, 3 |
-| 4 | Opening against an obstacle (Architect: a design case) | 21.6 N reversed: R up to 27.0 N | As 3 | Short-term, 3 |
-| 5 | Handling | 5 N pushing a finger shut: R 6.6 N | As 3 | Short-term, 3 |
-| 6 | Sideways push on jaw B | Yaw stall 7.1 N; hand 5 N | Strip under slot B | Short-term, 3 |
-| 7 | Rack A lift | 13.8 N at the rack's end | Top wall between the lip and the plate | Short-term, 3 |
-| 8 | Camera tug | 10 N | Top wall's rear edge | Short-term, 3 |
-| 9 | Anchor | M3 × 45 snug, 150 N, on a Ø7 washer | Washer on the top wall, the post round its hole, pull-out | Sustained, 4 |
-| 10 | Spec §8 proof | 32 N at 3 mm from the tip, jaws 30: R 34.2 N; 10.7 N sideways | As 3/4 and 6 | Proof, 2 |
+| −y end, worst low | −0.200 | 0.254 | 0.200 | 1.72 |
+| −y end, on 48.4 | −0.100 | 0.327 | 0.300 | 1.62 |
+| +y end after the anchor, nominal | +0.004 | 0.403 | 0.404 | 1.52 |
+| +y end after the anchor, RSS-high | +0.117 | 0.485 | 0.517 | 1.41 |
+| +y end after the anchor, worst | +0.239 | 0.574 | 0.639 | 1.28 |
 
-## Method, sections and assumptions
+- No binding anywhere: the clearances stay positive.
+- The contact ratio stays ≥ 1.28.
+- Backlash runs 0.33–0.40 nominal along the guide. That is the SYS-08 target (round 5's printed seat gave 0.33
+  everywhere). At RSS-high it exceeds 0.40 at the +y end. That costs jaw-position slop, not strength. Rack A's 0.25
+  gaps to the lip and front plate do not change: both move with the cover.
+- The spec's note "rack A's 0.7 backlash absorbs it" is the wrong reason. A higher guide *increases* backlash; it needs
+  no absorbing.
 
-- **Print direction.** The cover prints on its −y end (print Z = claw y). Side-profile bending runs along the layers
-  (25 MPa). The strip under slot B bends across them (12.5).
-- **Global model:** round 4's two-zone x–z frame, 64 joint variants: top wall clamped or on 1.1 × 10⁵ N·mm/rad; M2.5 3
-  or 30 kN/mm, held or free in z; plate leg 21 / 25.5; second lip 25.5 / 37.25; corner coupling 2.9 × 10⁴ / 10⁵
-  N·mm/rad.
-- **The post's foot** is a node at z 17.6, the flank resultant: x held by the ridge (3 kN/mm), z by the flanks and the
-  screw.
-- **The play.** It is modelled as round 4's slip: the foot slides freely, z held, until it has moved the play, and is
-  held after that. Linear in each phase, so the two superpose.
-- **The ridge.** It is a vertical prism in the cover's print, so its root (the flats' plane) is in-plane (25 MPa, 12.5
-  shear). Round 6: root 2.2 wide at the flats (z 18.05).
-  - Flank bearing: all of Fx on one 45° flank, frictionless: normal Fx√2 on the 0.64 × 7.3 band (round 6: tip 17.35 to the printed block top 17.8).
-  - Root: Fx/A + Kt·6M/(b²L), with M = Fx·(2z_c − flats − apex), the flank force's moment about the root's centroid.
-- **Screw tension.** In a "slip" mode the play only matters once the preload has crept away; with the preload, friction
-  at the seat holds the foot. So the screw then carries the lifts alone (round 6: lift up to 69.5 N at the worst-case play).
-  In "locked" (zero play) the preload is added on top.
-- **The seat stack-up** uses the round-6 slice facts and the reviewer's tolerances (script section "the V-seat AS PRINTED").
-- **Modes (round 6).** 'locked' (zero play, nominal and RSS; the 150 N preload added to the screw) and 'slip 0.029' (the worst-case stack, preload gone); every row is the worse of the two.
-- **PETG:** E 1.8 GPa (placeholder; only stiffness ratios use it).
-- **Temperature:** 40 °C against PETG at ~70 °C, OK.
+**Slot B (a fit item the self-check did not look at).**
+- Jaw B rides on the frame's wrist plate, but slot B moves with the cover. Its lower clearance is 0.25 − (the cover's
+  height): **0.246 nominal, 0.133 RSS-high, 0.011 worst** after seating.
+- The strip's top stays below the rack's running surface (z 6) as long as the height is under 0.25, so this rubs in
+  the worst case at most and never lifts the jaw. It is a note, not a fail.
+- The M2.5 heads (on the cover) sit 0.50 under jaw B's neck in CAD, 0.26 with the worst standing.
 
-## Allowables and sources
+**M3 × 10 and × 18 engagement.**
+- The bulkhead prints at 48.4. With the wall pulled down, an M3 × 10 has 7.00 engaged (6.95 in CAD). With the worst
+  standing left at the screw (0.259) it has 6.74. An M3 × 18 through the camera pad has 11.50 / 11.24.
+- Service tension is ≤ 24.5 N, so service pull-out is SF ≥ 16.
+- The preload is what fails: the frame row at 2.73.
 
-`library/materials.csv` has no measured PETG row, so these are the strength-checks **placeholders**. NEEDS_TEST is the
-best verdict possible.
+**Camera mount.**
+- It sits on the top wall and rises with it. The cover's tilt along y (0.10–0.34 over 60 mm) is ≤ 0.3° about x.
+- When the M3 × 18s pull the proud wall down behind the lip, the pad (x 0–14) can pitch by up to about 0.6° (nominal).
+  That shifts the image by about 1 % of its height. No clearance changes: the anchor head is 3.91 from the mount and
+  14.3 from the Brio with its plug.
 
-| Quantity | Value | Source |
+**The proud wall pulled down (info rows 165–168).** After seating, the gap at the +y screw is 0.079 nominal (0.165
+RSS-high, 0.259 worst). Driving the M3 closes it in two ways in series:
+- bending the top wall behind the lip (cantilever, L 7.6, b_eff 20.8: 576 N/mm);
+- tilting the cover, which crushes the ridge more (6030 N/mm).
+
+Bending takes 91 % of it.
+
+| Case at the +y screw | Gap | Screw force to close | Top face, tension | Re-entrant corner, compression |
+|---|---|---|---|---|
+| Nominal | 0.079 | 42 N | 10.1 MPa | 25.3 MPa |
+| RSS-high | 0.165 | 87 N | 21.1 MPa | 52.9 MPa |
+
+**Ruling: information, not a verdict row.**
+- It is displacement-controlled, like the seating crush the round 5 review also ruled information.
+- Creep only lets the wall settle onto the bulkhead.
+- The tensile side is a smooth face, below the in-plane strength even at RSS-high. The sharp corner is in compression.
+- It is an upper bound: a rigid root, the narrow b_eff.
+
+It is another reason for "snug only" on the top screws. It is also why the proof test must not count whitening at the
+lip's back corner seen right after assembly (inspect before the first screw and after the proof).
+
+## 4. Printability (the strength side)
+
+- **The ridge bump does not print.** The root is 2.0 wide (rows 26, 49 etc. use 2.0).
+- **The groove's 17.2 layer.** The tip's 0.206 over it holds at RSS (+0.093). In the worst case the tip bottoms (play
+  0.029, SF 4.04).
+- **The anchor pilot's 0.95 mm ligament** is the frame's (frame strength.md).
+
+## 5. Clearances (exact solids, claw_sequence_check placements, gap 0–44 every 1 mm)
+
+- **Racks:**
+
+  | Feature | Clearance | Where it is least |
+  |---|---|---|
+  | Second post + ridge + foot | 0.240 | jaw A, gap 0 |
+  | Lip | 0.240 | |
+  | First tie's post | 0.240 | |
+  | Webs | 1.128 | |
+  | Frame rail block | 0.250 | jaw B |
+
+  All are ≥ 0.2.
+- **Washer and head:**
+
+  | Item | Clearance |
+  |---|---|
+  | Anchor Ø7 × 0.5 washer + Ø5.5 head, to the jaws | 3.162 |
+  | the same, to the camera mount | 3.911 |
+  | the same, to the Brio with its plug | 14.301 |
+  | M2.5 heads to jaw B | 0.500 (0.26 with the worst standing) |
+  | Fix: M3 × 14 head on a Ø7 washer, to the jaws | 12.77 |
+
+- **Note (not the round-6 change, not a rack).** At gap 0–44 the front plate is 0.148 from jaw A, at slot A's lower
+  edge on the plate's front face. The jaw's r 3 kink fillet (neck → finger) starts 1.24 behind NECK_X1, inside the slot.
+  A 0.3 × 45° chamfer on slot A's (and slot B's) front edges would restore ≥ 0.25. This is a jaw / cover detail for the
+  next round.
+
+## 6. Every other row
+
+Every verdict row ≥ 3 passes except the two preload rows above.
+
+**Sustained rows (req 4):**
+
+| Row | What | SF |
 |---|---|---|
-| Along the layers | 25 MPa | Skill placeholder |
-| Across the layers | 12.5 MPa | 0.5 × in-plane |
-| Interlayer shear | 6.25 MPa | 0.5 × 12.5 |
-| Bearing | 25 MPa | In-plane value |
-| Kt | 2.5 sharp; 1.7 for r/h 0.15–0.25 (the ridge's root); 1.5 for r ≥ 0.25 h; 2 at a hole | Skill |
-| Corner crush (seating estimate only) | ~40 MPa | Assumption, PETG compressive flow |
+| 116 | anchor washer | 4.80 |
+| 117 | post round its hole | 8.97 |
+| 118 | anchor pull-out | 4.15 |
+| 119 | top M3 heads | **2.49** |
+| 120 | M2.5 heads | **3.26** |
 
-Required SF: 3 short-term, 4 cyclic or sustained, 2 at a proof load (1.5 × service).
+Rows 119 and 120 are new: the self-check had no row for these preloads. The cyclic row (both jaws stalled) is 10.60.
 
+## Load cases (unchanged since round 4)
 
-## Results (from `strength_calc.py`, verbatim; each frame-model row is the worse of 'locked' and the worst-case play 0.029 mm)
+The stall is 216 N·mm through the 20-tooth pinion: 21.6 N on one rack, 10.8 N per jaw. Each rack cocks in its 0.25 gaps
+and reacts its finger's moment with end forces R = F (x_load − 28.6) / span. The cases:
+- one jaw blocked (R 19.8–27.0 N, short-term);
+- both jaws (cyclic);
+- crash, 13 N at the tip (R 12.6–17.2 N, reversed);
+- opening against an obstacle (R up to 27.0 N, reversed);
+- handling, 5 N;
+- yaw stall 7.1 N and hand 5 N sideways on jaw B;
+- rack A lift 13.8 N;
+- camera tug 10 N;
+- the anchor's snug preload (150 N, sustained);
+- **the cover screws' snug preloads (new: M3 150 N, M2.5 100 N, sustained);**
+- spec §8 proof (32 N, R 34.2 N; 10.7 N sideways).
+
+## Method, allowables
+
+- **Two-zone x–z frame of the cover, 64 joint variants** (round 4), with the post's foot held by the ridge (3 kN/mm in
+  x at z 17.7, stiff in z).
+- **Play modes:** 'locked' (play 0, the preload added to the screw where that is worse) and 'slip 0.029' (the worst
+  build that step 9 accepts, preload gone). Each row is the worse of the two.
+- **Support reactions** are now returned by the solver, for the top joint.
+- **Allowables are placeholders, PETG** (no library row):
+  - 25 MPa along the layers, 12.5 across, 6.25 interlayer shear;
+  - bearing 25;
+  - Kt 2.5 sharp, 1.7 at the ridge's root, 1.5 at r ≥ 0.25 h, 2 at a hole;
+  - E 1.8 GPa (stiffness ratios and the forced-closure rows only).
+- **Corner crush** is taken at 40 or 80 MPa (an assumption, bracketed).
+- **Temperature:** 40 °C against PETG at ~70 °C, OK.
+- **Required SF:** 3 short-term, 4 sustained or cyclic, 2 at the proof load.
+
+## Proof test (spec §8)
+
+With the fix, the cover's proof rows pass (lowest 2.39, the plate strips). See design_review.md for the §8 text changes:
+- the step-9 seat check as an acceptance line;
+- the M2.5 and M3 hardware;
+- "inspect the lip's back corner before loading".
+
+## Results (from `strength_calc.py`, verbatim; each frame-model row is the worse of 'locked' and the worst accepted play 0.029 mm)
 
 | # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |
 |---|---|---|---|---|---|---|---|---|
@@ -175,358 +304,187 @@ Required SF: 3 short-term, 4 cyclic or sustained, 2 at a proof load (1.5 × serv
 | 5 | added: opening against an obstacle, jaw A, jaws nearly closed: rack A's +y end at y 31.4, R 19.8 N (the second tie's prop ignored) | lip root at the top wall, rack side (Kt 2.5): b_eff 8.5, t 8.0, lever 5.9 | XY | 3.22 | 25.00 | 7.77 | 3 | OK |
 | 6 | stall, one jaw blocked: rack A's +y end on the upper piece near slot A's end, R 27.0 N | front plate at the top wall (Kt 1.5): b_eff 7.1, t 5.0, lever 5.1 | XY | 6.99 | 25.00 | 3.58 | 3 | OK |
 | 7 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 1.27 MPa) | XY | 5.25 | 25.00 | 4.76 | 3 | OK |
-| 8 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 5.20 | 25.00 | 4.81 | 3 | OK |
-| 9 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.27 | 25.00 | 7.65 | 3 | OK |
-| 10 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.05 | 25.00 | 23.76 | 3 | OK |
-| 11 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.07 | 25.00 | 336.83 | 3 | OK |
-| 12 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.41 | 25.00 | 60.97 | 3 | OK |
-| 13 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.09 | 25.00 | 11.96 | 3 | OK |
-| 14 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.83 | 25.00 | 30.24 | 3 | OK |
-| 15 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.46 | 25.00 | 10.17 | 3 | OK |
-| 16 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.81 | 25.00 | 13.80 | 3 | OK |
-| 17 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 8.7 N at z 17.60, lift +38.4 N + wedge 8.7 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.16 | 25.00 | 21.53 | 3 | OK |
-| 18 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 16.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.40 | 12.50 | 30.98 | 3 | OK |
-| 19 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: M3 x 45 anchor: pull-out from the frame's rail block (10.49 engaged), preload (if any) + wedge lift + lift | screw 172 N, thread cylinder Ø3 x 10.49 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.74 | 6.25 | 3.59 | 3 | OK |
-| 20 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80, the printed layer corners) | normal 23.1 N on 0.64 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 4.97 | 25.00 | 5.03 | 3 | OK |
-| 21 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge root at the foot's flats (z 18.05): shear | 2.2 x 7.3, Fx 16.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 1.53 | 12.50 | 8.20 | 3 | OK |
-| 22 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge root at the foot's flats: the flank force's moment (0.20 Fx, resultant at the printed layer corners, z 17.6) + the wedge's compression, Kt 1.7 | 2.2 x 7.3, M 3.3 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.96 | 25.00 | 12.76 | 3 | OK |
-| 23 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.34 | 25.00 | 74.55 | 3 | OK |
-| 24 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.83 | 25.00 | 30.30 | 3 | OK |
-| 25 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.20 | 25.00 | 124.29 | 3 | OK |
-| 26 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.24 | 25.00 | 106.14 | 3 | OK |
-| 27 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.01 | 6.25 | 894.06 | 3 | OK |
-| 28 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.05 | 25.00 | 540.48 | 3 | OK |
-| 29 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 1.99 MPa) | XY | 8.25 | 25.00 | 3.03 | 3 | OK |
-| 30 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 5.69 | 25.00 | 4.40 | 3 | OK |
-| 31 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.57 | 25.00 | 6.99 | 3 | OK |
-| 32 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.16 | 25.00 | 21.62 | 3 | OK |
-| 33 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.08 | 25.00 | 307.15 | 3 | OK |
-| 34 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.45 | 25.00 | 55.47 | 3 | OK |
-| 35 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.30 | 25.00 | 10.89 | 3 | OK |
-| 36 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.91 | 25.00 | 27.40 | 3 | OK |
-| 37 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.69 | 25.00 | 9.29 | 3 | OK |
-| 38 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.98 | 25.00 | 12.63 | 3 | OK |
-| 39 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 17.8 N at z 17.60, lift +42.0 N + wedge 17.8 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.77 | 25.00 | 14.10 | 3 | OK |
-| 40 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second post's foot: shear across it (z 19.25) | A 60.7, Fx 25.6 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.63 | 12.50 | 19.72 | 3 | OK |
-| 41 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: M3 x 45 anchor: pull-out from the frame's rail block (10.49 engaged), preload (if any) + wedge lift + lift | screw 185 N, thread cylinder Ø3 x 10.49 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.87 | 6.25 | 3.34 | 3 | OK |
-| 42 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80, the printed layer corners) | normal 36.3 N on 0.64 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 7.81 | 25.00 | 3.20 | 3 | OK |
-| 43 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge root at the foot's flats (z 18.05): shear | 2.2 x 7.3, Fx 25.6 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 2.40 | 12.50 | 5.22 | 3 | OK |
-| 44 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge root at the foot's flats: the flank force's moment (0.20 Fx, resultant at the printed layer corners, z 17.6) + the wedge's compression, Kt 1.7 | 2.2 x 7.3, M 5.1 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 3.08 | 25.00 | 8.12 | 3 | OK |
-| 45 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.37 | 25.00 | 68.17 | 3 | OK |
-| 46 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.90 | 25.00 | 27.70 | 3 | OK |
-| 47 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.22 | 25.00 | 113.65 | 3 | OK |
-| 48 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.26 | 25.00 | 97.06 | 3 | OK |
-| 49 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.01 | 6.25 | 817.59 | 3 | OK |
-| 50 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.05 | 25.00 | 494.25 | 3 | OK |
-| 51 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 0.49 MPa) | XY | 2.02 | 25.00 | 12.38 | 3 | OK |
-| 52 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 4.45 | 25.00 | 5.62 | 3 | OK |
-| 53 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.51 | 25.00 | 9.97 | 3 | OK |
-| 54 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.92 | 25.00 | 27.29 | 3 | OK |
-| 55 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.07 | 25.00 | 378.96 | 3 | OK |
-| 56 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.36 | 25.00 | 69.46 | 3 | OK |
-| 57 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.84 | 25.00 | 13.60 | 3 | OK |
-| 58 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.62 | 25.00 | 40.10 | 3 | OK |
-| 59 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.87 | 25.00 | 13.38 | 3 | OK |
-| 60 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.61 | 25.00 | 15.51 | 3 | OK |
-| 61 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 0.0 N at z 17.60, lift +29.6 N + wedge 0.0 N, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.49 | 25.00 | 51.31 | 3 | OK |
-| 62 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 6.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.16 | 12.50 | 80.54 | 3 | OK |
-| 63 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: M3 x 45 anchor: pull-out from the frame's rail block (10.49 engaged), preload (if any) + wedge lift + lift | screw 159 N, thread cylinder Ø3 x 10.49 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.60 | 6.25 | 3.90 | 3 | OK |
-| 64 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80, the printed layer corners) | normal 8.9 N on 0.64 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 1.91 | 25.00 | 13.08 | 3 | OK |
-| 65 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge root at the foot's flats (z 18.05): shear | 2.2 x 7.3, Fx 6.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.59 | 12.50 | 21.31 | 3 | OK |
-| 66 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge root at the foot's flats: the flank force's moment (0.20 Fx, resultant at the printed layer corners, z 17.6) + the wedge's compression, Kt 1.7 | 2.2 x 7.3, M 1.3 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 0.75 | 25.00 | 33.17 | 3 | OK |
-| 67 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.30 | 25.00 | 84.37 | 3 | OK |
-| 68 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.73 | 25.00 | 34.30 | 3 | OK |
-| 69 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.18 | 25.00 | 140.67 | 3 | OK |
-| 70 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.21 | 25.00 | 119.35 | 3 | OK |
-| 71 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.01 | 6.25 | 1005.33 | 3 | OK |
-| 72 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.04 | 25.00 | 607.75 | 3 | OK |
-| 73 | added: opening against an obstacle, jaw B, jaws closed: rack B's end 6.9 from the edge, R 19.8 N: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 6.15 x 5, Kt 2.5 (shear 0.96 MPa) | XY | 4.00 | 25.00 | 6.25 | 3 | OK |
-| 74 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 1.27 MPa) | XY | 5.25 | 25.00 | 4.76 | 3 | OK |
-| 75 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.23 | 25.00 | 11.20 | 3 | OK |
-| 76 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.36 | 25.00 | 18.41 | 3 | OK |
-| 77 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.21 | 25.00 | 20.59 | 3 | OK |
-| 78 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.51 | 25.00 | 7.12 | 3 | OK |
-| 79 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.92 | 25.00 | 13.03 | 3 | OK |
-| 80 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.88 | 25.00 | 28.48 | 3 | OK |
-| 81 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 2 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.03 | 6.25 | 239.92 | 3 | OK |
-| 82 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 2 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.17 | 25.00 | 145.04 | 3 | OK |
-| 83 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 1.99 MPa) | XY | 8.25 | 25.00 | 3.03 | 3 | OK |
-| 84 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.50 | 25.00 | 7.13 | 3 | OK |
-| 85 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.13 | 25.00 | 11.72 | 3 | OK |
-| 86 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.91 | 25.00 | 13.11 | 3 | OK |
-| 87 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 5.51 | 25.00 | 4.53 | 3 | OK |
-| 88 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.01 | 25.00 | 8.30 | 3 | OK |
-| 89 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.38 | 25.00 | 18.14 | 3 | OK |
-| 90 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.04 | 6.25 | 152.76 | 3 | OK |
-| 91 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.27 | 25.00 | 92.35 | 3 | OK |
-| 92 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 0.49 MPa) | XY | 2.02 | 25.00 | 12.38 | 3 | OK |
-| 93 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.86 | 25.00 | 29.13 | 3 | OK |
-| 94 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 0.52 | 25.00 | 47.88 | 3 | OK |
-| 95 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 0.47 | 25.00 | 53.54 | 3 | OK |
-| 96 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.35 | 25.00 | 18.51 | 3 | OK |
-| 97 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.74 | 25.00 | 33.87 | 3 | OK |
-| 98 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.34 | 25.00 | 74.05 | 3 | OK |
-| 99 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.01 | 6.25 | 623.78 | 3 | OK |
-| 100 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.07 | 25.00 | 377.09 | 3 | OK |
-| 101 | added: opening against an obstacle, jaw A, jaws closed: rack A's end 6.9 from the edge, R 19.8 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 6.15 x 5, Kt 2.5 (shear 0.96 MPa) | XY | 4.00 | 25.00 | 6.25 | 3 | OK |
-| 102 | stall, one jaw blocked, jaws 44 open: rack B's -y end pushes the lower piece forward (27.0 N at z 12.1): one M2.5 holds it, 108 N | pan head Ø5 on the Ø2.8 teardrop, 13.1 mm2 | XY comp | 8.30 | 25.00 | 3.01 | 3 | OK |
-| 103 | stall, one jaw blocked: the same push on the lower piece's plate between the screw (z 3) and the web (z 19.25) | simply supported, b_eff 9.2 x 5 (one-sided spread at the edge) | XY | 2.82 | 25.00 | 8.86 | 3 | OK |
-| 104 | yaw stall 7.1 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 25 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws closed | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.69 | 12.50 | 7.38 | 3 | OK |
-| 105 | yaw stall 7.1 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 25 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws 44 open | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 2.53 | 12.50 | 4.93 | 3 | OK |
-| 106 | hand push 5 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 18 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws closed | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.19 | 12.50 | 10.48 | 3 | OK |
-| 107 | hand push 5 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 18 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws 44 open | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.78 | 12.50 | 7.00 | 3 | OK |
-| 108 | rack A lift: separating 7.9 N + grip twist 410 N.mm -> 13.8 N at the rack end | top wall between the lip and the front plate, span 12.5, b 25 x 3 | XY | 1.44 | 25.00 | 17.34 | 3 | OK |
-| 109 | USB tug 10 N tips the camera mount back: 53 N on the top wall's rear edge | 50 x 1 mm contact | XY | 1.06 | 25.00 | 23.67 | 3 | OK |
-| 110 | anchor M3 x 45 driven snug: Ø7 x 0.5 washer under the socket head on the top wall, preload 150 N (sustained) | 28.8 mm2 round the Ø3.4 teardrop (washer OD; BUILD_GUIDE §1) | XY comp | 5.21 | 25.00 | 4.80 | 4 | OK |
-| 111 | anchor preload 150 N through the stack (sustained): the 8 x 8 post round its Ø3.6 hole | 54 mm2 (the full-depth part only; the 45-degree part ignored) | XY comp | 2.79 | 25.00 | 8.97 | 4 | OK |
-| 112 | anchor preload 150 N (sustained): M3 x 45 pull-out from the frame's rail block, the top wall left 0.256 proud after seating (worst-case stack) | thread cylinder Ø3 x 10.49 (Ø2.7 x 14 pilot; 10.75 in CAD) | Z shear (frame) | 1.52 | 6.25 | 4.12 | 4 | OK |
-| 113 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 6.05 | 25.00 | 4.13 | 2 | OK |
-| 114 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.80 | 25.00 | 6.58 | 2 | OK |
-| 115 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.23 | 25.00 | 20.27 | 2 | OK |
-| 116 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.09 | 25.00 | 288.45 | 2 | OK |
-| 117 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.48 | 25.00 | 52.02 | 2 | OK |
-| 118 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.45 | 25.00 | 10.21 | 2 | OK |
-| 119 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.98 | 25.00 | 25.63 | 2 | OK |
-| 120 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.86 | 25.00 | 8.74 | 2 | OK |
-| 121 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.10 | 25.00 | 11.88 | 2 | OK |
-| 122 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 24.6 N at z 17.60, lift +44.6 N + wedge 24.6 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 2.22 | 25.00 | 11.24 | 2 | OK |
-| 123 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 32.5 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.80 | 12.50 | 15.56 | 2 | OK |
-| 124 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: M3 x 45 anchor: pull-out from the frame's rail block (10.49 engaged), preload (if any) + wedge lift + lift | screw 194 N, thread cylinder Ø3 x 10.49 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.97 | 6.25 | 3.18 | 2 | OK |
-| 125 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80, the printed layer corners) | normal 46.0 N on 0.64 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 9.89 | 25.00 | 2.53 | 2 | OK |
-| 126 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge root at the foot's flats (z 18.05): shear | 2.2 x 7.3, Fx 32.5 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 3.04 | 12.50 | 4.12 | 2 | OK |
-| 127 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge root at the foot's flats: the flank force's moment (0.20 Fx, resultant at the printed layer corners, z 17.6) + the wedge's compression, Kt 1.7 | 2.2 x 7.3, M 6.5 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 3.90 | 25.00 | 6.41 | 2 | OK |
-| 128 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.39 | 25.00 | 64.14 | 2 | OK |
-| 129 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.96 | 25.00 | 26.06 | 2 | OK |
-| 130 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.23 | 25.00 | 106.92 | 2 | OK |
-| 131 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.27 | 25.00 | 91.31 | 2 | OK |
-| 132 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.01 | 6.25 | 769.18 | 2 | OK |
-| 133 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.05 | 25.00 | 464.99 | 2 | OK |
-| 134 | spec §8 proof 1: jaw B pushed towards the other, R 34.2 N: plate strip at the tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 2.52 MPa) | XY | 10.45 | 25.00 | 2.39 | 2 | OK |
-| 135 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 4.44 | 25.00 | 5.63 | 2 | OK |
-| 136 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.70 | 25.00 | 9.25 | 2 | OK |
-| 137 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.42 | 25.00 | 10.35 | 2 | OK |
-| 138 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 6.99 | 25.00 | 3.58 | 2 | OK |
-| 139 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 3.82 | 25.00 | 6.55 | 2 | OK |
-| 140 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.75 | 25.00 | 14.31 | 2 | OK |
-| 141 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | Z shear | 0.05 | 6.25 | 120.54 | 2 | OK |
-| 142 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst-case stack, preload gone)] | XY comp | 0.34 | 25.00 | 72.87 | 2 | OK |
-| 143 | spec §8 proof 1: jaw A pushed towards the other, R 34.2 N: plate strip at the tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 2.52 MPa) | XY | 10.45 | 25.00 | 2.39 | 2 | OK |
-| 144 | spec §8 proof 1: 32 N pulls a jaw away, jaws 30 open: rack A's -y end at the lip's end, R 34.2 N | lip root at the top wall, rack side (Kt 2.5): b_eff 7.9, t 8.0, lever 5.9 | XY | 5.98 | 25.00 | 4.18 | 2 | OK |
-| 145 | spec §8 proof 1: the same, rack A's +y end on the upper piece near slot A's end | front plate at the top wall (Kt 1.5): b_eff 7.1, t 5.0, lever 5.1 | XY | 8.86 | 25.00 | 2.82 | 2 | OK |
-| 146 | spec §8 proof 2: 10.7 N on jaw B's tip towards the wrist, jaws closed | strip 11.75 x 5 | Z | 2.55 | 12.50 | 4.90 | 2 | OK |
-| 147 | spec §8 proof 2: 10.7 N on jaw B's tip towards the wrist, jaws 44 open | strip 11.75 x 5 | Z | 3.82 | 12.50 | 3.27 | 2 | OK |
+| 8 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 5.21 | 25.00 | 4.79 | 3 | OK |
+| 9 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.28 | 25.00 | 7.63 | 3 | OK |
+| 10 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 21 N (y 14: 21, y -23: 1) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 1.41 | 25.00 | 17.73 | 3 | OK |
+| 11 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.06 | 25.00 | 23.66 | 3 | OK |
+| 12 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.07 | 25.00 | 335.50 | 3 | OK |
+| 13 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.41 | 25.00 | 60.69 | 3 | OK |
+| 14 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.10 | 25.00 | 11.91 | 3 | OK |
+| 15 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.83 | 25.00 | 30.07 | 3 | OK |
+| 16 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.47 | 25.00 | 10.14 | 3 | OK |
+| 17 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.82 | 25.00 | 13.76 | 3 | OK |
+| 18 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 8.7 N at z 17.70, lift +38.5 N + wedge 8.7 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.14 | 25.00 | 21.93 | 3 | OK |
+| 19 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 16.4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.40 | 12.50 | 30.88 | 3 | OK |
+| 20 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: M3 x 45 anchor: pull-out from the frame's rail block (10.56 engaged), preload (if any) + wedge lift + lift | screw 172 N, thread cylinder Ø3 x 10.56 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.73 | 6.25 | 3.61 | 3 | OK |
+| 21 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80: the seated tip, after the anchor's least crush, to the printed top corner) | normal 23.2 N on 0.63 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 5.03 | 25.00 | 4.97 | 3 | OK |
+| 22 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge root at the foot's flats (z 18.05): shear | 2.0 x 7.3, Fx 16.4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 1.68 | 12.50 | 7.43 | 3 | OK |
+| 23 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: V-ridge root at the foot's flats (printed, x 14.35..16.35): the flank force's moment (0.50 Fx, resultant at the two upper corners, z 17.7) + the wedge's compression, Kt 1.7 | 2.0 x 7.3, M 8.2 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 3.98 | 25.00 | 6.28 | 3 | OK |
+| 24 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.34 | 25.00 | 74.32 | 3 | OK |
+| 25 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.83 | 25.00 | 30.21 | 3 | OK |
+| 26 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.20 | 25.00 | 123.91 | 3 | OK |
+| 27 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.24 | 25.00 | 105.81 | 3 | OK |
+| 28 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.01 | 6.25 | 891.30 | 3 | OK |
+| 29 | crash 13 N pushes jaw B shut, jaws 44 open: rack B pushes the upper piece's bottom strip at the cover's edge, R 17.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.05 | 25.00 | 538.81 | 3 | OK |
+| 30 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 1.99 MPa) | XY | 8.25 | 25.00 | 3.03 | 3 | OK |
+| 31 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 5.70 | 25.00 | 4.38 | 3 | OK |
+| 32 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.59 | 25.00 | 6.97 | 3 | OK |
+| 33 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top M3 pan head on the top wall, the joint's own tension (no preload) | T 23 N (y 14: 23, y -23: 1) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 1.54 | 25.00 | 16.21 | 3 | OK |
+| 34 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.16 | 25.00 | 21.49 | 3 | OK |
+| 35 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.08 | 25.00 | 305.77 | 3 | OK |
+| 36 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.45 | 25.00 | 55.16 | 3 | OK |
+| 37 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.31 | 25.00 | 10.83 | 3 | OK |
+| 38 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.92 | 25.00 | 27.19 | 3 | OK |
+| 39 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.70 | 25.00 | 9.26 | 3 | OK |
+| 40 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.99 | 25.00 | 12.59 | 3 | OK |
+| 41 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 17.9 N at z 17.70, lift +42.1 N + wedge 17.9 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.73 | 25.00 | 14.46 | 3 | OK |
+| 42 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: second post's foot: shear across it (z 19.25) | A 60.7, Fx 25.7 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.64 | 12.50 | 19.66 | 3 | OK |
+| 43 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: M3 x 45 anchor: pull-out from the frame's rail block (10.56 engaged), preload (if any) + wedge lift + lift | screw 185 N, thread cylinder Ø3 x 10.56 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.86 | 6.25 | 3.36 | 3 | OK |
+| 44 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80: the seated tip, after the anchor's least crush, to the printed top corner) | normal 36.4 N on 0.63 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 7.90 | 25.00 | 3.16 | 3 | OK |
+| 45 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge root at the foot's flats (z 18.05): shear | 2.0 x 7.3, Fx 25.7 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 2.64 | 12.50 | 4.73 | 3 | OK |
+| 46 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: V-ridge root at the foot's flats (printed, x 14.35..16.35): the flank force's moment (0.50 Fx, resultant at the two upper corners, z 17.7) + the wedge's compression, Kt 1.7 | 2.0 x 7.3, M 12.9 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 6.25 | 25.00 | 4.00 | 3 | OK |
+| 47 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.37 | 25.00 | 67.97 | 3 | OK |
+| 48 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.91 | 25.00 | 27.62 | 3 | OK |
+| 49 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.22 | 25.00 | 113.31 | 3 | OK |
+| 50 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.26 | 25.00 | 96.77 | 3 | OK |
+| 51 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.01 | 6.25 | 815.16 | 3 | OK |
+| 52 | added: opening against an obstacle, jaw B, jaws 44 open: R 27.0 N on the upper piece's bottom strip: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.05 | 25.00 | 492.79 | 3 | OK |
+| 53 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 0.49 MPa) | XY | 2.02 | 25.00 | 12.38 | 3 | OK |
+| 54 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 4.45 | 25.00 | 5.62 | 3 | OK |
+| 55 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.51 | 25.00 | 9.97 | 3 | OK |
+| 56 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 16 N (y 14: 16, y -23: 1) on the Ø5.6 pan head, 14.9 mm2 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 1.08 | 25.00 | 23.17 | 3 | OK |
+| 57 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.92 | 25.00 | 27.29 | 3 | OK |
+| 58 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.07 | 25.00 | 378.96 | 3 | OK |
+| 59 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.36 | 25.00 | 69.46 | 3 | OK |
+| 60 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.84 | 25.00 | 13.60 | 3 | OK |
+| 61 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.62 | 25.00 | 40.10 | 3 | OK |
+| 62 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.87 | 25.00 | 13.38 | 3 | OK |
+| 63 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.61 | 25.00 | 15.51 | 3 | OK |
+| 64 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 0.0 N at z 17.70, lift +29.6 N + wedge 0.0 N, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.49 | 25.00 | 51.31 | 3 | OK |
+| 65 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 6.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.16 | 12.50 | 80.30 | 3 | OK |
+| 66 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: M3 x 45 anchor: pull-out from the frame's rail block (10.56 engaged), preload (if any) + wedge lift + lift | screw 159 N, thread cylinder Ø3 x 10.56 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.59 | 6.25 | 3.92 | 3 | OK |
+| 67 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80: the seated tip, after the anchor's least crush, to the printed top corner) | normal 8.9 N on 0.63 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 1.93 | 25.00 | 12.92 | 3 | OK |
+| 68 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge root at the foot's flats (z 18.05): shear | 2.0 x 7.3, Fx 6.3 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.65 | 12.50 | 19.31 | 3 | OK |
+| 69 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: V-ridge root at the foot's flats (printed, x 14.35..16.35): the flank force's moment (0.50 Fx, resultant at the two upper corners, z 17.7) + the wedge's compression, Kt 1.7 | 2.0 x 7.3, M 3.1 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.53 | 25.00 | 16.32 | 3 | OK |
+| 70 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.30 | 25.00 | 84.37 | 3 | OK |
+| 71 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.73 | 25.00 | 34.30 | 3 | OK |
+| 72 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.18 | 25.00 | 140.67 | 3 | OK |
+| 73 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.21 | 25.00 | 119.35 | 3 | OK |
+| 74 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.01 | 6.25 | 1005.33 | 3 | OK |
+| 75 | handling: 5 N pushes jaw B shut, jaws 44 open: R 6.6 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.04 | 25.00 | 607.75 | 3 | OK |
+| 76 | added: opening against an obstacle, jaw B, jaws closed: rack B's end 6.9 from the edge, R 19.8 N: plate strip under the second tie's web | cantilever 2.07 from the web, b_eff 6.15 x 5, Kt 2.5 (shear 0.96 MPa) | XY | 4.00 | 25.00 | 6.25 | 3 | OK |
+| 77 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 1.27 MPa) | XY | 5.25 | 25.00 | 4.76 | 3 | OK |
+| 78 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.23 | 25.00 | 11.20 | 3 | OK |
+| 79 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.36 | 25.00 | 18.41 | 3 | OK |
+| 80 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 9 N (y 14: 4, y -23: 9) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY comp | 0.58 | 25.00 | 43.17 | 3 | OK |
+| 81 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.21 | 25.00 | 20.59 | 3 | OK |
+| 82 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.51 | 25.00 | 7.12 | 3 | OK |
+| 83 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.92 | 25.00 | 13.03 | 3 | OK |
+| 84 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.88 | 25.00 | 28.48 | 3 | OK |
+| 85 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 2 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.03 | 6.25 | 239.92 | 3 | OK |
+| 86 | crash 13 N pushes jaw A shut, jaws 44 open: rack A pushes the lower piece's top strip at the cover's edge, R 17.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 2 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.17 | 25.00 | 145.04 | 3 | OK |
+| 87 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 1.99 MPa) | XY | 8.25 | 25.00 | 3.03 | 3 | OK |
+| 88 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.50 | 25.00 | 7.13 | 3 | OK |
+| 89 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.13 | 25.00 | 11.73 | 3 | OK |
+| 90 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: top M3 pan head on the top wall, the joint's own tension (no preload) | T 14 N (y 14: 6, y -23: 14) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY comp | 0.91 | 25.00 | 27.49 | 3 | OK |
+| 91 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 1.91 | 25.00 | 13.11 | 3 | OK |
+| 92 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 5.51 | 25.00 | 4.53 | 3 | OK |
+| 93 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.01 | 25.00 | 8.30 | 3 | OK |
+| 94 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.38 | 25.00 | 18.14 | 3 | OK |
+| 95 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.04 | 6.25 | 152.76 | 3 | OK |
+| 96 | added: opening against an obstacle, jaw A, jaws 44 open: R 27.0 N on the lower piece's top strip: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.27 | 25.00 | 92.35 | 3 | OK |
+| 97 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 0.49 MPa) | XY | 2.02 | 25.00 | 12.38 | 3 | OK |
+| 98 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.86 | 25.00 | 29.13 | 3 | OK |
+| 99 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 0.52 | 25.00 | 47.88 | 3 | OK |
+| 100 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 3 N (y 14: 1, y -23: 3) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY comp | 0.22 | 25.00 | 112.23 | 3 | OK |
+| 101 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 0.47 | 25.00 | 53.54 | 3 | OK |
+| 102 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.35 | 25.00 | 18.51 | 3 | OK |
+| 103 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.74 | 25.00 | 33.87 | 3 | OK |
+| 104 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.34 | 25.00 | 74.05 | 3 | OK |
+| 105 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.01 | 6.25 | 623.78 | 3 | OK |
+| 106 | handling: 5 N pushes jaw A shut, jaws 44 open: R 6.6 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.07 | 25.00 | 377.09 | 3 | OK |
+| 107 | added: opening against an obstacle, jaw A, jaws closed: rack A's end 6.9 from the edge, R 19.8 N: plate strip above the first tie's web | cantilever 2.08 from the web, b_eff 6.15 x 5, Kt 2.5 (shear 0.96 MPa) | XY | 4.00 | 25.00 | 6.25 | 3 | OK |
+| 108 | stall, one jaw blocked, jaws 44 open: rack B's -y end pushes the lower piece forward (27.0 N at z 12.1): one M2.5 holds it, 108 N | pan head Ø5 on the Ø2.8 teardrop, 13.1 mm2 | XY comp | 8.30 | 25.00 | 3.01 | 3 | OK |
+| 109 | stall, one jaw blocked: the same push on the lower piece's plate between the screw (z 3) and the web (z 19.25) | simply supported, b_eff 9.2 x 5 (one-sided spread at the edge) | XY | 2.82 | 25.00 | 8.86 | 3 | OK |
+| 110 | yaw stall 7.1 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 25 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws closed | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.69 | 12.50 | 7.38 | 3 | OK |
+| 111 | yaw stall 7.1 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 25 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws 44 open | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 2.53 | 12.50 | 4.93 | 3 | OK |
+| 112 | hand push 5 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 18 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws closed | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.19 | 12.50 | 10.48 | 3 | OK |
+| 113 | hand push 5 N on jaw B's tip, towards the wrist: its neck presses the strip under slot B with up to 18 N (x3.56: the rack lifted off the plate, the pinion holding its rear), jaws 44 open | strip 11.75 x 5: slot end (Kt 1.7) / through the screw hole (Kt 2) | Z | 1.78 | 12.50 | 7.00 | 3 | OK |
+| 114 | rack A lift: separating 7.9 N + grip twist 410 N.mm -> 13.8 N at the rack end | top wall between the lip and the front plate, span 12.5, b 25 x 3 | XY | 1.44 | 25.00 | 17.34 | 3 | OK |
+| 115 | USB tug 10 N tips the camera mount back: 53 N on the top wall's rear edge | 50 x 1 mm contact | XY | 1.06 | 25.00 | 23.67 | 3 | OK |
+| 116 | anchor M3 x 45 driven snug: Ø7 x 0.5 washer under the socket head on the top wall, preload 150 N (sustained) | 28.8 mm2 round the Ø3.4 teardrop (washer OD; BUILD_GUIDE §1) | XY comp | 5.21 | 25.00 | 4.80 | 4 | OK |
+| 117 | anchor preload 150 N through the stack (sustained): the 8 x 8 post round its Ø3.6 hole | 54 mm2 (the full-depth part only; the 45-degree part ignored) | XY comp | 2.79 | 25.00 | 8.97 | 4 | OK |
+| 118 | anchor preload 150 N (sustained): M3 x 45 pull-out from the frame's rail block, the top wall left 0.339 proud after seating (worst-case stack) | thread cylinder Ø3 x 10.56 (Ø2.7 x 14 pilot; 10.75 in CAD) | Z shear (frame) | 1.51 | 6.25 | 4.15 | 4 | OK |
+| 119 | top M3 x 10 pan heads (BOM: no washer) driven snug, 150 N preload (sustained): bearing on the top wall | Ø5.6 pan head on the Ø3.4 teardrop, 14.9 mm2 | XY comp | 10.05 | 25.00 | 2.49 | 4 | **FAIL** |
+| 120 | front M2.5 x 16 pan heads driven snug, 100 N preload (sustained): bearing on the front plate | Ø5 pan head on the Ø2.8 teardrop, 13.1 mm2 | XY comp | 7.66 | 25.00 | 3.26 | 4 | **FAIL** |
+| 121 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 6.07 | 25.00 | 4.12 | 2 | OK |
+| 122 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.81 | 25.00 | 6.56 | 2 | OK |
+| 123 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 24 N (y 14: 24, y -23: 1) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 1.64 | 25.00 | 15.24 | 2 | OK |
+| 124 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate at the web top (z 35.25, sharp inner corner) | b 24.1 x 5, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.24 | 25.00 | 20.14 | 2 | OK |
+| 125 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate beside slot A's V apex (z 43.4, r 1.5) | b 21.0 x 5, Kt 1.5 [plate b 21.0, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.09 | 25.00 | 287.05 | 2 | OK |
+| 126 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: upper piece's plate at the top wall (z 48.5, r 2 fillet) | b 25.5 x 5, Kt 1.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.48 | 25.00 | 51.69 | 2 | OK |
+| 127 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: top wall in front of the lip (r 2 at the plate, sharp at the lip) | b 25.5 x 3 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.46 | 25.00 | 10.15 | 2 | OK |
+| 128 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second tie's post under the lip (z 35.25..36.75) | 8 x 24.3, Kt 2.5 [plate b 21.0, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.98 | 25.00 | 25.40 | 2 | OK |
+| 129 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second tie's web at the post (tension + bending) | 8 x 16 (45-degree parts ignored), Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.87 | 25.00 | 8.71 | 2 | OK |
+| 130 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the second tie | b 25.5 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.11 | 25.00 | 11.85 | 2 | OK |
+| 131 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second post's foot below the web (z 18.05..19.25), the anchor's reaction | 8 x 8.96 net of the Ø3.6 hole (A 60.7, I 373.5), Fx 24.6 N at z 17.70, lift +44.7 N + wedge 24.6 N, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 2.16 | 25.00 | 11.56 | 2 | OK |
+| 132 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: second post's foot: shear across it (z 19.25) | A 60.7, Fx 32.6 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 0.81 | 12.50 | 15.52 | 2 | OK |
+| 133 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: M3 x 45 anchor: pull-out from the frame's rail block (10.56 engaged), preload (if any) + wedge lift + lift | screw 195 N, thread cylinder Ø3 x 10.56 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | Z shear (frame) | 1.95 | 6.25 | 3.20 | 2 | OK |
+| 134 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge: flank bearing on the groove's 45° flank (contact band z 17.35..17.80: the seated tip, after the anchor's least crush, to the printed top corner) | normal 46.1 N on 0.63 x 7.3 (the 0.7 lead-in ignored) [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | bearing | 10.01 | 25.00 | 2.50 | 2 | OK |
+| 135 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge root at the foot's flats (z 18.05): shear | 2.0 x 7.3, Fx 32.6 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY shear | 3.35 | 12.50 | 3.73 | 2 | OK |
+| 136 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: V-ridge root at the foot's flats (printed, x 14.35..16.35): the flank force's moment (0.50 Fx, resultant at the two upper corners, z 17.7) + the wedge's compression, Kt 1.7 | 2.0 x 7.3, M 16.3 N.mm, Kt 1.7 (bead-filled 135° root corners); compression and bending added in magnitude [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 7.93 | 25.00 | 3.15 | 2 | OK |
+| 137 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.39 | 25.00 | 63.95 | 2 | OK |
+| 138 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.96 | 25.00 | 25.98 | 2 | OK |
+| 139 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.23 | 25.00 | 106.60 | 2 | OK |
+| 140 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.27 | 25.00 | 91.05 | 2 | OK |
+| 141 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.01 | 6.25 | 766.96 | 2 | OK |
+| 142 | spec §8 proof 1: 32 N pushes jaw B towards the other, jaws 30 open, R 34.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 1 N [plate b 25.5, lip b 25.5, top clamped, M2.5 30 kN/mm free along z, corners 1.0e+05 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.05 | 25.00 | 463.64 | 2 | OK |
+| 143 | spec §8 proof 1: jaw B pushed towards the other, R 34.2 N: plate strip at the tie's web | cantilever 2.07 from the web, b_eff 4.07 x 5, Kt 2.5 (shear 2.52 MPa) | XY | 10.45 | 25.00 | 2.39 | 2 | OK |
+| 144 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: top wall behind the lip, at the lip's back face (x 14.35) | 32 per zone x 3.0, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 4.44 | 25.00 | 5.63 | 2 | OK |
+| 145 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: top wall over the bulkhead, through the M3 holes (x 6.75) | 28.4 net per zone x 3.0, Kt 2 (hole) [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.70 | 25.00 | 9.25 | 2 | OK |
+| 146 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: top M3 pan head on the top wall, the joint's own tension (no preload) | T 17 N (y 14: 7, y -23: 17) on the Ø5.6 pan head, 14.9 mm2 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY comp | 1.15 | 25.00 | 21.69 | 2 | OK |
+| 147 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top clamped, M2.5 3 kN/mm held along z, corners 1.0e+05 N.mm/rad; ridge on both flanks, play 0 (nominal, RSS)] | XY | 2.42 | 25.00 | 10.35 | 2 | OK |
+| 148 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 6.99 | 25.00 | 3.58 | 2 | OK |
+| 149 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: first tie's web at the post (tension + bending) | 8 x 16, Kt 2.5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 3.82 | 25.00 | 6.55 | 2 | OK |
+| 150 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: lower piece's plate between the first tie's web and the M2.5 (web corner Kt 2.5; hole Kt 2) | b 25 x 5 [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.75 | 25.00 | 14.31 | 2 | OK |
+| 151 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: M2.5 x 16 at z 3: pull-out from the frame (11 engaged) | screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | Z shear | 0.05 | 6.25 | 120.54 | 2 | OK |
+| 152 | spec §8 proof 1: 32 N pushes jaw A towards the other, jaws 30 open, R 34.2 N: same M2.5: pan head on the cover's front plate | Ø5 head on the Ø2.8 teardrop, 13.1 mm2; screw force 4 N [plate b 21.0, lip b 25.5, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm free along z, corners 2.9e+04 N.mm/rad; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY comp | 0.34 | 25.00 | 72.87 | 2 | OK |
+| 153 | spec §8 proof 1: jaw A pushed towards the other, R 34.2 N: plate strip at the tie's web | cantilever 2.08 from the web, b_eff 4.08 x 5, Kt 2.5 (shear 2.52 MPa) | XY | 10.45 | 25.00 | 2.39 | 2 | OK |
+| 154 | spec §8 proof 1: 32 N pulls a jaw away, jaws 30 open: rack A's -y end at the lip's end, R 34.2 N | lip root at the top wall, rack side (Kt 2.5): b_eff 7.9, t 8.0, lever 5.9 | XY | 5.98 | 25.00 | 4.18 | 2 | OK |
+| 155 | spec §8 proof 1: the same, rack A's +y end on the upper piece near slot A's end | front plate at the top wall (Kt 1.5): b_eff 7.1, t 5.0, lever 5.1 | XY | 8.86 | 25.00 | 2.82 | 2 | OK |
+| 156 | spec §8 proof 2: 10.7 N on jaw B's tip towards the wrist, jaws closed | strip 11.75 x 5 | Z | 2.55 | 12.50 | 4.90 | 2 | OK |
+| 157 | spec §8 proof 2: 10.7 N on jaw B's tip towards the wrist, jaws 44 open | strip 11.75 x 5 | Z | 3.82 | 12.50 | 3.27 | 2 | OK |
 
 Information rows (not in the verdict):
-| 148 | info: opening stall on jaw B, upper piece WITHOUT the second tie (round 2's model) | beside slot A's V apex (z 43.4): b 21.0 x 5, lever 26.2, Kt 1.5 | XY | 12.12 | 25.00 | 2.06 | 3 | **FAIL** |
-| 149 | info: opening stall on jaw B, upper piece WITHOUT the second tie (round 2's model) | top-wall junction (z 48.5): b 25.5 x 5, lever 31.3, Kt 1.5 | XY | 11.94 | 25.00 | 2.09 | 3 | **FAIL** |
-| 150 | info, bound: opening stall on jaw B with the corners rigidly coupled: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm held along z, corners rigid; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 0.69 | 25.00 | 36.36 | 3 | OK |
-| 151 | info, bound: opening stall on jaw B with the corners rigidly coupled: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners rigid; ridge play 0.029 mm (worst-case stack, preload gone)] | XY | 1.45 | 25.00 | 17.19 | 3 | OK |
-| 152 | info: anchor preload seats the ridge, bound: all 150 N on the two 45° flanks (sustained; seating, self-limiting) | normal 106 N per flank on 0.64 x 7.3 | bearing | 22.83 | 25.00 | 1.09 | 4 | **FAIL** |
-| 153 | info, bound: opening stall with zero play, Fx 25.6 N all on the groove's top layer corner (z 17.8): V-ridge root at the flats, Kt 1.7 | 2.2 x 7.3, M 15.4 N.mm (arm 0.60) | XY | 6.04 | 25.00 | 4.14 | 3 | OK |
+| 158 | info: opening stall on jaw B, upper piece WITHOUT the second tie (round 2's model) | beside slot A's V apex (z 43.4): b 21.0 x 5, lever 26.2, Kt 1.5 | XY | 12.12 | 25.00 | 2.06 | 3 | **FAIL** |
+| 159 | info: opening stall on jaw B, upper piece WITHOUT the second tie (round 2's model) | top-wall junction (z 48.5): b 25.5 x 5, lever 31.3, Kt 1.5 | XY | 11.94 | 25.00 | 2.09 | 3 | **FAIL** |
+| 160 | info, bound: opening stall on jaw B with the corners rigidly coupled: lip root at the top wall above the first tie | b 19.75 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 30 kN/mm held along z, corners rigid; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 0.69 | 25.00 | 36.24 | 3 | OK |
+| 161 | info, bound: opening stall on jaw B with the corners rigidly coupled: first tie's post under the lip (flush with the lip; sharp web-top corner below) | 8 x 8, Kt 2.5 [plate b 25.5, lip b 37.25, top on 1.1e5 N.mm/rad, M2.5 3 kN/mm held along z, corners rigid; ridge play 0.029 mm (worst build step 9 accepts: tip bottomed; preload gone)] | XY | 1.46 | 25.00 | 17.14 | 3 | OK |
+| 162 | info: anchor preload seats the ridge, bound: all 150 N on the two 45° flanks (sustained; seating, self-limiting) | normal 106 N per flank on 0.63 x 7.3 | bearing | 23.03 | 25.00 | 1.09 | 4 | **FAIL** |
+| 163 | info, bound: opening stall with zero play, Fx 25.7 N all on the groove's top layer corner (z 17.8): V-ridge root at the flats, Kt 1.7 | 2.0 x 7.3, M 18.0 N.mm (arm 0.70) | XY | 8.05 | 25.00 | 3.10 | 3 | OK |
+| 164 | info: opening stall, Fx 25.7 N: V-ridge flank bearing at FIRST contact, no seating credit (band z 17.406..17.8, corners [17.6, 17.8]) | normal 36.4 N on 0.56 x 7.3 | bearing | 8.94 | 25.00 | 2.79 | 3 | **FAIL** |
+| 165 | info: the +y top M3 pulls the proud top wall down (nominal: 0.079 at the screw after the anchor's seating; 0.91 of it bends the wall, 42 N): top face at the lip's back face, tension (displacement-controlled, relaxes) | cantilever L 7.6, b_eff 20.8 x 3, E 1800, Kt 1 (smooth face) | XY | 10.14 | 25.00 | 2.47 | 4 | **FAIL** |
+| 166 | info: the same, nominal: the re-entrant corner under it (lip back face / top wall underside), compression | Kt 2.5 | XY comp | 25.35 | 25.00 | 0.99 | 3 | **FAIL** |
+| 167 | info: the +y top M3 pulls the proud top wall down (RSS-high: 0.165 at the screw after the anchor's seating; 0.91 of it bends the wall, 87 N): top face at the lip's back face, tension (displacement-controlled, relaxes) | cantilever L 7.6, b_eff 20.8 x 3, E 1800, Kt 1 (smooth face) | XY | 21.14 | 25.00 | 1.18 | 4 | **FAIL** |
+| 168 | info: the same, RSS-high: the re-entrant corner under it (lip back face / top wall underside), compression | Kt 2.5 | XY comp | 52.86 | 25.00 | 0.47 | 3 | **FAIL** |
 
-lowest SF 3.01 (required 3): stall, one jaw blocked, jaws 44 open: rack B's -y end pushes the lower piece forward (27.0 N at z 12.1): one M2.5 holds it, 108 N / pan head Ø5 on the Ø2.8 teardrop, 13.1 mm2
-VERDICT (calculation): NEEDS_TEST (placeholder allowables)
+lowest SF 2.49 (required 4): top M3 x 10 pan heads (BOM: no washer) driven snug, 150 N preload (sustained): bearing on the top wall / Ø5.6 pan head on the Ø3.4 teardrop, 14.9 mm2
+VERDICT (calculation): FAIL
 
-## Proof test (spec §8)
-
-- **The loads still match the design cases.** Step 1's 32 N push towards the other jaw is 1.5 × the opening stall
-  (R 34.2 N at 30 mm open); its 32 N pull is 1.5 × the one-jaw stall (lip root 4.18, front plate at the top wall 2.82);
-  step 2's 10.7 N sideways: strip under slot B 4.90 / 3.27.
-- **On the round-6 build every proof row passes** (req 2): lowest 2.39 (the plate strips at the ties' webs), the ridge's
-  flank bearing 2.53, its root shear 4.12 and bending 6.41 (bound 3.27), the M3 × 45 pull-out 3.18 (preload + wedge +
-  lift, 10.49 engaged).
-- **Wording.** The pass line's ridge check ("a 0.15 mm feeler does not enter under the post's foot") no longer checks
-  anything: the flats now stand 0.3 clear by design. The replacement (with the exact text) is in the report to the
-  Architect: after the test, a 0.3 mm feeler must not enter between the top wall and the bulkhead at the +y end.
+The script also prints the seat stack, the seating, the forced-closure numbers, the top joint's tensions, the rack A mesh
+table and the what-ifs quoted above.
 
 ---
 
-# History: round 5 independent review (strength-analyst; git 60d5e8f, which has its full results table)
+# History
 
-### Verdict
-
-**FAIL. As printed, the ridge does not reliably take the push: its x play is not controlled, and above 0.04 mm the
-cover falls back below SF 3.**
-
-- **Lowest SF 1.84** (required 3), row 30: the top wall behind the lip, at the lip's back face (x 14.35), under the
-  opening stall on jaw B (27.0 N), with the ridge's realistic as-printed play of **0.082 mm** (RSS-adverse).
-- Below 3 at that play as well:
-  - row 8, the same section under the desk crash, 2.16;
-  - row 31, the top wall through the M3 holes, 2.92;
-  - row 113, spec §8's proof push, 1.79 against 2. **The proof test would be unsafe to run on this build.**
-- With zero play (the CAD engineer's assumption) every verdict row passes: lowest 3.01, row 102, the M2.5 pan head,
-  unchanged since round 3. The design is not wrong in principle. It needs a seat that stays at zero play as printed:
-  see "Required change".
-
-### Ruling on the ridge play (item 1)
-
-#### What the arm's own slicing does
-
-I sliced both committed part.stl files with the exact command in their slice_settings.json and read the G-code back
-(a scratch slice, not a job file):
-- PrusaSlicer 2.7.2, 0.20mm QUALITY @MK3, Prusament PETG, each job's slice_overrides.ini;
-- first layer 0.2; every layer sliced at its mid-height; Arachne perimeters.
-
-| Feature | CAD | Printed | Evidence |
-|---|---|---|---|
-| Frame bulkhead top (the cover's top wall sits on it) | 48.5 | **48.4** | last layer `;Z:48.4`. 48.5 is exactly the slice plane of layer 48.4–48.6, and the slicer dropped that layer |
-| Frame rail block top (the foot's flats land on it) | 17.75 | **17.8** | layer 17.6–17.8 is sliced at 17.7, inside the block; nothing at 18.0 |
-| Groove walls, layers ending 17.2 / 17.4 / 17.6 / 17.8 | 45° flank | vertical steps at half-widths 0.15 / 0.35 / 0.55 / 0.75 | external-perimeter centrelines at frame y 26, centred on x 15.25 ± 0.001 |
-| Groove's first layer (17.0–17.2) | 0.3 slot | a slot between two external perimeters | it will close up, as the engineer said |
-| Cover ridge flanks | CAD | CAD ± 0.01 | external perimeter 0.225 inside both 45° flanks; the second perimeter fills the root |
-
-So each groove layer's top corner stands 0.1 inside the CAD flank, as the engineer said. But:
-1. **The bulkhead does not print "0.1 high or low": it prints 0.1 low, deterministically.**
-2. **The block prints 0.05 high.** The foot's flats, 0.1 over the block in CAD, are therefore only 0.05 over it in print.
-3. **The corners are not sharp.** A perimeter bead has a rounded edge, radius up to h/2 = 0.1. A corner radius r moves
-   the 45° ridge's contact (2 − √2)·r = 0.586·r further out: 0.03–0.06 mm.
-
-#### Stack-up
-
-I lowered the cover (as CAD) onto the printed frame and found the first stop. Tolerances, each taken as a 3σ bound
-(my assumption, because library/ has no measured data):
-- ridge flank ±0.05 normal to its face (±0.071 horizontal);
-- groove walls ±0.05;
-- cover top wall to foot ±0.05 (31 mm in its print plane);
-- corner radius 0.05 / 0.075 / 0.10.
-
-| Case | Stops on | Ridge play (x, per flank) | BUILD_GUIDE feelers would read: top wall / under the flats | Lowest frame-model SF |
-|---|---|---|---|---|
-| Nominal | the ridge, with the flats 0.006 above the block | **0.000** | 0.056 / 0.006 | 3.61 |
-| RSS-adverse | the foot's flats on the block | **0.082** | ≈0.05 / 0 | **1.84** |
-| Worst case | the foot's flats on the block | **0.129** | 0.100 / 0.000 | 1.38 |
-
-- **The seat has no margin.** At nominal, three stops coincide within 0.006 mm: the ridge on its flanks, the flats on
-  the block, and the tip on the closed first layer.
-- **The play is set by the two flanks' print errors.** Once the flats govern, the play is −0.05 + 0.586·r − (ridge
-  error) − (groove error). VSEAT_CLR cancels out of that line.
-- **The bulkhead is not what matters here.** Its slice-plane position decides nothing at the moment, because the foot
-  lands first.
-
-#### Play → SF (preload gone; both reversed pushes, all 64 variants)
-
-| Play (mm) | 0 | 0.025 | 0.04 | 0.05 | 0.075 | 0.1 |
-|---|---|---|---|---|---|---|
-| Lowest SF (this review) | 3.61 | 4.43 | 3.41 | 2.83 | 1.99 | 1.54 |
-| CAD engineer's table | 3.03 | 3.72 | 3.41 | 2.83 | 1.99 | 1.54 |
-
-From 0.04 mm on, the two tables agree. Below that they differ only because I take the ridge's root with Kt 1.7 instead
-of 2.5. The limit is **about 0.04 mm**, the same as round 4's analyst found for the shank. Hand check: with the foot
-free, the top wall behind the lip carries 0.68 MPa per newton (1.37 at the full 27 N). The foot slides 3.6–5.0 µm/N. So
-0.04 mm of play passes about 11 N through the top wall before the flank bears: about 7.5 MPa plus about 1 MPa
-afterwards, SF ≈ 3.0.
-
-#### Are the realistic plays inside 0.04 mm?
-
-**No.** With MK3 tolerances of ±0.05 mm per printed surface, the RSS-adverse play is 0.082 mm and the worst case
-0.129 mm.
-
-#### The BUILD_GUIDE checks cannot see it
-
-- **The 0.15 feeler under the flats.** Whenever the ridge has play, the flats rest on the block (gap 0), so the feeler
-  never goes in.
-- **The 0.1 feeler at the top wall.** The cover is held 0.05–0.10 off the bulkhead, so the feeler reads the same with
-  or without play.
-- The engineer's "bounds the play to about 0.05" assumed that the block prints at 17.75 and that the bulkhead sets the
-  cover's height. Neither is true in this slice.
-
-#### Preload does not save it either
-
-As printed, the foot's flats, not the flanks, usually take the anchor's preload. The x hold until that preload creeps is
-friction again: round 4's fdm-design-rules §4 problem.
-
-### Required change (smallest robust fix, computed in the script's "THE FIX" lines)
-
-**Make the ridge the only stop, always reached first, and seat it with the screws.** The flats are then clear by
-design, and the top-wall feeler can prove that the ridge bears.
-
-| # | Change | Where | Value |
-|---|---|---|---|
-| 1 | Ridge flanks onto the CAD groove flanks | claw_frame.py | `VSEAT_CLR` 0.1 → **0.0** (ridge virtual apex 17.05 → **16.95**) |
-| 2 | Decouple the foot's flats from VSEAT_CLR and raise them | cover model.py | `TIE2_FOOT_Z` = ZS − RAIL_IN + **FOOT_CLR 0.30** = **18.05**. Carry the ridge's 45° flanks on up to the flats: base x 14.15–16.35, 2.2 wide, 0.2 behind the post's back face; 0.2 from the anchor hole's edge on the flats plane |
-| 3 | Ridge tip above the closed first layer with margin | cover model.py | `RIDGE_TIP_Z` **17.35** (absolute, not apex + 0.2): tip 0.8 wide |
-| 4 | Bulkhead top off the slice plane | frame model.py | bulkhead top **48.45** (frame only; the cover's Z_TOP0 stays 48.5). It prints 48.4, as today, with 0.05 to either slice plane |
-| 5 | Assembly order and check | BUILD_GUIDE §4 step 9 | see the report's exact text: anchor first, before the M2.5 and M3 screws; a 0.03 feeler **must** enter at the top wall before any screw |
-
-**The fix's stack-up:**
-
-| Case | Stops on | Play | Ridge contact above the bulkhead (before the screws) |
-|---|---|---|---|
-| Nominal | ridge on both flanks | 0 | +0.156 |
-| RSS-adverse | ridge on both flanks | 0 | +0.055 … +0.257 |
-| Worst case | the top wall (top-wall feeler reads 0.000, so the step-9 check stops the build) | 0.029 → frame-model SF 4.40 | … +0.341 |
-
-The flats stay 0.20–0.31 clear. The tip stays ≥ 0.05 above the closed first layer.
-
-**Seating.** The ridge then holds the top wall up until the screws crush the groove's layer corners:
-- crush rate about 1750 N per mm (3 corners a flank × 7.3 mm, flattened at about 40 MPa, an assumption);
-- the anchor alone (150 N) takes out about 0.086 mm, which leaves the top wall 0.070 proud nominal and 0.256 worst;
-- with the +y top screw's share it takes out about 0.152 mm, which leaves 0.005 / 0.190.
-
-Consequences of the float:
-- **Pull-out:** with the worst float the M3 × 45 has 10.49 engaged; pull-out on the preload is 4.12 (req 4).
-- **Fit:** a top wall standing up to about 0.2 proud at the +y end is a fit matter, not a strength one. Rack A gets
-  that much more lift room, which is harmless against its 0.7 backlash. Spec §3's "top wall underside z 48.5 ±0.15"
-  needs the wider tolerance noted.
-- **Crushing:** the crushing only takes play out. Its creep only relaxes a preload that nothing relies on.
-
-**The fix's ridge rows** (Fx from the zero-play frame model):
-
-| Row | Opening stall, 25.6 N | Proof push, 32.5 N (req 2) |
-|---|---|---|
-| Flank bearing, 0.64 × 7.3 band | **3.20** | 2.53 |
-| Root shear | 5.22 | 4.12 |
-| Root bending at the corners' resultant, Kt 1.7 | 8.12 | 6.41 |
-| Root bending, bound: all of the flank force on the top corner | 4.14 | 3.27 |
-
-**Alternatives that do not work:**
-- **`VSEAT_CLR` 0 alone.** The flats move down with it, so the play is unchanged (the flats term does not contain
-  VSEAT_CLR). It also lifts the top wall 0.15 off the bulkhead.
-- **Moving only the bulkhead off its slice plane.** The bulkhead is not today's governing stop.
-- **VSEAT_CLR 0.05 instead of 0 in item 1.** It halves the float, but leaves 0.02 RSS / about 0.08 worst-case play, and
-  the step-9 check would reject about 1 build in 10.
-
-### Info row 152 (item 2): the preload on the two flanks, SF 1.23 against 4
-
-**It should not count toward the verdict.** It is right to keep it as information.
-- **The stress is crushing, and the crushing is the seating.** The bearing stress is local crushing of the frame's
-  0.2 mm layer corners. It stops by itself once the crushed area carries the clamp.
-- **It only closes play.** It moves the ridge deeper and never opens a gap.
-- **Its creep is harmless.** Creep only relaxes a preload that nothing relies on. The sustained SF 4 exists to limit
-  creep deflection of members that carry load; here that creep is harmless.
-- **Today's build does not even reach it.** The flats, not the flanks, usually take the preload.
-
-With the fix, this crushing is how the seat is made, and its size is computed above.
-
-### Other rows (item 6)
-
-- **At zero play** (the fix, or a lucky print):
-  - nothing is under 3 except what is noted;
-  - lowest 3.01, row 102, M2.5 pan head under rack B's push (unchanged since round 3, at the limit);
-  - then the plate strips at the ties' webs, 3.03 (rows 29 and 83).
-- **Sustained screw-head and pull-out rows (req 4):**
-  - the washer on the top wall: 4.80;
-  - the post round its hole: 8.97;
-  - M3 × 45 pull-out on the preload: 4.22 (4.12 with the fix's worst float).
-- **The ridge's root.**
-  - Verdict row: Kt 1.7, a bead-filled 135° corner, with the flank force at the printed corners' resultant (z 17.6).
-  - Bound, info row 153: all of it on the top corner, 2.11. In today's design nothing seats the ridge on all three
-    corners, so the bound is possible. In the fix the preload seats it, and the bound is 4.14.
-- **Rows 148–149** (2.06 / 2.09) are round 2's cover without the second tie, kept for reference only.
-
-### Design (round 5) as reviewed
-
-| Part | Geometry |
-|---|---|
-| Frame | 90° V-groove, 0.8 deep: x 14.45–16.05 at z 17.75, bottom 16.95, y 23.5–32, open at +y |
-| Cover: ridge | Its flanks 0.1 clear per flank in CAD (0.0707 normal): virtual apex 17.05, tip cut flat at 17.25 (0.4 wide), base x 14.45–16.05 at the flats |
-| Cover: foot | Flats at 17.85 |
-| Hardware | M3 × 45 with a Ø7 × 0.5 washer, 10.75 engaged |
-
-**Exact solids, checked:**
-- groove and ridge both centred on x 15.25, at y 26 and y 30;
-- 0 mm³ overlap, 0.0707 mm gap on each flank.
-
-**Item 5:** the frame's round-4 review text said x 14.35–15.95. Both models use 14.45–16.05, which is round 4's own
-what-if (`LIP_X0 + 0.1`), so they line up. The 0.1 shift costs 0.1 mm of the ligament to the anchor pilot (0.95 CAD
-instead of 1.05); the frame's report covers it.
+- **Round 6 self-check** (cad-engineer; git 8527ef6 / 105aafe): it reported NEEDS_TEST, with lowest SF 3.01 and play
+  0 / 0 / 0.029. This review replaces it. The self-check:
+  - had no tolerance on the bulkhead top, the tip or the slot;
+  - counted three carrying corners and took the band from the CAD tip;
+  - used a 2.2 root, where the printed root is 2.0;
+  - took the anchor's engagement from the CAD block top;
+  - had no preload rows for the top M3 and front M2.5 heads.
+- **Round 5 independent review** (git be24872): FAIL (1.84). Three stops coincided and the play was 0.082 RSS. The fix
+  was ridge-first contact, which is now built and verified above.
+- **Round 4** (git a701995): FAIL (the anchor's x hold relied on preload friction). Fix: the V-seat and the washer.
