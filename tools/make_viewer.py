@@ -185,7 +185,7 @@ for (const [k, v] of cfg.page.meta) { const s = document.createElement('span'); 
 for (const st of cfg.page.stamps) { const s = document.createElement('span'); s.className = `stamp ${st.kind}`; s.textContent = st.text; $('stamps').append(s); }
 for (const [k, v] of cfg.page.facts) { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; $('facts').append(dt, dd); }
 {
-  const tb = $('printTbl').tBodies[0]; let h = 0, g = 0, n = 0;
+  const tb = $('printTbl').tBodies[0]; let h = 0, g = 0, n = 0, todo = 0;
   for (const p of cfg.printed_parts) {
     const tr = tb.insertRow();
     tr.insertCell().textContent = p.label;
@@ -193,12 +193,13 @@ for (const [k, v] of cfg.page.facts) { const dt = document.createElement('dt'); 
     const ph = p.hours != null ? p.hours * (p.plates || 1) : null, pg = p.grams != null ? p.grams * (p.plates || 1) : null;
     const c1 = tr.insertCell(); c1.className = 'n'; c1.textContent = ph != null ? `${ph.toFixed(1)} h` : '—';
     const c2 = tr.insertCell(); c2.className = 'n'; c2.textContent = pg != null ? `${pg.toFixed(0)} g` : '—';
-    h += ph || 0; g += pg || 0; n += p.qty;
+    h += ph || 0; g += pg || 0; n += p.qty; if (ph == null) todo += 1;
   }
   const tf = $('printTbl').tFoot.insertRow();
   tf.insertCell().textContent = 'Total'; tf.insertCell().textContent = String(n);
-  const a = tf.insertCell(); a.className = 'n'; a.textContent = h ? `${h.toFixed(1)} h` : '—';
-  const b = tf.insertCell(); b.className = 'n'; b.textContent = g ? `${g.toFixed(0)} g` : '—';
+  const more = todo ? ` + ${todo} not sliced` : '';   // never present a partial sum as the total
+  const a = tf.insertCell(); a.className = 'n'; a.textContent = h ? `${h.toFixed(1)} h${more}` : '—';
+  const b = tf.insertCell(); b.className = 'n'; b.textContent = g ? `${g.toFixed(0)} g${more}` : '—';
 }
 
 // ---- renderer, scene, theme ------------------------------------------------------------
