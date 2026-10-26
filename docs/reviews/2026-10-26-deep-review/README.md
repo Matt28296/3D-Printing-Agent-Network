@@ -32,6 +32,10 @@ Five independent reviewers each took one slice of all three robot test builds: t
 | 26 Oct, 10:27 | Rover chassis: a fourth design round (steel plates under the idler bolt head and nut, 2 mm skin). In review |
 | 26 Oct, 13:00 | Rover chassis: a fifth design round after its fourth failure (the nut plate moves onto the wall's outer face; the idler's hub gets 5.2 mm shorter) |
 | 26 Oct, 11:40 | MG90S closed windows (arm forearm and claw frame, hexapod coxa bracket and femur, 14 servos): keep the 1.34–1.65 mm strips between each window and its screw holes, under the 1.8 mm rule, and check them on the first print instead. Each affected spec §8 and both build guides carry the check; if a strip whitens or cracks, that part's screw holes move out |
+| 26 Oct, ~14:45 | Rover chassis: a sixth design round (end stop widened to 2.0 mm). Passed; all six rover parts await approval |
+| 26 Oct, ~16:00 | Arm fourth attempts: upper-link rib taper 12, forearm round tab pilots, claw-cover support pillar B. Upper link and forearm passed and are sliced |
+| 26 Oct, ~16:45 | Claw cover: anchor its second post onto the frame with an M3 × 45. Its recheck failed: the post was held only by friction |
+| 26 Oct, ~20:30 | Claw cover and frame: a fifth design round with a V-groove lock (a 90° groove in the frame's rail block, a matching ridge under the cover's post, an Ø7 washer under the M3 × 45). In final review |
 
 ## How the fixes flow
 
