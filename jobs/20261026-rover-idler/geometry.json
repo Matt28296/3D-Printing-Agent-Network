@@ -1,16 +1,16 @@
 {
   "bbox_mm": [
     35.777,
-    34.582,
+    34.52,
     20.0
   ],
   "bbox_min_mm": [
     -17.888,
-    -17.291,
+    -17.26,
     0.0
   ],
-  "volume_mm3": 5156.67,
-  "area_mm2": 3116.87,
+  "volume_mm3": 5051.61,
+  "area_mm2": 3090.73,
   "solids": 1,
   "holes": [
     {
@@ -30,7 +30,7 @@
   ],
   "min_z_mm": 0.0,
   "watertight": true,
-  "mesh_faces": 1448,
+  "mesh_faces": 1488,
   "fits_bed": true,
   "bed_mm": [
     250,

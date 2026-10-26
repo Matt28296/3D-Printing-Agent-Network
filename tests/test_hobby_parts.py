@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("build123d")
 
-from build123d import Align, Box, Pos  # noqa: E402
+from build123d import Align, Box, Cylinder, Pos  # noqa: E402
 
 import hobby_parts as hp  # noqa: E402
 
@@ -145,3 +145,17 @@ def test_pilot_teardrop_points_the_right_way():
     tear = hp.servo_mount_cutter(s, 5.0, through=12, pilot_teardrop="-y")
     assert tear.volume > plain.volume
     assert tear.bounding_box().min.Y < plain.bounding_box().min.Y or tear.volume - plain.volume > 1.0
+
+
+def test_n20_fits_its_wall_cutter_and_d_bore():
+    """The N20 dummy clears its wall cutter (shaft, boss) and its shaft fits the D-bore with clearance."""
+    m = hp.N20_100RPM
+    wall = Pos(-15, -15, 0) * Box(30, 30, 3, align=(Align.MIN,) * 3)
+    wall = wall - hp.gearmotor_wall_cutter(m, 3)
+    assert (wall & hp.gearmotor_dummy(m)).volume < 1e-3
+    hub = Pos(0, 0, 3.5) * Cylinder(5.5, 7, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    hub = hub - Pos(0, 0, 3.5) * hp.d_shaft_bore_cutter(m, 7)
+    assert (hub & hp.gearmotor_dummy(m)).volume < 1e-3
+    # the flat must actually key the shaft: a round Ø3 shaft would not fit
+    round_shaft = Pos(0, 0, 3.5) * Cylinder(1.5, 6, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    assert (hub & round_shaft).volume > 0.5

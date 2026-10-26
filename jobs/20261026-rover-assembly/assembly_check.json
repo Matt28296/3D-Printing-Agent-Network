@@ -1,0 +1,20 @@
+{
+ "tol_mm3": 0.5,
+ "collisions": [],
+ "links_per_side": 34,
+ "axle_dx_mm": 120.0,
+ "teeth_engaged_in_notches": {
+  "sprocketL": 7,
+  "idlerL": 7,
+  "sprocketR": 7,
+  "idlerR": 7
+ },
+ "overall_mm": [
+  159.8,
+  142.0,
+  60.2
+ ],
+ "lowest_point_mm": 0.0,
+ "track_bottom_mm": 0.0,
+ "ground_clearance_mm": 8.68
+}

@@ -1,0 +1,17 @@
+{
+ "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+ "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
+ "filament_profile": "profiles/filament/Prusament_PETG.ini",
+ "overrides": {
+  "perimeters": 4,
+  "top_solid_layers": 5,
+  "bottom_solid_layers": 5,
+  "fill_density": "50%",
+  "fill_pattern": "gyroid",
+  "layer_height": 0.2,
+  "elefant_foot_compensation": 0.2
+ },
+ "model": "part.stl",
+ "copies": 2,
+ "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; walls/solid layers/infill raised to print_requirements.json; gyroid; 0.2 mm elephant-foot compensation. 2 copies per plate."
+}

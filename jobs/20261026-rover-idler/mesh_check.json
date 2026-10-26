@@ -2,12 +2,12 @@
   "overhang_limit_deg": 45.0,
   "overhang_area_mm2": 0.0,
   "overhang_pct": 0.0,
-  "bed_contact_area_mm2": 576.9,
+  "bed_contact_area_mm2": 561.9,
   "bridges": [],
   "thin_wall_warnings": [],
   "bbox_mm": [
     35.78,
-    34.58,
+    34.52,
     20.0
   ],
   "fits_bed": true,

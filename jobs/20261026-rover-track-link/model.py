@@ -25,6 +25,7 @@ CENTRE_HALF = 6.75              # centre knuckle |y|
 OUTER_IN = 7.25                 # outer knuckles from |y| 7.25 (0.5 axial gap)
 HALF_W = TRACK_W / 2            # 12
 NOTCH_HALF = 4.0                # sprocket-tooth notch |y| <= 4
+NOTCH_X0 = KN_R + 0.05          # notch starts at the centre knuckle's surface (assembly check: tooth flank at the run-out)
 GROUSER_H, GROUSER_X = 1.5, (4.0, 9.0)
 
 
@@ -46,7 +47,7 @@ def design():
         g0, g1 = sorted((s * (OUTER_IN + 0.25), s * (HALF_W - 0.5)))
         link += _box(GROUSER_X[0], GROUSER_X[1], g0, g1, -t - GROUSER_H, -t + 0.01)
     link += _box(clr, P - clr, -HALF_W, HALF_W, -t, t)                      # bridge, full width
-    link -= _box(clr, P + 1, -NOTCH_HALF, NOTCH_HALF, -t - 2, t + 2)        # tooth notch
+    link -= _box(NOTCH_X0, P + 1, -NOTCH_HALF, NOTCH_HALF, -t - 2, t + 2)   # tooth notch
     d = PIN_D + PIN_CLR + HOLE_COMP
     for x in (0.0, P):
         link -= Pos(x, 0, 0) * Rot(90, 0, 0) * Cylinder(d / 2, TRACK_W + 2)

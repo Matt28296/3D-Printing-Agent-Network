@@ -325,6 +325,9 @@ def gearmotor_dummy(m: GearMotorSpec) -> Part:
     term = Pos(0, 0, -m.gb_len - m.can_len - m.term_len / 2) * _B(6.0, 4.0, m.term_len)
     boss = Cylinder(m.boss_d / 2, m.boss_h, align=(Align.CENTER, Align.CENTER, Align.MIN))
     shaft = Cylinder(m.shaft_d / 2, m.shaft_len, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    flat_y = m.shaft_flat - m.shaft_d / 2          # D-flat on +Y, like d_shaft_bore_cutter
+    shaft = shaft & Pos(0, (flat_y - m.shaft_d / 2) / 2, 0) * _B(m.shaft_d, flat_y + m.shaft_d / 2, m.shaft_len,
+                                                                  align=(Align.CENTER, Align.CENTER, Align.MIN))
     return gb + can + term + boss + shaft
 
 
