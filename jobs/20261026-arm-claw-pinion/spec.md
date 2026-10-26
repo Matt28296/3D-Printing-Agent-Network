@@ -5,6 +5,9 @@ Job: 20261026-arm-claw-pinion · Written by: Architect · Date: 2026-10-26 (roun
 ## 1. Function
 Spur gear on the claw MG90S: module 1, 20 teeth, 20°, pitch Ø20, 10 mm wide, tips topped 0.15 (outside Ø21.7), root fillets r 0.38. Turns both racks in opposite directions, so the jaws open and close symmetrically: 2.865° of servo per mm of jaw gap, 0–44 mm in 126°. The servo's double-arm horn, both arms cut 5.5 mm from the centre, sits 2 mm deep in its back face with a light 0.1 mm fit that centres the pinion on the spline (SYS-08). It goes on last, pushed axially through the cover's Ø22.6 pass-through with both jaws parked fully open, and comes off first for service (SYS-01).
 
+
+**Round 3 (claw strength round 2): FACE_W 12; backlash parameters PINION_BACKLASH 0.1 / RACK_BACKLASH 0.7 (0.40 mm per mesh); counterbore 3.7 deep; 0.2 mm chamfer on the horn-pocket mouth. Where a row in §2–§4 below gives an older value, these govern.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: Ø21.7 × 10 mm. Interfaces: trimmed-horn pocket on the back face (hub Ø7.2 + two stubs to r 5.5, + 0.1 fit and HOLE_COMP, 2 deep); Ø2.6 clamp hole; Ø6.4 CAD × 1.7 counterbore on the front face for the Ø6 washer, leaving a 6.3 mm floor above the horn; 0.25 mm 45° chamfer on the bed face, tooth outline included.

@@ -5,6 +5,9 @@ Job: 20261026-arm-claw-cover · Written by: Architect · Date: 2026-10-26 (round
 ## 1. Function
 Closes both rack channels. The front plate holds both racks forward and carries the two neck slots (A open at −y, B open at +y, so the jaws slide in from the ends) and the pinion's pass-through: the pinion goes in last, axially, with both jaws parked fully open, and comes out first for service (deep review 03 SYS-01, fix A). The top wall is rack A's guide (the gear's separating force presses rack A's back against it); the lip wall backs rack A. A tie (post + web, between the racks) joins the two halves of the front plate that the slots and the pass-through separate. The camera mount sits on its top wall.
 
+
+**Round 3 (claw DFM and strength round 2): lip wall GUIDE_T 8 (lip at x 14.35); a second tie at y 24–32 with 45° undersides; FRONT_Z0 −6 (front plate down to 6 below the claw's back face); X_F0 / X_F1 34.85 / 39.85; two breakaway support pillars under the pieces beside the pinion pass-through (slicer supports off; BUILD_GUIDE step 9 snaps them off; justified in the brief); front screws M2.5 × 16. Where a row in §2–§4 below gives an older value, these govern.**
+
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 37.85 × 64 × 55.5 mm (print: 37.85 × 55.5 × 64; claw frame G: x 0…37.85, y ±32, z −4…51.5). Interfaces:
