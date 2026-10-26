@@ -1,527 +1,731 @@
-import math
+"""Strength check for jobs/20261025-arm-upper-link: Upper link (shoulder -> elbow) (round 5, independent re-check, 2026-10-26).
 
-# --- allowables -------------------------------------------------------------------
-ALLOW_INPLANE_MPA = 25.0   # source: placeholder PETG (library/materials.csv has no measured row) -> verdict at best NEEDS_TEST
-Z_RATIO = 0.5              # across-layer / in-plane; placeholder (skill: half the in-plane value)
-SHEAR_RATIO = 0.5          # shear allowable = 0.5 x normal allowable (Tresca); assumption, stated in strength.md
-SF_STATIC = 3.0            # short-term static
-SF_SUSTAINED = 4.0         # sustained (creep) or cyclic
-DYN = 2.0                  # dynamic factor on self-weight while the arm moves (as the spec uses)
-G_N_PER_G = 9.81e-3        # N per gram
-RHO_G_PER_MM3 = 1.27e-3    # PETG density
-
-cases = []      # rows that set the verdict
-advisory = []   # rows printed for information only (reason given in strength.md)
-
-
-def allow_mpa(across, shear=False):
-    a = ALLOW_INPLANE_MPA * (Z_RATIO if across else 1.0)
-    return a * (SHEAR_RATIO if shear else 1.0)
-
-
-def check(name, stress_mpa, across, sf_req, shear=False, Kt=1.0, info=False):
-    """Record one check. across=True: the stress pulls layers apart (or shears them)."""
-    s = Kt * stress_mpa
-    a = allow_mpa(across, shear)
-    sf = a / s if s > 1e-9 else float("inf")
-    tag = ("Z" if across else "XY") + (" shear" if shear else "")
-    (advisory if info else cases).append((name, tag, s, a, sf, sf_req))
-    return sf
-
-
-def bend(M_nmm, I_mm4, c_mm):
-    return M_nmm * c_mm / I_mm4
-
-
-def bearing(F_n, d_mm, t_mm):
-    return F_n / (d_mm * t_mm)
-
-
-def tearout(F_n, ligament_mm, t_mm):
-    """Shear-out on two planes; ligament = edge distance minus hole radius."""
-    return F_n / (2.0 * ligament_mm * t_mm)
-
-
-def pullout(F_n, d_mm, L_mm):
-    """Thread strip / pull-out of a self-tapping screw: shear on the pilot cylinder."""
-    return F_n / (math.pi * d_mm * L_mm)
-
-
-def torsion_thin(T_nmm, rects):
-    """Open thin-walled section: J = sum b t^3/3 (1 - 0.63 t/b); tau_max = T t_max / J."""
-    J = sum(b * t ** 3 / 3.0 * (1 - 0.63 * t / b) for b, t in rects)
-    return T_nmm * max(t for _, t in rects) / J
-
-
-def comp_section(rects):
-    """rects: (width b along the neutral axis, depth d, centroid position y). Returns (A, ybar, I)."""
-    A = sum(b * d for b, d, _ in rects)
-    ybar = sum(b * d * y for b, d, y in rects) / A
-    I = sum(b * d ** 3 / 12.0 + b * d * (y - ybar) ** 2 for b, d, y in rects)
-    return A, ybar, I
-
-
-def servo_screw_forces(T_nmm, holes):
-    """Torque reacted by screws only (servo body bearing on the window ignored): F_i = T r_i / sum r^2."""
-    r = [math.hypot(x, y) for x, y in holes]
-    s = sum(ri ** 2 for ri in r)
-    return [T_nmm * ri / s for ri in r]
-
-
-def report(title):
-    print(f"== {title} ==")
-    print("| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
-    print("|---|---|---|---|---|---|---|---|")
-    for i, (n, d, s, a, sf, req) in enumerate(cases, 1):
-        print(f"| {i} | {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:.0f} | {'OK' if sf >= req else '**FAIL**'} |")
-    if advisory:
-        print("\nAdvisory (not in the verdict; see strength.md):")
-        print("| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |")
-        print("|---|---|---|---|---|---|")
-        for n, d, s, a, sf, req in advisory:
-            print(f"| {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:.0f} |")
-    worst = min(cases, key=lambda r: r[4] / r[5])
-    fails = [r for r in cases if r[4] < r[5]]
-    print(f"\nlowest SF {worst[4]:.2f} (required {worst[5]:.0f}) at: {worst[0]}")
-    print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables; PASS not possible without measured data)")
-    return worst, fails
-
-# --- read the real parameters (model.py / tools/hobby_parts.py / geometry.json) ---------------------------
-# model.py imports build123d, which plain python3 doesn't have, so its top-level constants are evaluated with
-# ast against stand-ins for the hobby_parts names. Anything that can't be evaluated that way is skipped.
+Run from the project root:  python3 jobs/20261025-arm-upper-link/strength_calc.py
+Plain Python (no build123d). It reads the jobs' model.py, tools/hobby_parts.py, the shared claw_frame.py, each
+geometry.json and the assembly's torque_budget.json, sweeps the arm's poses for the yaw-stall, hand-push and weight
+cases, prints every check as a markdown table and ends with the verdict. strength.md explains every assumption.
+"""
+# ===== shared arm model: the same block in the five arm strength_calc.py files (base, turntable, ring, upper link, =====
+# ===== forearm). Plain Python, no build123d: parameters from each job's model.py and the shared claw_frame.py     =====
+# ===== (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py, masses from     =====
+# ===== each job's geometry.json volume. Checked against assembly_check.chain() and torque_budget.json (see below). =====
 import ast
 import json
+import math
 import os
 from types import SimpleNamespace
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 JOBS = os.path.join(ROOT, "jobs")
+ASM = os.path.join(JOBS, "20261025-robot-arm-assembly")
+
+# --- allowables: library/materials.csv has no PETG row and no job has a datasheet in inputs/ -> NEEDS_TEST at best ---
+ALLOW_XY_MPA = 25.0          # tension / bending along the layers: strength-checks placeholder, PETG
+Z_RATIO = 0.5                # across the layers: placeholder (half the in-plane value)
+SHEAR_RATIO = 0.5            # shear = 0.5 x the normal allowable (Tresca): my assumption
+BEARING_MPA = 25.0           # bearing / compression in any direction (compression does not open the layers)
+E_MPA, NU = 1800.0, 0.35     # PETG placeholder modulus (skill table); Poisson's ratio assumed
+SF_STATIC, SF_SUSTAINED = 3.0, 4.0
+SF_PROOF = SF_STATIC / 1.5   # at a proof load of 1.5 x service the part must still be inside the placeholder allowable
+DYN = 2.0                    # dynamic factor on self-weight (the specs' x2; the 250 deg/s^2 ramps need about x1.1)
+GN = 9.81e-3                 # N per gram
+RHO = 1.27e-3                # g/mm^3: solid PETG, the upper bound ("camera, solid" in torque_budget.json)
+STALL_MG996R_NMM = 1079.0    # 11 kgf.cm at 6 V, TowerPro datasheet (deep review 01 N1); hobby_parts and the specs say 1000
+STALL_MG90S_NMM = 216.0      # 2.2 kgf.cm at 6 V
+CLONE_FACTOR = 15.0 / 11.0   # listings that claim 15 kgf.cm (01 N1): printed as a sensitivity line only
+F_HAND_N = 5.0               # spec: sideways hand push
+PAYLOAD_G = 50.0             # spec: payload, put at the fingertips (torque_budget puts it 10 mm behind them)
+DESK_Z = -40.0
+STEP_DEG = 5                 # pose sweep step (assembly_check and torque_budget use 5)
+PRELOAD_SNUG_N = 150.0       # assumed tension of a tab self-tapper (M2 or M3) driven "snug" by hand: no torque is
+PRELOAD_TIGHT_N = 300.0      # specified; 300 N (over-tightened) is printed as a sensitivity line
+
+
+def allow(across, shear=False):
+    a = ALLOW_XY_MPA * (Z_RATIO if across else 1.0)
+    return a * (SHEAR_RATIO if shear else 1.0)
+
+
+# --- read tools/hobby_parts.py, tools/cadlib.py, model.py and claw_frame.py constants without build123d --------------
 _SERVO_FIELDS = ["name", "length", "width", "case_top", "total_h", "tab_height", "tab_t", "tab_span", "hole_dx",
                  "hole_dy", "tab_hole_d", "screw_pilot_d", "shaft_from_end", "horn_kind", "horn_d", "horn_t"]
 _SERVO_DEFAULTS = dict(horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1, horn_screw_clear_d=3.4, stall_torque_nmm=0.0,
-                       mass_g=0.0)
-_BOARD_FIELDS = ["name", "length", "width", "pcb_t", "pins_below", "parts_above", "usb_w", "usb_h"]
+                       mass_g=0.0, lead_z=0.0, lead_w=0.0, lead_t=0.0, lead_notch_w=0.0, lead_notch_reach=0.0)
 _BOX_FIELDS = ["name", "length", "width", "height", "mass_g", "note"]
 
 
-def _lit(node):
-    return ast.literal_eval(node)
-
-
 def _read_hobby():
-    tree = ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read())
     ns = {}
-    for node in tree.body:
+    for node in ast.parse(open(os.path.join(ROOT, "tools", "hobby_parts.py")).read()).body:
         if not (isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)):
             continue
         name, v = node.targets[0].id, node.value
         fn = getattr(getattr(v, "func", None), "id", "")
-        if fn == "ServoSpec":
-            d = dict(_SERVO_DEFAULTS)
-            d.update(zip(_SERVO_FIELDS, [_lit(a) for a in v.args]))
-            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
-            ns[name] = SimpleNamespace(**d)
-        elif fn == "BoardSpec":
-            ns[name] = SimpleNamespace(**dict(zip(_BOARD_FIELDS, [_lit(a) for a in v.args])))
-        elif fn == "BoxSpec":
-            d = dict(zip(_BOX_FIELDS, [_lit(a) for a in v.args]))
-            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
-            ns[name] = SimpleNamespace(**d)
-        elif fn == "replace":
-            d = dict(vars(ns[v.args[0].id]))
-            d.update({kw.arg: _lit(kw.value) for kw in v.keywords})
-            ns[name] = SimpleNamespace(**d)
-        else:
-            try:
-                ns[name] = _lit(v)
-            except Exception:
-                pass
-    cad = ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read())
-    for node in cad.body:
+        try:
+            if fn == "ServoSpec":
+                d = dict(_SERVO_DEFAULTS)
+                d.update(zip(_SERVO_FIELDS, [ast.literal_eval(a) for a in v.args]))
+                d.update({k.arg: ast.literal_eval(k.value) for k in v.keywords})
+                ns[name] = SimpleNamespace(**d)
+            elif fn == "BoxSpec":
+                d = dict(zip(_BOX_FIELDS, [ast.literal_eval(a) for a in v.args]))
+                d.update({k.arg: ast.literal_eval(k.value) for k in v.keywords})
+                ns[name] = SimpleNamespace(**d)
+            elif fn == "replace" and v.args[0].id in ns:
+                d = dict(vars(ns[v.args[0].id]))
+                d.update({k.arg: ast.literal_eval(k.value) for k in v.keywords})
+                ns[name] = SimpleNamespace(**d)
+            elif not fn:
+                ns[name] = ast.literal_eval(v)
+        except Exception:
+            pass
+    for node in ast.parse(open(os.path.join(ROOT, "tools", "cadlib.py")).read()).body:
         if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "HOLE_COMP_DEFAULT":
-            ns["HOLE_COMP_DEFAULT"] = _lit(node.value)
+            ns["HOLE_COMP_DEFAULT"] = ast.literal_eval(node.value)
     return ns
 
 
 HOBBY = _read_hobby()
-MG996R, SG90 = HOBBY["MG996R"], HOBBY["SG90"]
-HORN_DEPTH = HOBBY.get("HORN_DEPTH", 2.0)
+MG996R, MG90S, BRIO = HOBBY["MG996R"], HOBBY["MG90S"], HOBBY["BRIO_4K"]
+HORN_DEPTH, HOLE_COMP = HOBBY["HORN_DEPTH"], HOBBY["HOLE_COMP_DEFAULT"]
 
 
 def horn_face_z(s):
-    return (s.total_h - s.tab_height) + 0.6          # same formula as tools/hobby_parts.py
+    return (s.total_h - s.tab_height) + 0.6          # tools/hobby_parts.py
 
 
 def link_back_z(s, depth=HORN_DEPTH):
     return horn_face_z(s) - depth
 
 
-def model_params(job):
-    """Top-level constants of jobs/<job>/model.py, evaluated in order."""
+def eval_constants(path):
+    """Top-level constants of a model.py / claw_frame.py, evaluated in order; anything else is skipped."""
     ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
     base = set(ns)
-    tree = ast.parse(open(os.path.join(JOBS, job, "model.py")).read())
-    for node in tree.body:
+    for node in ast.parse(open(path).read()).body:
         if not isinstance(node, ast.Assign) or len(node.targets) != 1:
             continue
         try:
-            val = eval(compile(ast.Expression(node.value), "model.py", "eval"), ns)
+            val = eval(compile(ast.Expression(node.value), path, "eval"), ns)
         except Exception:
             continue
         t = node.targets[0]
         if isinstance(t, ast.Name):
             ns[t.id] = val
         elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
-            for e, v in zip(t.elts, val):
-                ns[e.id] = v
+            for e, x in zip(t.elts, val):
+                ns[e.id] = x
     return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+
+
+def job_params(job):
+    return eval_constants(os.path.join(JOBS, job, "model.py"))
 
 
 def volume_mm3(job):
     return json.load(open(os.path.join(JOBS, job, "geometry.json")))["volume_mm3"]
 
 
-HOLE_COMP = HOBBY["HOLE_COMP_DEFAULT"]
+TT = job_params("20261025-arm-turntable")
+UL = job_params("20261025-arm-upper-link")
+FA = job_params("20261025-arm-forearm")
+CF = eval_constants(os.path.join(ASM, "claw_frame.py"))
+TB = json.load(open(os.path.join(ASM, "torque_budget.json")))
+TRAVEL = TB["travel_deg"]                         # shoulder 0..180, elbow -150..30 (SYS-03 fitting), wrist -90..90
 
-# --- arm model, built from the jobs' model.py / geometry.json (assembly_plan.md frames) -------------------
-# Round 4 (claw v2 + Brio, 2026-10-26): the end effector beyond the wrist horn is the rack-and-pinion claw (jobs
-# 20261026-arm-claw-frame, -claw-cover, -claw-pinion, -claw-jaw x2) carrying the optional Brio 4K on
-# 20261026-arm-camera-mount, and the wrist servo is an MG90S (SG90 body and horn, 216 N.mm stall, 13.4 g).
-# Masses: each claw job's geometry.json volume x 1.27 g/cm3. Fingertip lever and camera pose: the shared layout
-# jobs/20261025-robot-arm-assembly/claw_frame.py. Part centres of mass: build123d centre of mass of each design() in
-# the claw frame G (measured 2026-10-26; the script warns if a part's volume has changed since).
-def claw_frame_params():
-    """Top-level constants of the shared claw layout (claw_frame.py), evaluated like model.py."""
-    ns = dict(HOBBY, math=math, horn_face_z=horn_face_z, link_back_z=link_back_z, max=max, min=min, abs=abs)
-    base = set(ns)
-    tree = ast.parse(open(os.path.join(JOBS, "20261025-robot-arm-assembly", "claw_frame.py")).read())
-    for node in tree.body:
-        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
-            continue
-        try:
-            val = eval(compile(ast.Expression(node.value), "claw_frame.py", "eval"), ns)
-        except Exception:
-            continue
-        t = node.targets[0]
-        if isinstance(t, ast.Name):
-            ns[t.id] = val
-        elif isinstance(t, ast.Tuple) and all(isinstance(e, ast.Name) for e in t.elts):
-            for e, v in zip(t.elts, val):
-                ns[e.id] = v
-    return SimpleNamespace(**{k: v for k, v in ns.items() if k not in base and not k.startswith("__")})
+# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, measured
+# 2026-10-26 by this analyst, in each part's design frame). A volume change over 0.5 % prints a warning.
+CAD = {"20261025-arm-turntable": (89196.5, (0.0, -3.799, 33.048)),
+       "20261025-arm-upper-link": (39496.5, (39.615, 0.0, 5.064)),
+       "20261025-arm-forearm": (29235.2, (35.755, 0.0, 5.087)),
+       "20261026-arm-claw-frame": (34760.0, (10.033, 0.453, 13.988)),
+       "20261026-arm-claw-cover": (22526.4, (27.291, -2.495, 32.778)),
+       "20261026-arm-claw-pinion": (2773.4, (0.0, 0.0, 5.135)),        # pinion frame: its z = claw +x
+       "20261026-arm-claw-jaw": (16126.7, (44.114, -2.705, 37.923)),     # jaw A at gap 0; jaw B is it turned
+       "20261026-arm-camera-mount": (10479.9, (-8.231, -3.094, 66.085)),
+       "20261025-arm-base": (89630.6, (0.534, 0.299, -12.615)),
+       "20261025-arm-turntable-ring": (13333.5, (0.0, 0.0, 7.813)),
+       "20261025-arm-esp32-cradle": (11498.6, (13.187, 26.581, -15.296))}
+STALE = []
+for _job, (_v0, _c) in CAD.items():
+    _v = volume_mm3(_job)
+    if abs(_v - _v0) > 0.005 * _v0:
+        STALE.append(f"WARNING: {_job} volume {_v:.0f} mm3 differs from {_v0:.0f} when its CoG was measured")
 
 
-UL = model_params("20261025-arm-upper-link")
-FA = model_params("20261025-arm-forearm")
-TT = model_params("20261025-arm-turntable")
-CF = claw_frame_params()
-MG90S, BRIO = HOBBY["MG90S"], HOBBY["BRIO_4K"]
-WRIST = MG90S                           # wrist servo: MG90S (same body and horn as the SG90 the forearm is drawn for)
-STALL_MG996R_NMM, STALL_SG90_NMM = MG996R.stall_torque_nmm, SG90.stall_torque_nmm
-STALL_WRIST_NMM = WRIST.stall_torque_nmm
-L1, L2 = UL.L, FA.L                     # shoulder->elbow, elbow->wrist
-GRIP_DX, L3 = CF.X_P0, CF.X_TIP         # wrist -> claw-servo output (pinion back face), wrist -> fingertip (was 40 / 95)
-SX, SZ = TT.XS, TT.ZS                   # shoulder axis X, Z
-DESK_Z = -40.0
-F_HAND_N = 5.0                          # handling case (spec 4): hand push out of the arm plane at the fingertip
-CAMERA = True                           # optional Brio 4K fitted (the heavier case governs)
-PAYLOAD_G = 50.0
-HFZ_MG, HFZ_SG = horn_face_z(MG996R), horn_face_z(WRIST)
-# world-Y stack: each link's back face sits HORN_DEPTH below the horn face; the next servo's tabs sit on its front face
-Y_SH_HORN = TT.UP_Y + HFZ_MG
-Y_UL_BACK = Y_SH_HORN - HORN_DEPTH
-Y_EL_TAB = Y_UL_BACK + UL.T
-Y_EL_HORN = Y_EL_TAB + HFZ_MG
-Y_FA_BACK = Y_EL_HORN - HORN_DEPTH
-Y_WR_TAB = Y_FA_BACK + FA.T
-Y_WR_HORN = Y_WR_TAB + HFZ_SG
-Y_CLAW = Y_WR_HORN - HORN_DEPTH        # claw frame back face (claw z = 0); claw +z = world +Y, claw +x = along the arm
-Y_TIP = Y_CLAW + CF.ZS                  # fingertips and payload on the pinion-axis line
-Y_HORN = {"shoulder": Y_SH_HORN, "elbow": Y_EL_HORN, "wrist": Y_WR_HORN, "gripper": Y_TIP}
+def mass_g(job):
+    return volume_mm3(job) * RHO
 
 
-def _servo_body(s):
-    """Body-centre offsets in the servo frame: x along the body, z (case centre below the tab underside)."""
-    return -(s.length - s.shaft_from_end) + s.length / 2, s.case_top / 2 - s.tab_height
+def com(job):
+    return CAD[job][1]
 
 
-def _plate_cg_x(x0, x1, w, win_x, win_a):
-    a = (x1 - x0) * w
-    return (a * (x0 + x1) / 2 - win_a * win_x) / (a - win_a)
+def servo_com(s):
+    """Body-box centre in the servo frame (origin on the shaft at the tab underside, +z = shaft)."""
+    return (-(s.length - s.shaft_from_end) + s.length / 2, 0.0, -s.tab_height + s.case_top / 2)
 
 
-_mx, _mz = _servo_body(MG996R)
-_sx, _sz = _servo_body(WRIST)
-M_UL, M_FA = volume_mm3("20261025-arm-upper-link") * RHO_G_PER_MM3, volume_mm3("20261025-arm-forearm") * RHO_G_PER_MM3
-M_TT = volume_mm3("20261025-arm-turntable") * RHO_G_PER_MM3
-CG_UL = _plate_cg_x(UL.X0, UL.X1, 2 * UL.HALF_W, UL.L + _mx, MG996R.length * MG996R.width)
-CG_FA = _plate_cg_x(FA.X0, FA.X1, 2 * FA.HALF_W, FA.L + _sx, WRIST.length * WRIST.width)
-# claw parts: (job, copies, volume when the CoG was measured, CoG (x, z) in claw frame G, joint index)
-CLAW_PARTS = [("20261026-arm-claw-frame", 1, 24422.2, (10.96, 12.01), 3),
-              ("20261026-arm-claw-cover", 1, 15434.92, (21.46, 30.47), 3),
-              ("20261026-arm-claw-pinion", 1, 1765.53, (CF.X_P0 + 4.21, CF.ZS), 4),
-              ("20261026-arm-claw-jaw", 2, 6898.26, (42.64, CF.ZS), 4),        # pair: jaw B = jaw A turned about the axis
-              ("20261026-arm-camera-mount", 1, 8846.95, (-8.37, 50.73), 3)]
+LB_MG, LB_SG = link_back_z(MG996R), link_back_z(MG90S)         # 14.5, 12.6: link back faces above the tabs
+XS, ZS, UP_Y = TT.XS, TT.ZS, TT.UP_Y
+L1, L2, T1, T2 = UL.L, FA.L, UL.T, FA.T
 _ta = math.radians(CF.CAM_TILT)
-CAM_CG = (CF.CAM_XC + BRIO.height / 2 * math.sin(_ta), CF.CAM_ZC + BRIO.height / 2 * math.cos(_ta))  # Brio box centre
-SCREW14_CG = (CF.CAM_XC - (CF.SEAT_T + 4.0) * math.sin(_ta), CF.CAM_ZC - (CF.SEAT_T + 4.0) * math.cos(_ta))
-_cx, _cz = _servo_body(MG90S)
-CLAW_SERVO_CG = (CF.X_B + _cz, CF.ZS)  # claw MG90S: shaft along claw +x, case centre 4.55 behind the bulkhead face
-EE = []                                 # (name, mass g, joint index, x from the wrist axis, claw z)
-for job, n, v0, (x, z), k in CLAW_PARTS:
-    if job == "20261026-arm-camera-mount" and not CAMERA:
-        continue
-    v = volume_mm3(job)
-    if abs(v - v0) > 0.005 * v0:
-        print(f"WARNING: {job} volume {v:.0f} differs from {v0:.0f} mm3 when its CoG was measured: re-measure the CoG")
-    EE.append((job.split("arm-")[1], n * v * RHO_G_PER_MM3, k, x, z))
-EE += [("claw MG90S", MG90S.mass_g, 3, CLAW_SERVO_CG[0], CLAW_SERVO_CG[1]),
-       ("pinion horn (cut) + M2x10 clamp", 2.0, 4, CF.X_P0 + 1.0, CF.ZS),
-       ("cover / tab screws", 6.0, 3, 14.0, 25.0)]   # 2 x M3x18 at x 7, 2 x M3x12 at the front, 2 x M2x8
-if CAMERA:
-    EE += [("Brio 4K", BRIO.mass_g, 3, CAM_CG[0], CAM_CG[1]), ("1/4-20 thumb screw", 4.0, 3, SCREW14_CG[0], SCREW14_CG[1])]
-M_EE = sum(m for _, m, _, _, _ in EE)
-X_EE = sum(m * x for _, m, _, x, _ in EE) / M_EE
-Z_EE = sum(m * z for _, m, _, _, z in EE) / M_EE
-# (name, mass g, rides beyond joint k: 0 yaw, 1 shoulder, 2 elbow, 3 wrist, 4 claw servo, s along the straight arm, world Y)
+
+
+def cam_to_g(p):
+    """Camera frame (origin at the thread, +x lens, +y long axis, +z up) -> claw frame G (assembly_check cam_in_g)."""
+    x, y, z = p
+    return (CF.CAM_XC + x * math.cos(_ta) + z * math.sin(_ta), y, CF.CAM_ZC - x * math.sin(_ta) + z * math.cos(_ta))
+
+
+_cx, _cy, _cz = servo_com(MG90S)
+_mx, _my, _mz = servo_com(MG996R)
+_pin = com("20261026-arm-claw-pinion")
+_jaw = com("20261026-arm-claw-jaw")
+# (name, mass g, body, point in the body frame). Bodies: "TT" = turntable (world frame at yaw 0), "U" upper link,
+# "F" forearm, "G" claw frame. The mass model of torque_budget.py ("camera, solid") plus the shoulder and base horns.
 ITEMS = [
-    ("shoulder MG996R", MG996R.mass_g, 0, -SX, TT.UP_Y + _mz),
-    ("shoulder horn + clamp screw", 5.0, 1, 0.0, Y_SH_HORN - 1.4),
-    ("upper link", M_UL, 1, CG_UL, Y_UL_BACK + UL.T / 2),
-    ("elbow MG996R", MG996R.mass_g, 1, L1 + _mx, Y_EL_TAB + _mz),
-    ("cable allowance 1", 6.0, 1, L1, Y_EL_TAB),
-    ("elbow horn + clamp screw", 5.0, 2, L1, Y_EL_HORN - 1.4),
-    ("forearm", M_FA, 2, L1 + CG_FA, Y_FA_BACK + FA.T / 2),
-    ("wrist MG90S", WRIST.mass_g, 2, L1 + L2 + _sx, Y_WR_TAB + _sz),
-    ("cable allowance 2", 4.0, 2, L1 + L2, Y_WR_TAB),
-    ("wrist horn + clamp screw", 2.0, 3, L1 + L2, Y_WR_HORN - 0.8),
-] + [(n, m, k, L1 + L2 + x, Y_CLAW + z) for n, m, k, x, z in EE] + [
-    ("payload", PAYLOAD_G, 4, L1 + L2 + L3, Y_TIP),
+    ("turntable", mass_g("20261025-arm-turntable"), "TT", com("20261025-arm-turntable")),
+    ("base disc horn + M3x14 clamp", 5.0, "TT", (0.0, 0.0, TT.Z0 - 1.5)),
+    ("shoulder MG996R", MG996R.mass_g, "TT", (XS + _mx, UP_Y + _mz, ZS - _my)),
+    ("shoulder horn + clamp", 4.2, "U", (0.0, 0.0, 0.6)),
+    ("upper link", mass_g("20261025-arm-upper-link"), "U", com("20261025-arm-upper-link")),
+    ("cable on the upper link", 9.0, "U", (L1 / 2, 0.0, T1 / 2)),
+    ("elbow MG996R", MG996R.mass_g, "U", (L1 + _mx, _my, T1 + _mz)),
+    ("elbow horn + clamp", 4.2, "F", (0.0, 0.0, -2.0)),
+    ("forearm", mass_g("20261025-arm-forearm"), "F", com("20261025-arm-forearm")),
+    ("cable on the forearm", 7.0, "F", (L2 / 2, 0.0, T1 / 2)),
+    ("wrist MG90S", MG90S.mass_g, "F", (L2 + _cx, _cy, T2 + _cz)),
+    ("wrist horn + clamp", 1.2, "G", (0.0, 0.0, 2.0)),
+    ("claw frame", mass_g("20261026-arm-claw-frame"), "G", com("20261026-arm-claw-frame")),
+    ("claw cover", mass_g("20261026-arm-claw-cover"), "G", com("20261026-arm-claw-cover")),
+    ("claw pinion", mass_g("20261026-arm-claw-pinion"), "G", (CF.X_P0 + _pin[2], 0.0, CF.ZS)),
+    ("claw jaw A", mass_g("20261026-arm-claw-jaw"), "G", _jaw),
+    ("claw jaw B", mass_g("20261026-arm-claw-jaw"), "G", (_jaw[0], -_jaw[1], 2 * CF.ZS - _jaw[2])),
+    ("claw MG90S", MG90S.mass_g, "G", (CF.X_B + _cz, _cx, CF.ZS + _cy)),
+    ("pinion horn + screw", 1.0, "G", (CF.X_P0 + 3.0, 0.0, CF.ZS)),
+    ("claw and mount screws", 5.0, "G", (8.0, 0.0, 30.0)),
+    ("cable on the claw", 5.0, "G", (0.0, 0.0, 30.0)),
+    ("camera mount", mass_g("20261026-arm-camera-mount"), "G", com("20261026-arm-camera-mount")),
+    ("Brio 4K", BRIO.mass_g, "G", cam_to_g((0.0, 0.0, BRIO.height / 2))),
+    ("thumb screw", 5.0, "G", cam_to_g((0.0, 0.0, -CF.SEAT_T - 3.0))),
 ]
-S_JOINT = {0: -SX, 1: 0.0, 2: L1, 3: L1 + L2, 4: L1 + L2 + GRIP_DX}
-print(f"arm model: Y horn faces {', '.join(f'{k} {v:.1f}' for k, v in Y_HORN.items() if k != 'gripper')}; claw back face "
-      f"Y {Y_CLAW:.1f}, fingertip {L3:.2f} from the wrist at Y {Y_TIP:.1f}; masses UL {M_UL:.1f} FA {M_FA:.1f} "
-      f"TT {M_TT:.1f} g; CG x UL {CG_UL:.1f} FA {CG_FA:.1f}")
-print(f"end effector beyond the wrist horn ({'with' if CAMERA else 'without'} the Brio): {M_EE + 2.0:.1f} g incl. the wrist "
-      f"horn, CoG {X_EE:.1f} in front of the wrist axis, {Z_EE:.1f} outboard of the claw back face (Y {Y_CLAW + Z_EE:.1f}); "
-      f"Brio CoG x {CAM_CG[0]:.2f}, z {CAM_CG[1]:.2f} (Y {Y_CLAW + CAM_CG[1]:.1f}); payload {PAYLOAD_G:.0f} g at the fingertip")
+TIP_G = (CF.X_TIP, 0.0, CF.ZS)                         # fingertips (claw closed), on the claw axis
+PAYLOAD = ("payload", PAYLOAD_G, "G", TIP_G)
+# where an obstacle or a hand can touch the arm: the fingertips and the two ends of the Brio (its long axis lies in the
+# arm plane, +-51 mm from the claw axis), which give the largest twisting levers
+CONTACTS = {"fingertip": TIP_G, "camera end +y": cam_to_g((0.0, BRIO.length / 2, BRIO.height / 2)),
+            "camera end -y": cam_to_g((0.0, -BRIO.length / 2, BRIO.height / 2))}
+DOWNSTREAM = {"TT": ("TT", "U", "F", "G"), "U": ("U", "F", "G"), "F": ("F", "G"), "G": ("G",)}
+EE_G = sum(i[1] for i in ITEMS if i[2] == "G")          # end effector beyond the wrist horn (solid): 224.1 g
 
 
-def beyond(k):
-    return [it for it in ITEMS if it[2] >= k]
+def frames(sh, el, wr):
+    """Body frames at yaw 0, as assembly_check.chain(): origin and angle; x = (cos t, 0, sin t), y = (sin t, 0, -cos t),
+    z = (0, 1, 0) (outboard). sh 0 = upper link along +X, + up; el / wr 0 = straight, + up."""
+    t1 = math.radians(sh)
+    t2 = t1 + math.radians(el)
+    t3 = t2 + math.radians(wr)
+    oU = (XS, UP_Y + LB_MG, ZS)
+    oF = (oU[0] + L1 * math.cos(t1), oU[1] + T1 + LB_MG, oU[2] + L1 * math.sin(t1))
+    oG = (oF[0] + L2 * math.cos(t2), oF[1] + T2 + LB_SG, oF[2] + L2 * math.sin(t2))
+    return {"TT": ((0.0, 0.0, 0.0), None), "U": (oU, t1), "F": (oF, t2), "G": (oG, t3)}
 
 
-def weight_inplane_nmm(k, s_ref=None):
-    """Static moment of everything beyond joint k about an axis at s_ref (default the joint), arm straight and horizontal."""
-    s0 = S_JOINT[k] if s_ref is None else s_ref
-    return sum(m * G_N_PER_G * (s - s0) for _, m, _, s, _ in beyond(k))
+def to_world(fr, p):
+    o, t = fr
+    if t is None:
+        return p
+    c, s = math.cos(t), math.sin(t)
+    return (o[0] + p[0] * c + p[1] * s, o[1] + p[2], o[2] + p[0] * s - p[1] * c)
 
 
-def weight_oop_nmm(k, y_ref):
-    """Out-of-plane moment (about world X) of the weight beyond joint k about the plane Y = y_ref; pose independent."""
-    return sum(m * G_N_PER_G * (y - y_ref) for _, m, _, _, y in beyond(k))
+def to_local(fr, v):
+    """World vector -> components along the body's x, y, z (world X, Y, Z for the turntable)."""
+    t = fr[1]
+    if t is None:
+        return v
+    c, s = math.cos(t), math.sin(t)
+    return (v[0] * c + v[2] * s, v[0] * s - v[2] * c, v[1])
 
 
-def weight_n(k):
-    return sum(m for _, m, _, _, _ in beyond(k)) * G_N_PER_G
+def cross(a, b):
+    return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
 
 
-def _pose(q1, q2, q3):
-    t1 = math.radians(q1); t2 = t1 + math.radians(q2); t3 = t2 + math.radians(q3)
-    S = (SX, Y_HORN["shoulder"], SZ)
-    E = (S[0] + L1 * math.cos(t1), Y_HORN["elbow"], S[2] + L1 * math.sin(t1))
-    W = (E[0] + L2 * math.cos(t2), Y_HORN["wrist"], E[2] + L2 * math.sin(t2))
-    G = (W[0] + GRIP_DX * math.cos(t3), Y_HORN["gripper"], W[2] + GRIP_DX * math.sin(t3))
-    P = (W[0] + L3 * math.cos(t3), Y_TIP, W[2] + L3 * math.sin(t3))
-    return S, E, W, G, P, (t1, t2, t3)
+def sub(a, b):
+    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
 
 
-def _moment(P, J, F):
-    r = (P[0] - J[0], P[1] - J[1], P[2] - J[2])
-    return (r[1] * F[2] - r[2] * F[1], r[2] * F[0] - r[0] * F[2], r[0] * F[1] - r[1] * F[0])
+def lump(items):
+    """(mass g, centre) of a list of (name, m, body, p) items on one body."""
+    m = sum(i[1] for i in items)
+    if m <= 0:
+        return 0.0, (0.0, 0.0, 0.0)
+    return m, tuple(sum(i[1] * i[3][k] for i in items) / m for k in range(3))
 
 
-def sweep(points, mode):
-    """Worst moments over the servo ranges (shoulder 0..180, elbow -90..90, wrist -90..90, 5 deg steps, joints above the desk).
+def link_beyond(body, job, x_cut, x0, x1, exclude=()):
+    """Items on a link beyond a section at x_cut: the point items with x > x_cut, plus the link's own mass beyond the cut
+    taken as uniform along x (it ignores the window, so it overstates the link's own weight beyond the cut)."""
+    own = [i for i in ITEMS if i[2] == body and i[3][0] > x_cut and i[0] not in exclude]
+    frac = (x1 - max(x_cut, x0)) / (x1 - x0)
+    own.append(("link beyond the cut", mass_g(job) * frac, body, ((max(x_cut, x0) + x1) / 2, 0.0, 5.0)))
+    return own
 
-    mode "yaw":  base-yaw servo stalls with the fingertip against a side obstacle: F = 1000/R, tangential (horizontal);
-                 scaled down where a pitch servo (shoulder/elbow 1000, wrist MG90S 216) would backdrive first.
-    mode "hand": F_HAND_N at the fingertip along +-Y (out of the arm plane); capped where the yaw servo would backdrive.
-    points: {name: (where, link_angle_index or None, (lever_t, lever_T_per_screw) or None)}; where = a joint name
-    "S"/"E"/"W"/"G", a fixed (x, y, z), or (joint, distance along the link, dY); "Fs" = worst horn-screw
-    tension in the same pose, Mt/lever_t + T/lever_T. Returns {name: dict of max |M| components}.
-    For a horn joint (index 0/1/2 = upper link/forearm/gripper), T = torsion about the link axis, Mt = transverse
-    out-of-plane bending; for fixed points (None) Mx, My, Mz are world components.
-    """
-    out = {n: {"T": 0.0, "Mt": 0.0, "Mx": 0.0, "My": 0.0, "Mz": 0.0, "F": 0.0, "Fs": 0.0, "pose": None} for n in points}
-    for q1 in range(0, 181, 5):
-        for q2 in range(-90, 91, 5):
-            for q3 in range(-90, 91, 5):
-                S, E, W, G, P, th = _pose(q1, q2, q3)
-                if min(E[2], W[2], G[2], P[2]) < DESK_Z:
-                    continue
-                if mode == "yaw":
-                    R = math.hypot(P[0], P[1])
-                    f = STALL_MG996R_NMM / R
-                    F = (-P[1] / R * f, P[0] / R * f, 0.0)
-                    s = 1.0
-                    for J, st in ((S, STALL_MG996R_NMM), (E, STALL_MG996R_NMM), (W, STALL_WRIST_NMM)):
-                        my = abs(_moment(P, J, F)[1])
-                        if my > st:
-                            s = min(s, st / my)
-                    F = tuple(c * s for c in F)
-                else:
-                    f = F_HAND_N
-                    if abs(P[0]) * f > STALL_MG996R_NMM:
-                        f = STALL_MG996R_NMM / abs(P[0])
-                    F = (0.0, f, 0.0)
-                pts = {"S": S, "E": E, "W": W, "G": G}
-                for n, (xyz, li, lev) in points.items():
-                    if isinstance(xyz, str):
-                        J = pts[xyz]
-                    elif isinstance(xyz[0], str):          # (joint, distance along link li, Y offset)
-                        J0 = pts[xyz[0]]; t = th[li]
-                        J = (J0[0] + xyz[1] * math.cos(t), J0[1] + xyz[2], J0[2] + xyz[1] * math.sin(t))
-                    else:
-                        J = xyz
-                    M = _moment(P, J, F)
-                    o = out[n]
-                    if li is not None:
-                        t = th[li]
-                        T = abs(M[0] * math.cos(t) + M[2] * math.sin(t))
-                        Mt = abs(-M[0] * math.sin(t) + M[2] * math.cos(t))
-                        if T > o["T"]: o["T"] = T
-                        if Mt > o["Mt"]: o["Mt"] = Mt
-                        if lev:
-                            fs = Mt / lev[0] + T / lev[1]
-                            if fs > o["Fs"]: o["Fs"] = fs
-                    for k, v in (("Mx", abs(M[0])), ("My", abs(M[1])), ("Mz", abs(M[2]))):
-                        if v > o[k]:
-                            o[k] = v
-                            if k == "Mx": o["pose"] = (q1, q2, q3)
-                    o["F"] = max(o["F"], math.sqrt(sum(c * c for c in F)))
+
+def poses():
+    sh0, sh1 = TRAVEL["shoulder"]
+    el0, el1 = TRAVEL["elbow"]
+    wr0, wr1 = TRAVEL["wrist"]
+    for sh in range(sh0, sh1 + 1, STEP_DEG):
+        for el in range(el0, el1 + 1, STEP_DEG):
+            for wr in range(wr0, wr1 + 1, STEP_DEG):
+                yield sh, el, wr
+
+
+def contact_forces(fr):
+    """Per contact point: (world point, yaw-stall force, hand-push force (+Y; the -Y push is its mirror)).
+    Yaw stall: F = 1079 / R tangential, scaled down where a pitch servo (shoulder / elbow 1079, wrist 216 N.mm)
+    would back-drive first. Hand push: 5 N along +Y, capped where the yaw servo would back-drive (1079 / |x|)."""
+    joints = ((fr["U"][0], STALL_MG996R_NMM), (fr["F"][0], STALL_MG996R_NMM), (fr["G"][0], STALL_MG90S_NMM))
+    out = {}
+    for name, pg in CONTACTS.items():
+        P = to_world(fr["G"], pg)
+        R = math.hypot(P[0], P[1])
+        f = STALL_MG996R_NMM / R
+        Fy = (-P[1] / R * f, P[0] / R * f, 0.0)
+        s = 1.0
+        for J, st in joints:
+            my = abs((P[2] - J[2]) * Fy[0])          # (r x F)_y with F_z = 0
+            if my > st:
+                s = min(s, st / my)
+        Fy = (Fy[0] * s, Fy[1] * s, 0.0)
+        fh = F_HAND_N if abs(P[0]) * F_HAND_N <= STALL_MG996R_NMM else STALL_MG996R_NMM / abs(P[0])
+        out[name] = (P, Fy, (0.0, fh, 0.0))
     return out
 
 
-
-# --- clamped horn joints (round 2): centre screw + washer clamps link and horn onto the spline -------------
-HS_D, HS_LEN = 1.6, 5.0       # anti-rotation screws through the horn arms: M2 self-tapping, drilled pilot 1.6,
-                              # ~5 mm engaged (M2x8 through the 2.8 mm horn) - assumption
-HS_R = {"MG996R": 15.0, "SG90": 7.0}       # arm hole used (outermost on the MG996R double arm, inner on the SG90)
-WASHER_D = {"MG996R": 9.0, "SG90": 6.0}    # DIN 9021 washers specified for M3x16 / M2x12 clamp screws
+def above_desk(fr):
+    pts = [fr["F"][0], fr["G"][0], to_world(fr["G"], TIP_G)]
+    return min(p[2] for p in pts) >= DESK_Z
 
 
-def clamp_caps(kind, t_floor):
-    """Allowable moments of a clamped horn joint (washer pull-through over the floor + arm screws, interlayer shear).
+class Probe:
+    """A section: body, centre point and the items beyond it. sweep() keeps, per load mode, the worst value of every
+    check (a function of the section force F and moment M, both in the body's axes) and the pose it came from."""
 
-    cap_t: transverse (about the link's y axis, along the horn arms); cap_T: torsion (about the arm axis, pivot on the
-    hub edge). The two paths are summed (PETG is ductile; both are bounded by the same allowable)."""
-    s = MG996R if kind == "MG996R" else SG90
-    a = allow_mpa(True, True)
-    wash = math.pi * WASHER_D[kind] * t_floor
-    arm = math.pi * HS_D * min(t_floor, HS_LEN)
-    hub, arm_l, r = s.horn_d / 2, s.horn_arm_len, HS_R[kind]
-    if s.horn_arms == 2:
-        cap_T = a * (wash + 2 * arm) * hub
-        cap_t = a * (wash * arm_l + arm * (r + arm_l))
-    else:   # single arm: weak direction pivots on the hub's far edge, the other on the arm tip
-        cap_T = a * (wash + arm) * hub
-        cap_t = min(a * (wash * hub + arm * (r + hub)), a * (wash * arm_l + arm * (arm_l - r)))
-    return cap_t, cap_T
+    def __init__(self, name, body, point, own_items=(), checks=None):
+        self.name, self.body, self.point = name, body, point
+        self.lumps = []                                   # (body, mass g, centre in that body's frame)
+        if own_items:
+            m, c = lump(list(own_items))
+            self.lumps.append((body, m, c))
+        for b in DOWNSTREAM[body][1:]:
+            m, c = lump([i for i in ITEMS if i[2] == b] + ([PAYLOAD] if b == "G" else []))
+            self.lumps.append((b, m, c))
+        self.checks = checks or {}
+        self.worst = {}
 
+    def loads(self, fr, P, F):
+        p = to_world(fr[self.body], self.point)
+        return to_local(fr[self.body], F), to_local(fr[self.body], cross(sub(P, p), F))
 
-def check_util(name, u, sf_req, info=False):
-    """Record a utilisation-type check (u = demand / allowable capacity) as an equivalent interlayer shear stress."""
-    return check(name, allow_mpa(True, True) * u, True, sf_req, shear=True, info=info)
+    def gravity(self, fr, factor):
+        p = to_world(fr[self.body], self.point)
+        Fw, Mw = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+        for b, m, c in self.lumps:
+            W = (0.0, 0.0, -m * GN * factor)
+            M = cross(sub(to_world(fr[b], c), p), W)
+            Fw[2] += W[2]
+            for k in range(3):
+                Mw[k] += M[k]
+        return to_local(fr[self.body], tuple(Fw)), to_local(fr[self.body], tuple(Mw))
 
+    def record(self, mode, F, M, pose, contact=None):
+        for cname, fn in self.checks.items():
+            v = fn(F, M)
+            key = (mode, cname)
+            if v > self.worst.get(key, (-1.0,))[0]:
+                self.worst[key] = (v, pose, contact, F, M)
 
-def pocket_half_w(s, x):
-    """Half width of the horn pocket at distance x along the arm (hull of discs, +0.5 clearance + HOLE_COMP)."""
-    c = 0.5 + HOLE_COMP
-    rh, rt = (s.horn_d + c) / 2, (s.horn_tip_d + c) / 2
-    x = abs(x)
-    if x <= s.horn_arm_len:
-        return rh - (rh - rt) * x / s.horn_arm_len
-    return math.sqrt(max(rt ** 2 - (x - s.horn_arm_len) ** 2, 0.0))
-
-# --- generic flat link on an MG996R double-arm horn, round 2 (upper link / forearm) -----------------------
-def link_oop(T, half_w, x=None, cut_w=0.0, horn=MG996R):
-    """Out-of-plane I and c (stress along x varies with z). x given -> section over the horn pocket."""
-    if x is not None:
-        wp = 2 * pocket_half_w(horn, x)
-        rects = [(2 * half_w - wp, T, T / 2), (wp, T - HORN_DEPTH, HORN_DEPTH + (T - HORN_DEPTH) / 2)]
-    else:
-        rects = [(2 * half_w - cut_w, T, T / 2)]
-    A, zb, I = comp_section(rects)
-    return I, max(zb, T - zb)
+    def get(self, mode, cname):
+        """(worst value, pose, contact point, section force, section moment) of a check over the sweep."""
+        return self.worst[(mode, cname)]
 
 
-def link_checks(job, P, far, far_name, far_stall, far_holes, far_lig, far_pilot, far_screw_L, far_levers, M_win,
-                win_w, k, horn_name, li, joint, cad):
-    T, HW = P.T, P.HALF_W
-    t_floor = T - HORN_DEPTH
-    row_x = P.L + far_holes[0][0]           # the tab-pilot row nearer the horn
-    cap_t, cap_T = clamp_caps("MG996R", t_floor)
-    pts = {"horn": (joint, li, (cap_t, cap_T)), "x15": ((joint, 15.0, 0.0), li, None), "x30": ((joint, 30.0, 0.0), li, None),
-           "row": ((joint, row_x, 0.0), li, None), "far": ((joint, P.L, 0.0), li, far_levers)}
-    SW = {m: sweep(pts, m) for m in ("yaw", "hand")}
-    for m in SW:
-        print(f"{m:4s} sweep: " + "; ".join(f"{n} T={o['T']:.0f} Mt={o['Mt']:.0f}" for n, o in SW[m].items()))
-    w_in, w_oop = weight_inplane_nmm(k), weight_oop_nmm(k, Y_HORN[horn_name])
-    print(f"weight beyond the {horn_name} horn: in-plane {w_in:.0f} N.mm (arm straight, horizontal), out-of-plane {w_oop:.0f}")
-    I15, c15 = link_oop(T, HW, 15.0)
-    If, cf = link_oop(T, HW)
-    n_row = 2 if len(far_holes) == 4 else 1          # pilots in the row nearer the horn
-    Ir, cr = link_oop(T, HW, cut_w=n_row * (far_pilot + HOLE_COMP))
-    Iw, cw = link_oop(T, HW, cut_w=win_w)
-    print(f"sections: oop I x15 {I15:.0f}, full {If:.0f}, pilot row {Ir:.0f}, window {Iw:.0f} (CAD {cad})")
-    # 1. horn stall through the pocket walls (still 2 mm deep)
-    s = MG996R
-    F_arm = STALL_MG996R_NMM / (2 * (s.horn_arm_len + s.horn_tip_d / 2 - 2.5))
-    check(f"{horn_name} stall 1000 N.mm: horn-pocket wall bearing", bearing(F_arm, 5.0, HORN_DEPTH), False, SF_STATIC)
-    # 2. in-plane bending (strong axis), bounded by the horn-servo stall
-    Iin = lambda cut: T * ((2 * HW) ** 3 - cut ** 3) / 12.0
-    check("stall 1000 N.mm: in-plane bending, full section x30", bend(STALL_MG996R_NMM, Iin(0.0), HW), False, SF_STATIC)
-    check(f"stall: in-plane bending at the {far_name} window, M {M_win:.0f} (Kt 2.5)", bend(M_win, Iin(win_w), HW), False,
-          SF_STATIC, Kt=2.5)
-    check("weight x2 (sustained): in-plane bending, full section", bend(DYN * w_in, Iin(0.0), HW), False, SF_SUSTAINED)
-    # 3. far servo stall into its tab pilots (vertical pilots: in-plane bearing and tear-out)
-    Fs = max(servo_screw_forces(far_stall, far_holes))
-    check(f"{far_name} stall: tab-pilot bearing", bearing(Fs, far_pilot, T), False, SF_STATIC)
-    check(f"{far_name} stall: pilot-to-window ligament {far_lig:.2f} tear-out (full F toward the window)",
-          tearout(Fs, far_lig, T), False, SF_STATIC, shear=True)
-    # 4. clamped horn joint
-    check_util(f"weight x2 (sustained): clamped {horn_name}-horn joint (torsion)", DYN * abs(w_oop) / cap_T, SF_SUSTAINED)
-    for m, lbl in (("yaw", "yaw-stall sweep"), ("hand", "hand push 5 N")):
-        check_util(f"{lbl}: clamped {horn_name}-horn joint (D9 washer + arm screws, floor {t_floor:.0f})",
-                   SW[m]["horn"]["Fs"], SF_STATIC)
-    # 5. out-of-plane bending and torsion of the plate (along the layers; torsion conservatively as interlayer shear)
-    for m, lbl, req in (("w", "weight x2 (sustained)", SF_SUSTAINED), ("yaw", "yaw-stall sweep", SF_STATIC),
-                        ("hand", "hand push 5 N", SF_STATIC)):
-        M = (lambda n: DYN * abs(w_oop)) if m == "w" else (lambda n, m=m: SW[m][n]["Mt"])
-        check(f"{lbl}: out-of-plane bending x15 over the pocket (Kt 2 arm-screw hole)", bend(M("x15"), I15, c15), False, req,
-              Kt=2.0)
-        check(f"{lbl}: out-of-plane bending x30, full section", bend(M("x30"), If, cf), False, req)
-        check(f"{lbl}: out-of-plane bending at the {far_name} pilot row x{row_x:.1f} (Kt 2)", bend(M("row"), Ir, cr), False,
-              req, Kt=2.0)
-        if m != "w":
-            check(f"{lbl}: plate torsion, full width (Z shear)", torsion_thin(SW[m]["x30"]["T"], [(2 * HW, T)]), True, req,
-                  shear=True)
-            check(f"{lbl}: {far_name} tab screws pull-out (L {far_screw_L:.0f})",
-                  pullout(SW[m]["far"]["Fs"], far_pilot, far_screw_L), True, req, shear=True)
-            check(f"{lbl}: {far_name} window rails alone, servo case ignored (Kt 2.5)", bend(SW[m]["row"]["Mt"], Iw, cw),
-                  False, req, Kt=2.5, info=True)
-    return SW
+def sweep(probes):
+    """Every pose inside the servo travel with the elbow, wrist and fingertips above the desk:
+    - "weight": self-weight + 50 g payload x DYN (sustained);
+    - "yaw":  base-yaw stall into a side obstacle at a fingertip or a camera end, plus the static weight (short-term);
+    - "hand": 5 N sideways hand push at the same points, either way, plus the static weight (short-term).
+    The contact and the weight are added component by component as magnitudes: the worse sign of each."""
+    n = 0
+    for pose in poses():
+        fr = frames(*pose)
+        if not above_desk(fr):
+            continue
+        n += 1
+        cf = contact_forces(fr)
+        for pr in probes:
+            Fg, Mg = pr.gravity(fr, 1.0)
+            pr.record("weight", tuple(DYN * c for c in Fg), tuple(DYN * c for c in Mg), pose)
+            for cname, (P, Fy, Fh) in cf.items():
+                for mode, Fc in (("yaw", Fy), ("hand", Fh)):
+                    F, M = pr.loads(fr, P, Fc)
+                    pr.record(mode, tuple(abs(a) + abs(b) for a, b in zip(F, Fg)),
+                              tuple(abs(a) + abs(b) for a, b in zip(M, Mg)), pose, cname)
+    return n
 
-# --- 20261025-arm-upper-link (round 2) -------------------------------------------------------------------
+
+MODES = {"weight": ("weight x2 (sustained)", SF_SUSTAINED), "yaw": ("yaw-stall sweep", SF_STATIC),
+         "hand": ("hand push 5 N", SF_STATIC)}
+
+
+def where(pr, mode, cname):
+    v, pose, contact = pr.get(mode, cname)[:3]
+    return f"s{pose[0]} e{pose[1]} w{pose[2]}" + (f", {contact}" if contact else "")
+
+
+# --- proof tests (spec §8 as this review would write them) -----------------------------------------------------------
+# The assembled-arm test, shared by the turntable and the base: base screwed down, servos powered, base servo centred
+# (yaw 0: the arm's plane is the X-Z plane, the arm reaching over the +X wall), arm straight up (shoulder 90, elbow 0,
+# wrist 0), a luggage scale pushing along +-Y (out of the arm's plane) at the fingertips, 1 min each way. Every script
+# prints, at its own critical checks, the test value over the yaw-stall service value, so the links can be seen not to
+# be overloaded by it. (With the elbow at 90 the fingertips are 184 mm from the yaw axis and the base servo would slip
+# at 1079 / 184 = 5.9 N, so that variant cannot reach a proof load.)
+ARM_TESTS = {"arm up, +-Y at the fingertips": ((90, 0, 0), 11.5)}
+PROOF_RATIO = 1.5                            # proof load = 1.5 x service (strength-checks: 1.5 to 2 x)
+
+
+def test_loads(pr, pose, F_N, body="G", point=TIP_G, weight=True):
+    """Section force and moment for a push of F_N along world +-Y at a point of a body, in pose (shoulder, elbow, wrist),
+    plus the static weight (the worse sign of each component, as in the sweep). weight=False for bench tests where the
+    part lies so that gravity acts in its own plane."""
+    fr = frames(*pose)
+    F, M = pr.loads(fr, to_world(fr[body], point), (0.0, F_N, 0.0))
+    Fg, Mg = pr.gravity(fr, 1.0) if weight else ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    return tuple(abs(a) + abs(b) for a, b in zip(F, Fg)), tuple(abs(a) + abs(b) for a, b in zip(M, Mg))
+
+
+def test_ratio(pr, cname, pose, F_N, mode="yaw", **kw):
+    """A check's value under the test over its worst service value in a load mode (yaw stall by default)."""
+    return pr.checks[cname](*test_loads(pr, pose, F_N, **kw)) / pr.get(mode, cname)[0]
+
+
+def force_for(fn, target, hi=500.0):
+    """Smallest force F with fn(F) >= target (fn grows with F); bisection."""
+    lo = 0.0
+    if fn(hi) < target:
+        return float("inf")
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if fn(mid) < target else (lo, mid)
+    return hi
+
+
+# --- servo mounts: windows, pilots, lead notches as servo_mount_cutter() cuts them (CAD sizes) -------------------------
+def servo_mount(s, clearance, end_clearance=None, lead="notch", pilot_shift=0.0):
+    c = clearance + HOLE_COMP
+    ce = (clearance if end_clearance is None else end_clearance) + HOLE_COMP
+    bx0 = -(s.length - s.shaft_from_end)
+    xm = bx0 + s.length / 2
+    m = SimpleNamespace(case_x=(bx0, s.shaft_from_end), win_x=(bx0 - ce / 2, s.shaft_from_end + ce / 2),
+                        win_hw=(s.width + c) / 2, d_pilot=s.screw_pilot_d + HOLE_COMP, xm=xm)
+    ys = [0.0] if s.hole_dy == 0 else [-s.hole_dy / 2, s.hole_dy / 2]
+    m.pilots = [(xm + dx + (pilot_shift if dx > 0 else 0.0), y) for dx in (-s.hole_dx / 2, s.hole_dx / 2) for y in ys]
+    nw, reach = s.lead_notch_w + HOLE_COMP, s.lead_notch_reach + HOLE_COMP / 2
+    ends = (1, -1) if lead == "notch" else ((1,) if lead == "notch_shift_pilot" else ())
+    m.notches = [(min(s.shaft_from_end, s.shaft_from_end + reach), s.shaft_from_end + reach, nw / 2) if e > 0 else
+                 (bx0 - reach, bx0, nw / 2) for e in ends]
+    lig = []
+    for (px, py) in m.pilots:
+        cand = []
+        for (xa, xb, hw) in m.notches:
+            gx = max(xa - px, px - xb, 0.0)
+            gy = max(abs(py) - hw, 0.0)
+            cand.append(math.hypot(gx, gy) - m.d_pilot / 2)
+        if abs(py) < m.win_hw:                                  # straight to the window's end wall
+            cand.append(min(abs(px - m.win_x[0]), abs(px - m.win_x[1])) - m.d_pilot / 2)
+        lig.append(min(cand))
+    m.ligaments = lig
+    return m
+
+
+def splitting(S_n, d_thread, d_mean, L, lig):
+    """Hoop stress in a thin strip beside a tapped pilot. The thread's radial pressure is p = S tan30 / (pi d_mean L)
+    (frictionless 60° thread); the strip is taken as the wall of a thick ring round the thread (Lamé):
+    sigma = p (b^2 + a^2) / (b^2 - a^2), a = thread radius, b = a + strip. A ring that thin all round is weaker than a
+    hole with only one thin side. The thread-forming interference itself is not modelled: the first-print check covers it."""
+    p = S_n * math.tan(math.radians(30)) / (math.pi * d_mean * L)
+    a = d_thread / 2
+    b = a + lig
+    return p * (b * b + a * a) / (b * b - a * a)
+
+
+ROWS, ADVISORY = [], []
+
+
+def row(case, section, direction, stress, allow_mpa, sf_req, info=False):
+    sf = allow_mpa / stress if stress > 1e-9 else float("inf")
+    (ADVISORY if info else ROWS).append((f"{case}: {section}", direction, stress, allow_mpa, sf, sf_req))
+    return sf
+
+
+def report(title):
+    print(f"\n== {title} ==")
+    print("| # | Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
+    print("|---|---|---|---|---|---|---|---|")
+    for i, (n, d, s, a, sf, req) in enumerate(ROWS, 1):
+        print(f"| {i} | {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:g} | {'OK' if sf >= req else '**FAIL**'} |")
+    if ADVISORY:
+        print("\nAdvisory rows (not in the verdict; strength.md gives the reason for each):")
+        print("| Case / section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req |")
+        print("|---|---|---|---|---|---|")
+        for n, d, s, a, sf, req in ADVISORY:
+            print(f"| {n} | {d} | {s:.2f} | {a:.2f} | {sf:.2f} | {req:g} |")
+    worst = min(ROWS, key=lambda r: r[4] / r[5])
+    fails = [r for r in ROWS if r[4] < r[5]]
+    print(f"\nlowest SF {worst[4]:.2f} (required {worst[5]:g}) at: {worst[0]}")
+    if fails:
+        print(f"{len(fails)} row(s) under the required SF:")
+        for r in sorted(fails, key=lambda r: r[4] / r[5]):
+            print(f"  SF {r[4]:.2f} < {r[5]:g}: {r[0]}")
+    print("VERDICT:", "FAIL" if fails else "NEEDS_TEST (placeholder allowables: PASS is not possible without measured data)")
+    return worst, fails
+
+
+def model_check():
+    """The plain-Python model against torque_budget.json (made from the CAD by torque_budget.py)."""
+    tb = TB["configs"]["camera, solid"]
+    fr0 = frames(0, 0, 0)
+    case_top = {"shoulder": UP_Y + (MG996R.case_top - MG996R.tab_height),
+                "elbow": fr0["U"][0][1] + T1 + (MG996R.case_top - MG996R.tab_height),
+                "wrist": fr0["F"][0][1] + T2 + (MG90S.case_top - MG90S.tab_height)}
+    items = [i for i in ITEMS if i[0] not in ("shoulder horn + clamp", "base disc horn + M3x14 clamp")]
+    oh = {j: sum(i[1] * GN * (to_world(fr0[i[2]], i[3])[1] - case_top[j]) for i in items if i[2] in b)
+          for j, b in (("shoulder", "UFG"), ("elbow", "FG"), ("wrist", "G"))}
+    pts = [(i[1], to_world(fr0[i[2]], i[3])) for i in items]
+    my = GN * sum(m * p[0] for m, p in pts)
+    mx = GN * sum(m * p[1] for m, p in pts)
+    tbo = TB["overhung_moment_nmm"]["camera, payload 0 g"]
+    tby = TB["yaw_output_moment_nmm"]["camera, arm straight out, payload 0 g"]
+    print(f"model check (payload 0, solid): end effector {EE_G:.1f} g (torque_budget {tb['end_effector_g']}); "
+          f"overhung shoulder / elbow / wrist {oh['shoulder']:.0f} / {oh['elbow']:.0f} / {oh['wrist']:.0f} N.mm "
+          f"(torque_budget {tbo['shoulder']:.0f} / {tbo['elbow']:.0f} / {tbo['wrist']:.0f}); arm straight out on the base "
+          f"horn {math.hypot(mx, my):.0f} N.mm (torque_budget {tby['total_nmm']:.0f})")
+    for s in STALE:
+        print(s)
+# ===================================================== end of the shared block =====================================================
+
+# ============================================ 20261025-arm-upper-link (round 5) ============================================
+JOB = "20261025-arm-upper-link"
 P = UL
-_c = P.CLR + HOLE_COMP
-WIN_W = MG996R.width + _c
-PILOT = MG996R.screw_pilot_d                     # printed pilot (CAD +0.2)
-LIG = (MG996R.hole_dx / 2 - 10.15) - (PILOT + HOLE_COMP) / 2 - (MG996R.shaft_from_end + _c / 2)   # CAD ligament
-SW = link_checks("20261025-arm-upper-link", P, "E", "elbow MG996R", STALL_MG996R_NMM,
-                 [(-34.4, 5.0), (-34.4, -5.0), (14.1, 5.0), (14.1, -5.0)], LIG, PILOT, min(P.T, 7.0),
-                 (2 * MG996R.hole_dx, 2 * (MG996R.hole_dy / 2 + MG996R.width / 2)), STALL_MG996R_NMM, WIN_W,
-                 1, "shoulder", 0, "S", "x15 2597, x30 2830, x65.6 2363, window 1138")
-worst, fails = report("20261025-arm-upper-link")
+HS = ES = MG996R                            # shoulder horn servo, elbow servo
+FLOOR = P.T - HORN_DEPTH                    # 8: material over the shoulder horn, under the clamp washer
+D_WASHER = 9.0                              # Ø9 x 0.8 (ISO 7093) under the M3 x 14 clamp (BUILD_GUIDE §1)
+LEV_TILT_ARMS = HS.horn_arm_len             # 17.5: tilting about the link's y axis pivots on a horn-arm tip
+LEV_TILT_HUB = HS.horn_d / 2                # 5.5: tilting about the link's x axis pivots on the hub edge
+EM = servo_mount(ES, P.CLR, lead="notch")   # notches at both case ends (the MG996R's lead end is unverified)
+X_SERVO = P.L + EM.xm                       # 89.85: elbow-servo body centre
+PIL_FAR, PIL_NEAR = P.L + EM.pilots[0][0], P.L + EM.pilots[2][0]          # 65.6, 114.1 (rows of two, y +-5)
+WIN_X0, WIN_X1 = P.L + EM.win_x[0], P.L + EM.win_x[1]                     # 69.2, 110.5
+NOTCH_FAR = (P.L + EM.notches[1][0], P.L + EM.notches[1][1])             # 67.4 .. 69.5
+D_PIL_PRINT = ES.screw_pilot_d              # 2.6 printed (2.8 CAD)
+D_THREAD = 2.9                              # M3 (ST2.9) self-tapper, major diameter
+D_MEAN = (D_THREAD + D_PIL_PRINT) / 2
+L_ENG = 12.0 - 0.5 - ES.tab_t               # M3 x 12 + Ø7 x 0.5 washer through the 2.5 mm tab: 9 mm in the 10 mm plate
+L_BEAR = 2 * D_THREAD
+LIG_CAD = min(EM.ligaments)                 # notch -> nearest pilot, 1.85 CAD (DFM round 4: 2.05 printed)
+LIG = LIG_CAD - max(D_THREAD - EM.d_pilot, 0.0) / 2
+TAB_EDGE = ES.width / 2                     # 9.85
+TAB_LEVER_W = ES.hole_dy / 2 + TAB_EDGE     # 14.85: twisting about the link axis pries a tab about its long edge
+TAB_LEVER_L = ES.hole_dx / 2 + ES.tab_span / 2   # 51.25: prying about the far tab's tip
+R_FAR = math.hypot(P.L - PIL_FAR, ES.hole_dy / 2)
+R_NEAR = math.hypot(PIL_NEAR - P.L, ES.hole_dy / 2)
+SUM_R2 = 2 * (R_FAR ** 2 + R_NEAR ** 2)
+# twisting split between the two MG996R tabs: each tab has two screws across its width, so a tab joint is stiff in twist
+# (est. 0.5-2.4e6 N.mm/rad); the near tab's path runs through the window rails as a frame (est. 0.85e5). The far tab takes
+# 87-97 %: all of it is put on the far tab's outer screw (lever 14.85, the inner screw ignored); 15 % goes through the rails.
+TOR_FAR, TOR_RAILS = 1.0, 0.15
+RAIL_W = P.HALF_W - EM.win_hw               # 6.85
+B, T = 2 * P.HALF_W, P.T
+I_RAILS = 2 * RAIL_W * T ** 3 / 12
+I_RAIL1 = RAIL_W * T ** 3 / 12
+I_RAILS_IP = 2 * (T * RAIL_W ** 3 / 12 + T * RAIL_W * (EM.win_hw + RAIL_W / 2) ** 2)
+L_WIN, D_RAILS = WIN_X1 - WIN_X0, 2 * (EM.win_hw + RAIL_W / 2)
+PIN = (PIL_NEAR - WIN_X0) / (PIL_NEAR - PIL_FAR)               # rails' share of the far-row moment (tab rows as pins)
+X_NOTCH = (NOTCH_FAR[0] + NOTCH_FAR[1]) / 2
+PIN_NOTCH = (PIL_NEAR - X_NOTCH) / (PIL_NEAR - PIL_FAR)
+KT_CORNER, KT_HOLE = 2.5, 2.0
+POCKET_W = 6.9                              # horn pocket width at x 15 (arm 6.3 + 0.5 clearance + HOLE_COMP)
+
+
+def sec_pocket():
+    A = B * T - POCKET_W * HORN_DEPTH
+    zc = (B * T * T / 2 - POCKET_W * HORN_DEPTH * HORN_DEPTH / 2) / A
+    I = B * T ** 3 / 12 + B * T * (T / 2 - zc) ** 2 - (POCKET_W * HORN_DEPTH ** 3 / 12 + POCKET_W * HORN_DEPTH * (HORN_DEPTH / 2 - zc) ** 2)
+    return I, max(zc, T - zc)
+
+
+I_X15, C_X15 = sec_pocket()
+I_FULL = B * T ** 3 / 12
+I_ROW = (B - 2 * EM.d_pilot) * T ** 3 / 12
+I_NOTCH = (B - 2 * EM.notches[1][2]) * T ** 3 / 12
+I_IP_FULL = T * B ** 3 / 12
+CAD_I = {"x15": 2596.5, "x30": 2829.5, "row": 2362.9, "notch": 2446.2, "rails": 1137.9}   # build123d sections
+ALPHA = 0.267 + (0.282 - 0.267) * (B / T - 3.0) / 1.0     # torsion coefficient, b/t 3 -> 4 (Roark)
+
+
+def s_tab(F, M):
+    return TOR_FAR * abs(M[0]) / TAB_LEVER_W + abs(M[1]) / (2 * TAB_LEVER_L) + abs(F[2]) / 4
+
+
+def rails(F, M):
+    oop = PIN * abs(M[1]) * (T / 2) / I_RAILS + TOR_RAILS * abs(M[0]) * L_WIN / (2 * D_RAILS) * (T / 2) / I_RAIL1
+    return KT_CORNER * oop
+
+
+def hoop(S, lig):
+    return splitting(S, D_THREAD, D_MEAN, L_ENG, lig)
+
+
+def pullout(S):
+    return S / (math.pi * D_PIL_PRINT * L_ENG)
+
+
+absM = lambda k: (lambda F, M: abs(M[k]))
+U_items = [i for i in ITEMS if i[2] == "U"]
+probes = {
+    "horn": Probe("shoulder-horn joint", "U", (0.0, 0.0, HORN_DEPTH),
+                  own_items=[i for i in U_items if i[0] != "shoulder horn + clamp"],
+                  checks={"S": lambda F, M: abs(M[1]) / LEV_TILT_ARMS + abs(M[0]) / LEV_TILT_HUB + abs(F[2])}),
+    "x15": Probe("x 15 over the pocket", "U", (15.0, 0.0, T / 2),
+                 own_items=link_beyond("U", JOB, 15.0, P.X0, P.X1, exclude=("upper link",)),
+                 checks={"My": absM(1), "Mx": absM(0), "Mz": absM(2)}),
+    "x30": Probe("x 30 full section", "U", (30.0, 0.0, T / 2),
+                 own_items=link_beyond("U", JOB, 30.0, P.X0, P.X1, exclude=("upper link",)),
+                 checks={"My": absM(1), "Mx": absM(0)}),
+    "row": Probe("far elbow-pilot row", "U", (PIL_FAR, 0.0, T / 2),
+                 own_items=link_beyond("U", JOB, PIL_FAR, P.X0, P.X1, exclude=("upper link",)),
+                 checks={"My": absM(1), "rails": rails}),
+    "tabs": Probe("elbow tab plane", "U", (X_SERVO, 0.0, P.T),
+                  own_items=[i for i in U_items if i[0] == "elbow MG996R"],
+                  checks={"S": s_tab, "Mx": absM(0), "My": absM(1)}),
+}
+model_check()
+print(f"upper link: elbow MG996R window x {WIN_X0:.2f}-{WIN_X1:.2f}, pilot rows x {PIL_FAR:.2f} / {PIL_NEAR:.2f}, far notch "
+      f"x {NOTCH_FAR[0]:.2f}-{NOTCH_FAR[1]:.2f}; notch -> pilot strip {LIG_CAD:.2f} CAD ({LIG:.2f} behind the thread); "
+      f"rails {RAIL_W:.2f} x {T:g}; pin share at the window's far end {PIN:.3f}, at the notch {PIN_NOTCH:.3f}")
+print(f"sections (out of plane): x15 I {I_X15:.0f} (CAD {CAD_I['x15']}), full {I_FULL:.0f} (CAD {CAD_I['x30']}), pilot row "
+      f"{I_ROW:.0f} (CAD {CAD_I['row']}), notch {I_NOTCH:.0f} (CAD {CAD_I['notch']}), rails {I_RAILS:.0f} (CAD {CAD_I['rails']})")
+n = sweep(list(probes.values()))
+print(f"{n} poses swept (shoulder {TRAVEL['shoulder']}, elbow {TRAVEL['elbow']}, wrist {TRAVEL['wrist']}, {STEP_DEG} deg)")
+for k, pr in probes.items():
+    print(f"  {pr.name}: " + "; ".join(f"{m} " + ", ".join(f"{c} {pr.get(m, c)[0]:.0f}" for c in pr.checks)
+                                     for m in ("weight", "yaw", "hand")))
+
+# --- local cases -----------------------------------------------------------------------------------------------------
+p_horn = 3 * STALL_MG996R_NMM / (2 * HORN_DEPTH * (HS.horn_arm_len + HS.horn_tip_d / 2) ** 2)
+row("shoulder stall 1079 N.mm", "horn-pocket wall bearing (arm flanks, triangular, 2 mm deep)", "bearing", p_horn,
+    BEARING_MPA, SF_STATIC)
+row("shoulder stall 1079 N.mm", "in-plane bending, full section (M <= stall)", "XY",
+    STALL_MG996R_NMM * (B / 2) / I_IP_FULL, ALLOW_XY_MPA, SF_STATIC)
+row("shoulder stall 1079 N.mm", f"in-plane bending of the window rails (Kt {KT_CORNER})", "XY",
+    KT_CORNER * STALL_MG996R_NMM * P.HALF_W / I_RAILS_IP, ALLOW_XY_MPA, SF_STATIC)
+F_stall = STALL_MG996R_NMM * R_FAR / SUM_R2
+row("elbow stall 1079 N.mm", f"far tab pilot bearing, F {F_stall:.1f} N", "bearing", F_stall / (D_PIL_PRINT * L_BEAR),
+    BEARING_MPA, SF_STATIC)
+row("elbow stall 1079 N.mm", f"notch -> pilot strip {LIG:.2f}: tear-out, F {F_stall:.1f} N", "XY shear",
+    F_stall / (2 * LIG * L_BEAR), allow(False, True), SF_STATIC)
+
+# --- swept cases -----------------------------------------------------------------------------------------------------
+for mode, (lbl, req) in MODES.items():
+    pr = probes["horn"]
+    row(lbl, f"clamped shoulder-horn joint: Ø{D_WASHER:g} washer pull-through, floor {FLOOR:g} (S {pr.get(mode, 'S')[0]:.0f} N; "
+        f"{where(pr, mode, 'S')})", "Z shear", pr.get(mode, "S")[0] / (math.pi * D_WASHER * FLOOR), allow(True, True), req)
+for mode, (lbl, req) in MODES.items():
+    pr = probes["x15"]
+    row(lbl, f"x 15 over the pocket, out of plane (Kt 2 arm-screw hole; M {pr.get(mode, 'My')[0]:.0f})", "XY",
+        KT_HOLE * pr.get(mode, "My")[0] * C_X15 / I_X15, ALLOW_XY_MPA, req)
+pr = probes["x30"]
+row(MODES["yaw"][0], f"x 30 full section, out of plane (M {pr.get('yaw', 'My')[0]:.0f})", "XY",
+    pr.get("yaw", "My")[0] * (T / 2) / I_FULL, ALLOW_XY_MPA, SF_STATIC)
+for mode, (lbl, req) in MODES.items():
+    pr = probes["row"]
+    M = pr.get(mode, "My")[0]
+    row(lbl, f"far elbow-pilot row x {PIL_FAR:.1f}, out of plane (Kt 2; M {M:.0f}; {where(pr, mode, 'My')})", "XY",
+        KT_HOLE * M * (T / 2) / I_ROW, ALLOW_XY_MPA, req)
+    row(lbl, f"far lead notch x {NOTCH_FAR[0]:.1f}-{NOTCH_FAR[1]:.1f}, net {B - 2 * EM.notches[1][2]:.1f} (Kt {KT_CORNER}; "
+        f"{PIN_NOTCH:.2f} M)", "XY", KT_CORNER * PIN_NOTCH * M * (T / 2) / I_NOTCH, ALLOW_XY_MPA, req)
+    row(lbl, f"window rails 2 x {RAIL_W:.2f} at the far window end, tab rows as pins (Kt {KT_CORNER}; {where(pr, mode, 'rails')})",
+        "XY", pr.get(mode, "rails")[0], ALLOW_XY_MPA, req)
+for mode, (lbl, req) in MODES.items():
+    pr = probes["x15"]
+    row(lbl, f"plate torsion, full width (T {pr.get(mode, 'Mx')[0]:.0f})", "Z shear",
+        pr.get(mode, "Mx")[0] / (ALPHA * B * T ** 2), allow(True, True), req)
+for mode, (lbl, req) in MODES.items():
+    pr = probes["tabs"]
+    S = pr.get(mode, "S")[0]
+    row(lbl, f"elbow MG996R tab screw pull-out, S {S:.0f} N (L {L_ENG:g}, Ø{D_PIL_PRINT:g}; {where(pr, mode, 'S')})",
+        "Z shear", pullout(S), allow(True, True), req)
+    row(lbl, f"notch -> pilot strip {LIG:.2f}: splitting, snug preload {PRELOAD_SNUG_N:.0f} N + {S:.0f} N", "XY",
+        hoop(PRELOAD_SNUG_N + S, LIG), ALLOW_XY_MPA, req)
+row("spec §8: tab screws driven snug", f"notch -> pilot strip {LIG:.2f}: splitting at {PRELOAD_SNUG_N:.0f} N", "XY",
+    hoop(PRELOAD_SNUG_N, LIG), ALLOW_XY_MPA, SF_SUSTAINED)
+
+# --- advisory ----------------------------------------------------------------------------------------------------------
+k_tab = 5.0e4                                # one MG996R tab prying about y (its own bending), N.mm/rad
+phi_r = E_MPA * I_RAILS / (PIL_NEAR - PIL_FAR)
+kk = k_tab / phi_r
+m2 = -(kk / 6) / (1 + kk / 2)
+Q = 1 / (1 + kk * (1 / 3 + m2 / 2) + m2)
+share_spring = Q * PIN + m2 * Q
+pr = probes["row"]
+row(MODES["yaw"][0], f"window rails with tab springs ({share_spring:.2f} of the row moment instead of {PIN:.2f})", "XY",
+    pr.get("yaw", "rails")[0] * share_spring / PIN, ALLOW_XY_MPA, SF_STATIC, info=True)
+row(f"yaw-stall sweep with a {CLONE_FACTOR * 11:.0f} kgf.cm clone MG996R", "window rails", "XY",
+    pr.get("yaw", "rails")[0] * CLONE_FACTOR, ALLOW_XY_MPA, SF_STATIC, info=True)
+row(f"yaw-stall sweep, tab screws over-tightened to {PRELOAD_TIGHT_N:.0f} N", f"notch -> pilot strip {LIG:.2f}: splitting",
+    "XY", hoop(PRELOAD_TIGHT_N + probes["tabs"].get("yaw", "S")[0], LIG), ALLOW_XY_MPA, SF_STATIC, info=True)
+
+worst, fails = report(JOB)
+print("\nWHAT-IF (the yaw stall governs):")
+rails_yaw = probes["row"].get("yaw", "rails")[0]
+rails_hand = probes["row"].get("hand", "rails")[0]
+for h in (4.0, 6.0, 8.0):
+    t2 = T + h                               # ribs as wide as the rails: every term of rails() scales with (T / t2)^2
+    scale = (T / 2 / I_RAILS) / ((t2 / 2) / (2 * RAIL_W * t2 ** 3 / 12))
+    print(f"  rails with {h:g} mm back-face ribs (rails {RAIL_W:.2f} x {t2:g}): yaw SF {ALLOW_XY_MPA / (rails_yaw / scale):.2f}, "
+          f"hand SF {ALLOW_XY_MPA / (rails_hand / scale):.2f}, weight x2 SF "
+          f"{ALLOW_XY_MPA / (probes['row'].get('weight', 'rails')[0] / scale):.2f}")
+
+# --- proof tests (spec §8 as this review would write it) ------------------------------------------------------------------
+print("\nPROOF TEST (spec §8 as this review would write it). Ratio = test value / yaw-stall service value at the same check.")
+L_BAR = 175.0                                # bar on the elbow horn in place of the forearm: elbow axis to fingertips 173.4
+PT = [("row", "rails", "window rails"), ("tabs", "S", "elbow tab screw"), ("row", "My", "far pilot row"),
+      ("x15", "My", "x 15 bending"), ("x15", "Mx", "plate torsion"), ("horn", "S", "shoulder-horn joint")]
+bar = dict(body="F", point=(L_BAR, 0.0, 0.0), weight=False)
+print(f"  bench: shoulder horn in a vice, plate vertical, elbow MG996R fitted; a bar on the elbow horn in place of the "
+      f"forearm, pushed along the elbow shaft {L_BAR:g} mm from the elbow axis")
+for e in (0, -60, -90):
+    pose = (0, e, 0)
+    F_r = force_for(lambda F: test_ratio(probes["row"], "rails", pose, F, **bar), PROOF_RATIO)
+    F_s = force_for(lambda F: test_ratio(probes["tabs"], "S", pose, F, **bar), PROOF_RATIO)
+    print(f"    bar at {-e} deg to the link: {PROOF_RATIO:g} x at the rails with {F_r:.1f} N, at the tab screw with {F_s:.1f} N")
+BENCH_POSE, F_BENCH = (0, -60, 0), 16.0
+print(f"  chosen: bar at {-BENCH_POSE[1]} deg, {F_BENCH:g} N: " + ", ".join(
+    f"{lbl} {test_ratio(probes[k], c, BENCH_POSE, F_BENCH, **bar):.2f}" for k, c, lbl in PT))
+S_t = probes["tabs"].checks["S"](*test_loads(probes["tabs"], BENCH_POSE, F_BENCH, **bar))
+print(f"    notch -> pilot strip {LIG:.2f}: screw tension {S_t:.0f} N, splitting SF "
+      f"{ALLOW_XY_MPA / hoop(PRELOAD_SNUG_N + S_t, LIG):.2f} (required {SF_PROOF:g} at a proof load)")
+for name, (pose, F_N) in ARM_TESTS.items():
+    print(f"  turntable/base test ({name}, {F_N:g} N, servos powered): " + ", ".join(
+        f"{lbl} {test_ratio(probes[k], c, pose, F_N):.2f}" for k, c, lbl in PT))
+for lbl_, F_, L_ in (("spec §8 (2) as written: 21 N at the elbow axis", 21.0, 0.0),):
+    r = test_ratio(probes["row"], "rails", (0, 0, 0), F_, body="F", point=(L_, 0.0, 0.0), weight=False)
+    print(f"  {lbl_}: window rails {r:.2f}")
+T_lever = 7.5 * 185.0
+print(f"  spec §8 (2) as written: 7.5 N on a 185 mm lever = {T_lever:.0f} N.mm of torsion against the yaw-stall "
+      f"{probes['x15'].get('yaw', 'Mx')[0]:.0f}: ratio {T_lever / probes['x15'].get('yaw', 'Mx')[0]:.2f}")
