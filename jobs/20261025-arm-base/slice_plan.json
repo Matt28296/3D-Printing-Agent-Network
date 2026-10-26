@@ -3,15 +3,18 @@
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
  "overrides": {
+  "layer_height": 0.2,
   "perimeters": 4,
-  "top_solid_layers": 5,
-  "bottom_solid_layers": 5,
+  "top_solid_layers": 18,
+  "bottom_solid_layers": 20,
   "fill_density": "30%",
   "fill_pattern": "gyroid",
-  "layer_height": 0.2,
-  "elefant_foot_compensation": 0.2
+  "elefant_foot_compensation": 0.2,
+  "seam_position": "aligned",
+  "support_material": 0,
+  "brim_width": 0
  },
  "model": "part.stl",
  "copies": 1,
- "rationale": "Prusa 0.20mm QUALITY + Prusament PETG stock presets; perimeters/solid layers/infill raised to print_requirements.json (load path walls), gyroid for isotropic infill, 0.2 mm elephant-foot compensation paired with the 0.4 mm bottom chamfer."
+ "rationale": "SLICE round 2 for the round-5 design (replaces the old round-3 plan). Round 1 (5 bottom / 18 top) left 30 % gyroid in print Z 1.0-3.9 under the far pad and Z 1.0-1.9 under the near pad (the audit's per-layer infill count: 650-1170 mm of sparse infill a layer in layers 6-20), because the plate there has the pad above it, not a top surface; round 2 raises bottom_solid_layers to 20. Profiles: stock MK3S printer, 0.20mm QUALITY @MK3 and Prusament PETG from config/printer.json; filament_type PETG = print_requirements, spec 6 and the brief. Temperatures stay in the filament profile (240/250 C nozzle, 85/90 C bed, fan 30-50 %, all inside the requirements' 230-250 / 80-90 and the skill's PETG range), so they are not overridden. library/materials.csv and lessons.md have no rows yet, so no flow, temperature or xy_size_compensation overrides (xy stays 0; holes are compensated in CAD). Requirements: perimeters 4 (min 4), bottom 20 (min 5), fill 30 % (min 30), gyroid (equals), layer 0.2 (max 0.2). top_solid_layers 18 (min 5) is a strength decision: printed upside down, the 4 mm top plate and the 7.5 / 5.5 mm pads round the MG996R tab bosses are the parts strength round 5 checked as solid plates (Roark plate, SF 3.38-3.39 at Kt 2.5 against 3). With 5 top / 5 bottom layers the 7.5 mm pad would print as 1 mm skins over 5.5 mm of 30 % gyroid, about 0.6 x the solid section modulus, which would put the yaw-stall row near SF 2. 20 bottom layers (4.0 mm) make the whole plate solid from the bed, and 18 top layers (3.6 mm) under the pads' undersides (print Z 7.5 / 5.5) make both pads solid down into the plate. Elsewhere the extra layers only touch the 3 mm walls above their 45-degree opening roofs and the tops of the walls, pillars and bosses, which 4 perimeters already fill. Elephant-foot 0.2 pairs with the 0.4 mm bed chamfer and keeps the bed-face servo window, lead notches and pilot mouths true. Seam: aligned (stock, stated): it puts seams in corners, so they land in the servo window's and notches' corners rather than on their 0.2 mm/side clearance faces, and on the outline's rounded corners rather than on the flat walls with the jack and USB openings. Supports off: the brief puts 45-degree roofs and teardrops on every wall opening and mesh_check reports no overhangs needing support. No brim: 110 x 104 mm of bed contact and PETG barely warps; a brim would fill the 0.4 mm bed chamfer. Copies 1 (spec 7), one plate, limit 10 h."
 }

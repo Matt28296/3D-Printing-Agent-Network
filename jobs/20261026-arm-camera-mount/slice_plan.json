@@ -2,18 +2,20 @@
  "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
- "model": "part.stl",
  "overrides": {
+  "layer_height": 0.2,
   "perimeters": 4,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
   "fill_density": "40%",
   "fill_pattern": "gyroid",
-  "layer_height": 0.2,
   "elefant_foot_compensation": 0.2,
+  "seam_position": "aligned",
+  "support_material": 0,
   "brim_type": "outer_only",
   "brim_width": 5
  },
+ "model": "part.stl",
  "copies": 1,
- "rationale": "Stock QUALITY + Prusament PETG; 4 perimeters, 40 % gyroid; standing 50 mm tall on a 186 mm\u00b2 end face, so a 5 mm outer brim; EFC 0.2."
+ "rationale": "SLICE round 1 for the round-2 design (replaces the pre-round-1 plan). Profiles: stock MK3S printer, 0.20mm QUALITY @MK3 and Prusament PETG from config/printer.json; filament_type PETG = print_requirements, spec 6 and the brief. Temperatures stay in the filament profile (240/250 C nozzle, 85/90 C bed, fan 30-50 %: inside 230-250 / 80-90 and the skill's PETG range). No library rows: no flow, temperature or xy compensation overrides. Requirements: perimeters 4 (min 4), top/bottom 5 (min 5), fill 40 % gyroid (min 40, equals gyroid), layer 0.2 (max 0.2), brim_width 5 (min 5). Orientation is in the STL (brief): standing on its -y end, side profile in the bed plane, so the 4 mm seat and the 5 mm lip are standing walls: 4 perimeters a side fill the seat and leave a 1.4 mm gyroid core in the lip, so the lip-root and seat-root sections strength checked are near solid. Brim: outer_only, 5 mm, as print_requirements asks (184 mm2 footprint under a 50 mm tall part); it rings the outline only, so the slot and holes stay clear; trim it off the 0.3 mm bed chamfer after printing. Elephant-foot 0.2 pairs with that chamfer. Seam: aligned (stock, stated). Not rear: rear (+Y in print) is the pad's underside, which must sit flat on the cover's top wall. Aligned puts the seams in corners; the audit checks where the outline's seams land, to keep them off the seat face (camera bottom), the lip's front face and the pad's underside. Supports off: mesh_check 0 % overhang, no bridges; slot and holes are teardrops. Copies 1 (spec 7), one plate, limit 2 h."
 }
