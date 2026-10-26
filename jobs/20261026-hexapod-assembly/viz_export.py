@@ -35,12 +35,12 @@ LABELS = {"bottom": "Bottom body plate", "top": "Top plate / electronics deck", 
           "femur": "Femur", "tibia": "Tibia"}
 QTY = {"bottom": 1, "top": 1, "coxa": 6, "femur": 6, "tibia": 6}
 PETG = "petg_white"
-STAMPS = [{"text": "Round 4 in review", "kind": "warn"}, {"text": "Assembly check clean", "kind": "pass"},
-          {"text": "Not sliced yet", "kind": "note"}]
+STAMPS = [{"text": "Awaiting your approval", "kind": "pass"}, {"text": "Assembly check clean", "kind": "pass"},
+          {"text": "Sliced and audited", "kind": "pass"}]
 LEG_NAMES = ["left front", "left middle", "left rear", "right front", "right middle", "right rear"]
 GAIT_STRIDE, GAIT_LIFT, FRAME_S = 30.0, 20.0, 0.025
-RESLICE = ("bottom", "top", "coxa", "femur")   # round 3 changed these after their last slice: their slice_stats.json
-                                               # (no STL hash in it) describe the old geometry. Empty this once re-sliced.
+RESLICE = ()   # every part was re-sliced on 26 Oct 2026 after round 4; list a part here again if its geometry changes
+               # after its last slice (slice_stats.json has no STL hash).
 UBEC_AT = (0.0, 22.5)            # as assembly_check.py: x centre, y of its LiPo-side face (on its side)
 
 
@@ -180,8 +180,10 @@ def main(out_dir: Path):
     parts = []
     for k, job in JOBS.items():
         st = {} if k in RESLICE else stats(job)
-        parts.append({"label": LABELS[k], "job": job, "qty": QTY[k], "hours": st.get("print_time_h"),
-                      "grams": st.get("filament_g")})
+        plan = ROOT / "jobs" / job / "slice_plan.json"
+        per = json.loads(plan.read_text()).get("copies", 1) if plan.exists() else 1
+        parts.append({"label": LABELS[k], "job": job, "qty": QTY[k], "plates": -(-QTY[k] // per),
+                      "hours": st.get("print_time_h"), "grams": st.get("filament_g")})   # per plate
     sliced = all(p["hours"] is not None for p in parts)
     chk = json.loads((HERE / "assembly_check.json").read_text())
     lim = chk["joint_limits"]
@@ -209,8 +211,8 @@ def main(out_dir: Path):
                      f"tripod gait in place ({GAIT_STRIDE:.0f} mm stride, {GAIT_LIFT:.0f} mm lift, the tibias tucked "
                      f"{-(f_s + t_s):.1f}° in), or stop it and pose the left middle leg with the sliders."),
             "meta": [["Printed parts", str(sum(QTY.values()))],
-                     ["Print time", f"{sum(p['hours'] for p in parts):.1f} h" if sliced else "re-slice pending"],
-                     ["PETG", f"{sum(p['grams'] for p in parts):.0f} g" if sliced else "re-slice pending"],
+                     ["Print time", f"{sum(p['hours'] * p['plates'] for p in parts):.1f} h" if sliced else "re-slice pending"],
+                     ["PETG", f"{sum(p['grams'] * p['plates'] for p in parts):.0f} g" if sliced else "re-slice pending"],
                      ["Stance", f"{ov[0]:.0f} × {ov[1]:.0f} × {ov[2]:.0f} mm"]],
             "stamps": STAMPS,
             "facts": [["Controller", "ESP32 DevKit + 2 × PCA9685 (0x40, 0x41) on I²C"],
