@@ -47,7 +47,14 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 - [ ] Pinion presses onto the trimmed horn with a light fit and sits centred
 - [ ] At `g 44`, with both jaws parked fully open, it slides axially through the cover's hole into both racks (nudging a jaw by at most half a tooth)
 - [ ] `g 0` ↔ `g 44` runs both jaws smoothly, with no tight spot, and a little backlash (≈0.35 mm per mesh)
-- [ ] **Proof test:** With the claw assembled, grip a 20 mm wooden block clamped in a vice, first centred, then 8 mm off-centre (one jaw touches first), and command a full close 5 times each (the sketch squeezes for at most 2 s each time). Pass: no tooth damage or whitening on the pinion or racks, the horn stubs do not slip in the pocket (mark a line across pinion and servo case with a pen), and the jaws open again smoothly.
+- [ ] **Proof test (claw strength round 2, 1.5 × the design loads; the claw opening against an obstacle stays a design case):** Claw assembled, wrist horn in a vice, servo powered and holding, jaws at 30 mm.
+  1. Each fingertip in turn, 3 mm from the tip: pull it along the jaw travel, away from the other jaw, with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall force), 10 s. If the servo slips before 32 N, note the force: the teeth have then been proven only to that force.
+  2. Push jaw B's fingertip sideways towards the wrist (−z) with **10.7 N** (1.5 × the yaw stall), 10 s, with the jaws closed and again at 44 mm.
+  3. Then the grip test already in §8: a 20 mm wooden block in a vice, centred and then 8 mm off-centre, 5 full closes each.
 
+  Pass:
+  - no tooth damage or whitening on the pinion or the racks (look at the tooth roots with a loupe);
+  - the horn stubs haven't slipped in the pocket (pen line across the pinion and the servo case);
+  - the jaws run 0–44 mm smoothly afterwards, with no tight spot and no new play.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`; claw assembly order and fit: `claw_sequence_check.json`.

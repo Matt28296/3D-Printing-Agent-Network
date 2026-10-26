@@ -50,7 +50,17 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 - [ ] Without the pinion, both jaws slide in from the open slot ends to fully open with no binding
 - [ ] With the pinion in, the jaws run 0–44 mm with no tight spot; the grip faces meet flat when closed (feeler 0.2 mm max gap)
 - [ ] `claw_sequence_check.py`: 0 mm³ on both slide-in paths and over the stroke
-- [ ] **Proof test:** Grip test as for the pinion (centred and 8 mm off-centre, full close 5 times each, the sketch squeezing for at most 2 s), then grip a 10 mm wooden dowel at the fingertips and hang 200 g from it for 1 min. Pass: no cracks or whitening at the neck, the gusset or the finger root; the dowel does not slip; the jaws still slide freely.
+- [ ] **Proof test (claw strength round 2, 1.5 × the design loads; the claw opening against an obstacle stays a design case):** Claw assembled, wrist horn in a vice, servo powered and holding, jaws at 30 mm. For each jaw in turn:
+  1. Loop a cord round the finger 3 mm from the tip, at the edge of the grip face farthest from the jaw's own rack. Pull away from the other jaw with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall), 10 s.
+  2. At the same place, push towards the other jaw on the outer face with **32 N** (1.5 × the opening stall), 10 s.
+  3. Push the fingertip sideways (±z) with **10.7 N** (1.5 × the yaw stall), 10 s each way.
+  4. Then the checks §8 already has: the grip test as for the pinion (centred and 8 mm off-centre, 5 full closes each), and a 10 mm wooden dowel gripped at the fingertips with 200 g hanging from it for 1 min.
 
+  If the servo slips before a pull reaches 32 N, note the force: the jaw has then been proven only to that force.
+
+  Pass:
+  - no crack or whitening at the grooves nearest the tip, the taper's end, the neck's root fillets, the gusset or the kinks (use a loupe; whitening runs along a layer line);
+  - the dowel doesn't slip;
+  - the jaws still slide freely and meet flat (0.2 mm feeler at most).
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`; claw assembly order and fit: `claw_sequence_check.json`.

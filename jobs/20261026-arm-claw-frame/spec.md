@@ -62,7 +62,15 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 - [ ] Wrist horn seats flat in its pocket; the M2 × 12 clamps the frame without the screw bottoming in the spline
 - [ ] Rack B slides along the wrist plate with no binding
 - [ ] `claw_sequence_check.py` (run by `assembly_check.py`): 0 mm³ on every insertion path and over the 0–44 mm stroke
-- [ ] **Proof test:** Claw fully assembled with the camera, wrist horn clamped in a vice: push 7.5 N (≈0.75 kg on a luggage scale) at the fingertips, sideways (±z) then up and down (±y), 1 min each. Pass: no cracks or whitening at the horn pocket, the bulkhead root, the servo window corners or any screw pilot; the frame doesn't lift off the horn; the fingertips return to within 0.5 mm.
+- [ ] **Proof test (claw strength round 2, 1.5 × the design loads; the claw opening against an obstacle stays a design case):** Claw fully assembled with the camera, wrist horn clamped in a vice, servo powered and holding.
+  1. Jaws at 30 mm: pull jaw B's fingertip (3 mm from the tip) away from jaw A with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall force), 10 s. Then push it towards jaw A with **32 N** (1.5 × the opening stall), 10 s. Repeat with the jaws closed, pulling only. At 30 mm a slipping servo can't run the rack out of mesh.
+  2. **15 N** (1.5 kg) on the Brio's USB plug, 10 s each along +x (towards the fingers), ±y and ±z.
+  3. **20 N** (1.5 × the 13 N desk hit) on the end face of the Brio, along its length, 10 s each way.
+  4. 7.5 N at the fingertips, sideways (±z) then ±y, 1 min each.
 
+  Pass:
+  - no crack or whitening at the rail wall's root (along it and at its ends), the horn pocket, the clamp washer's seat, the bulkhead root, the window's corners and strips, or any screw pilot (the tab-pilot strips included);
+  - the frame doesn't lift off the horn;
+  - the fingertips return to within 0.5 mm.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`; claw assembly order and fit: `claw_sequence_check.json`.

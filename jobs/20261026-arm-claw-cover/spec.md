@@ -59,7 +59,13 @@ Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled 
 - [ ] Both jaws slide in from the open slot ends to fully open without binding; the pinion then passes the front plate's hole and meshes with both racks; the jaws run 0–44 mm without binding
 - [ ] The pinion's clamp screw is reachable through the pass-through
 - [ ] `claw_sequence_check.py`: 0 mm³ on every insertion path and over the stroke
-- [ ] **Proof test:** Covered by the claw proof tests (frame and jaw): after them, both jaws still slide the full 0–44 mm with no binding, the slot edges and the tie show no cracks, and the cover screws are still tight.
+- [ ] **Proof test (claw strength round 2, 1.5 × the design loads; the claw opening against an obstacle stays a design case):** Claw assembled on the frame, wrist horn in a vice, servo powered and holding, jaws at 30 mm.
+  1. Each fingertip in turn, 3 mm from the tip: pull it away from the other jaw with **32 N** (3.3 kg on a luggage scale, 1.5 × the one-jaw stall), 10 s. Then push it towards the other jaw with **32 N** (1.5 × the opening stall), 10 s.
+  2. Push jaw B's fingertip sideways towards the wrist (−z) with **10.7 N** (1.5 × the yaw stall), 10 s, jaws closed and again at 44 mm.
 
+  Pass:
+  - no crack or whitening at the lip's roots, the tie's post, web and their corners, the upper piece's top corner and slot A's V apex, the strip under slot B, or the slot ends;
+  - both jaws still slide the full 0–44 mm without binding;
+  - the cover screws are still tight.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`; claw assembly order and fit: `claw_sequence_check.json`.

@@ -48,7 +48,15 @@ The camera package (Brio 63 g, this mount ≈13 g, thumb screw 5 g) hangs ≈80 
 - [ ] Thumb screw reachable from below the seat with the mount fitted
 - [ ] Both M3 button heads seat flat on the pad, and a 2 mm hex key reaches them with the camera off
 - [ ] The right-angle USB-C plug goes into the camera's port above the lip
-- [ ] **Proof test:** Camera fitted, arm powered: run the arm through its fastest full-range sweep 10 times, then pull the camera's USB cable with 10 N (≈1 kg on a luggage scale) along each axis for 10 s. Pass: no crack at the seat root or the lip, the camera has not turned on the screw, and the screws are still tight.
+- [ ] **Proof test (claw strength round 2, 1.5 × the design loads):**
+  1. Camera fitted, arm powered: run the arm through its fastest full-range sweep 10 times.
+  2. Claw off the arm, wrist horn in a vice. Pull the USB cable at the plug with **15 N** (1.5 kg on a luggage scale, 1.5 × the 10 N tug), 10 s each: both ways along the lens axis, both ways along the camera's length, and both ways across them (up and down).
+  3. Loop a cord round the camera 45 mm from its centre (6 mm in from one end). Pull **15 N** along the lens axis, forwards then backwards, 10 s each. Repeat at the other end. This is the twist from a port 45 mm off-centre.
+  4. Push the camera's end face along its length with **20 N** (1.5 × the 13 N desk hit), 10 s each way.
 
+  Pass:
+  - no crack or whitening at the lip's root fillet, the seat's root or the slot's ends;
+  - the camera hasn't turned on the thumb screw (pen line across the camera and the seat);
+  - the screws are still tight.
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.

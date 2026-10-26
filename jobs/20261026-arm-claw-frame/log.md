@@ -11,3 +11,4 @@
 - 2026-10-26T12:46Z · architect (as head-orchestrator) · merged the round 2 DFM review; status.json updated · ok
 - 2026-10-26T12:55Z · strength-analyst (claw round 2, independent) · strength.md, strength_calc.py · FAIL (lowest SF 0.65, rail wall root; Ø6 washer 2.39 / 2.12; bulkhead root 2.70; window strips 1.32; MG90S tab-pilot strips 1.60 at the peak, 4.10 on the mean: the user-accepted first-print check stands)
 - 2026-10-26T12:55Z · architect (as head-orchestrator) · merged the round 2 strength review; strength_calc re-run; status.json updated · ok
+- 2026-10-26T12:56Z · architect · spec §8: proof test replaced with claw strength round 2's version (1.5 × the design loads); decision: the claw opening against an obstacle stays a design case (nothing limits the opening stall force) · ok

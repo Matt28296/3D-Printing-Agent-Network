@@ -10,3 +10,4 @@
 - 2026-10-26T12:46Z · architect (as head-orchestrator) · merged the round 2 DFM review; status.json updated · ok
 - 2026-10-26T12:55Z · strength-analyst (claw round 2, independent) · strength.md, strength_calc.py · FAIL (lowest SF 2.62, V-groove at x 72.6 near the 6 mm tip)
 - 2026-10-26T12:55Z · architect (as head-orchestrator) · merged the round 2 strength review; strength_calc re-run; status.json updated · ok
+- 2026-10-26T12:56Z · architect · spec §8: proof test replaced with claw strength round 2's version (1.5 × the design loads); decision: the claw opening against an obstacle stays a design case (nothing limits the opening stall force) · ok
