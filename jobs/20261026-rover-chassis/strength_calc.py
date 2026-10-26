@@ -1,28 +1,23 @@
-"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 4.
+"""Strength check for jobs/20261026-rover-chassis (tracked rover, PETG), round 5.
 
-Run from the project root with the CAD venv active (build123d, trimesh, scipy):
-    source /home/claude/.venv-cad/bin/activate
-    python3 jobs/20261026-rover-chassis/strength_calc.py
+Run from the project root with the CAD venv's interpreter (build123d, trimesh, scipy), about 1-2 min:
+    /home/claude/.venv-cad/bin/python3 jobs/20261026-rover-chassis/strength_calc.py
 
-Round 4 = the round-4 geometry (model.py, rover_frame.py) with the round-3 method and loads. Round 4 made strength round 3's
-changes 1 and 2 only:
-- SKIN 1.0 -> 2.0: gearbox face |y| 44, shaft arm 11.0 (the nacelle, hub and track plane did not move);
-- idler clamp: a steel head plate 20.6 x 10 x 2 let flush into a 2 mm recess in each idler-block face (x 108-129), and a
-  steel nut plate 14 x 8 x 2 on the bottom of an idler nut slot opened to 9 x 15 x 4.6 deep. Between the recess (|y| 28-30)
-  and the slot (|y| 33.4-38) only a 3.4 mm PETG web is left, and the bolt slot cuts it into two strips.
+Round 5 = the round-5 geometry (model.py, rover_frame.py) with round 4's method and loads. Round 5 made strength round 4's
+fix only (user-approved):
+- the 9 x 15 x 4.6 idler nut slot is deleted: 8.0 mm of solid PETG between the head-plate recess floor (|y| 30) and the
+  wall's outer face (|y| 38), with only the bolt slot through it;
+- the nut plate is the head plate's twin (20.6 x 10 x 2, slot 3.4 x 12 from 6 to 18 mm along), flat on the outer face on a
+  printed seat: a lip under its bottom edge (top Z_A - 5.2, 1.0 proud, 45° underside) and an end stop at each end (inner
+  faces x 108 and 129, STOP_W 1.5, up to Z_A + 5.2; the designer's addition);
+- a Ø9 x 0.8 DIN 9021 washer under the wall nut; the idler's hub 5.2 mm shorter (idler job).
 
-New in this round:
-- The idler clamp is solved as a contact problem along X: head plate and nut plate as steel Hetenyi beams on elastic
-  foundations, the 3.4 mm web between them as through-thickness springs grounded by the out-of-plane stiffness of its
-  strips and end pieces, and the rigid bolt body (head + washer, nut) joined by the bolt's axial spring. Compression-only
-  contacts, active-set iteration. No friction and no clamp preload are credited (DFM round 4, note S2): the bolt tension
-  that resists the yaw moment is the prying force the moment itself creates.
-- The 5 cm front-corner drop and the spec section 8 5 kg hang tilt the idler bolt about X: the same couple pushes one plate
-  strip into one web strip (beam on elastic foundation).
-- The step-3 snug against the self-tapped jack-screw thread (DFM round 4, note S1), the section 8 proof loads, and the FIX.
-The script builds the chassis with build123d (section properties, probes) and recomputes the rover mass from every rover
-part.stl at its print_requirements minima. Rows tagged as drop rows scale linearly with the drop height; report() prints
-the height at which the first of them reaches its required SF.
+The clamp is round 4's contact model (no friction and no preload credited, DFM round 4 S2), generalised so that the
+plates' and the PETG's z-bands come from the round-5 geometry (probed on the solid) instead of round 4's symmetric FIX
+idealisation, and checked against round 4's FIX numbers. New rows: the head plate's top edge on the 45° roof (B4, now all
+of the drop shear), the end stops and the lip (B18/B19; friction as a DEMAND only), the head plate on its recess end.
+Rows tagged as drop rows scale linearly with the drop height; report() prints the height at which the first of them
+reaches its required SF.
 """
 # ===================== shared rover block, round 3 (identical in all six rover strength_calc.py) =====================
 import json
@@ -213,10 +208,11 @@ import trimesh  # noqa: E402
 from build123d import Face, Plane, Vector  # noqa: E402
 from OCP.BRepGProp import BRepGProp  # noqa: E402
 from OCP.GProp import GProp_GProps  # noqa: E402
-from scipy import ndimage  # noqa: E402
+from scipy import ndimage, sparse  # noqa: E402
+from scipy.sparse.linalg import spsolve  # noqa: E402
 
 ns = runpy.run_path(os.path.join(JOBS, JOB, "model.py"), run_name="model")
-WORLD = ns["design"]()                       # round-4 chassis in the rover world frame
+WORLD = ns["design"]()                       # round-5 chassis in the rover world frame
 p = SimpleNamespace(**{k: v for k, v in ns.items() if k.isupper()})
 M = F.MOTOR
 HC = p.HOLE_COMP
@@ -292,11 +288,11 @@ m_pin = math.pi / 4 * F.PIN_D ** 2 * 24.0 * 7.85e-3
 A_PLATE_SLOT = (F.PLATE_SLOT[1] - F.PLATE_SLOT[0]) * F.PLATE_SLOT[0] + math.pi / 4 * F.PLATE_SLOT[0] ** 2
 m_head_plate = (F.IDLER_PLATE[0] * F.IDLER_PLATE[1] - A_PLATE_SLOT) * F.PLATE_T * RHO_STEEL
 m_nut_plate = (F.NUT_PLATE[0] * F.NUT_PLATE[1] - A_PLATE_SLOT) * F.PLATE_T * RHO_STEEL
-BOM = [  # round-4 BUILD_GUIDE §1, grams (bought-part masses: hobby_parts where given, else typical catalogue values)
+BOM = [  # round-5 BUILD_GUIDE §1, grams (bought-part masses: hobby_parts where given, else typical catalogue values)
     ("2 x N20 gear motor", 2 * M.mass_g), ("2 x Pololu #1996 hub", 2 * F.HUB.mass_g), ("8 x M3x12 screw", 8 * 0.9),
     ("4 x M3x50 + 2 x M3x40 fully threaded", 4 * 2.5 + 2 * 2.1), ("2 x M3x20 set screw", 2 * 0.85),
-    ("6 nuts, 6 nylocs, 26 washers, 2 DIN 9021", 6 * 0.25 + 6 * 0.3 + 26 * 0.12 + 2 * 0.35),
-    ("2 head + 2 nut steel plates (round 4)", 2 * (m_head_plate + m_nut_plate)),
+    ("6 nuts, 6 nylocs, 26 washers, 4 DIN 9021", 6 * 0.25 + 6 * 0.3 + 26 * 0.12 + 4 * 0.35),
+    ("2 head + 2 nut steel plates (round 5: all 20.6 x 10)", 2 * (m_head_plate + m_nut_plate)),
     ("4 heat-set inserts + 4 x M3x8", 4 * 0.4 + 4 * 0.65), (f"{2 * F.N_LINKS} steel pins Ø2 x 24", 2 * F.N_LINKS * m_pin),
     ("battery: 2 protected 18650 + holder", HP.BATT_2X18650_LONG.mass_g), ("ESP32 DevKit", 10.0),
     ("mini breadboard + TB6612 + MP1584", HP.MINI_BREADBOARD.mass_g + 3.0 + 2.5), ("HC-SR04", HP.HCSR04.mass_g),
@@ -306,7 +302,7 @@ m_printed = sum(v[0] for v in pm.values())
 m_solid = sum(v[1] for v in pm.values())
 m_bought = sum(g for _, g in BOM)
 m_est = m_printed + m_bought
-print("\nmass check (round 4): printed at the print_requirements minima: "
+print("\nmass check (round 5): printed at the print_requirements minima: "
       + ", ".join(f"{k} {v[0]:.1f} g" for k, v in pm.items()) + f" = {m_printed:.0f} g (all solid {m_solid:.0f} g)")
 print("  bought (BUILD_GUIDE §1): " + ", ".join(f"{n} {g:.1f}" for n, g in BOM) + f" = {m_bought:.0f} g")
 print(f"  rover {m_est:.0f} g at the print minima ({m_solid + m_bought:.0f} g if every printed part were solid);"
@@ -372,7 +368,8 @@ check(f"A5 road-wheel inner hole-edge bearing (mean over the loaded {L_emb - s0:
 check_metal(f"A6 M3 x 50 class 12.9 bending at the outer face, 5 cm drop x {arm_bolt:.0f}",
             bend_round(L.drop * arm_bolt, D3_M3), SY_129_MPA, drop=True)
 
-# ---- B. idler mount: 30 x 24 block (face |y| 28), ±4 slot with hull, jack screw at the head, round-4 steel plates --------
+
+# ---- B. idler mount: 30 x 24 block (face |y| 28), ±4 slot with hull, jack screw at the head, round-5 steel plates --------
 xi1 = F.X_FRONT_OUT - t_w
 bl = min(F.AXLE_DX + p.IDLER_BLOCK[0] / 2, xi1) - (F.AXLE_DX - p.IDLER_BLOCK[0] / 2)     # 25.5 (runs into the front wall)
 a_idler = math.sqrt(bl * p.IDLER_BLOCK[1] / math.pi)
@@ -383,61 +380,87 @@ check(f"B2 idler block: wall bending, reverse stall {L.R_idler_stall:.1f} N (Kt 
 check(f"B3 idler block: wall bending, pretension {L.R_sus:.0f} N sustained (Kt {KT_SHARP})",
       plate_boss_moment_stress(L.R_sus * arm_w, a_idler, t_w, KT_SHARP), False, SF_CYCLIC)
 
-# --- the round-4 clamp, as built (model.py / rover_frame.py), and probes of the solid ---------------------------------
-r_s = (p.BOLT_D + HC) / 2                                  # 1.8: CAD radius of the idler slot
-Z_LO, Z_HI = -r_s, r_s * math.sqrt(2)                      # PETG bolt-slot band about Z_A: hull to the teardrop tips
-BS = (F.AXLE_DX - F.IDLER_SLOT - r_s, F.AXLE_DX + F.IDLER_SLOT + r_s)   # 114.2-125.8: PETG bolt slot along X
-BAND = F.PLATE_SLOT[0] / 2                                 # 1.7: plate slots |z| < 1.7
-H_LEN, H_H = F.IDLER_PLATE                                 # head plate 20.6 x 10
-H0 = 0.5 * (p.PLATE_RECESS_X[0] + p.PLATE_RECESS_X[1]) - H_LEN / 2   # 108.2 (assembly_check head_plate_x)
-HS = (H0 + 6.0, H0 + 6.0 + F.PLATE_SLOT[1])                # its slot from 6 to 18 mm along (BUILD_GUIDE §1): 114.2-126.2
-N_LEN, N_H = F.NUT_PLATE                                   # nut plate 14 x 8, slot in the middle
-N0 = F.AXLE_DX - N_LEN / 2
-NS = (F.AXLE_DX - F.PLATE_SLOT[1] / 2, F.AXLE_DX + F.PLATE_SLOT[1] / 2)
-W_X = (F.AXLE_DX - p.NUT_SLOT_L / 2, F.AXLE_DX + p.NUT_SLOT_L / 2)    # nut slot = the web's footprint: 112.5-127.5
-y_rec = y_boss + p.PLATE_RECESS_D                          # 30: recess bottom = head plate's bearing face
-y_slot = F.HALF_W_OUT - p.NUT_SLOT_D                       # 33.4: nut-slot bottom = nut plate's bearing face
-WEB_T = y_slot - y_rec                                     # 3.4
+# --- the round-5 clamp, as built (model.py / rover_frame.py), and probes of the solid ---------------------------------
 ZA = F.Z_A
-probe = {"web solid at (120, 31.7, Z_A+3.5)": solid_at(120.0, 31.7, ZA + 3.5),
+r_s = (p.BOLT_D + HC) / 2                                  # 1.8: CAD radius of the idler slot
+SLOT_LO, SLOT_HI = -r_s, r_s * math.sqrt(2)                # PETG bolt-slot band about Z_A (CAD): -1.80 .. +2.55
+BS = (F.AXLE_DX - F.IDLER_SLOT - r_s, F.AXLE_DX + F.IDLER_SLOT + r_s)   # 114.2-125.8: PETG bolt slot along X
+assert tuple(F.NUT_PLATE) == tuple(F.IDLER_PLATE), "round 5: the nut plate is the head plate's twin"
+P_LEN, P_H = F.IDLER_PLATE                                 # both plates 20.6 x 10
+H0 = 0.5 * (p.PLATE_RECESS_X[0] + p.PLATE_RECESS_X[1]) - P_LEN / 2   # 108.2: head plate, centred in its recess
+N0 = 0.5 * (p.NUT_PLATE_X[0] + p.NUT_PLATE_X[1]) - P_LEN / 2         # 108.2: nut plate, centred between its stops
+HS = (H0 + F.PLATE_SLOT_FROM, H0 + F.PLATE_SLOT_FROM + F.PLATE_SLOT[1])   # 114.2-126.2 (6 to 18 mm along, BUILD_GUIDE §1)
+NS = (N0 + F.PLATE_SLOT_FROM, N0 + F.PLATE_SLOT_FROM + F.PLATE_SLOT[1])
+PLATE_Z0 = -p.PLATE_RECESS_Z                               # -5.2: the head plate stands on the recess floor ...
+assert abs(-p.LIP_DZ - PLATE_Z0) < 1e-9, "... and the nut plate on the lip at the same height"
+PLATE_MID = PLATE_Z0 + P_H / 2                             # -0.2: both plates Z_A - 5.2 .. + 4.8, slot band -1.9 .. +1.5
+BAND = F.PLATE_SLOT[0] / 2                                 # 1.7: the plates' slot half width (slot on the plate's centre line)
+BOLT_Z = -p.BOLT_D / 2 + 1.5                               # -0.2: the M3 (Ø3) rests on the printed slot floor (Ø3.4: -1.7)
+WASHER_R = F.WASHER_WIDE[0] / 2                            # 4.5: Ø9 x 0.8 DIN 9021 under the head and, round 5, under the nut
+y_rec = y_boss + p.PLATE_RECESS_D                          # 30: recess floor = head plate's bearing face
+y_out = F.HALF_W_OUT                                       # 38: wall's outer face = nut plate's bearing face
+WEB_T = y_out - y_rec                                      # 8.0: PETG between the plates
+TP_MIN = 1.9                                               # 14-gauge plate (the BOM's first choice; metric 2.0 is stiffer)
+STOP_H = (ZA + p.LIP_DZ) - (ZA - p.LIP_DZ - p.LIP_FACE / 2)   # 10.9: end stop height (Z_A - 5.7 .. + 5.2)
+probe = {"8 mm PETG solid at (120, 30.1, Z_A+3.5)": solid_at(120.0, 30.1, ZA + 3.5),
+         "8 mm PETG solid at (120, 34.0, Z_A+3.5) (round 4's nut slot gone)": solid_at(120.0, 34.0, ZA + 3.5),
+         "8 mm PETG solid at (120, 37.9, Z_A+4.4)": solid_at(120.0, 37.9, ZA + 4.4),
+         "8 mm PETG solid at (120, 36.0, Z_A-4.4)": solid_at(120.0, 36.0, ZA - 4.4),
          "recess void at (120, 29.9, Z_A+3.5)": not solid_at(120.0, 29.9, ZA + 3.5),
-         "web solid at (120, 30.1, Z_A+3.5)": solid_at(120.0, 30.1, ZA + 3.5),
-         "web solid at (120, 33.3, Z_A+3.5)": solid_at(120.0, 33.3, ZA + 3.5),
-         "nut slot void at (120, 33.5, Z_A+3.5)": not solid_at(120.0, 33.5, ZA + 3.5),
-         "nut slot void at (120, 34.4, Z_A+4.4)": not solid_at(120.0, 34.4, ZA + 4.4),
-         "roof solid at (120, 34.4, Z_A+4.6)": solid_at(120.0, 34.4, ZA + 4.6),
-         "bolt slot void at (120, 31.7, Z_A+2.4)": not solid_at(120.0, 31.7, ZA + 2.4),
-         "web end piece solid at (113.5, 31.7, Z_A)": solid_at(113.5, 31.7, ZA),
-         "solid behind the head plate at (110, 36, Z_A)": solid_at(110.0, 36.0, ZA)}
-assert all(probe.values()), f"idler clamp geometry differs from the round-4 model: {probe}"
-print(f"idler clamp (probed on the solid): head plate {H_LEN} x {H_H} x {F.PLATE_T} at x {H0:.1f}-{H0 + H_LEN:.1f} (slot"
-      f" {HS[0]:.1f}-{HS[1]:.1f}) on the recess bottom |y| {y_rec}; nut plate {N_LEN} x {N_H} x {F.PLATE_T} at x {N0:.1f}-"
-      f"{N0 + N_LEN:.1f} on the nut-slot bottom |y| {y_slot}; web |y| {y_rec}-{y_slot} = {WEB_T:.1f} mm over x {W_X[0]}-{W_X[1]},"
-      f" z ±{p.NUT_SLOT_H / 2}; PETG bolt slot x {BS[0]:.1f}-{BS[1]:.1f}, z {Z_LO:+.2f}..{Z_HI:+.2f}: strips"
-      f" {p.NUT_SLOT_H / 2 - Z_HI:.2f} (top) and {p.NUT_SLOT_H / 2 + Z_LO:.2f} (bottom) tall, roots at sharp corners")
+         "recess void at (120, 29.9, Z_A-5.1), floor solid at Z_A-5.3": not solid_at(120.0, 29.9, ZA - 5.1)
+         and solid_at(120.0, 29.9, ZA - 5.3),
+         "outside the wall void at (120, 38.1, Z_A+3.5)": not solid_at(120.0, 38.1, ZA + 3.5),
+         "bolt slot void at (120, 34, Z_A+2.45) and (120, 34, Z_A-1.7)": not solid_at(120.0, 34.0, ZA + 2.45)
+         and not solid_at(120.0, 34.0, ZA - 1.7),
+         "bolt slot edges solid at (120, 34, Z_A+2.65) and (120, 34, Z_A-1.9)": solid_at(120.0, 34.0, ZA + 2.65)
+         and solid_at(120.0, 34.0, ZA - 1.9),
+         "uncut PETG beside the bolt slot at (113.5, 34, Z_A) and (126.5, 34, Z_A)": solid_at(113.5, 34.0, ZA)
+         and solid_at(126.5, 34.0, ZA),
+         "lip: solid (118, 38.5, Z_A-5.3), void above it (118, 38.5, Z_A-5.1)": solid_at(118.0, 38.5, ZA - 5.3)
+         and not solid_at(118.0, 38.5, ZA - 5.1),
+         "lip: 1.0 proud (void at (118, 39.05, Z_A-5.5)), face to Z_A-6.2": not solid_at(118.0, 39.05, ZA - 5.5)
+         and solid_at(118.0, 38.95, ZA - 6.15) and not solid_at(118.0, 38.95, ZA - 6.3),
+         "lip: 45° underside (solid at (118, 38.05, Z_A-7.15), void at (118, 38.05, Z_A-7.3))":
+         solid_at(118.0, 38.05, ZA - 7.15) and not solid_at(118.0, 38.05, ZA - 7.3),
+         "rear stop x 106.5-108: solid (107, 38.5, Z_A), void (108.1, 38.5, Z_A), void (106.4, 38.5, Z_A)":
+         solid_at(107.0, 38.5, ZA) and not solid_at(108.1, 38.5, ZA) and not solid_at(106.4, 38.5, ZA),
+         "front stop x 129-130.5: solid (130, 38.5, Z_A), void (128.9, 38.5, Z_A)": solid_at(130.0, 38.5, ZA)
+         and not solid_at(128.9, 38.5, ZA),
+         "stops up to Z_A+5.2: solid (107, 38.5, Z_A+5.1), void (107, 38.5, Z_A+5.3)": solid_at(107.0, 38.5, ZA + 5.1)
+         and not solid_at(107.0, 38.5, ZA + 5.3),
+         "nut plate's space clear (120, 39.5, Z_A)": not solid_at(120.0, 39.5, ZA)}
+assert all(probe.values()), f"idler clamp geometry differs from the round-5 model: {probe}"
+print(f"idler clamp (probed on the solid): head plate and nut plate both {P_LEN} x {P_H} x {F.PLATE_T} (checked at"
+      f" {TP_MIN} for 14 ga) at x {H0:.1f}-{H0 + P_LEN:.1f} (slot {HS[0]:.1f}-{HS[1]:.1f}), z Z_A {PLATE_Z0:+.1f}..{PLATE_Z0 + P_H:+.1f}"
+      f" (slot band {PLATE_MID - BAND:+.1f}..{PLATE_MID + BAND:+.1f}); head plate on the recess floor |y| {y_rec:.0f}, nut plate"
+      f" on the outer face |y| {y_out:.0f} on its lip (top Z_A {-p.LIP_DZ:+.1f}, {p.LIP_OUT} proud) between stops x"
+      f" {p.NUT_PLATE_X[0] - p.STOP_W:.1f}-{p.NUT_PLATE_X[0]:.1f} and {p.NUT_PLATE_X[1]:.1f}-{p.NUT_PLATE_X[1] + p.STOP_W:.1f};"
+      f" {WEB_T:.1f} mm of PETG between them, cut only by the bolt slot x {BS[0]:.1f}-{BS[1]:.1f}, z {SLOT_LO:+.2f}..{SLOT_HI:+.2f};"
+      f" bolt axis at Z_A {BOLT_Z:+.1f} (on the printed slot floor)")
 
-# --- clamp model ----------------------------------------------------------------------------------------------------
+# --- clamp model (round 4's method, generalised to the round-5 stack) --------------------------------------------------
+# Everything is in the BOLT frame (z measured from the bolt axis at Z_A - 0.2). In it the steel is exactly symmetric: both
+# plates +-5.0, their slot bands +-1.7, both Ø9 washers r 4.5 about the bolt. The PETG is not: the band between the plates
+# (8.0 mm thick) reaches up to the recess roof's start at +5.4 and down to the recess floor / lip top at -5.0, and the PETG
+# bolt slot runs from -1.6 to +2.75. So the PETG strips beside the bolt slot are 2.65 (top) and 3.4 (bottom) tall, rooted at
+# +5.4 and -5.0. Their roots: inner face, top = the recess wall turning into its 45° roof (135°), bottom = the recess floor's
+# sharp 90° edge; outer face, top = the flat wall face (no corner), bottom = the lip's top face (sharp 90°). Kt 2.5 is used
+# at all four (conservative at the two top roots; advisory rows show Kt 1.0 at the flat one).
 E_ST = E_STEEL_MPA
 SY_PLATE_MPA = 200.0     # hand-cut 14 ga (1.9) / 2 mm mild steel sheet or flat bar: conservative yield (A36 250, CR 1008 ~200)
-KS_PETG = 200.0          # N/mm^3: PETG foundation under a 10 mm wide plate on thick solid (E/(B(1-nu^2)), Vesic ~165)
-ROOT_SOFT = 1.3          # web-strip root rotation adds ~30 % to the Timoshenko cantilever compliance
-K_END = 11000.0          # N/mm per mm: web end pieces (1.7 x 9 x 3.4, attached on 3 sides) as cantilevers from the slot end
-WASHER_R = F.WASHER_WIDE[0] / 2                    # 4.5: Ø9 x 0.8 DIN 9021 tilting with the head (3.55 as a bound)
-KB_BOLT = 70000.0        # N/mm: M3 between head and nut (8.2 mm grip, stress area 5.03 mm²) with head and nut compliance
-KP = 2.0e5               # N/mm^3 contact penalty (steel on steel, plate on web faces)
+ROOT_SOFT = 1.3          # strip root rotation adds ~30 % to the Timoshenko cantilever compliance (round 4)
+K_END = 30000.0          # N/mm per mm: the uncut 8 mm band beside the bolt slot, out of plane (round 4 FIX; 10000 as sensitivity)
+KB_BOLT = 70000.0        # N/mm: M3 between head and nut, with head and nut compliance (round 4)
+KP = 2.0e5               # N/mm^3 contact penalty (steel on steel, plate on PETG faces)
+R_HOLE_W = 1.6           # DIN 9021 M3 hole Ø3.2
 
 
 def strip_k(a, t):
-    """Out-of-plane stiffness per unit length (N/mm per mm) of a web strip cantilevered from its root, load at arm a
+    """Out-of-plane stiffness per unit length (N/mm per mm) of a PETG strip cantilevered from its root, load at arm a
     (Timoshenko beam: bending + shear, kappa 5/6)."""
     EI = E_PETG_MPA * t ** 3 / 12.0
     kGA = 5.0 / 6.0 * G_PETG_MPA * t
     return 1.0 / (a ** 3 / (3 * EI) + a / kGA)
-
-
-def _segs(hz, slot, band, x):
-    """z-segments of a plate (half height hz) at x, minus its slot band where its slot is."""
-    return [(-hz, -band), (band, hz)] if slot[0] <= x <= slot[1] else [(-hz, hz)]
 
 
 def _cut(segs, a, b):
@@ -453,8 +476,12 @@ def _cut(segs, a, b):
     return out
 
 
-def _w(segs, lo=-1e9, hi=1e9):
-    return sum(max(0.0, min(b, hi) - max(a, lo)) for a, b in segs)
+def _clip(segs, lo, hi):
+    return [(max(a, lo), min(b, hi)) for a, b in segs if min(b, hi) > max(a, lo)]
+
+
+def _w(segs):
+    return sum(b - a for a, b in segs)
 
 
 def _hermite(EI, Lh):
@@ -462,106 +489,100 @@ def _hermite(EI, Lh):
                                     [-12, -6 * Lh, 12, -6 * Lh], [6 * Lh, 2 * Lh * Lh, -6 * Lh, 4 * Lh * Lh]])
 
 
-def nut_half_height(dx):
-    """M3 nut (5.5 AF) with its flats on top and bottom (corners along X: the smaller lever, conservative)."""
-    rc = F.NUT[0] / math.sqrt(3)
-    return 0.0 if abs(dx) >= rc else min(F.NUT[0] / 2, (rc - abs(dx)) * math.sqrt(3))
+def plate_segs(g, x, slot):
+    """z-segments (bolt frame) of a plate at x: +-hz about its mid (offset po), minus its slot band where its slot is."""
+    hz, po = g["hz"], g["po"]
+    s = [(po - hz, po + hz)]
+    return _cut(s, po - BAND, po + BAND) if slot[0] <= x <= slot[1] else s
 
 
-def nut_side_half_height(g, dx):
-    """Half height (z) of what bears on the nut plate at dx from the bolt: the nut, or a washer under it (g['nut_washer'])."""
-    rw = g.get("nut_washer")
-    if rw:
-        return math.sqrt(max(0.0, rw ** 2 - dx * dx))
-    return nut_half_height(dx)
+def washer_width(g, r, d, x, slot):
+    """z-width of a Ø2r washer (centred on the bolt) that bears on a plate at dx = d from the bolt."""
+    if abs(d) >= r:
+        return 0.0
+    c = math.sqrt(r * r - d * d)
+    s = _clip(plate_segs(g, x, slot), -c, c)
+    if abs(d) < R_HOLE_W:
+        ch = math.sqrt(R_HOLE_W ** 2 - d * d)
+        s = _cut(s, -ch, ch)
+    return _w(s)
 
 
 def arms(g):
-    zs = g["zs"]
-    a_top_N = zs - (Z_HI + min(g["Nh"] / 2, zs)) / 2
-    a_bot_N = zs - (-Z_LO + min(g["Nh"] / 2, zs)) / 2
-    a_top_H = zs - (Z_HI + min(g["Hh"] / 2, zs)) / 2
-    a_bot_H = zs - (-Z_LO + min(g["Hh"] / 2, zs)) / 2
-    return a_top_N, a_bot_N, a_top_H, a_bot_H
+    """Arm from each PETG strip's root to the middle of the band where a plate bears on it: (top, bottom)."""
+    hz, po = g["hz"], g["po"]
+    t0, t1 = max(po + BAND, g["sh"]), min(po + hz, g["rt"])
+    b0, b1 = max(BAND - po, g["sl"]), min(hz - po, g["rb"])
+    return g["rt"] - (t0 + t1) / 2, g["rb"] - (b0 + b1) / 2
 
 
-def clamp_yaw(g, xb, Mz, P0=0.0, r_e=WASHER_R, ks=KS_PETG, root_soft=ROOT_SOFT, k_end=None, h=0.1):
-    """Idler clamp under the yaw moment Mz (about Z) on the bolt body, bolt at slot position xb. Everything along X:
-    head plate and nut plate (steel Hermite beams), the web as two face nodes and a mid node per station (through-
-    thickness springs, out-of-plane ground spring), the head plate also on solid PETG where there is no web behind it,
-    rigid bolt body (v_h, v_n, theta) touching the plates through the washer and the nut, bolt axial spring with an
-    initial stretch for the preload P0. Compression-only contacts, active-set iteration."""
+def clamp_yaw(g, xb, Mz, P0=0.0, r_e=None, root_soft=ROOT_SOFT, k_end=None, h=0.1):
+    """Idler clamp under the yaw moment Mz (about Z) on the bolt body, bolt at slot position xb. Everything along X: head
+    plate and nut plate (steel Hermite beams), the PETG between them as two face nodes and a mid node per station (through-
+    thickness springs, out-of-plane ground spring: the strips beside the bolt slot as cantilevers from their roots, the uncut
+    band elsewhere), rigid bolt body (v_h, v_n, theta) touching the plates through the two Ø9 washers, bolt axial spring with
+    an initial stretch for the preload P0. Compression-only contacts, active-set iteration. Round 4's model, with the
+    plates' z-bands and the PETG band taken from the round-5 geometry."""
     k_end = g["k_end"] if k_end is None else k_end
-    zs, wt, tp = g["zs"], g["web_t"], F.PLATE_T
+    r_h = g["r_wh"] if r_e is None else r_e
+    r_n = g["r_wn"] if r_e is None else r_e
+    wt, tp = g["web_t"], g["tp"]
     (Ha, Hb), (Na, Nb), (Wa, Wb) = g["H"], g["N"], g["W"]
-    xs = np.round(np.arange(Ha, Hb + 1e-9, h), 6)
+    assert Wa <= min(Ha, Na) + 1e-9 and Wb >= max(Hb, Nb) - 1e-9, "both plates bear on the 8 mm band only"
+    x0, x1 = min(Ha, Na), max(Hb, Nb)
+    xs = np.round(np.arange(x0, x1 + 1e-9, h), 6)
     n = len(xs)
+    inH = (xs >= Ha - 1e-9) & (xs <= Hb + 1e-9)
     inN = (xs >= Na - 1e-9) & (xs <= Nb + 1e-9)
-    inW = (xs >= Wa - 1e-9) & (xs <= Wb + 1e-9)
-    iN, iW = np.nonzero(inN)[0], np.nonzero(inW)[0]
-    a_top_N, a_bot_N, a_top_H, a_bot_H = arms(g)
-    k_top = strip_k(max(a_top_N, 0.05), wt) / root_soft
-    k_bot = strip_k(max(a_bot_N, 0.05), wt) / root_soft
-    wHw, wHs, wN, wwa, wnu, bweb = (np.zeros(n) for _ in range(6))
+    iH, iN = np.nonzero(inH)[0], np.nonzero(inN)[0]
+    a_top, a_bot = arms(g)
+    k_top = strip_k(max(a_top, 0.05), wt) / root_soft
+    k_bot = strip_k(max(a_bot, 0.05), wt) / root_soft
+    wH, wN, wwa, wnu, bweb = (np.zeros(n) for _ in range(5))
     for k, x in enumerate(xs):
-        sH = _segs(g["Hh"] / 2, g["Hs"], BAND, x)
-        if BS[0] <= x <= BS[1]:
-            sH = _cut(sH, Z_LO, Z_HI)
-        if inW[k]:
-            wHw[k] = _w(sH, -zs, zs)
-            wHs[k] = (_w(sH) - wHw[k]) if g["H_solid"] else 0.0
-        else:
-            wHs[k] = _w(sH) if g["H_solid"] else 0.0
-        if inN[k] and inW[k]:
-            sN = _segs(g["Nh"] / 2, g["Ns"], BAND, x)
-            if BS[0] <= x <= BS[1]:
-                sN = _cut(sN, Z_LO, Z_HI)
-            wN[k] = _w(sN, -zs, zs)
-        d = x - xb
-        if abs(d) < r_e:
-            c = math.sqrt(r_e ** 2 - d * d)
-            wwa[k] = 2 * max(0.0, c - BAND) if g["Hs"][0] <= x <= g["Hs"][1] else 2 * (c - math.sqrt(max(0.0, 1.6 ** 2 - d * d)))
+        inbs = BS[0] <= x <= BS[1]
+        if inH[k]:
+            sH = plate_segs(g, x, g["Hs"])
+            wH[k] = _w(_clip(_cut(sH, -g["sl"], g["sh"]) if inbs else sH, -g["rb"], g["rt"]))
+            wwa[k] = washer_width(g, r_h, x - xb, x, g["Hs"])
         if inN[k]:
-            hz = nut_side_half_height(g, d)
-            if hz > 0:
-                wnu[k] = 2 * max(0.0, hz - BAND) if g["Ns"][0] <= x <= g["Ns"][1] else 2 * (hz - math.sqrt(max(0.0, 1.65 ** 2 - d * d)))
-        bweb[k] = (2 * zs - (Z_HI - Z_LO)) if BS[0] <= x <= BS[1] else 2 * zs
+            sN = plate_segs(g, x, g["Ns"])
+            wN[k] = _w(_clip(_cut(sN, -g["sl"], g["sh"]) if inbs else sN, -g["rb"], g["rt"]))
+            wnu[k] = washer_width(g, r_n, x - xb, x, g["Ns"])
+        bweb[k] = (g["rt"] + g["rb"]) - ((g["sh"] + g["sl"]) if inbs else 0.0)
     is_strip = (xs >= BS[0]) & (xs <= BS[1])
     kg = np.where(is_strip, k_top + k_bot, k_end)
     kc_half = 2 * E_PETG_MPA * bweb / wt
-    nH = 2 * n
-    oN = nH
+    mapH = {k: j for j, k in enumerate(iH)}
+    mapN = {k: j for j, k in enumerate(iN)}
+    oH, oN = 0, 2 * len(iH)
     oW = oN + 2 * len(iN)
-    oB = oW + 3 * len(iW)
+    oB = oW + 3 * n
     ndof = oB + 3
     vh, vn, th = oB, oB + 1, oB + 2
-    mapN = {k: j for j, k in enumerate(iN)}
-    mapW = {k: j for j, k in enumerate(iW)}
     K0 = np.zeros((ndof, ndof))
     f = np.zeros(ndof)
 
-    def EI_of(slot, hz):
-        return lambda x: E_ST * (2 * hz - (2 * BAND if slot[0] <= x <= slot[1] else 0.0)) * tp ** 3 / 12
+    def EI_of(slot):
+        return lambda x: E_ST * (2 * g["hz"] - (2 * BAND if slot[0] <= x <= slot[1] else 0.0)) * tp ** 3 / 12
 
-    EI_H, EI_N = EI_of(g["Hs"], g["Hh"] / 2), EI_of(g["Ns"], g["Nh"] / 2)
-    for off, idx, EI in ((0, np.arange(n), EI_H), (oN, iN, EI_N)):
+    EI_H, EI_N = EI_of(g["Hs"]), EI_of(g["Ns"])
+    for off, idx, EI in ((oH, iH, EI_H), (oN, iN, EI_N)):
         for e in range(len(idx) - 1):
             Lh = xs[idx[e + 1]] - xs[idx[e]]
             dd = [off + 2 * e + j for j in range(4)]
             K0[np.ix_(dd, dd)] += _hermite(EI(0.5 * (xs[idx[e]] + xs[idx[e + 1]])), Lh)
     lump = np.full(n, h)
     lump[0] = lump[-1] = h / 2
-    for k in iW:
-        j = mapW[k]
-        ui, um, uo = oW + 3 * j, oW + 3 * j + 1, oW + 3 * j + 2
-        Lk = lump[k] if k not in (iW[0], iW[-1]) else h / 2
+    for k in range(n):
+        ui, um, uo = oW + 3 * k, oW + 3 * k + 1, oW + 3 * k + 2
         for a, b in ((ui, um), (um, uo)):
-            kk = kc_half[k] * Lk
+            kk = kc_half[k] * lump[k]
             K0[a, a] += kk
             K0[b, b] += kk
             K0[a, b] -= kk
             K0[b, a] -= kk
-        K0[um, um] += kg[k] * Lk
+        K0[um, um] += kg[k] * lump[k]
     K0[vh, vh] += KB_BOLT
     K0[vn, vn] += KB_BOLT
     K0[vh, vn] -= KB_BOLT
@@ -574,37 +595,38 @@ def clamp_yaw(g, xb, Mz, P0=0.0, r_e=WASHER_R, ks=KS_PETG, root_soft=ROOT_SOFT, 
     contacts = []
     for k in range(n):
         x, Lk = xs[k], lump[k]
-        if wHs[k] > 0:
-            contacts.append(("Hs", k, ks * wHs[k] * Lk, [2 * k], [1.0]))
-        if inW[k] and wHw[k] > 0:
-            contacts.append(("Hw", k, KP * wHw[k] * Lk, [2 * k, oW + 3 * mapW[k]], [1.0, -1.0]))
-        if inN[k] and inW[k] and wN[k] > 0:
-            contacts.append(("Nw", k, KP * wN[k] * Lk, [oW + 3 * mapW[k] + 2, oN + 2 * mapN[k]], [1.0, -1.0]))
-        if wwa[k] > 0:
-            contacts.append(("W", k, KP * wwa[k] * Lk, [vh, th, 2 * k], [1.0, x - xb, -1.0]))
+        if inH[k] and wH[k] > 0:
+            contacts.append(("Hw", k, KP * wH[k] * Lk, [oH + 2 * mapH[k], oW + 3 * k], [1.0, -1.0]))
+        if inN[k] and wN[k] > 0:
+            contacts.append(("Nw", k, KP * wN[k] * Lk, [oW + 3 * k + 2, oN + 2 * mapN[k]], [1.0, -1.0]))
+        if inH[k] and wwa[k] > 0:
+            contacts.append(("W", k, KP * wwa[k] * Lk, [vh, th, oH + 2 * mapH[k]], [1.0, x - xb, -1.0]))
         if inN[k] and wnu[k] > 0:
             contacts.append(("Nut", k, KP * wnu[k] * Lk, [oN + 2 * mapN[k], vn, th], [1.0, -1.0, -(x - xb)]))
     active = np.ones(len(contacts), dtype=bool)
+    rows_, cols_, vals_ = [], [], []
+    for c, (_, _, _, dd, co) in enumerate(contacts):
+        rows_ += [c] * len(dd)
+        cols_ += list(dd)
+        vals_ += list(co)
+    Cm = sparse.csr_matrix((vals_, (rows_, cols_)), shape=(len(contacts), ndof))
+    kk_all = np.array([c[2] for c in contacts])
+    K0s = sparse.csc_matrix(K0)
     for it in range(300):
-        K = K0.copy()
-        for c, (_, _, kk, dd, co) in enumerate(contacts):
-            if active[c]:
-                co = np.array(co)
-                K[np.ix_(dd, dd)] += kk * np.outer(co, co)
-        u = np.linalg.solve(K, f)
-        gap = np.array([sum(cc * u[d] for d, cc in zip(dd, co)) for (_, _, _, dd, co) in contacts])
+        K = (K0s + Cm.T @ sparse.diags(kk_all * active) @ Cm).tocsc()
+        u = spsolve(K, f)
+        gap = Cm @ u
         new = gap > 0
         if np.array_equal(new, active):
             break
         active = new
     else:
         raise RuntimeError("clamp contact iteration did not converge")
-    q = {t: np.zeros(n) for t in ("Hs", "Hw", "Nw", "W", "Nut")}
+    q = {t: np.zeros(n) for t in ("Hw", "Nw", "W", "Nut")}
     for c, (t, k, kk, _, _) in enumerate(contacts):
         if active[c]:
             q[t][k] += kk * gap[c]
-    r = SimpleNamespace(xs=xs, q=q, T=KB_BOLT * (D0 + u[vn] - u[vh]), theta=u[th])
-    r.M_check = float(((xs - xb) * q["W"]).sum() - ((xs - xb) * q["Nut"]).sum())
+    r = SimpleNamespace(xs=xs, q=q, T=KB_BOLT * (D0 + u[vn] - u[vh]), theta=float(u[th]), xb=xb)
     r.lever = (float(((xs - xb) * q["W"]).sum()) - float(((xs - xb) * q["Nut"]).sum())) / max(r.T, 1e-9)
 
     def zone_mean(force, width):
@@ -617,60 +639,43 @@ def clamp_yaw(g, xb, Mz, P0=0.0, r_e=WASHER_R, ks=KS_PETG, root_soft=ROOT_SOFT, 
             j1 += 1
         return force[j0:j1 + 1].sum() / (width[j0:j1 + 1] * lump[j0:j1 + 1]).sum(), pr[i], xs[i]
 
-    r.pH = zone_mean(q["Hs"] + q["Hw"], wHs + wHw)          # head plate on PETG (solid + web): zone mean, peak, x
-    r.pN = zone_mean(q["Nw"], wN)                           # nut plate on the web
-    # web out-of-plane: ground reaction per unit x at the mid node (negative = pushed -y by the nut plate)
-    gw = np.array([kg[k] * u[oW + 3 * mapW[k] + 1] for k in iW])
-    xw = xs[iW]
-    st = (xw >= BS[0]) & (xw <= BS[1])
+    r.pH = zone_mean(q["Hw"], wH)                            # head plate on the recess floor: zone mean, peak, x
+    r.pN = zone_mean(q["Nw"], wN)                            # nut plate on the wall's outer face
+    gw = np.array([kg[k] * u[oW + 3 * k + 1] for k in range(n)])   # ground reaction per unit x (- = pushed -y by the nut plate)
+    st = is_strip
     share_top = k_top / (k_top + k_bot)
     qt, qb = gw * share_top, gw * (1 - share_top)
     t2 = wt ** 2
-    dz, t_sec, kt_c = g["in_corner"]
-    # N's push (-y): tension on the outer face at the strip roots (sharp corners on the round-4 nut slot)
-    sig_out = np.where(gw < 0, np.maximum(6 * np.abs(qt) * a_top_N, 6 * np.abs(qb) * a_bot_N) / t2, 0.0) * g["kt_out"]
-    # H's push (+y): tension on the inner face at the root (no corner there as built) and at the recess corner beyond it
-    sig_in = np.where(gw > 0, np.maximum(np.maximum(6 * qt * a_top_H, 6 * qb * a_bot_H) / t2 * g["kt_in_root"],
-                                         6 * qb * (a_bot_H + dz) / t_sec ** 2 * kt_c), 0.0)
+    sig_out = np.where(gw < 0, np.maximum(6 * np.abs(qt) * a_top * g["kt_out_top"], 6 * np.abs(qb) * a_bot * g["kt_out_bot"])
+                       / t2, 0.0)
+    sig_in = np.where(gw > 0, np.maximum(6 * qt * a_top * g["kt_in_top"], 6 * qb * a_bot * g["kt_in_bot"]) / t2, 0.0)
     r.sig_strip = float(max(sig_out[st].max(initial=0.0), sig_in[st].max(initial=0.0)))
-    r.sig_strip_out = float(sig_out[st].max(initial=0.0))
     r.tau_strip = float(1.5 * np.maximum(np.abs(qt), np.abs(qb))[st].max(initial=0.0) / wt)
     r.q_strip = float(np.abs(gw[st]).max(initial=0.0))
-    # web end pieces (round 4 only): cantilevers in X from the nut-slot ends; sharp corner on the outer face
-    r.sig_end, r.tau_end, r.V_end = 0.0, 0.0, 0.0
-    if g.get("end_pieces"):
-        for sel, x_att in (((xw < BS[0]), Wa), ((xw > BS[1]), Wb)):
-            V = float(gw[sel].sum() * h)
-            Mep = float((gw[sel] * np.abs(xw[sel] - x_att)).sum() * h)
-            kt = g["kt_out"] if V < 0 else 1.0
-            r.sig_end = max(r.sig_end, kt * 6 * abs(Mep) / (2 * zs * t2))
-            r.tau_end = max(r.tau_end, 1.5 * abs(V) / (2 * zs * wt))
-            r.V_end = max(r.V_end, abs(V))
-    # plate bending (Hermite curvature at element ends)
 
-    def plate_sigma(off, idx, EI, hz, slot):
+    def plate_sigma(off, idx, EI, slot):
         best = 0.0
         for e in range(len(idx) - 1):
-            x0, x1 = xs[idx[e]], xs[idx[e + 1]]
-            Lh = x1 - x0
+            x0_, x1_ = xs[idx[e]], xs[idx[e + 1]]
+            Lh = x1_ - x0_
             we = u[off + 2 * e: off + 2 * e + 4]
-            xm = 0.5 * (x0 + x1)
-            Z = (2 * hz - (2 * BAND if slot[0] <= xm <= slot[1] else 0.0)) * tp ** 2 / 6
+            xm = 0.5 * (x0_ + x1_)
+            Z = (2 * g["hz"] - (2 * BAND if slot[0] <= xm <= slot[1] else 0.0)) * tp ** 2 / 6
             for xi in (0.0, 1.0):
                 d2 = np.array([(-6 + 12 * xi) / Lh ** 2, (-4 + 6 * xi) / Lh, (6 - 12 * xi) / Lh ** 2, (-2 + 6 * xi) / Lh])
                 best = max(best, abs(EI(xm) * (d2 @ we)) / Z)
         return best
 
-    r.sig_H = plate_sigma(0, np.arange(n), EI_H, g["Hh"] / 2, g["Hs"])
-    r.sig_N = plate_sigma(oN, iN, EI_N, g["Nh"] / 2, g["Ns"])
-    a_nut = float((wnu * lump).sum())
-    r.p_nut = r.T / a_nut if a_nut > 0 else 0.0              # mean steel bearing of the nut on the nut plate
+    r.sig_H = plate_sigma(oH, iH, EI_H, g["Hs"])
+    r.sig_N = plate_sigma(oN, iN, EI_N, g["Ns"])
+    a_nw = float((wnu * lump).sum())
+    r.p_nut = r.T / a_nw if a_nw > 0 else 0.0                 # nut-side Ø9 washer on the nut plate: mean steel bearing
     a_wa = float((wwa * lump).sum())
-    r.p_washer = r.T / a_wa if a_wa > 0 else 0.0
+    r.p_washer = r.T / a_wa if a_wa > 0 else 0.0              # head-side Ø9 washer on the head plate
     return r
 
 
-def bef_line(xs, EI, k, p):
+def bef_line(xs, EI, k, p_):
     """Beam on a Winkler foundation k(x) (N/mm per mm) under a line load p(x) (N/mm), free ends; returns w(x)."""
     n = len(xs)
     K = np.zeros((2 * n, 2 * n))
@@ -679,176 +684,201 @@ def bef_line(xs, EI, k, p):
         Lh = xs[e + 1] - xs[e]
         dd = [2 * e, 2 * e + 1, 2 * e + 2, 2 * e + 3]
         K[np.ix_(dd, dd)] += _hermite(EI[e], Lh)
-        km, pm = 0.5 * (k[e] + k[e + 1]) * Lh, 0.5 * (p[e] + p[e + 1]) * Lh
+        km, pm_ = 0.5 * (k[e] + k[e + 1]) * Lh, 0.5 * (p_[e] + p_[e + 1]) * Lh
         for i in (2 * e, 2 * e + 2):
             K[i, i] += km / 2
-            f[i] += pm / 2
+            f[i] += pm_ / 2
     return np.linalg.solve(K + np.eye(2 * n) * 1e-9, f)[0::2]
 
 
-def contact_centroid_z(half_height, reach):
-    """z-centroid (from the bolt axis) of a contact beyond the 1.7 plate-slot band, profile half_height(dx) for |dx| < reach,
-    uniform pressure. Washer + nut centroids are the lever of the bolt body's tilt couple about X; uniform pressure gives a
-    smaller lever than the edge-loaded contact of a tilting part, so the prying force T comes out high (conservative)."""
-    hh = 0.01
+def washer_beyond(g, r, up):
+    """Washer contact beyond the plate's slot band, above it (up) or below it: (half-width profile f(dx), z-centroid
+    distance from the bolt). Uniform pressure: a smaller lever than an edge-loaded contact, so the prying T comes out high."""
+    po = g["po"]
+    edge = (po + BAND) if up else (BAND - po)
+
+    def hw(dx):
+        return max(0.0, math.sqrt(max(0.0, r * r - dx * dx)) - edge)
+
+    hh = 0.005
     A = Az = 0.0
-    for i in range(int(2 * reach / hh)):
-        x = -reach + (i + 0.5) * hh
-        hz = half_height(x)
-        if hz > BAND:
-            A += (hz - BAND) * hh
-            Az += (hz ** 2 - BAND ** 2) / 2 * hh
-    return Az / A
+    for i in range(int(2 * r / hh)):
+        x = -r + (i + 0.5) * hh
+        c = math.sqrt(max(0.0, r * r - x * x))
+        if c > edge:
+            A += (c - edge) * hh
+            Az += (c * c - edge * edge) / 2 * hh
+    return hw, Az / A
 
 
-ZH_TILT = contact_centroid_z(lambda dx: math.sqrt(max(0.0, WASHER_R ** 2 - dx * dx)), WASHER_R)   # Ø9 washer on the head plate
-ZN_TILT = contact_centroid_z(nut_half_height, F.NUT[0] / math.sqrt(3))                          # nut on the nut plate
-
-
-def zn_tilt(g):
-    rw = g.get("nut_washer")
-    return contact_centroid_z(lambda dx: math.sqrt(max(0.0, rw ** 2 - dx * dx)), rw) if rw else ZN_TILT
-
-
-def clamp_tilt(g, xb, Fz, up=True, y_c=None, ks=KS_PETG, root_soft=ROOT_SOFT, k_end=None, h=0.05):
-    """Vertical load Fz at the track plane tilts the bolt about X. With no friction and no preload, the tilt couple is the
-    prying couple T (z_h + z_n) = Fz (Y_T - y_c); y_c = the head plate's bearing face (the innermost place the shear can
-    react, so the largest moment). Upward load (drop on the front corner): the nut's top edge pushes the nut plate's top
-    strip into the web's top strip, the head's bottom edge pushes the head plate's bottom strip into the web's bottom
-    strip. Each plate strip is a beam on the web strip (and the stiffer end regions / solid PETG)."""
+def clamp_tilt(g, xb, Fz, up=True, root_soft=ROOT_SOFT, k_end=None, h=0.05):
+    """A vertical load Fz at the track plane tilts the bolt about X. With no friction and no preload the tilt couple is the
+    prying couple T (z_h + z_n) = Fz (Y_T - y_c), y_c = the head plate's bearing face (the innermost place the shear can
+    react: the largest moment). Up (5 cm front-corner drop): the nut washer's top pushes the nut plate's top strip into the
+    PETG top strip (outer face), the head washer's bottom pushes the head plate's bottom strip into the PETG bottom strip
+    (inner face). Down (the §8 5 kg hang): the other two. Each plate strip is a beam on the PETG strip (and the uncut band)."""
     k_end = g["k_end"] if k_end is None else k_end
-    y_c = g["y_face_H"] if y_c is None else y_c
-    zs, wt, tp = g["zs"], g["web_t"], F.PLATE_T
-    T = Fz * (F.Y_T - y_c) / (ZH_TILT + zn_tilt(g))
-    a_top_N, a_bot_N, a_top_H, a_bot_H = arms(g)
-    out = SimpleNamespace(T=T)
-    # nut side
-    Na, Nb = g["N"]
-    xs = np.round(np.arange(Na, Nb + 1e-9, h), 6)
-    hzN = g["Nh"] / 2
-    EI = np.array([E_ST * ((hzN - BAND) if g["Ns"][0] <= 0.5 * (a + b) <= g["Ns"][1] else hzN) * tp ** 3 / 12
-                   for a, b in zip(xs[:-1], xs[1:])])
-    aN = a_top_N if up else a_bot_N
-    k = np.where((xs >= BS[0]) & (xs <= BS[1]), strip_k(max(aN, 0.05), wt) / root_soft, k_end / 2)
-    pz = np.array([max(0.0, nut_side_half_height(g, x - xb) - BAND) for x in xs])
-    pz = pz / (pz.sum() * h) * T
-    w = bef_line(xs, EI, k, pz)
-    qn = k * w
-    st = (xs >= BS[0]) & (xs <= BS[1])
-    out.qN = float(qn[st].max())
-    out.sig_N_side = 6 * out.qN * aN / wt ** 2 * g["kt_out"]
-    out.tau_N_side = 1.5 * out.qN / wt
-    # head side: the head plate's strip on the opposite web strip (inner face in tension) and on solid PETG
-    Ha, Hb = g["H"]
-    xs = np.round(np.arange(Ha, Hb + 1e-9, h), 6)
-    hzH = g["Hh"] / 2
-    EI = np.array([E_ST * ((hzH - BAND) if g["Hs"][0] <= 0.5 * (a + b) <= g["Hs"][1] else hzH) * tp ** 3 / 12
-                   for a, b in zip(xs[:-1], xs[1:])])
-    aH = a_bot_H if up else a_top_H
-    inW = (xs >= g["W"][0]) & (xs <= g["W"][1])
-    st = (xs >= BS[0]) & (xs <= BS[1])
-    k_web = np.where(st, strip_k(max(aH, 0.05), wt) / root_soft, np.where(inW, k_end / 2, 0.0))
-    k_sol = np.where(inW, ks * max(0.0, hzH - zs), ks * hzH) if g["H_solid"] else np.zeros(len(xs))
-    pz = np.array([max(0.0, math.sqrt(max(0.0, WASHER_R ** 2 - (x - xb) ** 2)) - BAND) for x in xs])
-    pz = pz / (pz.sum() * h) * T
-    w = bef_line(xs, EI, k_web + k_sol, pz)
-    qh = k_web * w
-    out.qH = float(qh[st].max())
-    dz, t_sec, kt_c = g["in_corner"]
-    out.sig_H_side = max(6 * out.qH * aH / wt ** 2 * g["kt_in_root"], 6 * out.qH * (aH + dz) / t_sec ** 2 * kt_c)
-    out.tau_H_side = 1.5 * out.qH / wt
-    out.p_H_solid = float((k_sol * w).max() / max(hzH - (zs if g["H_solid"] else 0.0), 1e-9)) if g["H_solid"] else 0.0
+    wt, tp = g["web_t"], g["tp"]
+    hwN, zN = washer_beyond(g, g["r_wn"], up)
+    hwH, zH = washer_beyond(g, g["r_wh"], not up)
+    T = Fz * (F.Y_T - g["y_c"]) / (zN + zH)
+    a_top, a_bot = arms(g)
+    out = SimpleNamespace(T=T, lever=zN + zH)
+    for side, (Xa, Xb), slot, hwf, a, kt in (
+            ("N", g["N"], g["Ns"], hwN, a_top if up else a_bot, g["kt_out_top"] if up else g["kt_out_bot"]),
+            ("H", g["H"], g["Hs"], hwH, a_bot if up else a_top, g["kt_in_bot"] if up else g["kt_in_top"])):
+        xs = np.round(np.arange(Xa, Xb + 1e-9, h), 6)
+        EI = np.array([E_ST * ((g["hz"] - BAND) if slot[0] <= 0.5 * (a_ + b_) <= slot[1] else g["hz"]) * tp ** 3 / 12
+                       for a_, b_ in zip(xs[:-1], xs[1:])])
+        st = (xs >= BS[0]) & (xs <= BS[1])
+        k = np.where(st, strip_k(max(a, 0.05), wt) / root_soft, k_end / 2)
+        pz = np.array([hwf(x - xb) for x in xs])
+        pz = pz / (pz.sum() * h) * T
+        w = bef_line(xs, EI, k, pz)
+        qmax = float((k * w)[st].max())
+        setattr(out, "q" + side, qmax)
+        setattr(out, "sig_" + side, 6 * qmax * a / wt ** 2 * kt)
+        setattr(out, "tau_" + side, 1.5 * qmax / wt)
     return out
 
 
-CLAMP_R4 = dict(name="round 4 as built", H=(H0, H0 + H_LEN), Hs=HS, Hh=H_H, N=(N0, N0 + N_LEN), Ns=NS, Nh=N_H, W=W_X,
-                zs=p.NUT_SLOT_H / 2, web_t=WEB_T, k_end=K_END, H_solid=True, end_pieces=True, kt_out=KT_SHARP,
-                kt_in_root=1.0, in_corner=(p.PLATE_RECESS_Z - p.NUT_SLOT_H / 2, 8.0, KT_SHARP), y_face_H=y_rec)
-# FIX: the nut plate leaves the wall. It becomes a second 20.6 x 10 x 2 plate (the head plate's twin) on the wall's flat
-# OUTER face at x 108.2-128.8, Z_A ± 5, held by a printed lip under its bottom edge (no recess, so nothing thins the PETG
-# behind it); a Ø9 x 0.8 DIN 9021 washer goes under the wall nut, as under the head; the 9 x 15 x 4.6 idler nut slot is
-# deleted (the bolt slot stays). PETG between the plates: |y| 30-38 = 8.0 mm, no slot behind either plate. The idler's hub
-# then starts at |y| 38 + 2 + 0.8 + 2.4 + 0.5 = 43.7 instead of 38.5 (5.2 mm shorter; idler job). Kt 2.5 is kept at both
-# faces' roots (the head-plate recess floor edge inside, the lip's corner outside).
-CLAMP_FIX = dict(name="FIX nut plate on the outer face", H=(H0, H0 + H_LEN), Hs=HS, Hh=H_H, N=(H0, H0 + H_LEN), Ns=HS,
-                 Nh=H_H, W=(H0, H0 + H_LEN), zs=p.PLATE_RECESS_Z, web_t=F.HALF_W_OUT - y_rec, k_end=30000.0,
-                 H_solid=False, end_pieces=False, kt_out=KT_SHARP, kt_in_root=KT_SHARP,
-                 in_corner=(0.0, F.HALF_W_OUT - y_rec, KT_SHARP), y_face_H=y_rec, nut_washer=WASHER_R)
-# the same move without the washer under the nut, and with a 0.5 mm locating recess instead of the lip (not enough)
-CLAMP_FIX_NOWASHER = dict(CLAMP_FIX, nut_washer=None)
-CLAMP_FIX_RECESS = dict(CLAMP_FIX, web_t=F.HALF_W_OUT - 0.5 - y_rec, in_corner=(0.0, F.HALF_W_OUT - 0.5 - y_rec, KT_SHARP))
-IDLER_HUB_SHORTER = F.PLATE_T + F.WASHER_WIDE[1] + F.NUT[1]       # 5.2 mm: the stack that moves outside the wall
+CLAMP_R5 = dict(name="round 5 as built", H=(H0, H0 + P_LEN), Hs=HS, N=(N0, N0 + P_LEN), Ns=NS,
+                W=(min(H0, N0), max(H0, N0) + P_LEN), hz=P_H / 2, po=PLATE_MID - BOLT_Z,
+                rt=p.PLATE_RECESS_Z - BOLT_Z, rb=p.PLATE_RECESS_Z + BOLT_Z, sh=SLOT_HI - BOLT_Z, sl=-SLOT_LO + BOLT_Z,
+                web_t=WEB_T, tp=TP_MIN, k_end=K_END, r_wh=WASHER_R, r_wn=WASHER_R, kt_out_top=KT_SHARP,
+                kt_out_bot=KT_SHARP, kt_in_top=KT_SHARP, kt_in_bot=KT_SHARP, y_c=y_rec)
+# round 4's FIX as it was modelled there (plates Z_A +-5, bolt on Z_A, PETG band +-5.2, slot -1.8..+2.55, plate 2.0): the
+# same function must give back round 4's FIX rows (3.02 / 3.05 / 3.42 in the drop, 6.45 at the reverse stall)
+CLAMP_R4FIX = dict(CLAMP_R5, name="round 4 FIX model", po=0.0, rt=5.2, rb=5.2, sh=2.55, sl=1.8, tp=2.0)
+a_top5, a_bot5 = arms(CLAMP_R5)
 XB = [F.AXLE_DX + d for d in (-F.IDLER_SLOT, -F.IDLER_SLOT / 2, 0.0, F.IDLER_SLOT / 2, F.IDLER_SLOT)]
+X_FRONT = XB[-1]                                     # the slot's front end (§8 test 1 position)
 ARM_YAW = F.Y_T - p.JACK_Y                           # 29.6: the jack screw pushes the head at |y| 25.4
+print(f"round-5 clamp in the bolt frame: plates +-{CLAMP_R5['hz']:.1f} (offset {CLAMP_R5['po']:+.2f}), slot band"
+      f" +-{BAND}; PETG band {-CLAMP_R5['rb']:+.2f}..{CLAMP_R5['rt']:+.2f}, bolt slot {-CLAMP_R5['sl']:+.2f}..{CLAMP_R5['sh']:+.2f};"
+      f" strips {CLAMP_R5['rt'] - CLAMP_R5['sh']:.2f} (top) and {CLAMP_R5['rb'] - CLAMP_R5['sl']:.2f} (bottom) tall, plates bear"
+      f" at arms {a_top5:.3f} / {a_bot5:.3f} from their roots (round 4 FIX: {arms(CLAMP_R4FIX)[0]:.3f} / {arms(CLAMP_R4FIX)[1]:.3f})")
 
 
-def yaw_worst(g, R, P0s=(0.0,), **kw):
+def yaw_worst(g, R, P0s=(0.0,), xbs=None, **kw):
     """Worst value of each clamp result over the slot positions (and preloads)."""
-    res = [clamp_yaw(g, xb, R * ARM_YAW, P0=P0, **kw) for xb in XB for P0 in P0s]
+    res = [clamp_yaw(g, xb, R * ARM_YAW, P0=P0, **kw) for xb in (xbs or XB) for P0 in P0s]
     pick = SimpleNamespace()
-    for key in ("T", "sig_strip", "sig_strip_out", "tau_strip", "q_strip", "sig_end", "tau_end", "V_end", "sig_H", "sig_N",
-                "p_nut", "p_washer"):
+    for key in ("T", "sig_strip", "tau_strip", "q_strip", "sig_H", "sig_N", "p_nut", "p_washer"):
         setattr(pick, key, max(getattr(r, key) for r in res))
-    pick.pH = max((r.pH for r in res), key=lambda t: t[0])
-    pick.pN = max((r.pN for r in res), key=lambda t: t[0])
-    pick.res = res
+    pick.theta = max(abs(r.theta) for r in res)
+    pick.T_min = min(r.T for r in res)
+    pick.pH = max((r.pH + (r.xb,) for r in res), key=lambda t: t[0])
+    pick.pN = max((r.pN + (r.xb,) for r in res), key=lambda t: t[0])
+    pick.x_strip = max(res, key=lambda r: r.sig_strip).xb
     pick.lever = min(r.lever for r in res)
+    pick.res = res
     return pick
 
 
-def tilt_worst(g, Fz, up=True, **kw):
-    res = [clamp_tilt(g, xb, Fz, up=up, **kw) for xb in XB]
-    pick = SimpleNamespace(T=res[0].T)
-    for key in ("sig_N_side", "tau_N_side", "sig_H_side", "tau_H_side", "qN", "qH", "p_H_solid"):
-        setattr(pick, key, max(getattr(r, key) for r in res))
+def tilt_worst(g, Fz, up=True, xbs=None, **kw):
+    res = [(xb, clamp_tilt(g, xb, Fz, up=up, **kw)) for xb in (xbs or XB)]
+    pick = SimpleNamespace(T=res[0][1].T, lever=res[0][1].lever)
+    for key in ("sig_N", "tau_N", "sig_H", "tau_H", "qN", "qH"):
+        setattr(pick, key, max(getattr(r, key) for _, r in res))
+    pick.x_H = max(res, key=lambda t: t[1].sig_H)[0]
+    pick.x_N = max(res, key=lambda t: t[1].sig_N)[0]
     return pick
 
 
-# vertical loads, round-3 method (rigid pin on a Winkler foundation in z): the nut no longer touches PETG (9 mm slot);
-# the nut plate's top edge (14 x 2) bears on the flat roof, the bolt on the web's hole, the head plate's bottom edge on the
-# recess floor. A bound: the clamp couple below carries the moment in fact, and only the shear reaches the roofs.
-z_zones = [(F.HALF_W_OUT - y_slot - F.PLATE_T, F.HALF_W_OUT - y_slot, N_LEN), (F.HALF_W_OUT - y_slot, F.HALF_W_OUT - y_rec, 3.0),
-           (F.HALF_W_OUT - y_rec, F.HALF_W_OUT - y_boss, H_LEN)]
-w0z, thz = rigid_pin(L.drop, arm_bolt, z_zones)
-R_np = L.drop * N_LEN * (w0z * F.PLATE_T + thz * (z_zones[0][1] ** 2 - z_zones[0][0] ** 2) / 2)
-check(f"B4 idler nut plate's top edge ({N_LEN:.0f} x {F.PLATE_T:.0f}) on the flat slot roof (rigid pin, round-4 zones; the nut"
-      f" no longer touches PETG), 5 cm front corner", R_np / (N_LEN * F.PLATE_T), False, SF_STATIC, drop=True)
-
-# yaw at the idler (no friction, no preload): B5 sustained pretension, B5c everyday reverse, B6 reverse stall
-yS = yaw_worst(CLAMP_R4, L.R_sus, P0s=(0.0, 80.0))
-yC = yaw_worst(CLAMP_R4, L.R_idler_cyc)
-yR = yaw_worst(CLAMP_R4, L.R_idler_stall)
+# yaw at the idler (no friction, no preload credited): sustained pretension, everyday reverse, reverse stall
+yS = yaw_worst(CLAMP_R5, L.R_sus, P0s=(0.0, 80.0))
+yC = yaw_worst(CLAMP_R5, L.R_idler_cyc)
+yR = yaw_worst(CLAMP_R5, L.R_idler_stall)
 print(f"idler clamp yaw (no friction, no preload credited; worst of x {XB[0]:.0f}-{XB[-1]:.0f}): reverse stall"
-      f" {L.R_idler_stall:.1f} N -> M {L.R_idler_stall * ARM_YAW:.0f} N*mm, prying bolt tension T {yR.T:.0f} N (lever"
-      f" {yR.lever:.2f} mm between the washer's and the nut's resultants), web strips up to {yR.q_strip:.1f} N/mm out of plane,"
-      f" end pieces up to {yR.V_end:.0f} N; steel plates {yR.sig_H:.0f} / {yR.sig_N:.0f} MPa")
-for tag, y, R, sf in (("pretension 10 N sustained (P 0 or 80 N)", yS, L.R_sus, SF_CYCLIC),
-                      (f"everyday reverse {L.R_idler_cyc:.1f} N cyclic", yC, L.R_idler_cyc, SF_CYCLIC),
-                      (f"reverse stall {L.R_idler_stall:.1f} N", yR, L.R_idler_stall, SF_STATIC)):
-    check(f"B5/B6 idler head plate on PETG (zone mean, peak {y.pH[1]:.1f} at x {y.pH[2]:.1f}), {tag}", y.pH[0], False, sf)
-    check(f"B5/B6 idler nut plate on the 3.4 mm web (zone mean, peak {y.pN[1]:.1f} at x {y.pN[2]:.1f}), {tag}", y.pN[0], False,
-          sf)
-    check(f"B12 web strip root, bending across layers at the nut slot's sharp corner (Kt {KT_SHARP}), {tag}", y.sig_strip,
-          True, sf)
-    check(f"B13 web strip root, shear along the layer at the strip root, {tag}", y.tau_strip, True, sf, shear=True)
-    check(f"B14 web end piece, bending at the nut slot's end corner (Kt {KT_SHARP} when the nut plate pushes), {tag}",
-          y.sig_end, False, sf)
+      f" {L.R_idler_stall:.1f} N -> M {L.R_idler_stall * ARM_YAW:.0f} N*mm, prying bolt tension T {yR.T_min:.0f}-{yR.T:.0f} N"
+      f" (lever >= {yR.lever:.2f} mm between the washers' resultants), strips up to {yR.q_strip:.2f} N/mm out of plane, bolt"
+      f" body yaw <= {yR.theta * 1000:.2f} mrad; steel plates {yR.sig_H:.0f} / {yR.sig_N:.0f} MPa")
+for tag, y, sf in (("pretension 10 N sustained (P 0 or 80 N)", yS, SF_CYCLIC),
+                   (f"everyday reverse {L.R_idler_cyc:.1f} N cyclic", yC, SF_CYCLIC),
+                   (f"reverse stall {L.R_idler_stall:.1f} N", yR, SF_STATIC)):
+    check(f"B5 idler head plate on the recess floor (zone mean, peak {y.pH[1]:.1f} at x {y.pH[2]:.1f}, bolt at x"
+          f" {y.pH[3]:.0f}), {tag}", y.pH[0], False, sf)
+    check(f"B6 idler nut plate on the wall's outer face (zone mean, peak {y.pN[1]:.1f} at x {y.pN[2]:.1f}, bolt at x"
+          f" {y.pN[3]:.0f}), {tag}", y.pN[0], False, sf)
+    check(f"B12 8.0 mm PETG between the plates: strip root beside the bolt slot, bending across layers (Kt {KT_SHARP} at"
+          f" every root), {tag}", y.sig_strip, True, sf)
+    check(f"B13 strip root, shear along the layer, {tag}", y.tau_strip, True, sf, shear=True)
 # drop: the 5 cm front corner tilts the idler bolt about X
-tD = tilt_worst(CLAMP_R4, L.drop, up=True)
-print(f"idler clamp tilt, 5 cm front corner {L.drop:.1f} N up at the track plane: prying T {tD.T:.0f} N (lever z"
-      f" {ZH_TILT:.2f} + {ZN_TILT:.2f}); web top strip {tD.qN:.1f} N/mm, bottom strip {tD.qH:.1f} N/mm out of plane")
-check(f"B15 web top strip root under the nut plate's top strip, across layers (Kt {KT_SHARP}), 5 cm front corner",
-      tD.sig_N_side, True, SF_STATIC, drop=True)
-check("B15 web top strip root, shear along the layer, 5 cm front corner", tD.tau_N_side, True, SF_STATIC, shear=True,
-      drop=True)
-check("B15 web bottom strip under the head plate (inner face; recess-floor corner), 5 cm front corner", tD.sig_H_side, True,
+tD = tilt_worst(CLAMP_R5, L.drop, up=True)
+print(f"idler clamp tilt, 5 cm front corner {L.drop:.1f} N up at the track plane: prying T {tD.T:.0f} N (lever"
+      f" {tD.lever:.2f}); top strip (nut side) {tD.qN:.2f} N/mm, bottom strip (head side) {tD.qH:.2f} N/mm out of plane")
+print(f"  drop worst bolt positions: nut side x {tD.x_N:.0f}, head side x {tD.x_H:.0f}")
+check(f"B15 top strip root under the nut plate (outer face; Kt {KT_SHARP}), across layers, 5 cm front corner", tD.sig_N, True,
       SF_STATIC, drop=True)
-# steel plates and steel bearing (reverse stall; drop)
-check_metal("B16 steel head plate bending (slotted section), reverse stall", yR.sig_H, SY_PLATE_MPA)
-check_metal("B16 steel nut plate bending (slotted section), reverse stall", yR.sig_N, SY_PLATE_MPA)
-check_metal(f"B17 nut on the nut plate's two strips: mean steel bearing at T {yR.T:.0f} N, reverse stall", yR.p_nut,
-            SY_PLATE_MPA)
-check_metal(f"B17 Ø9 washer on the head plate: mean steel bearing at T {yR.T:.0f} N", yR.p_washer, SY_PLATE_MPA)
+check(f"B15 bottom strip root under the head plate (inner face: the recess floor's sharp edge, Kt {KT_SHARP}), 5 cm front"
+      f" corner", tD.sig_H, True, SF_STATIC, drop=True)
+check("B15 strip root, shear along the layer, 5 cm front corner", max(tD.tau_N, tD.tau_H), True, SF_STATIC, shear=True,
+      drop=True)
+# the drop's shear: the nut plate has nothing over it (no roof, the stops only locate X), and the bolt is 1.05 mm under the
+# PETG slot's top, so the head plate's slot edge takes the shear and its top back edge meets the recess's 45° roof after 0.4
+check(f"B4 head plate's top back edge on the recess's 45° roof (all of the drop shear on a 0.3 mm wide line, {P_LEN} long),"
+      f" 5 cm front corner", L.drop / (P_LEN * 0.3), False, SF_STATIC, drop=True)
+# steel plates and steel bearing (reverse stall)
+check_metal(f"B16 steel head plate bending (slotted section, {TP_MIN} thick), reverse stall", yR.sig_H, SY_PLATE_MPA)
+check_metal(f"B16 steel nut plate bending (slotted section, {TP_MIN} thick), reverse stall", yR.sig_N, SY_PLATE_MPA)
+check_metal(f"B17 Ø9 washer on the nut plate: mean steel bearing at T {yR.T:.0f} N, reverse stall", yR.p_nut, SY_PLATE_MPA)
+check_metal(f"B17 Ø9 washer on the head plate: mean steel bearing at T {yR.T:.0f} N, reverse stall", yR.p_washer, SY_PLATE_MPA)
+A_NUT_FACE = math.pi / 4 * (F.NUT[0] ** 2 - (2 * R_HOLE_W) ** 2)
+check_metal(f"B17 M3 nut's face on its Ø9 washer (Ø{F.NUT[0]} - Ø{2 * R_HOLE_W}) at T {yR.T:.0f} N, reverse stall",
+            yR.T / A_NUT_FACE, SY_PLATE_MPA)
+
+# --- the nut plate's seat: end stops and lip (round 5, the designer's addition) ----------------------------------------
+# What reaches them. Nothing in the clamp rows above is credited to friction. But friction is a DEMAND on the stops: the
+# bolt body yaws about the jack screw's tip (the theta above), so the nut-side washer, 14.6 mm from the jack line, wants to
+# slide rearward on the nut plate by theta x 14.6 (about 0.01-0.03 mm), far more than a 1 mm PETG stop needs to build up
+# the full friction force. So the washer drags the plate into its rear stop with mu (T + P), capped by R (friction can't
+# carry more than the bolt receives; the jack screw carries the rest). Oiled steel (mu 0.2, BUILD_GUIDE step 3) with the
+# step-3 snug still present (P 89 N, S1) is used, as in S1. Credit is taken neither for the PETG face's friction behind
+# the plate nor for the jack screw's share. While tensioning, the jack pushes the bolt forward and the washer drags the plate
+# into its FRONT stop with mu P. The head plate's ends bear on the solid recess ends (x 108: the buttress face; x 129).
+T_SNUG_NMM, K_OIL, MU_OIL, K_DRY, MU_DRY = 40.0, 0.15, 0.2, 0.2, 0.6
+P_snug = T_SNUG_NMM / (K_OIL * 3.0)                  # 89 N (S1)
+STOP_ARM = p.LIP_OUT / 2                             # 0.5: plate end bears on the stop's face over |y| 38-39
+STOP_BEAR = min(p.LIP_OUT, TP_MIN) * P_H             # 10 mm²: 1.0 of the plate's thickness x its 10 mm height
+
+
+def stop_rows(tag, Fx, sf, info=False, stop_w=None):
+    w = p.STOP_W if stop_w is None else stop_w
+    check(f"B18 nut plate's end on its end stop: bearing ({min(p.LIP_OUT, TP_MIN):.1f} x {P_H:.0f}), {tag}",
+          Fx / STOP_BEAR, False, sf, info=info)
+    check(f"B18 end stop root ({w} x {STOP_H:.1f} at the wall face, plate at arm {STOP_ARM}): bending (Kt {KT_SHARP}, sharp"
+          f" corner on the loaded face), {tag}", bend_rect(Fx * STOP_ARM, STOP_H, w), False, sf, Kt=KT_SHARP, info=info)
+    check(f"B18 end stop root: shear, {tag}", 1.5 * Fx / (w * STOP_H), False, sf, shear=True, info=info)
+
+
+def stop_demand(R, T):
+    return min(R, MU_OIL * (T + P_snug))
+
+
+yS0 = yaw_worst(CLAMP_R5, L.R_sus)                   # prying T with no preload (the snug's P is added in stop_demand)
+stop_cases = ((f"pretension {L.R_sus:.0f} N sustained", L.R_sus, yS0.T, SF_CYCLIC),
+              (f"everyday reverse {L.R_idler_cyc:.1f} N cyclic", L.R_idler_cyc, yC.T, SF_CYCLIC),
+              (f"reverse stall {L.R_idler_stall:.1f} N", L.R_idler_stall, yR.T, SF_STATIC))
+for tag, R, T, sf in stop_cases:
+    Fx = stop_demand(R, T)
+    stop_rows(f"rear stop, friction drag min(R, mu (T + P)) = min({R:.1f}, {MU_OIL} x ({T:.0f} + {P_snug:.0f})) ="
+              f" {Fx:.1f} N, {tag}", Fx, sf)
+F_tens = MU_OIL * P_snug
+stop_rows(f"front stop, tensioning (the jack slides the snug bolt forward; the washer drags the plate, mu P {F_tens:.1f} N)",
+          F_tens, SF_STATIC)
+check(f"B18h head plate's end on the recess end (x 108, solid buttress; {TP_MIN} x {P_H:.0f}), reverse stall"
+      f" {stop_demand(L.R_idler_stall, yR.T):.1f} N", stop_demand(L.R_idler_stall, yR.T) / (TP_MIN * P_H), False, SF_STATIC)
+# lip: in service it holds only the plate's own weight. The bolt rests on the PETG slot floor (Z_A - 1.7 printed), 0.2 above
+# the plates' slot bottoms, so downward bolt loads go to the PETG, not to the plates; upward ones lift the plate off its lip
+# (it then rises at most 0.4, to Z_A + 5.2: still between the stops, which reach Z_A + 5.2).
+LIP_ROOT_H = p.LIP_FACE + p.LIP_OUT                   # 2.0: lip depth at the wall face (1.0 face + 45° underside)
+LIP_BEAR = min(p.LIP_OUT, TP_MIN) * P_LEN            # 20.6 mm²: the plate's bottom edge on the lip, 1.0 of its thickness
+F_lip_drop = m_nut_plate * 1e-3 * G_MS2 * (2 * H_DROP_MM / DELTA_MM)
+check(f"B19 lip under the nut plate, root bending (Kt {KT_SHARP}): the plate's own mass at the drop's"
+      f" {2 * H_DROP_MM / DELTA_MM:.0f} g ({F_lip_drop:.2f} N)", bend_rect(F_lip_drop * STOP_ARM, P_LEN, LIP_ROOT_H), False,
+      SF_STATIC, Kt=KT_SHARP, drop=True)
+
 # jack screw: self-tapped M3 in the Ø2.6 printed pilot through the 6.5 mm buttress; teardrop leaves 270° of thread
 L_jack = p.JACK_X[1] - p.JACK_X[0]
 A_strip = math.pi * 3.0 * L_jack * 0.5 * 0.75        # thread-fill 0.5 (rounds 1-2), teardrop 270°
@@ -856,9 +886,8 @@ F_JACK_CAP = A_strip * allow_mpa(True, True)         # 143.6 N at the across-lay
 check(f"B7 jack-screw thread strip-out ({L_jack:.1f} mm, Ø{p.JACK_PILOT} pilot), reverse stall {L.R_idler_stall:.1f} N",
       L.R_idler_stall / A_strip, True, SF_STATIC, shear=True)
 check(f"B8 jack-screw thread, pretension {L.R_sus:.0f} N sustained", L.R_sus / A_strip, True, SF_CYCLIC, shear=True)
-# S1: tensioning slides the snugged bolt over two oiled steel faces (washer on head plate, nut on nut plate): 2 mu P + 2 T0
-T_SNUG_NMM, K_OIL, MU_OIL, K_DRY, MU_DRY = 40.0, 0.15, 0.2, 0.2, 0.6
-P_snug = T_SNUG_NMM / (K_OIL * 3.0)
+# S1: tensioning slides the snugged bolt: the head's Ø9 washer on the head plate and the nut's Ø9 washer on the nut plate,
+# both oiled steel on steel (BUILD_GUIDE step 3): 2 mu P + 2 T0
 F_slide = 2 * MU_OIL * P_snug + L.R_sus
 check(f"B7t jack-screw thread while tensioning: snug {T_SNUG_NMM / 1000:.2f} N*m (K {K_OIL}: P {P_snug:.0f} N), oiled plates"
       f" (mu {MU_OIL}): thrust {F_slide:.0f} N", F_slide / A_strip, True, SF_STATIC, shear=True)
@@ -870,6 +899,7 @@ check_metal(f"B10 idler M3 x 40 class 12.9: bending at the head face (y {y_boss:
             bend_round(L.R_idler_stall * (F.Y_T - y_boss), D3_M3), SY_129_MPA)
 check_metal(f"B11 idler M3 x 40 class 12.9: bending at the outer face, 5 cm front corner x {arm_bolt:.0f}",
             bend_round(L.drop * arm_bolt, D3_M3), SY_129_MPA, drop=True)
+
 
 # ---- C. drivetrain concept C: N20 rolled 45° in the diamond pocket; nacelle 2 mm, skin 2 mm, track plane 11 mm out ------
 hx, hy = (M.gb_w + p.GB_CLR) / 2, (M.gb_h + p.GB_CLR) / 2     # printed pocket half sizes 6.1 x 5.1 (CAD + HOLE_COMP)
@@ -1052,35 +1082,134 @@ check_metal("proof 5 kg at the rim centre: M3 class 12.9 at the outer face", ben
             SF_PROOF, info=True)
 check_metal("if A2-70 (fully threaded stainless) bolts are fitted instead: 5 cm drop", bend_round(L.drop * arm_bolt, D3_M3),
             SY_A2_70_MPA, info=True)
-# clamp: peaks, bounds and sensitivities of the governing rows
-check(f"B6 head plate on PETG, reverse stall: PEAK (at a width step of the 1-D model) {yR.pH[1]:.1f} at x {yR.pH[2]:.1f}",
+# clamp (round 5): peaks, corner factors, sensitivities, the §8 proof loads, the round-4 FIX cross-check, options
+check(f"B5 head plate on PETG, reverse stall: PEAK (at a width step of the 1-D model) {yR.pH[1]:.1f} at x {yR.pH[2]:.1f}",
       yR.pH[1], False, SF_STATIC, info=True)
-check(f"B6n nut plate on the web, reverse stall: PEAK {yR.pN[1]:.1f} at x {yR.pN[2]:.1f}", yR.pN[1], False, SF_STATIC,
-      info=True)
-check("B12 web strip root, reverse stall, WITHOUT the corner Kt (nominal)", yR.sig_strip_out / KT_SHARP, True, SF_STATIC,
-      info=True)
-check("B15 web top strip root, 5 cm front corner, WITHOUT the corner Kt (nominal)", tD.sig_N_side / KT_SHARP, True, SF_STATIC,
-      info=True)
-for lab, kw in (("washer bearing only to r 3.55 (head edge + 45° through the washer)", dict(r_e=3.55)),
-                ("PETG foundation 500 N/mm³", dict(ks=500.0)), ("root fully rigid (root_soft 1.0)", dict(root_soft=1.0)),
-                ("roots twice as soft (2.0)", dict(root_soft=2.0)), ("end pieces 3x stiffer", dict(k_end=3 * K_END)),
-                ("end pieces half as stiff", dict(k_end=K_END / 2))):
-    ys = yaw_worst(CLAMP_R4, L.R_idler_stall, **kw)
-    check(f"B12 sensitivity, {lab}: web strip root (Kt {KT_SHARP}), reverse stall", ys.sig_strip, True, SF_STATIC, info=True)
-# spec §8 proof loads on the round-4 clamp (SF_PROOF 1.0: must not damage a good part)
-yP = yaw_worst(CLAMP_R4, L.R_idler_proof)
-check(f"proof: reverse stall at 100 % PWM fresh pack ({L.R_idler_proof:.1f} N, §8 test 2): web strip root (Kt {KT_SHARP})",
-      yP.sig_strip, True, SF_PROOF, info=True)
+check(f"B6 nut plate on PETG, reverse stall: PEAK {yR.pN[1]:.1f} at x {yR.pN[2]:.1f}", yR.pN[1], False, SF_STATIC, info=True)
+check("B15 bottom strip root under the head plate, 5 cm front corner, WITHOUT the corner Kt (nominal)", tD.sig_H / KT_SHARP,
+      True, SF_STATIC, info=True)
+tK = tilt_worst(dict(CLAMP_R5, kt_out_top=1.0), L.drop, up=True)
+check("B15 top strip root under the nut plate with Kt 1.0 (the outer face is flat at that root), 5 cm front corner", tK.sig_N,
+      True, SF_STATIC, info=True)
+
+
+def bolt_frame(bz):
+    """CLAMP_R5 with the bolt axis at Z_A + bz instead of on the printed slot floor."""
+    return dict(CLAMP_R5, po=PLATE_MID - bz, rt=p.PLATE_RECESS_Z - bz, rb=p.PLATE_RECESS_Z + bz, sh=SLOT_HI - bz,
+                sl=-SLOT_LO + bz)
+
+
+for lab, g_, kw in (("roots rigid (root_soft 1.0)", CLAMP_R5, dict(root_soft=1.0)),
+                    ("roots twice as soft (2.0)", CLAMP_R5, dict(root_soft=2.0)),
+                    ("uncut band 3x softer (k_end 10000)", CLAMP_R5, dict(k_end=10000.0)),
+                    ("uncut band 3x stiffer (k_end 90000)", CLAMP_R5, dict(k_end=90000.0)),
+                    ("metric 2.0 mm plates", dict(CLAMP_R5, tp=2.0), {}),
+                    ("bolt on the CAD slot floor (Z_A - 0.3)", bolt_frame(-0.3), {}),
+                    ("bolt up against the plates' slot tops (Z_A + 0.0)", bolt_frame(0.0), {})):
+    yy = yaw_worst(g_, L.R_idler_stall, **kw)
+    tt = tilt_worst(g_, L.drop, up=True, **kw)
+    check(f"sensitivity, {lab}: strip root (Kt {KT_SHARP}), reverse stall", yy.sig_strip, True, SF_STATIC, info=True)
+    check(f"sensitivity, {lab}: strip roots (Kt {KT_SHARP}), 5 cm front corner", max(tt.sig_N, tt.sig_H), True, SF_STATIC,
+          info=True)
+    check(f"sensitivity, {lab}: strip shear, 5 cm front corner", max(tt.tau_N, tt.tau_H), True, SF_STATIC, shear=True,
+          info=True)
+ye = yaw_worst(CLAMP_R5, L.R_idler_stall, r_e=3.55)
+check("sensitivity, washers bearing only to r 3.55 (head/nut edge + 45° through the washer): head plate on PETG (zone"
+      " mean), reverse stall", ye.pH[0], False, SF_STATIC, info=True)
+check("sensitivity, washers bearing only to r 3.55: strip root, reverse stall", ye.sig_strip, True, SF_STATIC, info=True)
+
+# spec §8 proof loads (SF_PROOF 1.0: a proof load must not damage a good part), at the slot's front end (where §8 test 1
+# puts the idler bolt) and at the worst slot position
 R44 = 4.5 * G_MS2
-y44 = yaw_worst(CLAMP_R4, R44)
-check(f"proof: 4.5 kg ({R44:.0f} N) rearward pull on the idler (§8 test 1): web strip root (Kt {KT_SHARP})", y44.sig_strip,
-      True, SF_PROOF, info=True)
-check(f"proof: 4.5 kg rearward pull: web end piece (Kt {KT_SHARP})", y44.sig_end, False, SF_PROOF, info=True)
-t5 = tilt_worst(CLAMP_R4, F_prf, up=False)
-check(f"proof: 5 kg ({F_prf:.0f} N) hung from the idler (§8 test 1, pulls down): web bottom strip root (Kt {KT_SHARP})",
-      t5.sig_N_side, True, SF_PROOF, info=True)
+for lab, xbs in ((f"bolt at the slot's front end (x {X_FRONT:.0f})", [X_FRONT]), ("worst slot position", None)):
+    yP = yaw_worst(CLAMP_R5, L.R_idler_proof, xbs=xbs)
+    y44 = yaw_worst(CLAMP_R5, R44, xbs=xbs)
+    t5 = tilt_worst(CLAMP_R5, F_prf, up=False, xbs=xbs)
+    print(f"  proof, {lab}: 44 N pull worst at x {y44.x_strip:.0f} (strip) / {y44.pH[3]:.0f} (head plate); 49 N hang worst at"
+          f" x {t5.x_N:.0f} (nut side) / {t5.x_H:.0f} (head side)")
+    check(f"proof {L.R_idler_proof:.1f} N reverse stall (§8 test 2), {lab}: strip root (Kt {KT_SHARP})", yP.sig_strip, True,
+          SF_PROOF, info=True)
+    check(f"proof {L.R_idler_proof:.1f} N reverse stall, {lab}: head plate on PETG (zone mean)", yP.pH[0], False, SF_PROOF,
+          info=True)
+    check(f"proof {R44:.0f} N rearward pull (§8 test 1), {lab}: strip root (Kt {KT_SHARP})", y44.sig_strip, True, SF_PROOF,
+          info=True)
+    check(f"proof {R44:.0f} N rearward pull, {lab}: strip shear", y44.tau_strip, True, SF_PROOF, shear=True, info=True)
+    check(f"proof {R44:.0f} N rearward pull, {lab}: head plate on PETG (zone mean)", y44.pH[0], False, SF_PROOF, info=True)
+    check(f"proof {R44:.0f} N rearward pull, {lab}: nut plate on PETG (zone mean)", y44.pN[0], False, SF_PROOF, info=True)
+    check(f"proof {F_prf:.0f} N hung from the idler (§8 test 1, pulls down), {lab}: bottom strip root under the nut plate"
+          f" (the lip's corner, Kt {KT_SHARP})", t5.sig_N, True, SF_PROOF, info=True)
+    check(f"proof {F_prf:.0f} N hang, {lab}: top strip root under the head plate (Kt {KT_SHARP})", t5.sig_H, True, SF_PROOF,
+          info=True)
+    check(f"proof {F_prf:.0f} N hang, {lab}: strip shear", max(t5.tau_N, t5.tau_H), True, SF_PROOF, shear=True, info=True)
+y44w = yaw_worst(CLAMP_R5, R44)
+stop_rows(f"proof {R44:.0f} N rearward pull (§8 test 1), rear stop, min(R, mu (T + P)) {stop_demand(R44, y44w.T):.1f} N",
+          stop_demand(R44, y44w.T), SF_PROOF, info=True)
+check(f"proof {F_prf:.0f} N hang: the nut plate's bottom edge on its lip (bound: all of it, {LIP_BEAR:.1f} mm²)",
+      F_prf / LIP_BEAR, False, SF_PROOF, info=True)
+check(f"proof {F_prf:.0f} N hang: lip root bending (bound: all of it, Kt {KT_SHARP})",
+      bend_rect(F_prf * STOP_ARM, P_LEN, LIP_ROOT_H), False, SF_PROOF, Kt=KT_SHARP, info=True)
+check(f"proof {F_prf:.0f} N hang: the bolt on the PETG slot floor (Ø3 x {WEB_T:.0f})", F_prf / (3.0 * WEB_T), False, SF_PROOF,
+      info=True)
 check_metal(f"proof 5 kg on the idler bolt: M3 class 12.9 at the outer face", bend_round(F_prf * arm_bolt, D3_M3),
             SY_129_MPA, SF_PROOF, info=True)
+# end stops: what the friction demand would be with dry plates, and with the plate's end bearing only on the stop's tip
+P_dry = T_SNUG_NMM / (K_DRY * 3.0)
+stop_rows(f"if the plates are dry (mu {MU_DRY}): rear stop, reverse stall, min(R, mu (T + P)) "
+          f"{min(L.R_idler_stall, MU_DRY * (yR.T + P_dry)):.1f} N", min(L.R_idler_stall, MU_DRY * (yR.T + P_dry)), SF_STATIC,
+          info=True)
+check(f"end stop root bending with the plate bearing on the stop's outer edge only (arm {p.LIP_OUT}), reverse stall"
+      f" {stop_demand(L.R_idler_stall, yR.T):.1f} N (Kt {KT_SHARP})",
+      bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, p.STOP_W), False, SF_STATIC, Kt=KT_SHARP, info=True)
+check(f"end stop root bending if the merged lip under it is counted (section {p.STOP_W} x {STOP_H + LIP_ROOT_H - p.LIP_FACE / 2:.1f}),"
+      f" reverse stall (Kt {KT_SHARP})", bend_rect(stop_demand(L.R_idler_stall, yR.T) * STOP_ARM,
+                                                   STOP_H + LIP_ROOT_H - p.LIP_FACE / 2, p.STOP_W), False, SF_STATIC,
+      Kt=KT_SHARP, info=True)
+stop_rows(f"if the snug has crept away (P 0, prying T up to {yR.T:.0f} N only): rear stop, reverse stall"
+          f" {min(L.R_idler_stall, MU_OIL * yR.T):.1f} N", min(L.R_idler_stall, MU_OIL * yR.T), SF_STATIC, info=True)
+# assembly: BUILD_GUIDE step 3 holds the nut and turns the head, so the nut-side washer doesn't turn on the nut plate. If the
+# nut were turned instead, its washer would try to turn the plate (mu P r_m) and the lip would react it at the plate's end
+# nearer the bolt (lever >= 7.8 mm at the slot's rear end), on the plate's corner (taken over 2 mm of lip, root over 4 mm)
+r_m = 2 / 3 * (WASHER_R ** 3 - R_HOLE_W ** 3) / (WASHER_R ** 2 - R_HOLE_W ** 2)
+lev_lip = XB[0] - N0
+for lab, mu, Pq in (("oiled", MU_OIL, P_snug), ("dry", MU_DRY, T_SNUG_NMM / (K_DRY * 3.0))):
+    F_c = mu * Pq * r_m / lev_lip
+    check(f"assembly, if the nut is turned instead of the head ({lab}, mu {mu}, P {Pq:.0f} N): plate corner on the lip"
+          f" ({F_c:.1f} N on 2 x {p.LIP_OUT})", F_c / (2.0 * min(p.LIP_OUT, TP_MIN)), False, SF_STATIC, info=True)
+    check(f"assembly, if the nut is turned instead of the head ({lab}): lip root bending over 4 mm (Kt {KT_SHARP})",
+          bend_rect(F_c * STOP_ARM, 4.0, LIP_ROOT_H), False, SF_STATIC, Kt=KT_SHARP, info=True)
+# the smallest fix for the end stops: STOP_W 1.5 -> 2.0 (inner faces unchanged at x 108 / 129: stops x 106.0-108, 129-131)
+for tag, R, T, sf in stop_cases:
+    Fx = stop_demand(R, T)
+    check(f"FIX STOP_W 2.0: end stop root bending (Kt {KT_SHARP}), {tag} ({Fx:.1f} N)", bend_rect(Fx * STOP_ARM, STOP_H, 2.0),
+          False, sf, Kt=KT_SHARP, info=True)
+check(f"FIX STOP_W 2.0: end stop root bending, the plate on the stop's outer edge only (arm {p.LIP_OUT}), reverse stall",
+      bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, 2.0), False, SF_STATIC, Kt=KT_SHARP, info=True)
+check(f"FIX+ STOP_W 2.5 (more margin): end stop root bending, the plate on the stop's outer edge only (arm {p.LIP_OUT}),"
+      f" reverse stall", bend_rect(stop_demand(L.R_idler_stall, yR.T) * p.LIP_OUT, STOP_H, 2.5), False, SF_STATIC,
+      Kt=KT_SHARP, info=True)
+check(f"FIX STOP_W 2.0: end stop root bending, proof {R44:.0f} N pull", bend_rect(stop_demand(R44, y44w.T) * STOP_ARM, STOP_H,
+      2.0), False, SF_PROOF, Kt=KT_SHARP, info=True)
+f_fs = 129.0 + 2.0
+y_fillet = F.HALF_W_OUT - p.CORNER_R + math.sqrt(p.CORNER_R ** 2 - (f_fs - (F.X_FRONT_OUT - p.CORNER_R)) ** 2)
+print(f"FIX STOP_W 2.0 fit: the front stop then ends at x {f_fs:.1f}, where the r{p.CORNER_R:.0f} corner fillet's face is at"
+      f" |y| {y_fillet:.2f}: the stop (from |y| {F.HALF_W_OUT - 1.0:.0f}) still joins it; the rear stop ends at x"
+      f" {p.NUT_PLATE_X[0] - 2.0:.1f}, on the flat outer face")
+# option offered in round 4 and not taken: 1 x 45° chamfer on the recess floor's edge (Kt 1.6 there)
+tC = tilt_worst(dict(CLAMP_R5, kt_in_bot=1.6), L.drop, up=True)
+check("option (not required): 1 x 45° chamfer on the recess floor's edge (Kt 1.6): bottom strip root, 5 cm front corner",
+      tC.sig_H, True, SF_STATIC, info=True)
+# round 4's FIX model recomputed with this script's functions (must give round 4's predictions back)
+fR4 = yaw_worst(CLAMP_R4FIX, L.R_idler_stall)
+fD4 = tilt_worst(CLAMP_R4FIX, L.drop, up=True)
+check("round 4 FIX model, recomputed: head plate on PETG (zone mean), reverse stall (round 4: 6.45)", fR4.pH[0], False,
+      SF_STATIC, info=True)
+check("round 4 FIX model, recomputed: bottom strip under the head plate, 5 cm front corner (round 4: 3.02)", fD4.sig_H, True,
+      SF_STATIC, info=True)
+check("round 4 FIX model, recomputed: strip shear, 5 cm front corner (round 4: 3.05)", max(fD4.tau_N, fD4.tau_H), True,
+      SF_STATIC, shear=True, info=True)
+check("round 4 FIX model, recomputed: top strip under the nut plate, 5 cm front corner (round 4: 3.42)", fD4.sig_N, True,
+      SF_STATIC, info=True)
+
 # S1: snug torque against the jack-screw thread (capacity at the allowable: F_JACK_CAP)
 for T_nm in (0.02, 0.04, 0.05, 0.1, 0.3):
     for lab, Kk, mu in (("oiled", K_OIL, MU_OIL), ("dry", K_DRY, MU_DRY)):
@@ -1106,64 +1235,9 @@ check(f"C9 skin, sideways friction in a corner drop (mu {mu_drop} x {L.drop:.1f}
 F_s08 = S08_6V_NMM[-1][1] / F.RP
 check(f"S-08 ungated 196 N*mm motor: skin shear, track stall ({lev_h:.2f} x {T0_N * 2 + F_s08:.1f} N)",
       skin_tau(lev_h * (2 * T0_N + F_s08)), True, SF_STATIC, shear=True, info=True)
-check(f"head plate's top edge on the recess's 45° roof (all the drop shear on a 0.3 mm wide line, {H_LEN} long), 5 cm front"
-      f" corner", L.drop / (H_LEN * 0.3), False, SF_STATIC, info=True)
-# FIX: nut plate on the wall's flat outer face with a Ø9 washer under the nut (CLAMP_FIX): every clamp row again, and its
-# proof loads. All FIX rows are advisory; they are the evidence for the required change in strength.md.
-fS = yaw_worst(CLAMP_FIX, L.R_sus, P0s=(0.0, 80.0))
-fC = yaw_worst(CLAMP_FIX, L.R_idler_cyc)
-fR = yaw_worst(CLAMP_FIX, L.R_idler_stall)
-fP = yaw_worst(CLAMP_FIX, L.R_idler_proof)
-f44 = yaw_worst(CLAMP_FIX, R44)
-fD = tilt_worst(CLAMP_FIX, L.drop, up=True)
-f5 = tilt_worst(CLAMP_FIX, F_prf, up=False)
-fT = CLAMP_FIX["web_t"]
-for tag, y, sf in (("pretension sustained (P 0 or 80 N)", fS, SF_CYCLIC), ("everyday reverse cyclic", fC, SF_CYCLIC),
-                   ("reverse stall", fR, SF_STATIC)):
-    check(f"FIX head plate on PETG (zone mean), {tag}", y.pH[0], False, sf, info=True)
-    check(f"FIX nut plate on the wall's outer face (zone mean), {tag}", y.pN[0], False, sf, info=True)
-    check(f"FIX {fT:.1f} mm PETG between the plates: strip root across layers (Kt {KT_SHARP} at both faces), {tag}",
-          y.sig_strip, True, sf, info=True)
-    check(f"FIX strip root, shear along the layer, {tag}", y.tau_strip, True, sf, shear=True, info=True)
-check(f"FIX top strip root under the nut plate (Kt {KT_SHARP}), 5 cm front corner", fD.sig_N_side, True, SF_STATIC, info=True)
-check(f"FIX bottom strip root under the head plate, recess floor edge (Kt {KT_SHARP}), 5 cm front corner", fD.sig_H_side, True,
-      SF_STATIC, info=True)
-check("FIX strip root, shear along the layer, 5 cm front corner", max(fD.tau_N_side, fD.tau_H_side), True, SF_STATIC,
-      shear=True, info=True)
-check_metal("FIX steel plates bending, reverse stall (both 20.6 x 10 x 2)", max(fR.sig_H, fR.sig_N), SY_PLATE_MPA, info=True)
-check_metal(f"FIX jack screw unchanged; idler M3 x 40 at the outer face, 5 cm front corner x {arm_bolt:.0f}",
-            bend_round(L.drop * arm_bolt, D3_M3), SY_129_MPA, info=True)
-check(f"FIX proof {L.R_idler_proof:.1f} N reverse stall (§8 test 2): strip root", fP.sig_strip, True, SF_PROOF, info=True)
-check(f"FIX proof {R44:.0f} N rearward pull (§8 test 1): strip root", f44.sig_strip, True, SF_PROOF, info=True)
-check(f"FIX proof {R44:.0f} N rearward pull: head plate on PETG (zone mean)", f44.pH[0], False, SF_PROOF, info=True)
-check(f"FIX proof {F_prf:.0f} N hung from the idler (§8 test 1): strip root under the nut plate", f5.sig_N_side, True, SF_PROOF,
-      info=True)
-check(f"FIX proof {F_prf:.0f} N hung from the idler: shear along the layer", max(f5.tau_N_side, f5.tau_H_side), True,
-      SF_PROOF, shear=True, info=True)
-check(f"FIX nut plate's bottom edge on its lip ({H_LEN} x {F.PLATE_T}), {F_prf:.0f} N hang", F_prf / (H_LEN * F.PLATE_T),
-      False, SF_STATIC, info=True)
-fRs = yaw_worst(CLAMP_FIX, L.R_idler_stall, k_end=10000.0, root_soft=1.0)
-check("FIX sensitivity (wall beyond the bolt slot 3x softer, rigid roots): strip root, reverse stall", fRs.sig_strip, True,
-      SF_STATIC, info=True)
-fDs = tilt_worst(CLAMP_FIX, L.drop, up=True, root_soft=1.0)
-check("FIX sensitivity (rigid roots): strip root shear, 5 cm front corner", max(fDs.tau_N_side, fDs.tau_H_side), True,
-      SF_STATIC, shear=True, info=True)
-fDn = tilt_worst(CLAMP_FIX_NOWASHER, L.drop, up=True)
-check("NOT ENOUGH: the same move without the washer under the nut: shear along the layer, 5 cm front corner",
-      max(fDn.tau_N_side, fDn.tau_H_side), True, SF_STATIC, shear=True, info=True)
-fDr = tilt_worst(CLAMP_FIX_RECESS, L.drop, up=True)
-check("NOT ENOUGH: the nut plate in a 0.5 mm locating recess instead of on a lip: shear along the layer, 5 cm front corner",
-      max(fDr.tau_N_side, fDr.tau_H_side), True, SF_STATIC, shear=True, info=True)
-# thickening the web inside the wall instead (keeps the nut slot and its sharp root corners)
-for lab, wt in (("web 5.4: idler-block face 2 mm inward (needs JACK_Y 23.4, JACK_Y_IN 20, JACK_X from 102.5)", 5.4),
-                ("web 4.0: DIN 439 thin nut (1.8), nut slot 0.6 shallower", 4.0)):
-    gw_ = dict(CLAMP_R4, web_t=wt)
-    check(f"NOT ENOUGH: {lab}: web strip root (Kt {KT_SHARP}), reverse stall", yaw_worst(gw_, L.R_idler_stall).sig_strip, True,
-          SF_STATIC, info=True)
-    check(f"NOT ENOUGH: {lab}: web top strip root (Kt {KT_SHARP}), 5 cm front corner",
-          tilt_worst(gw_, L.drop, up=True).sig_N_side, True, SF_STATIC, info=True)
-print(f"FIX clamp: T {fR.T:.0f} N at the reverse stall; strips up to {fR.q_strip:.1f} N/mm; drop T {fD.T:.0f} N, strips"
-      f" {fD.qN:.1f} / {fD.qH:.1f} N/mm; plates {fR.sig_H:.0f} / {fR.sig_N:.0f} MPa; idler hub {IDLER_HUB_SHORTER:.1f} mm shorter")
+print(f"round-5 clamp: T {yR.T_min:.0f}-{yR.T:.0f} N at the reverse stall (bolt yaw <= {yR.theta * 1000:.2f} mrad); drop T"
+      f" {tD.T:.0f} N, strips {tD.qN:.2f} / {tD.qH:.2f} N/mm; plates {yR.sig_H:.0f} / {yR.sig_N:.0f} MPa; strip arms"
+      f" {a_top5:.3f} / {a_bot5:.3f}")
 print(f"inserts: Ø{p.INSERT_D} holes have no HOLE_COMP and print about Ø{p.INSERT_D - HC:.1f} (round 3 note, unchanged)")
 
 report(f"{JOB} strength checks")
