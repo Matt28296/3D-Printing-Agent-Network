@@ -28,3 +28,4 @@
 - 2026-10-26T19:05Z · architect · user approved round 6 (ridge-first seat) · cad-engineer started
 - 2026-10-26T19:45Z · cad-engineer (round 6, user-approved) · model.py, cad_checks.py, strength_calc.py, design_brief.md, design_review.md, strength.md, part.step/stl; shared claw_frame.py, claw_sequence_check, BUILD_GUIDE.md · ok (merged)
 - 2026-10-26T19:45Z · architect · spec §1/§2/§3/§8 updated for round 6 · ok
+- 2026-10-26T20:30Z · design-reviewer + strength-reviewer (round 6) · design_review.md, strength.md, strength_calc.py · DFM FAIL (bare heads), strength FAIL 2.49 (top screw heads at preload) · escalated

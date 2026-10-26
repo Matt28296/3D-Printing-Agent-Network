@@ -3,18 +3,20 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 4,
+    "DESIGN": 5,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 6 built (ridge-first seat): CAD DFM PASS, CAD-side strength NEEDS_TEST 3.00; independent review next",
+    "DESIGN": "round 6 review: DFM PASS; strength FAIL 2.73 \u2014 top M3 \u00d7 10 pull-out at snug preload. Fix with the cover: M3 \u00d7 14 + washer (pull-out 4.12). Escalated",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [],
+  "open_questions": [
+    "Round 7: M3 \u00d7 14 + \u00d87 washers (top), FRONT_SCREWS z 2.5 + \u00d86 washers (front)?"
+  ],
   "updated": "2026-10-26T16:09:12+00:00"
 }
