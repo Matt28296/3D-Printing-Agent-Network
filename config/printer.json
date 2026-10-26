@@ -15,10 +15,13 @@
   "materials_on_hand": [],
   "prusaslicer_path": "prusa-slicer",
   "profiles": {
-    "printer": "profiles/printer/MK3S.ini",
-    "print_default": "profiles/print/0.20mm_QUALITY_MK3S.ini",
-    "filament": {}
+    "printer": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
+    "print_default": "profiles/print/0.20mm_QUALITY_@MK3.ini",
+    "filament": {
+      "PETG": "profiles/filament/Prusament_PETG.ini"
+    }
   },
   "transfer": "sd_card",
-  "sd_drive": ""
+  "sd_drive": "",
+  "_profiles_note": "Prusa stock presets flattened by tools/vendor_profiles.py on 2026-10-25 (no user-exported profiles yet)."
 }

@@ -1,0 +1,25 @@
+{
+ "filament_type": "PETG",
+ "nozzle_diameter": 0.4,
+ "min": {
+  "perimeters": 3,
+  "top_solid_layers": 4,
+  "bottom_solid_layers": 4,
+  "fill_density": 25
+ },
+ "max": {
+  "layer_height": 0.2
+ },
+ "equals": {
+  "fill_pattern": "gyroid"
+ },
+ "nozzle_temp_c": [
+  230,
+  250
+ ],
+ "bed_temp_c": [
+  80,
+  90
+ ],
+ "max_print_hours": 2
+}

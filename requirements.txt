@@ -1,6 +1,7 @@
 # Project virtualenv (.venv). Tested with Python 3.13 and these versions.
 build123d>=0.13,<0.14
 trimesh>=4.4
+manifold3d>=3.0        # mesh booleans for assembly interference checks
 numpy>=1.26
 scipy>=1.11
 rtree>=1.2
