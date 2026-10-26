@@ -63,6 +63,7 @@ All four plates are the same: 20.6 × 10 × 2 mm, with a 3.4 mm wide, 12 mm long
 ### Tools
 - 1.5 mm hex key, ball end, long arm: jack screws and hub set screws
 - 2.5 mm hex key (an L-key, with an 18 mm short arm)
+- 2.5 mm **ball-end** hex key (L-key, 18 mm short arm): the idler snug in step 3. A plain long arm (56 mm) doesn't fit between the idler blocks
 - 5.5 mm open-end spanner, or flat-nose pliers: holds each idler wall nut while you snug its bolt
 - Soldering iron, which also sets the inserts
 - Small vice or parallel pliers: track pins
@@ -132,7 +133,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
    - **Snug each idler bolt at the rear end of its slot,** to about 0.04 N·m and no more:
      - Push the bolt to the rear end of its slot.
      - Outside, hold the nut with the 5.5 mm spanner (or flat-nose pliers). Nothing else is in the way yet.
-     - Inside, put the **long** arm of the 2.5 mm key into the bolt head, and twist the key by its **short** arm with two fingertips until the head stops turning. Stop there.
+     - Inside, put the **ball end** of the 2.5 mm ball-end key into the bolt head, the long arm tilted 18–25° up so it passes over the opposite idler block (there is only about 50 mm between the blocks), and twist the key by its **short** arm with two fingertips until the head stops turning. Stop there.
      - How light that is: 0.04 N·m is about 230 g pushed at the tip of the key's 18 mm short arm. Before you start, press the short arm's tip onto the kitchen scale until it reads 230 g, to feel it. Don't lever on the long arm, and don't use a screwdriver-style hex driver: a normal "snug" (0.3 N·m) clamps the plates so hard that the jack screw strips its thread when it tries to slide the bolt (step 8).
    - From now on only the jack screw moves the idler bolt (step 8). Don't turn the idler bolt heads or nuts again.
 4. **Jack screws.** From behind, screw an M3 × 20 set screw into the hole in each idler buttress: the block behind the idler slot, inside the tub. Turn it with the 1.5 mm key until its tip touches the idler bolt head. It cuts its own thread in the first few turns.

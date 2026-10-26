@@ -37,7 +37,7 @@ Open-top tub, 154 × 76 × 40 mm with 4.5 mm walls, plus a motor housing and nac
 | Boss / idler-block faces | \|y\| 28.0 | ±0.2 | sets the bolt-head stack |
 | Jack-screw pilot | Ø2.6 printed (Ø2.8 CAD), axis \|y\| 25.4 | ±0.1 | M3 set screw taps its own thread |
 | Head-plate recess | 2.0 deep (= `PLATE_T`), x 108–129 (21.0 CAD), Z_A ± 5.2 + 45° roof | ±0.1 | 20.6 × 10 × 2 steel plate sits flush with the block face (\|y\| 28) |
-| Nut-plate seat (round 5) | lip top Z_A − 5.2, 1.0 proud; stops at x 108 / 129 | +0.2/−0 | 20.6 × 10 × 2 nut plate on the outer face; 8.0 mm PETG between the plates |
+| Nut-plate seat (round 5) | lip top Z_A − 5.2, 1.0 proud; stops at x 108 / 129 (21.0 CAD, prints ≈ 20.8) | stop gap ≥ 20.7 printed (the 20.6 plate drops in; file the stops if it doesn't) | 20.6 × 10 × 2 nut plate on the outer face; 8.0 mm PETG between the plates |
 | Insert holes | Ø4.0 × 6.5 (maker's size, no compensation) | ±0.1 | M3 × 5.7 heat-set insert |
 
 Motor, battery-holder and sensor sizes are nominal (tools/hobby_parts.py: N20_100RPM, BATT_2X18650_LONG, HCSR04). The motor is an N20 (GA12) 6 V, 100 rpm (≈150:1), low- or medium-power winding (stall ≤ 0.7 A at 6 V), 9 mm gearbox, 3 mm D-shaft 10 mm long from the gearbox face (at least 9.6 mm: a 9 mm shaft is too short for the sprocket's centre hole, sprocket strength round 4). An 11 mm gearbox also fits, because the gearbox face is the datum. Measure your N20 (gearbox section 12 × 10, can Ø12 with 10 mm flats, shaft Ø3 with a 2.5 mm D-flat) and your 2 × 18650 holder (up to 80 × 41 × 21) before printing, and give Claude any difference over 0.3 mm. Track pins: Ø2 × 24 mm steel dowel pins (ISO 8734 / ISO 2338, m6), or 2 mm steel rod cut to 23.5 mm and deburred.

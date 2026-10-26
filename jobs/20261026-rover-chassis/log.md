@@ -23,3 +23,6 @@
 - 2026-10-26T13:06Z · architect · user approved a fifth DESIGN round with the strength reviewer's fix (nut plate on the wall's outer face, nut slot deleted, Ø9 washer under the nut, idler hub 5.2 mm shorter); round 5 started · ok
 - 2026-10-26T13:41Z · architect · spec §1–§3 and §8 for round 5 (nut-plate seat, 0.04 N·m oiled snug, tests at the slot's front end, PETG round each plate in the pass criteria) · ok
 - 2026-10-26T13:41Z · architect (as head-orchestrator) · merged round 5 (3b368bd); cad_checks re-run; status.json: in review · ok
+- 2026-10-26T13:58Z · design-lead + cad-engineer (round 5, user-approved) · model.py: nut slot deleted (8.0 mm PETG between the plates), nut plate 20.6 × 10 × 2 on an outer-face seat (lip top Z_A − 5.2, stops x 108/129), Ø9 washer under the nut; cad_checks 50/50; assembly check 160 parts clean (merged 3b368bd) · ok
+- 2026-10-26T13:58Z · dfm-reviewer (round 5, independent) · design_review.md · PASS (seat prints without support; 8.0 mm bridge over the bolt slot; plates 1.72–2.17 fit; build-guide G1: ball-end key for the snug)
+- 2026-10-26T13:58Z · architect · BUILD_GUIDE step 3 and Tools: 2.5 mm ball-end key, tilted over the opposite block; spec §3 seat row gives printed targets · ok

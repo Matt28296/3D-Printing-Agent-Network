@@ -20,3 +20,5 @@
 - 2026-10-26T13:06Z · architect (as head-orchestrator) · user approved chassis round 5, which shortens this hub by 5.2 mm: status.json back to DESIGN (iterations unchanged: not a failure of this part), slice marked stale · ok
 - 2026-10-26T13:41Z · architect · spec §2 and §8 for the 14.8 mm part and the round 5 bolt stack · ok
 - 2026-10-26T13:41Z · architect (as head-orchestrator) · merged round 5 (3b368bd); cad_checks re-run; status.json: in review · ok
+- 2026-10-26T13:58Z · design-lead + cad-engineer (round 5) · model.py: hub 5.2 mm shorter (part 14.8 tall, hub from |y| 43.7); cad_checks 5/5 · ok
+- 2026-10-26T13:58Z · dfm-reviewer (round 5, independent) · design_review.md · PASS (no overhangs or bridges; hub wall 3.15; 3.6–4.5 mm past the nyloc)
