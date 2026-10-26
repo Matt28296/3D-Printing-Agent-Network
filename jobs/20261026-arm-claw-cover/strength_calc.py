@@ -1,9 +1,20 @@
-"""Strength check, round 3: jobs/20261026-arm-claw-cover (front plate in two pieces + two ties, top wall, 8 mm lip).
+"""Strength check, round 4: jobs/20261026-arm-claw-cover (front plate in two pieces + two ties, top wall, 8 mm lip, the
+second tie's 8 mm post seated on the frame's rail block and anchored there by one vertical M3 x 45).
 
 Run from the project root:  python3 jobs/20261026-arm-claw-cover/strength_calc.py
 Plain python3: parameters come from claw_frame.py, this job's model.py, the jaw's model.py and tools/hobby_parts.py
 (ast module). No build123d needed. Section widths quoted as "probed" were measured on the round 3 solid (design())
-with thin slabs; the script states them as numbers so it runs without the CAD venv.
+with thin slabs, and the second post's on the round 4 solid; the script states them as numbers so it runs without the
+CAD venv.
+
+Round 4 (independent re-check of the as-built anchor):
+- the anchor is in the model as built (ANCHOR2 = ANCHOR_AS_BUILT, from ANCHOR_XY in claw_frame.py);
+- the anchor's x hold is checked two ways: (a) the snug preload's friction holds the post's foot at once (round 3's
+  what-if), (b) the preload has crept away (fdm-design-rules §4: do not count on preload in PETG), so the foot slides
+  through the hole's radial clearance before the shank bears: the cover takes the push the unanchored way (z still held:
+  seat in compression, screw in tension) until the foot has moved the gap, and the anchored way after that;
+- new rows: the M3 x 45 (pull-out from the frame's pilot, head bearing on the top wall, shank bearing after a slip),
+  the post's root under the lip and its foot over the rail block, the post round its hole, spec §8's proof push.
 
 The cover prints standing on its -y end: print Z = claw y. Bending of the front plate, the top wall, the lip, the posts
 and the webs in the side profile (stresses along claw x or z) runs along the layers (25 MPa); beams along claw y (the
@@ -11,8 +22,9 @@ strip under slot B) bend across them (12.5 MPa). Placeholder PETG allowables (no
 
 The pinion pass-through and the two open-ended slots cut the front plate into two pieces:
   upper piece  y > ~7 (and over slot A's closed end): hangs from the top wall and, since round 3, is tied to the lip by
-               the second tie (post 4 thick + web, full at y 24..32, 45-degree undersides growing from the lip and from
-               the plate down to y ~8);
+               the second tie (post + web, full at y 24..32, 45-degree undersides growing from the lip and from the
+               plate down to y ~8); since round 4 the post is 8 thick and stands on the frame's rail block, anchored
+               there by one vertical M3 x 45;
   lower piece  the strip under slot B plus the -y region up to slot A: screwed to the wrist plate's front edge
                (2 x M2.5 x 16 at y +-24, z 3) and tied to the lip by the first tie (post 8 x 8 + web, y -32..-24).
 Each rack reacts its finger's moment as a couple of x-forces at its two ends. A grip puts rack A's forward contact on
@@ -200,10 +212,24 @@ wall(f"stall, one jaw blocked: rack A's +y end on the upper piece near slot A's 
 K_TOP_SOFT = 1.1e5
 K_T_LO, K_T_HI = 2.9e4, 1.0e5
 B_PLATE_WEBTOP, B_PLATE_APEX, B_PLATE_TOP = 24.1, 21.0, 25.5
-B_POST2 = 24.3
+B_POST2 = 24.4               # round 4, probed at z 35.5: 195.1 mm2 net of the anchor hole / 8 (I_y 1090: b_eq 25.55)
 B_TW_FRONT = 25.5
-T_POST2 = P.TIE2_POST_T                                   # 4
-ANCHOR2 = False                                           # what-if: second post seated + screwed on the rail block
+T_POST2 = P.TIE2_POST_T                                   # 8 (round 4; round 3: 4)
+ANCHOR_AS_BUILT = hasattr(C, "ANCHOR_XY") and P.TIE2_FOOT_Z <= C.ZS - C.RAIL_IN + 1e-6
+ANCHOR2 = ANCHOR_AS_BUILT                                 # the second post seated + screwed on the rail block (round 4)
+K_ANCHOR_X = 3000.0                                       # N/mm: the foot held in x (friction, or the shank once it bears)
+ANCHOR_KX = K_ANCHOR_X                                    # set to 0 for the slip phase (preload gone, gap still open)
+P_M3 = 150.0                                              # N, the anchor driven "snug only" (<= 0.09 N.m), assumption
+GAP_NOM = (C.M3_CLEAR - 3.0) / 2                          # 0.2: printed Ø3.4 hole round the Ø3 shank, centred
+GAP_MAX = (C.M3_CLEAR + P.HOLE_COMP - 3.0) / 2 + 0.1      # 0.4: CAD Ø3.6 + 0.1 position error (bound)
+Z_FOOT = C.ZS - C.RAIL_IN                                 # 17.75: the post's foot on the rail block
+D_HOLE = C.M3_CLEAR + P.HOLE_COMP                         # 3.6 CAD
+POST_FOOT_A, POST_FOOT_I = 63.1, 386.0                    # probed on the round 4 solid at z 19 (net of the hole)
+POST_WALL = 2.2                                           # probed: hole to either x face of the post (z 25, 40, 50)
+STACK = C.Z_TOP1 - Z_FOOT                                 # 33.75: top wall + lip + post under the head
+L_ANCHOR = 45.0 - STACK                                   # 11.25 engaged in the frame's 14 mm pilot
+HEAD_DK = 5.5                                             # ISO 4762 M3 socket head
+WASHER_M3 = (7.0, 0.5)                                    # ISO 7089 M3 washer, as on the MG996R tab screws
 TIE_W = C.TIE_Y[1] - C.TIE_Y[0]                          # 8
 WEB_H = 2 * C.TIE_Z                                       # 16
 Z_WEB0, Z_WEB1 = C.ZS - C.TIE_Z, C.ZS + C.TIE_Z          # 19.25, 35.25
@@ -285,6 +311,7 @@ def frame2d(nodes, members, supports, loads, ties=()):
         ul = [sum(T[p][q] * ue[q] for q in range(6)) for p in range(6)]
         f = [sum(k[p][q] * ul[q] for q in range(6)) for p in range(6)]
         out[tag] = (f[3], -f[2], f[5], L)
+    out["_u"] = {n: (u[3 * idx[n]], u[3 * idx[n] + 1], u[3 * idx[n] + 2]) for n in names}   # node displacements (mm, rad)
     return out
 
 
@@ -296,7 +323,7 @@ def cover_frame(load_node, R, b_front, b_lip2, top_clamped, k_screw, screw_z, k_
     """The cover as a two-zone frame; R (+x) at load_node ('LD2' upper piece, 'LD1' lower piece). k_t None = the two
     corners joined rigidly (one 2-D frame)."""
     xl = (C.LIP_X0 + C.RAIL_X1) / 2                       # 18.35: lip (and first post) centreline
-    xp2 = C.RAIL_X1 - T_POST2 / 2                         # 20.35: second post centreline
+    xp2 = C.RAIL_X1 - T_POST2 / 2                         # 18.35: second post centreline (8 thick; 20.35 when 4)
     nodes = {"BKa": (C.X_B, Z_TOP_C), "TWRa": (C.LIP_X0, Z_TOP_C), "LTa": (xl, C.Z_TOP0), "TWB": (C.RAIL_X1, Z_TOP_C),
              "TWF": (C.X_F0, Z_TOP_C), "PLT": (X_PL, C.Z_TOP0),
              "L2B": (xl, Z_POST1), "P2T": (xp2 + 1e-3, Z_POST1), "P2B": (xp2, Z_WEB1), "FF2": (X_PL, Z_WEB1), "LD2": (X_PL, z_rb),
@@ -314,8 +341,13 @@ def cover_frame(load_node, R, b_front, b_lip2, top_clamped, k_screw, screw_z, k_
                mem("TWF", "TWB", C.TOP_T, B_TW_FRONT, "top wall in front of the lip"),
                mem("PLT", "TWF", T5, b_front, "r3", True),
                mem("FF2", "PLT", T5, b_front, "plate leg"),
-               mem("LTa", "L2B", C.GUIDE_T, b_lip2, "lip 2"), mem("L2B", "P2T", T_POST2, B_POST2, "r4", True),
-               mem("P2T", "P2B", T_POST2, B_POST2, "post 2"), mem("P2B", "FF2", WEB_H, TIE_W, "r5", True),
+               mem("LTa", "L2B", C.GUIDE_T, b_lip2, "lip 2")]
+    if abs(xp2 - xl) < 0.01:                              # round 4: the 8 mm post is on the lip's centreline (x 18.35)
+        del nodes["P2T"]                                  # (a 0.001 mm link would make the stiffness matrix ill-posed)
+        members += [mem("L2B", "P2B", T_POST2, B_POST2, "post 2")]
+    else:
+        members += [mem("L2B", "P2T", T_POST2, B_POST2, "r4", True), mem("P2T", "P2B", T_POST2, B_POST2, "post 2")]
+    members += [mem("P2B", "FF2", WEB_H, TIE_W, "r5", True),
                mem("FF2", "LD2", T5, B_PLATE_WEBTOP, "r6", True),
                mem("BKb", "TWRb", T_TW_BACK, B_TW_BACK, "top wall behind the lip, zone -"),
                mem("TWRb", "LTb", C.GUIDE_T, 32, "r7", True),
@@ -330,11 +362,12 @@ def cover_frame(load_node, R, b_front, b_lip2, top_clamped, k_screw, screw_z, k_
     sup = {"BKa": rot, "BKb": rot, "GS": (0, 1, 2), "GBa": (0, 1, 2), "GBb": (0, 1, 2),
            "LPS": (1,) if screw_z else ()}
     if ANCHOR2:
-        # what-if fix: the second post seated on the frame's rail block top (z 17.75) and clamped by a vertical M3: the
-        # foot is held there in x (preload friction + shank, through a 3 kN/mm spring) and z
+        # as built (round 4): the second post seated on the frame's rail block top (z 17.75) and clamped by the vertical
+        # M3 x 45: the foot is held there in x (preload friction, or the shank once the gap has closed: a 3 kN/mm spring;
+        # ANCHOR_KX 0 = sliding freely) and z (seat in compression, screw in tension: stiff)
         nodes.update({"AN": (xp2, C.ZS - C.RAIL_IN), "GA": (xp2 - 10.0, C.ZS - C.RAIL_IN),
                       "GZ": (xp2, C.ZS - C.RAIL_IN - 10.0)})
-        members += [mem("P2B", "AN", WEB_H, TIE_W, "r11", True), ("AN", "GA", 3000.0 * 10.0, 1e-6, "anchor"),
+        members += [mem("P2B", "AN", WEB_H, TIE_W, "r11", True), ("AN", "GA", max(ANCHOR_KX, 1e-6) * 10.0, 1e-6, "anchor"),
                     ("AN", "GZ", 1e6 * 10.0, 1e-6, "anchor z")]   # seat (compression) / screw (tension), stiff
         sup.update({"GA": (0, 1, 2), "GZ": (0, 1, 2)})
     ties = [("LTa", "LTb", 0, PENALTY), ("LTa", "LTb", 1, PENALTY), ("LTa", "LTb", 2, PENALTY if k_t is None else k_t)]
@@ -396,6 +429,29 @@ def cover_sections(res, v, upper):
         N, Mi, Mj, L = res["lip 2"]
         out["lip root at the top wall above the second tie"] = (sig(N, Mi, bl, C.GUIDE_T, KT_SHARP), ALLOW_XY, "XY",
                                                                 f"b {bl} x {C.GUIDE_T:.0f}, Kt {KT_SHARP}")
+    if upper and "anchor" in res:
+        # round 4: the anchor's reaction at the post's foot. Fx (x hold) and Fz (+ = the post lifts: screw tension)
+        Fx, Fz = abs(res["anchor"][0]), res["anchor z"][0]
+        # the post alone below the web (z 17.75..19.25): 8 thick along x, 9.26 wide at z 19, net of the Ø3.6 hole on its
+        # centreline (probed: A 63.1 mm2, I_y 386 mm4); bending in the x-z plane over the 1.5 mm stub, Kt 2.5 at the web's
+        # bottom corner; in print these stresses run along the layers
+        M_f = Fx * (Z_WEB0 - Z_FOOT)
+        out["second post's foot below the web (z 17.75..19.25), the anchor's reaction (round 4)"] = (
+            max(Fz, 0.0) / POST_FOOT_A + KT_SHARP * M_f * (T_POST2 / 2) / POST_FOOT_I, ALLOW_XY, "XY",
+            f"8 x 9.26 net of the Ø{D_HOLE:.1f} hole (A {POST_FOOT_A}, I {POST_FOOT_I}), Fx {Fx:.1f} N, lift {Fz:+.1f} N, "
+            f"Kt {KT_SHARP}")
+        out["second post's foot: shear across it (z 19.25)"] = (
+            1.5 * Fx / POST_FOOT_A, ALLOW_XY * 0.5, "XY shear", f"A {POST_FOOT_A}, Fx {Fx:.1f} N")
+        # M3 x 45 pull-out from the frame's Ø2.7 x 14 pilot: preload + the lift (the joint opens only past the preload)
+        T_scr = (P_M3 if CUR_MODE == "held" else 0.0) + max(Fz, 0.0)    # slip modes: the preload has gone
+        out[f"M3 x 45 anchor: pull-out from the frame's rail block ({L_ANCHOR:.2f} engaged), preload (if any) + lift"] = (
+            T_scr / (math.pi * 3.0 * L_ANCHOR), SHEAR_Z, "Z shear (frame)",
+            f"screw {T_scr:.0f} N, thread cylinder Ø3 x {L_ANCHOR:.2f}")
+        # once the preload has gone, the shank bears on the post's hole (its -x wall, 2.2 to the post's face)
+        out["anchor shank bearing on the post's hole after a slip (Ø3 x 2d)"] = (
+            Fx / (3.0 * 6.0), BEARING, "bearing", f"Fx {Fx:.1f} N on Ø3 x 6")
+        out["post's 2.2 mm wall behind the hole: tear-out on the layer planes (y = const in print)"] = (
+            Fx / (2 * POST_WALL * 6.0), SHEAR_Z, "Z shear", f"Fx {Fx:.1f} N, 2 x {POST_WALL} x 6")
     N, Mi, Mj, L = res["lip 1"]
     out["lip root at the top wall above the first tie"] = (sig(N, Mi, B_LIP1, C.GUIDE_T, KT_SHARP), ALLOW_XY, "XY",
                                                            f"b {B_LIP1} x {C.GUIDE_T:.0f}, Kt {KT_SHARP}")
@@ -421,13 +477,54 @@ def cover_sections(res, v, upper):
     return out
 
 
-def cover_rows(case, load_node, R, req, rows=ROWS, variants=None):
+def _combine(r1, f1, r2, f2):
+    """Member results r1 x f1 + r2 x f2 (linear superposition of two solves; L from r1)."""
+    out = {}
+    for k, v in r1.items():
+        if k == "_u":
+            out[k] = {n: tuple(f1 * a + f2 * b for a, b in zip(v[n], r2["_u"][n])) for n in v}
+        else:
+            w = r2[k]
+            out[k] = (f1 * v[0] + f2 * w[0], f1 * v[1] + f2 * w[1], f1 * v[2] + f2 * w[2], v[3])
+    return out
+
+
+def anchored(load_node, R, v, mode):
+    """Solve the as-built cover under R for one variant and one anchor mode:
+    'held'   the preload's friction holds the post's foot in x from the start (round 3's what-if);
+    'slip g' the preload has crept away: the foot slides freely (z still held) until it has moved g mm, then the shank
+             bears (3 kN/mm). Linear in each phase, so the two solves superpose. Returns (res, R carried before bearing)."""
+    global ANCHOR_KX, CUR_MODE
+    CUR_MODE = mode
+    if not ANCHOR2 or mode == "held":
+        ANCHOR_KX = K_ANCHOR_X
+        return cover_frame(load_node, R, *v), 0.0
+    g = float(mode.split()[1])
+    ANCHOR_KX = 0.0
+    free1 = cover_frame(load_node, 1.0, *v)               # per newton, foot sliding
+    ANCHOR_KX = K_ANCHOR_X
+    dx1 = abs(free1["_u"]["AN"][0])
+    R_g = R if dx1 * R <= g else g / dx1
+    if R_g >= R:
+        return _combine(free1, R, free1, 0.0), R
+    held1 = cover_frame(load_node, 1.0, *v)
+    return _combine(free1, R_g, held1, R - R_g), R_g
+
+
+CUR_MODE = "held"
+ANCHOR_MODES = ("held", f"slip {GAP_NOM:.2f}", f"slip {GAP_MAX:.2f}") if ANCHOR2 else ("held",)
+
+
+def cover_rows(case, load_node, R, req, rows=ROWS, variants=None, modes=None):
     worst = {}
-    for v in (VARIANTS if variants is None else variants):
-        res = cover_frame(load_node, R, *v)
-        for k, (s, a, d, sec) in cover_sections(res, v, load_node == "LD2").items():
-            if k not in worst or s / a > worst[k][0] / worst[k][1]:
-                worst[k] = (s, a, d, f"{sec} [{vlabel(v)}]")
+    for mode in (ANCHOR_MODES if modes is None else modes):
+        for v in (VARIANTS if variants is None else variants):
+            res, _ = anchored(load_node, R, v, mode)
+            for k, (s, a, d, sec) in cover_sections(res, v, load_node == "LD2").items():
+                if k not in worst or s / a > worst[k][0] / worst[k][1]:
+                    am = "" if not ANCHOR2 else ("; anchor held by its preload" if mode == "held" else
+                                                 f"; anchor preload gone, {mode.split()[1]} mm slip")
+                    worst[k] = (s, a, d, f"{sec} [{vlabel(v)}{am}]")
     for k, (s, a, d, sec) in worst.items():
         row(f"{case}: {k}", sec, d, s, a, req, rows)
 
@@ -547,6 +644,47 @@ F_edge = M_tip / (C.TOP_SCREWS[0][0] - C.PAD_X[0])
 row(f"USB tug 10 N tips the camera mount back: {F_edge:.0f} N on the top wall's rear edge", "50 x 1 mm contact",
     "XY", F_edge / (C.MOUNT_Y[1] - C.MOUNT_Y[0]), BEARING, SF_SHORT)
 
+# ================================================================ 6. the anchor (round 4), local rows
+HOLE_TD = C.M3_CLEAR                                       # 3.4 printed (3.6 CAD teardrop)
+A_TD_TIP = (HOLE_TD / 2) ** 2 * (1 - math.pi / 4)          # the teardrop's point, outside the circle
+
+
+def head_area(od):
+    return math.pi / 4 * (od ** 2 - HOLE_TD ** 2) - A_TD_TIP
+
+
+if ANCHOR2:
+    row(f"anchor M3 x 45 driven snug: socket head (dk {HEAD_DK}) on the top wall, preload {P_M3:.0f} N (sustained)",
+        f"{head_area(HEAD_DK):.1f} mm2 round the Ø{HOLE_TD} teardrop, no washer (BUILD_GUIDE lists none)", "XY comp",
+        P_M3 / head_area(HEAD_DK), BEARING, SF_CYCLIC)
+    a_post = C.GUIDE_T * TIE_W - math.pi / 4 * D_HOLE ** 2
+    row(f"anchor preload {P_M3:.0f} N through the stack (sustained): the 8 x 8 post round its Ø{D_HOLE:.1f} hole",
+        f"{a_post:.0f} mm2 (the full-depth part only; the 45-degree part ignored)", "XY comp", P_M3 / a_post, ALLOW_XY,
+        SF_CYCLIC)
+    row(f"anchor preload {P_M3:.0f} N (sustained): M3 x 45 pull-out from the frame's rail block",
+        f"thread cylinder Ø3 x {L_ANCHOR:.2f} (Ø2.7 x 14 pilot)", "Z shear (frame)",
+        P_M3 / (math.pi * 3.0 * L_ANCHOR), SHEAR_Z, SF_CYCLIC)
+
+# ================================================================ 7. spec §8 proof push (round 4: the anchored cover)
+SF_PROOF = SF_SHORT / 1.5                                  # 2 at 1.5 x the service load (as every arm script)
+F_PROOF, GAP_PROOF = 32.0, 30.0
+SPAN_30 = (C.RACK_Y[1] - GAP_PROOF / 2) - (-C.HALF_Y)      # 48.4: rack end beyond the cover's edge at 30 mm open
+R_proof = thrust(F_PROOF, X_GRIP, SPAN_30)
+PROOF = []
+for jaw, node in (("B", "LD2"), ("A", "LD1")):
+    cover_rows(f"spec §8 proof 1: {F_PROOF:.0f} N pushes jaw {jaw} towards the other, jaws 30 open, R {R_proof:.1f} N",
+               node, R_proof, SF_PROOF, rows=PROOF)
+    strip_rows(f"spec §8 proof 1: jaw {jaw} pushed towards the other, R {R_proof:.1f} N",
+               R_proof, lev_s2 if jaw == "B" else lev_s1, 0.0, "plate strip at the tie's web", SF_PROOF, rows=PROOF)
+wall(f"spec §8 proof 1: {F_PROOF:.0f} N pulls a jaw away, jaws 30 open: rack A's -y end at the lip's end, R {R_proof:.1f} N",
+     R_proof, 0.0, SF_PROOF, rows=PROOF)
+wall(f"spec §8 proof 1: the same, rack A's +y end on the upper piece near slot A's end", R_proof, 0.0, SF_PROOF, t=T5,
+     kt=KT_FILLET, lever=lev, label="front plate at the top wall", rows=PROOF)
+for pos, (y0, y1) in (("jaws closed", (0.0, C.NECK_Y)), ("jaws 44 open", (C.STROKE, C.STROKE + C.NECK_Y))):
+    row(f"spec §8 proof 2: 10.7 N on jaw B's tip towards the wrist, {pos}", f"strip {STRIP_D:.2f} x {T5:.0f}", "Z",
+        strip_sf(STRIP_D, 10.7, y0, y1), ALLOW_Z, SF_PROOF, PROOF)
+ROWS.extend(PROOF)
+
 
 # ---------------------------------------------------------------- report
 def table(rows, start=1):
@@ -560,14 +698,35 @@ print(f"cover: front plate {C.FRONT_T} (z {C.FRONT_Z0}..{C.Z_TOP0}), top wall {C
       f"y {C.TIE_Y}, post {C.GUIDE_T} x {TIE_W}; tie 2 y {C.TIE2_Y}, post {T_POST2} x {B_POST2} (probed)")
 print(f"rack thrust: grip one jaw {R_gc:.1f} (closed) / {R_go:.1f} N (open); crash {R_cc:.1f} / {R_co:.1f}; hand "
       f"{R_hand:.1f} (open)")
-print(f"two-zone cover frame, opening stall R {R_go:.1f} N, over the {len(VARIANTS)} variants:")
+print(f"two-zone cover frame, opening stall R {R_go:.1f} N, over the {len(VARIANTS)} variants"
+      + (", anchor held by its preload:" if ANCHOR2 else ":"))
 for node, name in (("LD2", "rack B on the upper piece"), ("LD1", "rack A on the lower piece")):
-    rs = [cover_frame(node, R_go, *v) for v in VARIANTS]
+    rs = [anchored(node, R_go, v, "held")[0] for v in VARIANTS]
     S = [abs(r["screw"][0]) for r in rs]
     P1 = [max(abs(r["post 1"][1]), abs(r["post 1"][2])) for r in rs]
     P2 = [max(abs(r["post 2"][1]), abs(r["post 2"][2])) for r in rs]
     print(f"  {name}: M2.5 force {min(S):.0f}..{max(S):.0f} N; first post moment {min(P1):.0f}..{max(P1):.0f} N.mm; "
           f"second post moment {min(P2):.0f}..{max(P2):.0f} N.mm")
+if ANCHOR2:
+    print(f"anchor (as built): M3 x 45 at {tuple(C.ANCHOR_XY)}, stack {STACK:.2f}, {L_ANCHOR:.2f} engaged; post foot z {Z_FOOT}")
+    for node, name in (("LD2", "rack B on the upper piece"), ("LD1", "rack A on the lower piece")):
+        for R, lab in ((R_go, "opening stall"), (R_co, "crash")):
+            for mode in ANCHOR_MODES:
+                out = [anchored(node, R, v, mode) for v in VARIANTS]
+                A = [abs(r["anchor"][0]) for r, _ in out]
+                Z = [r["anchor z"][0] for r, _ in out]
+                Rg = [rg for _, rg in out]
+                print(f"  {name}, {lab} {R:.1f} N, {mode:9s}: anchor x {min(A):5.1f}..{max(A):5.1f} N, z "
+                      f"{min(Z):+5.1f}..{max(Z):+5.1f} N (+ = lift); push carried before the shank bears "
+                      f"{min(Rg):.1f}..{max(Rg):.1f} N")
+    fr = []
+    for v in VARIANTS:
+        ANCHOR_KX = 0.0
+        fr.append(abs(cover_frame("LD2", 1.0, *v)["_u"]["AN"][0]))
+    ANCHOR_KX = K_ANCHOR_X
+    print(f"  foot sliding freely (preload gone): {min(fr) * 1000:.1f}..{max(fr) * 1000:.1f} um per N of rack-B push, so "
+          f"{GAP_NOM:.2f} mm closes at {GAP_NOM / max(fr):.1f}..{GAP_NOM / min(fr):.1f} N and {GAP_MAX:.2f} mm at "
+          f"{GAP_MAX / max(fr):.1f}..{GAP_MAX / min(fr):.1f} N (opening stall {R_go:.1f}, crash {R_co:.1f}, hand {R_hand:.1f})")
 print("\n| # | Case | Section | Dir | Stress (MPa) | Allowable (MPa) | SF | SF req | OK? |")
 print("|---|---|---|---|---|---|---|---|---|")
 table(ROWS)
@@ -585,60 +744,86 @@ for T_s in (50.0, 80.0, 108.0, 134.0):
           f"{SHEAR_Z / (T_s / (math.pi * 2.5 * L_M25)):.2f}")
 
 
-def reversed_worst(variants=None):
-    """Worst SF over every frame-model section, both reversed pushes (opening stall and crash), all variants; and the
-    best variant's own worst SF (how the most favourable joint assumptions do)."""
+def reversed_worst(variants=None, modes=("held",)):
+    """Worst SF over every frame-model section, both reversed pushes (opening stall and crash), all variants and anchor
+    modes; and the best variant's own worst SF (how the most favourable joint assumptions do)."""
     worst, per_v = (9e9, ""), {}
     for node in ("LD2", "LD1"):
         for R in (R_go, R_co):
-            for v in (VARIANTS if variants is None else variants):
-                res = cover_frame(node, R, *v)
-                for k, (s, a, d, sec) in cover_sections(res, v, node == "LD2").items():
-                    sf = a / s
-                    per_v[v] = min(per_v.get(v, 9e9), sf)
-                    if sf < worst[0]:
-                        worst = (sf, k)
+            for mode in modes:
+                for v in (VARIANTS if variants is None else variants):
+                    res, _ = anchored(node, R, v, mode)
+                    for k, (s, a, d, sec) in cover_sections(res, v, node == "LD2").items():
+                        sf = a / s
+                        per_v[v] = min(per_v.get(v, 9e9), sf)
+                        if sf < worst[0]:
+                            worst = (sf, f"{k}, {mode}")
     return worst, max(per_v.values())
 
 
 print("\nWhat-if, the cover's moment path to the frame (reversed pushes, worst of all frame-model sections and variants):")
-_save = (T_TW_BACK, B_POST1, KT_LIP_BACK)
-for name, t, bp, kl in (("as built: top wall 3 behind the lip, first post 8 x 8, sharp lip corner", 3.0, 8.0, KT_SHARP),
-                        ("top wall 5 behind the lip", 5.0, 8.0, KT_SHARP),
-                        ("top wall 6 behind the lip", 6.0, 8.0, KT_SHARP),
-                        ("top wall 6 behind the lip, first post 8 x 14 (y -32..-18)", 6.0, 14.0, KT_SHARP),
-                        ("top wall 6 behind the lip + r 2 at the lip's back corner, first post 8 x 14", 6.0, 14.0,
-                         KT_FILLET),
-                        ("top wall 7 behind the lip, first post 8 x 14", 7.0, 14.0, KT_SHARP)):
-    T_TW_BACK, B_POST1, KT_LIP_BACK = t, bp, kl
-    (sf, k), best = reversed_worst()
-    print(f"  {name:78s}: lowest SF {sf:.2f} ({k}); most favourable variant {best:.2f}")
-T_TW_BACK, B_POST1, KT_LIP_BACK = _save
-# the anchored second post: TIE2_POST_T 4 -> 8 (x 14.35..22.35, like the first), down to the rail block's top (z 17.75)
-_save2 = T_POST2
-for name, t2 in (("second post 8 thick, seated on the rail block + vertical M3 (anchored)", 8.0),):
-    T_POST2, ANCHOR2 = t2, True
-    (sf, k), best = reversed_worst()
-    rs = [cover_frame("LD2", R_go, *v) for v in VARIANTS]
-    A = [abs(r["anchor"][0]) for r in rs]
-    Z = [r["anchor z"][0] for r in rs]                   # + tension: the post pulls up on the screw
-    print(f"  {name:78s}: lowest SF {sf:.2f} ({k}); most favourable variant {best:.2f}")
-    print(f"    anchor under the opening stall ({R_go:.1f} N): x {min(A):.1f}..{max(A):.1f} N, z {min(Z):+.1f}..{max(Z):+.1f} N "
-          f"(+ = lift, taken by the screw)")
-    # the anchor's own checks: M3 snug preload 150 N (assumption, 'snug only' as every M3 here); friction 0.3 holds x
-    P_M3 = 150.0
-    lift = max(0.0, max(Z))
-    stack = C.Z_TOP1 - (C.ZS - C.RAIL_IN)                # 33.75: top wall + lip + post, top to the rail block
-    L_eng = 45.0 - stack                                  # M3 x 45 socket head: 11.25 in a 14 mm pilot
-    A_th = math.pi * 3.0 * L_eng
-    print(f"    friction {0.3 * P_M3:.0f} N >= x {max(A):.1f} N: {'yes' if 0.3 * P_M3 >= max(A) else 'NO (shank bearing)'}; "
-          f"M3 x 45 through the {stack:.2f} mm stack, {L_eng:.2f} engaged in a Ø2.7 x 14 pilot in the rail block: "
-          f"pull-out SF {SHEAR_Z / (P_M3 / A_th):.2f} on the preload (req 4, sustained), "
-          f"{SHEAR_Z / ((P_M3 + lift) / A_th):.2f} with the lift (req 3)")
-    a_post = C.GUIDE_T * TIE_W - math.pi / 4 * (C.M3_CLEAR + P.HOLE_COMP) ** 2
-    print(f"    the 8 x 8 post round its Ø{C.M3_CLEAR + P.HOLE_COMP:.1f} hole under the clamp ({a_post:.0f} mm2): "
-          f"{P_M3 / a_post:.2f} MPa, SF {ALLOW_XY / (P_M3 / a_post):.1f} (req 4, sustained, along the layers)")
-T_POST2, ANCHOR2 = _save2, False
+_saveA = ANCHOR2
+ANCHOR2 = False
+(sf, k), best = reversed_worst()
+print(f"  {'round 3 for reference: no anchor (post 2 as built, 8 thick, not seated)':78s}: lowest SF {sf:.2f} ({k}); "
+      f"most favourable variant {best:.2f}")
+ANCHOR2 = _saveA
+if ANCHOR2:
+    for modes in (("held",), (f"slip {GAP_NOM:.2f}",), (f"slip {GAP_MAX:.2f}",)):
+        (sf, k), best = reversed_worst(modes=modes)
+        print(f"  {'as built, anchor ' + modes[0]:78s}: lowest SF {sf:.2f} ({k}); most favourable variant {best:.2f}")
+    print(f"What-if, the anchor's head on the top wall at the {P_M3:.0f} N preload (sustained, req 4):")
+    for lab, od in ((f"bare socket head dk {HEAD_DK}", HEAD_DK), (f"+ M3 washer Ø{WASHER_M3[0]:g} x {WASHER_M3[1]:g}",
+                                                                     WASHER_M3[0])):
+        L_w = L_ANCHOR - (WASHER_M3[1] if od == WASHER_M3[0] else 0.0)
+        print(f"  {lab:32s}: bearing SF {BEARING / (P_M3 / head_area(od)):.2f}; pull-out on the preload SF "
+              f"{SHEAR_Z / (P_M3 / (math.pi * 3.0 * L_w)):.2f} ({L_w:.2f} engaged)")
+    print(f"  preload that a bare head carries at SF 4: {BEARING / 4 * head_area(HEAD_DK):.0f} N")
+    # what the 'held' mode asks of the preload: clamp left at the seat = preload - lift, friction mu x that >= Fx
+    print("What-if, the clamp the seat's friction needs to hold the foot (preload - lift >= Fx / mu), worst variant:")
+    for R, lab in ((R_go, "opening stall"), (R_co, "crash"), (R_proof, "spec §8 proof push")):
+        out = [anchored("LD2", R, v, "held")[0] for v in VARIANTS]
+        need = max(abs(r["anchor"][0]) / 0.3 + max(r["anchor z"][0], 0.0) for r in out)
+        need2 = max(abs(r["anchor"][0]) / 0.2 + max(r["anchor z"][0], 0.0) for r in out)
+        print(f"  {lab:20s} R {R:5.1f} N: preload >= {need:.0f} N at mu 0.3, {need2:.0f} N at mu 0.2 (snug assumed {P_M3:.0f} N)")
+    print("What-if, residual radial gap at the foot once the preload has gone (both reversed pushes, all variants):")
+    for gap in (0.0, 0.025, 0.04, 0.05, 0.075, 0.1):
+        (sf, k), best = reversed_worst(modes=(f"slip {gap}",))
+        print(f"  gap {gap:5.3f} mm: lowest SF {sf:.2f} ({k})")
+    # the FIX: a 90-degree V-seat beside the anchor, so the foot is held in x by geometry and the screw's tension, not by
+    # friction. The frame's rail block gets a V-groove along y in its top: centre x 15.25, 0.8 deep (x 14.45..16.05 at the
+    # block top z 17.75, bottom z 16.95), y 23.5..32 (open at +y), 0.95 of block between its edge and the anchor pilot at
+    # the top. The post's foot gets the matching V-ridge (the same flanks; tip truncated 0.15 at z 17.10, so it never
+    # bottoms; x 14.35..16.15 where it meets the foot's flats), y 24..32 with a 45-degree lead-in over its first 0.8 (the
+    # post's underside); the foot's flats rise 0.1 (TIE2_FOOT_Z 17.85) so the flanks seat, not the flats. A +x push on the
+    # foot rides up a 45-degree flank: the screw holds it in tension (positive: no friction or preload needed); Fz added =
+    # Fx (frictionless, the worst case). The anchor pilot and the M3 x 45 do not change.
+    V_D, V_TRUNC, V_X0 = 0.8, 0.15, C.LIP_X0 + 0.1          # groove x 14.45..16.05 at the block top
+    L_V = (C.TIE2_Y[1] - C.TIE2_Y[0]) - V_D                 # 7.2: full-depth ridge, y 24.8..32
+    print(f"What-if, the FIX: 90-degree V-seat beside the anchor (x {V_X0:.2f}..{V_X0 + 2 * V_D:.2f}, {V_D} deep, along y "
+          f"over the post's foot): x held positively (gap 0); M3 x 45 + Ø7 x 0.5 washer:")
+    (sf, k), best = reversed_worst(modes=("slip 0.0",))
+    print(f"  cover frame model, both reversed pushes, all variants: lowest SF {sf:.2f} ({k}); most favourable {best:.2f}")
+    outs = [anchored(n, R, v, "slip 0.0")[0] for n in ("LD2",) for R in (R_go, R_proof) for v in VARIANTS]
+    Fx_max = max(abs(r["anchor"][0]) for r in outs[:len(VARIANTS)])
+    Fz_max = max(max(r["anchor z"][0], 0.0) for r in outs[:len(VARIANTS)])
+    Fx_pr = max(abs(r["anchor"][0]) for r in outs[len(VARIANTS):])
+    flank = (V_D - V_TRUNC) * math.sqrt(2)                  # 0.92 of flank on each side
+    N_fl = Fx_max * math.sqrt(2)                            # all on one 45-degree flank, frictionless
+    s_fl = N_fl / (flank * L_V)
+    s_root = 1.5 * Fx_max / (2 * V_D * L_V)                 # ridge root on the post's foot: in print a vertical plane
+    plug = (C.RAIL_X1 - (V_X0 + 2 * V_D)) * L_V - math.pi / 4 * (C.M3_PILOT + P.HOLE_COMP) ** 2
+    s_plug = 1.5 * Fx_max / plug                            # the frame's block in front of the groove, sheared off its
+    L45 = L_ANCHOR - WASHER_M3[1]                           # layers at the groove's bottom (interlayer, 6.25)
+    T45 = P_M3 + Fx_max + Fz_max
+    print(f"  anchor Fx {Fx_max:.1f} N, lift {Fz_max:.1f} N (opening stall); Fx {Fx_pr:.1f} N at the spec §8 proof push")
+    print(f"  flank bearing {s_fl:.2f} MPa on {flank:.2f} x {L_V:.1f}: SF {BEARING / s_fl:.1f} (req 3); ridge root 1.5 V / A "
+          f"{s_root:.2f} MPa along the layers: SF {ALLOW_XY / 2 / s_root:.1f}; the frame's block in front of the groove, "
+          f"{plug:.0f} mm2 at the groove's bottom, interlayer: SF {SHEAR_Z / s_plug:.1f}")
+    print(f"  M3 x 45 + washer: {L45:.2f} engaged; pull-out on the preload SF {SHEAR_Z / (P_M3 / (math.pi * 3.0 * L45)):.2f} "
+          f"(req 4); preload + wedge lift + lift {T45:.0f} N: SF {SHEAR_Z / (T45 / (math.pi * 3.0 * L45)):.2f} (req 3); head "
+          f"on the washer SF {BEARING / (P_M3 / head_area(WASHER_M3[0])):.2f} (req 4); the ridge's x play after seating = the "
+          f"stack's creep under the head (gap <= 0.025 keeps every row >= 4.5)")
 print("What-if, strip under slot B (yaw stall, the worse of closed / open):")
 for d in (STRIP_D - 2.0, STRIP_D - 1.0, STRIP_D, STRIP_D + 2.0):
     w = max(strip_sf(d, F_YAW_Z, 0.0, C.NECK_Y), strip_sf(d, F_YAW_Z, C.STROKE, C.STROKE + C.NECK_Y))
