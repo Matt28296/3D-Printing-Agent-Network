@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 5 FAIL (independent review): DFM FAIL (\u00a73 fit), strength FAIL 1.84 at the realistic printed ridge play 0.082 mm. Fix proposed: ridge-first seat (VSEAT_CLR 0, TIE2_FOOT_Z 18.05, RIDGE_TIP_Z 17.35) + frame bulkhead top 48.45. Escalated to the user",
+    "DESIGN": "round 6 in progress (user-approved sixth attempt): ridge-first V-seat \u2014 TIE2_FOOT_Z 18.05, RIDGE_TIP_Z 17.35, VSEAT_CLR 0",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Round 6: ridge-first V-seat (cover foot 18.05, tip 17.35; frame VSEAT_CLR 0, bulkhead top 48.45)?"
-  ],
+  "open_questions": [],
   "updated": "2026-10-26T16:09:12+00:00"
 }
