@@ -3,17 +3,17 @@
 Job: 20261026-hexapod-body-bottom · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-hexapod-assembly](../20261026-hexapod-assembly/assembly_plan.md)
 
 ## 1. Function
-4 mm plate (hull of the six coxa-servo windows, 155 × 131 mm) that the six coxa MG90S hang under (tabs on its underside, shafts down), with four 30 mm columns for the top plate and two strap slots for the 2S LiPo that sits on it.
+4 mm plate (hull of the six coxa-servo windows, 155 × 131 mm) that the six coxa MG90S hang under (tabs on its underside, shafts down), with four 40 mm columns for the top plate and two strap slots for the 2S LiPo that sits on it.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 155 × 131 × 44 mm (columns). Interfaces: 6 MG90S windows 22.9 × 12.8 with 2 Ø1.7 slotted pilots each, at the mounts in hex_frame.py; 4 columns Ø8 × 40 with r1.5 root fillets and Ø2.8 pilots at (±40, ±25) (hex_frame.COLUMNS, shared with the top plate); strap slots 22 × 3.
+- Mating parts and their dimensions: 155 × 131 × 44 mm (columns). Interfaces: 6 MG90S windows 22.9 × 12.6 CAD with 2 Ø1.7 slotted pilots each, at the mounts in hex_frame.py; 4 columns Ø8 × 40 with r1.5 root fillets and Ø2.8 pilots at (±40, ±25) (hex_frame.COLUMNS, shared with the top plate); strap slots 22 × 3.
 - Fasteners used: 12 × MG90S tab screws (servo bag) — use M2×8 self-tapping if the bag screws are short; 4 × M3×8 self-tapping (top plate onto the columns); 1 velcro strap for the LiPo
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
-| Coxa servo windows | 22.7 × 12.6 printed | +0.3/−0 | 0.1 end / 0.2 side clearance |
+| Coxa servo windows | 22.7 × 12.4 printed | +0.3/−0 | 0.1 end / 0.2 side clearance |
 | Mount positions | per hex_frame.LEG_MOUNTS | ±0.3 | leg spacing |
 | Column height | 40.0 | ±0.3 | top-plate seat; room for the ESP32 leads above the LiPo |
 

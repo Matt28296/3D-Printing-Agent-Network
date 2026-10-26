@@ -9,7 +9,7 @@ PETG for every rover part: tough against knocks, wears acceptably on steel pins,
 Outer disc face on the bed, hub up. Bearing on the bore is in the layer plane.
 
 ## Concept
-The sprocket's toothed geometry with a round Ø3.5 running bore and a shorter hub, free on the M3 × 45 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
+The sprocket's toothed geometry with a round Ø3.5 running bore and a shorter hub, free on the M3 × 35 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
 
 ## Critical dimensions
 | Feature | Nominal (mm) | Tolerance | Fit | Compensation | Source |

@@ -9,12 +9,12 @@ PETG for every hexapod part: tough, low creep under the servos' constant holding
 Flat, the tab face (underside) on the bed. Plate bending along the layers; the tab screws pull out across the layers.
 
 ## Concept
-4 mm plate (hull of the six coxa-servo windows, 155 × 131 mm) that the six coxa MG90S hang under (tabs on its underside, shafts down), with four 30 mm columns for the top plate and two strap slots for the 2S LiPo that sits on it.
+4 mm plate (hull of the six coxa-servo windows, 155 × 131 mm) that the six coxa MG90S hang under (tabs on its underside, shafts down), with four 40 mm columns for the top plate and two strap slots for the 2S LiPo that sits on it.
 
 ## Critical dimensions
 | Feature | Nominal (mm) | Tolerance | Fit | Compensation | Source |
 |---|---|---|---|---|---|
-| Coxa servo windows | 22.7 × 12.6 printed | +0.3/−0 | 0.1 end / 0.2 side clearance | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
+| Coxa servo windows | 22.7 × 12.4 printed | +0.3/−0 | 0.1 end / 0.2 side clearance | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
 | Mount positions | per hex_frame.LEG_MOUNTS | ±0.3 | leg spacing | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
 | Column height | 40.0 | ±0.3 | top-plate seat; room for the ESP32 leads above the LiPo | HOLE_COMP +0.2 on holes/pockets | default from fdm-design-rules (no library row) |
 

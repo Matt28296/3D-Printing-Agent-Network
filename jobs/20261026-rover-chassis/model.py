@@ -14,7 +14,7 @@ Round 2 (DFM + strength round 1):
 - Lid columns joined to the walls, front pair moved behind the idler slot (bolt heads clear).
 - Idler slot ends are teardrops; strap slots at |y| 27.5; 3 mm 45° fillets along the floor.
 - Mini toggle switch (threaded bushing, Ø6.2 hole) instead of a snap-in rocker (4.5 mm wall).
-Bolts: road wheels and idlers run on M3 × 45 bolts whose heads sit inside the tub and whose
+Bolts: road wheels run on M3 × 45 and idlers on M3 × 35 bolts whose heads sit inside the tub and whose
 nuts sit in traps in the wall's outer face (flush), so the wheels run right next to the wall.
 """
 import sys

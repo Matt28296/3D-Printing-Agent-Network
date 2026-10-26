@@ -3,12 +3,12 @@
 Job: 20261026-rover-idler · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
-The sprocket's toothed geometry with a round Ø3.5 running bore and a shorter hub, free on the M3 × 45 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
+The sprocket's toothed geometry with a round Ø3.5 running bore and a shorter hub, free on the M3 × 35 bolt in the chassis's tension slot, so the track wraps it exactly like the sprocket.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: Ø35.8 × 20 mm, round bore through.
-- Fasteners used: Rides on the M3 × 45 idler bolt between the wall nut (with a washer) and a washer + nyloc nut
+- Fasteners used: Rides on the M3 × 35 idler bolt between the wall nut (with a washer) and a washer + nyloc nut
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |

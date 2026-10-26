@@ -3,12 +3,12 @@
 Job: 20261026-rover-chassis · Written by: Architect · Date: 2026-10-26 · Assembly: [20261026-rover-assembly](../20261026-rover-assembly/assembly_plan.md)
 
 ## 1. Function
-Open-top tub, 154 × 76 × 40 mm, 4.5 mm walls. Holds both N20 drive motors in cradles (cheeks, a rear stop and a zip-tie tunnel; no face screws), with each sprocket hub running in a 6 mm journal in the side wall so the track loads go into the wall, not the N20 shaft. Carries the M3 × 45 axle bolts for 4 road wheels and 2 idlers (heads inside, nuts in traps in the outer faces; idler bolts in an 8 mm tension slot with a sliding nut), the 2 × 18650 holder (velcro strap through floor slots), a mini toggle switch (rear wall) and an HC-SR04 (front wall).
+Open-top tub, 154 × 76 × 40 mm, 4.5 mm walls. Holds both N20 drive motors in cradles (cheeks, a rear stop and a zip-tie tunnel; no face screws), with each sprocket hub running in a 6 mm journal in the side wall so the track loads go into the wall, not the N20 shaft. Carries the axle bolts for 4 road wheels (M3 × 45) and 2 idlers (M3 × 35) (heads inside, nuts in traps in the outer faces; idler bolts in an 8 mm tension slot with a sliding nut), the 2 × 18650 holder (velcro strap through floor slots), a mini toggle switch (rear wall) and an HC-SR04 (front wall).
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
 - Mating parts and their dimensions: 154 × 76 × 40 mm. Axles at Z 20.68 (X 0 sprocket journal, 40 and 80 road wheels, 120 ± 4 idler), track centre planes Y ±55. Interfaces: journal Ø10.7 CAD through wall + 1.5 mm boss (6 mm long); N20 cradle with cheeks at x ±6.3–8.3, rear stop posts, zip-tie tunnel; Ø20 road-wheel bosses and a 30 × 24 idler block down to the floor; 6 × Ø3.6 teardrop bolt holes + 5.8 AF nut traps; idler slot ±4 with teardrop ends and a nut slot; 4 lid columns (−13, ±30), (100, ±30) with Ø2.8 pilots; toggle hole Ø6.4; 2 × Ø16.6 teardrop sensor holes; strap slots at |y| 27.5; 3 mm 45° floor fillets.
-- Fasteners used: 6 × M3 × 45 bolts (head inside the tub) + M3 nut in each wall trap + washer and nyloc on the outer end (wheels and idlers run free between); 2 zip ties for the motors; 4 × M3 × 10 self-tapping for the lid; 1 velcro strap for the battery holder; MTS-102 mini toggle switch (6 mm bushing nut)
+- Fasteners used: 4 × M3 × 45 (road wheels) and 2 × M3 × 35 (idlers) bolts, class 12.9, head inside the tub, + M3 nut in each wall trap + washer and nyloc on the outer end (wheels and idlers run free between); 2 zip ties for the motors; 4 × M3 × 10 self-tapping for the lid; 1 velcro strap for the battery holder; MTS-102 mini toggle switch (6 mm bushing nut)
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |

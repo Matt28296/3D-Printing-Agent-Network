@@ -9,7 +9,7 @@ PETG for every rover part: tough against knocks, wears acceptably on steel pins,
 Floor on the bed, walls vertical. Every hole in a wall is horizontal, so each is a teardrop or has a 45° roof; every inward boss runs down to the floor. Wheel-bolt bending and wall bending in a drop put the wall roots across the layers: 4.5 mm walls, Ø20 bosses, 3 mm floor fillets.
 
 ## Concept
-Open-top tub, 154 × 76 × 40 mm, 4.5 mm walls. Holds both N20 drive motors in cradles (cheeks, a rear stop and a zip-tie tunnel; no face screws), with each sprocket hub running in a 6 mm journal in the side wall so the track loads go into the wall, not the N20 shaft. Carries the M3 × 45 axle bolts for 4 road wheels and 2 idlers (heads inside, nuts in traps in the outer faces; idler bolts in an 8 mm tension slot with a sliding nut), the 2 × 18650 holder (velcro strap through floor slots), a mini toggle switch (rear wall) and an HC-SR04 (front wall).
+Open-top tub, 154 × 76 × 40 mm, 4.5 mm walls. Holds both N20 drive motors in cradles (cheeks, a rear stop and a zip-tie tunnel; no face screws), with each sprocket hub running in a 6 mm journal in the side wall so the track loads go into the wall, not the N20 shaft. Carries the axle bolts for 4 road wheels (M3 × 45) and 2 idlers (M3 × 35) (heads inside, nuts in traps in the outer faces; idler bolts in an 8 mm tension slot with a sliding nut), the 2 × 18650 holder (velcro strap through floor slots), a mini toggle switch (rear wall) and an HC-SR04 (front wall).
 
 ## Critical dimensions
 | Feature | Nominal (mm) | Tolerance | Fit | Compensation | Source |

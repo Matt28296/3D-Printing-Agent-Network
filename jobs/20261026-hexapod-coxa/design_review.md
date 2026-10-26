@@ -1,53 +1,78 @@
 VERDICT: FAIL
 
-# DFM review (round 1): 20261026-hexapod-coxa
+# DFM review (round 2): 20261026-hexapod-coxa
 
-Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), ../20261026-hexapod-assembly/{hex_frame.py, assembly_plan.md, assembly_check.py, assembly_check.json}, tools/hobby_parts.py, library/lessons.md (no entries). Section probes run on part.stl with trimesh (`mesh.contains` at the points quoted below).
-Outputs are current: `build()` gives 7153.19 mm³, the same as geometry.json. model.py (21:45:26) is older than part.stl (21:45:28) and mesh_check.json (21:45:30). The geometry.json `holes` field still holds an error (toolsmith, advisory).
+Reviewer: dfm-reviewer · 2026-10-26 · Inputs: spec.md, design_brief.md, model.py, geometry.json, mesh_check.json, renders/*.png (all 5 viewed), the round-1 review, ../20261026-hexapod-assembly/{hex_frame.py, assembly_check.py, assembly_check.json, assembly_hexapod.png, assembly_plan.md, BUILD_GUIDE.md}, tools/hobby_parts.py, library/lessons.md (no entries). Section probes: `mesh.contains` on part.stl, at the points quoted below.
 
-Values below are computed from the parameters, not from the comments. Several comments are wrong: PILOT_X is (−19.25, 8.55), not (−19.4, 8.4). VPLATE_X is 9.25…44.05, not 9.1…43.9. WIN_HALF is 6.3, not 6.4. `link_back_z` is 9.4, not 9.7 (hex_frame.py). That puts the femur at C y −4.1…2.9 (not −3.8…3.2), so the arm clears it by 2.4 mm, not 2.7.
+Outputs are current. model.py (05:19:31 UTC) is newer than part.stl (05:19:00), but `build()` gives 8144.95 mm³ and a 53.05 × 25.0 × 37.75 bbox from (−9, −18, 0), identical to geometry.json, so nothing was re-run. assembly_check.json (05:20:21) is newer than hex_frame.py and every hexapod model.py.
+
+Numbers below are in frame C (z up in print), from the parameters and from `assembly_check.leg_frames`:
+- Femur axis at (32, ·, 17).
+- Femur-servo tabs at x 10.55–42.75, y −13.5…−11.0, z 11–23.
+- Window at x 15.2–38.1, from z 10.7 up (roof apex 34.75).
+- Vertical plate at x 9.25–44.05, y −18…−13.5.
+- Femur back face at y −4.1.
+- Stance foot at (77, 15.8, 87).
 
 ## Checklist
 
 | # | Item | Result | Evidence |
 |---|---|---|---|
-| 1 | Fits bed with 5 mm margin | PASS | 53.05 × 25.0 × 33.75 mm, `fits_bed: true` |
+| 1 | Fits bed with 5 mm margin | PASS | 53.05 × 25.0 × 37.75 mm, `fits_bed: true`. Six copies fit the plate |
 | 2 | Single watertight solid, min Z = 0 | PASS | `solids: 1`, watertight, `min_z_mm: 0.0` |
-| 3 | Orientation matches brief | PASS | The horizontal plate is on the bed and the vertical plate stands up. The window roof and the pilot teardrops point +Z (front.png, iso.png). The roof is `"-y"` in the servo frame, and servo −y = C +z, which is up in print |
-| 4 | Load paths | **FAIL** | The brief accepts cross-layer bending at the vertical-plate root because it has "4.5 mm plate + 6 mm 45° gussets". **No gussets exist.** In `design()` both gusset spans have negative length: xa = VPLATE_X[0] + 3 = 12.25 and xb = win_x0 − 3 = 12.20; xa = win_x1 + 3 = 41.10 and xb = VPLATE_X[1] − 3 = 41.05. The `if xb - xa > 1` test skips both. The mesh agrees: no solid at y −13.0, z 5.5 or at y −12.0, z 6.5 anywhere along x 9.5…44. right.png shows a bare L with a sharp inside corner. The window also reaches down to z 6.7 (Z_F − WIN_HALF), only 1.7 mm above the arm top at z 5.0 (section x 27: void z 6.7…30.3). Above z 6.7 the plate is just two posts, 5.95 × 4.5 mm each (z 13 section: solid 9.30–15.20 and 38.10–44.05, both broken by the pilots). Those posts carry the femur-stall couple and the sideways-shove bending, with tension across the layers, from the window's sharp bottom corners |
-| 5 | Bed contact | PASS | 786.8 mm² of PETG, no warping concern |
-| 6 | Overhangs / bridges | PASS (advisory) | `overhang_pct` 2.81. Horn-pocket bridge: 7.9 mm span at z 2.0 (≤ 10 mm). Roof 45°, pilot teardrops 45°. Advisory: there is a 3 × 3 mm bridge at z 4.99 (mesh_check). The square end of the vertical plate (x 41–44.05, y −18…−15) sits over the arm's r 3 corner. Probe: (43.8, −17.8) is void at z 4.9 and solid at z 5.2. It is a ~1.9 mm² unsupported patch, cosmetic |
-| 7 | Walls | PASS | Vertical plate 4.5 mm. Pilot-to-window ligament 1.55–1.65 mm CAD (z 13 section), ≈ 1.8 mm printed, the same as the arm review accepted. Pilot-to-plate-end edge 2.25 mm. Horn-pocket floor 3.0 mm (T_C − 2). Hub wall at the horn tip 19 − 16.45 = 2.55 mm. `thin_wall_warnings: []` |
-| 8 | HOLE_COMP / teardrops | PASS | `HOLE_COMP = HOLE_COMP_DEFAULT` (0.2) goes into both cutters: window 22.9 × 12.6 CAD, pilots Ø1.7, horn pocket +0.7, clamp hole Ø2.6. The horizontal pilots have `pilot_teardrop="-y"` (up). The window has a 45° roof |
-| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(br, 0.0, 0.4)` on the blank, before the pocket is cut. The horn-pocket rim on the bed is not chamfered. Rely on `elefant_foot_compensation` (advisory) |
-| 10 | Internal corners on load paths | **FAIL** | (a) The vertical-plate root (z 5) and the window's bottom corners (z 6.7) are sharp: no fillet and no gusset (right.png, front.png). (b) Where the hub meets the arm, at (x 19, y −6.5), there is a sharp re-entrant corner through the full 5 mm (top.png, bottom.png). All of the foot moment (≈ 310 N·mm, spec §4) passes it |
-| 11 | Fasteners | **FAIL** | Femur-servo tab screws go into Ø1.7 horizontal pilots through 4.5 mm, which is fine. The **coxa centre screw does not suit this part**. Spec §2 gives an M2×12 plus a Ø6 washer, the same as femur and tibia. Here only 3.0 mm of plastic is above the pocket floor (T_C 5 − pocket 2), against 5.0 mm on femur and tibia. So 12 − 0.5 − 3.0 = **8.5 mm** of screw passes the horn's outer face, 2 mm more than on femur and tibia (6.5 mm). One screw length cannot suit both stacks. The screw risks bottoming in the spline bore before it clamps, and then the bracket is not clamped (spec §8: "no lift of the bracket off the horn") |
-| 12 | Critical dims named | PASS | L_C = 32.0 and Z_F = T_C + 8 = 13.0 (hex_frame.py), as in spec §3. Servo numbers come from `MG90S`. CLR, END_CLR and HOLE_COMP are named |
+| 3 | Orientation matches brief | PASS | The horizontal plate is on the bed and the vertical plate stands. The window roof and the pilot teardrops point +Z (front.png, iso.png) |
+| 4 | Load paths | PASS | The brief accepts cross-layer bending of the vertical plate, because the horn pocket has to be on the bed. Its mitigation now exists in the model. The window floor is at z 10.7, leaving a 5.7 mm solid band (mid-plane probe at x 27: solid z 0–10.65). The 5 mm 45° gusset is real (YZ probe at x 27: solid to y −8.75 at z 5.2, −11.05 at z 7.5 and −13.35 at z 9.8; right.png). It does not run the "whole length" the brief claims (see #10b). The two posts above the window floor still carry the femur servo's out-of-plane moment across the layers: see #10a and the strength note under Recommendations |
+| 5 | Bed contact | PASS | 788.6 mm² of PETG |
+| 6 | Overhangs / bridges | PASS | `overhang_pct` 2.66. Horn-pocket bridge 7.9 mm at z 2.0 (≤ 10 mm). Roof 45°, teardrops 45°, and the gusset slope faces up. A 1.9 mm² patch at z 4.99 is the plate end overhanging the arm's r3 corner (probe (43.8, −17.8): void at z 4.9, solid at z 5.2). It is cosmetic, and fix 2 removes it. Two 0.8 mm² slivers at z 17.85 (span 0.17 mm) are the tops of the pilot slots' outer circles, 0.05 mm above the teardrop flank. They are negligible |
+| 7 | Walls | PASS | Plate 4.5 mm. z 17 section: pilot-to-window ligaments are 1.55 and 1.6 mm CAD (≈ 1.8 printed), pilot to plate end 2.25 mm. Horn-pocket floor 3.0 mm. Hub wall at the horn tip 2.55 mm. `thin_wall_warnings: []` |
+| 8 | HOLE_COMP / teardrops | PASS | `HOLE_COMP = HOLE_COMP_DEFAULT` (0.2) goes into both cutters. Pilots have `pilot_teardrop="-y"` (C +z, up). The window roof is `"-y"` (up) |
+| 9 | Bottom edges chamfered | PASS | `chamfer_plane_edges(br, 0.0, 0.4)` runs after the hub fillet and before the pockets. The bed outline is chamfered (bottom.png). The horn-pocket rim is not chamfered and relies on `elefant_foot_compensation` 0.2 (slice_plan.json) |
+| 10 | Internal corners on load paths | **FAIL** | **(a)** The window's bottom corners at (15.2, 10.7) and (38.1, 10.7) are square. A 0.15 mm probe grid around each corner is solid on the post side and void on the window side right into the corner (front.png). Above z 10.7 the plate is only two posts, 5.95 × 4.5 mm each (z 11 section: solid x 9.28–15.18 and 38.10–44.03). Together they carry the femur servo's whole moment about C x into the band, across the layers. Nominal stress at that layer (estimate): the 4 N stance load with the foot 31.6 mm off the plate mid-plane gives 126 N·mm → 3.1 MPa, cyclic. The spec's 3 N shove, 76.3 mm below the window floor, adds 229 N·mm → 8.8 MPa together, against the brief's placeholder 12.5 MPa across layers. That is before any sharp-corner concentration. **(b)** The gusset runs only x 12.3–41.0 (probe at y −12, z 6.5). That is 3 mm short of each plate end and 1.7 mm inside the tab span (10.55–42.75). At x 10.5 and x 42.5 the z 5.3 section ends at the plate face (y −13.55), so the root corner is still sharp under the outer half of each post. **(c)** Hub-to-arm corner: fixed. The r2.5 fillet is present (probe (19.3, −6.2) is solid; points within 2.5 mm of the fillet centre (21.5, −4.0) are void; top.png, bottom.png) |
+| 11 | Fasteners | PASS | Spec §2 and BUILD_GUIDE.md (BOM, step 4) now give an M2×10 centre screw. It passes the horn face by 10 − 0.5 washer − 3.0 floor = 6.5 mm, the same as the femur and tibia M2×12 (12 − 0.5 − 5.0). Tab screws: M2×8 self-tapping into Ø1.7 CAD teardrop pilots through the 2.5 mm tab and the 4.5 mm plate. The brief still says M2×12 for horn joints (fix 3) |
+| 12 | Critical dims named | PASS | Spec §3: L_C 32.0 = `L_C` (hex_frame.py:24); the femur axis 17.0 below the back face = `Z_F = T_C + 12.0` (hex_frame.py:32). Both have source comments. Several model.py comments are still wrong (fix 3) |
 | 13 | Service temperature | PASS | 40 °C against PETG ≈ 70 °C (30 °C margin) |
 | 14 | lessons.md | N/A | No entries |
 | 15 | FreeCAD reference | N/A | inputs/ is empty |
 
-Fits, checked from the numbers:
-- The MG90S goes in from the +y side, case bottom first, along −y. The path is clear: the servo case is at C z 7…19, and the arm and hub top out at z 5.
-- The femur-servo case sits at C z ≥ 7, 2.0 mm above the arm (z 5).
-- The femur's rear end stays inside r ≈ 11 of its axis. The hub corner (19, 5) is 15.3 mm from the femur axis (32, 13).
-- Spec §2 says the window is "22.9 × 12.8". The CAD window is **22.9 × 12.6**, which prints at about 22.7 × 12.4. A servo near the makers' 22.8 mm upper length will not go in (spec §3 already asks for a measurement).
-
 ## Required fixes
 
-1. **Give the vertical plate real root support** (rule §2 internal corners; §1 cross-layer load; brief "6 mm 45° gussets"; evidence: the gusset spans in model.py are −0.05 mm, the mesh probe is empty and right.png shows a bare L). Two things constrain any gusset:
-   - The femur-servo tabs occupy C x 10.55…42.75, y −13.5…−11.0, z 7…19.
-   - The tibia servo sweeps C y ≥ −13.0 at radius ≥ 28.4 mm from the femur axis (32, 13).
+1. **Give the window's two bottom corners a radius of at least 1 mm** (rule §2, internal corners on load paths; rule §1, cross-layer load; evidence #10a).
+   - A fillet inside the window cannot reach 1 mm. With 0.1 mm printed end clearance and 0.2 mm side clearance, any radius over 0.5 mm hits a square servo-case corner.
+   - Cut relief (T-bone) holes instead: Ø2–3 mm through the plate, centred on the post's inner face r above the floor, at (15.2, 10.7 + r) and (38.1, 10.7 + r). Each arc is then tangent to the window floor, and the post runs into the band through a radius.
+   - Give each relief a 45° point upwards (teardrop) so it prints without support.
+   - The reliefs only remove material. They stay above the gusset (top z 10.0) and below the pilots (which start at z 16.15).
+   - Each relief narrows its post by r at that height, so the strength-analyst must size the post there (see Recommendations). If a post needs more section, lengthen VPLATE_X outward rather than thinning anything.
+2. **Run the gusset the full plate length, x 9.25 → 44.05** (rule §2; round-1 fix 1 asked for "full-length" and "on the tab span"; the brief says "along its whole length"; evidence #10b).
+   - At the hub end nothing is in the way: the hub is solid under x 9.25–12.25.
+   - At the outer end, either square the arm's far-end corners (r3 → ≤ 0.5) or run the arm 3 mm past the plate. Either one also removes the z 4.99 overhang patch (#6).
+   - The extended gusset stays within 25.7 mm of the femur axis (the tibia servo sweeps ≥ 28.4 mm) and 1.0 mm under the tabs.
+   - Then rebuild and re-run mesh_check, render and assembly_check.py.
+3. **Correct the documentation** (round-1 fix 4 was not done in model.py; rule §7; evidence: the parameter values from `build()`).
+   - model.py:31, PILOT_X comment: "−19.4, 8.4" → −19.25, 8.55.
+   - model.py:32, VPLATE_X: "9.1 … 43.9" → 9.25 … 44.05.
+   - model.py:33, WIN_HALF: "6.4" → 6.3.
+   - model.py:35, VPLATE_H: "37.85" → 37.75.
+   - model.py:28 (ARM_Y) and the docstring: the femur plane is −4.1 … 2.9 and the arm clears it by 2.4 mm (not −3.8 … 3.2 and 2.7 mm).
+   - design_brief.md: make the horn-joint line give M2×10 for the coxa (it still says M2×12, against spec §2 and BUILD_GUIDE.md), and describe the posts' cross-layer bending and the corner reliefs.
 
-   So a 6 mm gusset under the tabs would hit them. Do one of these, then re-run assembly_check.py:
-   - (a) Lengthen VPLATE_X by ≥ 6.5 mm at each end. Put 6 mm gussets only outside the tab span (x < 10.0 and x > 43.3), keeping them inside r 27 of the femur axis.
-   - (b) Raise the window. For example, Z_F = T_C + 12 gives a ≥ 5.7 mm solid band between the arm and the window. Add a full-length r ≥ 1.5 mm root fillet, or a ≤ 1.5 mm chamfer that stays below the tabs (z < 6.5 now).
+## Round 1 fixes checked
 
-   Also put the gusset x-limits on the **tab span**, not the window ±3 mm.
-2. **Fillet the hub-to-arm re-entrant corner** at (19, −6.5) with r ≥ 2 mm (rule §2; top.png). It is on the full foot-moment path.
-3. **Give the coxa its own centre-screw length** in spec §2 (rule §4, assembly). Size it from washer 0.5 + 3.0 mm floor + the measured spline thread depth below the horn face. That is about M2×8 to M2×10, not the femur's and tibia's M2×12. Or make the hub floor 5 mm (T_C 7) so all three joints share one screw.
-4. Fix the stale numbers in model.py comments and spec §2 (window 22.9 × 12.6 CAD; PILOT_X, VPLATE_X, WIN_HALF, femur plane −4.1…2.9). Documentation only, but spec §2 is what a person checks against.
+1. Vertical-plate root support: **partly done.**
+   - `Z_F = T_C + 12` (hex_frame.py:32) gives the 5.7 mm band (window floor z 10.7, probe).
+   - A 5 mm 45° gusset exists, 1.0 mm under the tabs (probe; right.png).
+   - But the gusset stops 3 mm short of both plate ends, and the window corners above the band are still sharp (fixes 1–2).
+   - assembly_check.py was re-run after the change (05:20 UTC): stance clear, femur −70…+90, tibia −170…0, coxae ±45, neighbours converge to 35.
+2. Hub-to-arm fillet: **done**, r2.5 (`HUB_ARM_FILLET`; probe; top.png).
+3. Coxa centre screw: **done** in spec §2 (M2×10) and BUILD_GUIDE.md. The brief still says M2×12 (fix 3).
+4. Stale numbers: **partly done.** Spec §2 now says "22.9 × 12.6 CAD", but the model.py comments are unchanged (fix 3).
 
-Advisory:
-- The plate-end overhang over the arm's r 3 corner: square that arm corner, or end the plate 3 mm short.
-- MG90S lead exit: the window has no wire notch and a printed end clearance of ≈ 0.1 mm. Check on a real servo that the lead and its strain relief pass through, before printing 6 copies.
+Round-1 advisories: the plate-end overhang over the arm's r3 corner is unchanged (fix 2 removes it). The lead-exit advisory is still open (below).
+
+## Recommendations
+
+- strength-analyst: check the posts in cross-layer bending about C x.
+  - Window floor, z 10.7: two posts of 5.95 × 4.5 mm (less r after fix 1).
+  - Pilots, z 17: widths 2.25 + 1.55 and 1.6 + 2.25 mm.
+  - Loads: the stance load (≈ 126 N·mm) and the 3 N shove (≈ 229 N·mm).
+- MG90S lead exit (round-1 advisory, still open): the lead leaves the case at the hub-side end (C x ≈ 15.4), where the printed end clearance is ≈ 0.1 mm. A lead notch there would cut the left post, which is the critical section. Fit one real servo before printing six.
+- The geometry.json `holes` field still holds an error (toolsmith).
