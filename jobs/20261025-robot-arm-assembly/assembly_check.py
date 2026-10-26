@@ -89,6 +89,8 @@ def main():
 
     lb_mg, lb_sg = link_back_z(MG996R), link_back_z(SG90)
     xs, zs, up_y = tt.XS, tt.ZS, tt.UP_Y
+    t_up, t_fa, t_gb = mods["upper"].T, mods["forearm"].T, mods["gripper_base"].T
+    t_jaw = mods["jaw"].T
 
     def place(q):
         yaw, sh, el, wr, gr = q
@@ -98,15 +100,15 @@ def main():
         P["servo_shoulder"] = W @ frame((xs, up_y, zs), (1, 0, 0), (0, 1, 0))
         U = W @ frame((xs, up_y + lb_mg, zs), (math.cos(math.radians(sh)), 0, math.sin(math.radians(sh))), (0, 1, 0))
         P["upper"] = U
-        P["servo_elbow"] = U @ T(100, 0, 6)
-        F = U @ T(100, 0, 6 + lb_mg) @ Rz(-el)          # + = elbow up
+        P["servo_elbow"] = U @ T(100, 0, t_up)
+        F = U @ T(100, 0, t_up + lb_mg) @ Rz(-el)       # + = elbow up
         P["forearm"] = F
-        P["servo_wrist"] = F @ T(90, 0, 5)
-        G = F @ T(90, 0, 5 + lb_sg) @ Rz(-wr)           # + = wrist up
+        P["servo_wrist"] = F @ T(90, 0, t_fa)
+        G = F @ T(90, 0, t_fa + lb_sg) @ Rz(-wr)        # + = wrist up
         P["gripper_base"] = G
-        P["servo_grip"] = G @ T(40, 0, 5)
-        P["jaw"] = G @ T(40, 0, 5 + lb_sg) @ Rz(gr)     # + = open
-        tip = G @ np.array([95.0, -6.0, 17.0, 1.0])
+        P["servo_grip"] = G @ T(40, 0, t_gb)
+        P["jaw"] = G @ T(40, 0, t_gb + lb_sg) @ Rz(gr)  # + = open
+        tip = G @ np.array([95.0, -6.0, t_gb + lb_sg + t_jaw / 2, 1.0])
         return P, tip[:3]
 
     def overlaps(P):

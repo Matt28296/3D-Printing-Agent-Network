@@ -7,16 +7,17 @@ Printed as modelled (tabs on the bed).
 import math
 
 from build123d import Align, Box, Cylinder, Pos, Rot
-from cadlib import chamfer_bottom, to_bed
-from hobby_parts import MG996R, link_back_z
+from cadlib import HOLE_COMP_DEFAULT, chamfer_bottom, to_bed
+from hobby_parts import MG996R, horn_face_z
 
 # --- parameters (mm) -----------------------------------------------------------
-R_IN, R_OUT = 41.0, 44.5      # inside the base-servo tab screws (r ≤ 38.2), under the Ø96 turntable
-TURNTABLE_Z = link_back_z(MG996R)   # 14.5: turntable underside
+HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (default, fdm-design-rules)
+R_IN, R_OUT = 41.0, 44.0      # inside the base-servo tabs (r <= 38.4); 0.75 mm clear of the tab-screw heads
+TURNTABLE_Z = horn_face_z(MG996R)   # 16.5: turntable underside (the base horn sits flat on it, no pocket)
 RUN_GAP = 1.5                 # running gap to the turntable; sand the ring top if it rubs
-H = TURNTABLE_Z - RUN_GAP     # 13.0
-TAB_R, TAB_ANG = 48.0, (30.0, 150.0, 270.0)   # must match the base's ring pilots
-TAB_D, TAB_T, TAB_HOLE = 9.0, 3.0, 3.4        # M3 clearance
+H = TURNTABLE_Z - RUN_GAP     # 15.0
+TAB_R, TAB_ANG = 47.5, (30.0, 150.0, 270.0)   # must match the base's ring pilots
+TAB_D, TAB_T, TAB_HOLE = 9.0, 3.0, 3.4        # tab Ø9 reaches r 52.0 = base edge; M3 clearance (printed)
 
 
 def design():
@@ -30,7 +31,8 @@ def design():
         web_len = TAB_R - R_IN - 1
         ring += Pos((x + xm) / 2, (y + ym) / 2, 0) * Rot(0, 0, a) * Box(web_len, TAB_D, TAB_T,
                                                                        align=(Align.CENTER, Align.CENTER, Align.MIN))
-        ring -= Pos(x, y, -1) * Cylinder(TAB_HOLE / 2, TAB_T + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        ring -= Pos(x, y, -1) * Cylinder((TAB_HOLE + HOLE_COMP) / 2, TAB_T + 2,
+                                         align=(Align.CENTER, Align.CENTER, Align.MIN))
     return ring
 
 

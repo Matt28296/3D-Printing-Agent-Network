@@ -11,7 +11,7 @@
    ],
    "fingertip_mm": [
     295.1,
-    61.4,
+    74.8,
     66.5
    ],
    "collisions": [],
@@ -27,7 +27,7 @@
    ],
    "fingertip_mm": [
     4.2,
-    61.4,
+    74.8,
     345.5
    ],
    "collisions": [],
@@ -43,7 +43,7 @@
    ],
    "fingertip_mm": [
     -0.9,
-    61.4,
+    74.8,
     267.7
    ],
    "collisions": [],
@@ -59,7 +59,7 @@
    ],
    "fingertip_mm": [
     -88.2,
-    61.4,
+    74.8,
     104.5
    ],
    "collisions": []
@@ -74,14 +74,14 @@
    ],
    "fingertip_mm": [
     66.1,
-    61.4,
+    74.8,
     -37.9
    ],
    "collisions": [
     [
-     "base",
+     "desk",
      "gripper_base",
-     647.6
+     287.0
     ]
    ]
   },
@@ -95,7 +95,7 @@
    ],
    "fingertip_mm": [
     180.8,
-    61.4,
+    74.8,
     205.5
    ],
    "collisions": []
@@ -110,7 +110,7 @@
    ],
    "fingertip_mm": [
     192.8,
-    61.4,
+    74.8,
     15.5
    ],
    "collisions": []
@@ -124,8 +124,8 @@
     30
    ],
    "fingertip_mm": [
-    144.6,
-    231.4,
+    135.1,
+    240.9,
     137.2
    ],
    "collisions": []
@@ -139,8 +139,8 @@
     20
    ],
    "fingertip_mm": [
-    124.4,
-    -0.9,
+    131.1,
+    10.7,
     -9.5
    ],
    "collisions": [],
@@ -203,12 +203,12 @@
       [
        "desk",
        "forearm",
-       1634.6
+       3851.4
       ],
       [
        "desk",
        "gripper_base",
-       169.9
+       270.6
       ],
       [
        "desk",
@@ -218,12 +218,12 @@
       [
        "ring",
        "upper",
-       14.2
+       51.0
       ],
       [
        "turntable",
        "upper",
-       321.8
+       1137.7
       ]
      ]
     ],
@@ -233,17 +233,17 @@
       [
        "desk",
        "forearm",
-       835.6
+       1662.5
       ],
       [
        "desk",
        "gripper_base",
-       1935.6
+       3109.4
       ],
       [
        "desk",
        "jaw",
-       161.5
+       258.8
       ],
       [
        "desk",
@@ -254,6 +254,11 @@
        "desk",
        "servo_wrist",
        237.6
+      ],
+      [
+       "turntable",
+       "upper",
+       148.0
       ]
      ]
     ],
@@ -263,12 +268,12 @@
       [
        "desk",
        "gripper_base",
-       190.8
+       511.6
       ],
       [
        "desk",
        "jaw",
-       25.9
+       235.0
       ]
      ]
     ]
@@ -343,36 +348,17 @@
     130,
     140,
     150,
-    160
+    160,
+    170
    ],
    "first_hits": [
     [
      -170,
      [
       [
-       "base",
-       "gripper_base",
-       1448.2
-      ],
-      [
-       "cradle",
-       "gripper_base",
-       135.7
-      ],
-      [
-       "gripper_base",
-       "ring",
-       1.8
-      ],
-      [
-       "gripper_base",
-       "turntable",
-       150.9
-      ],
-      [
        "servo_grip",
        "turntable",
-       80.0
+       25.0
       ]
      ]
     ],
@@ -380,19 +366,9 @@
      -160,
      [
       [
-       "base",
+       "desk",
        "gripper_base",
-       1759.8
-      ],
-      [
-       "cradle",
-       "gripper_base",
-       108.2
-      ],
-      [
-       "servo_grip",
-       "turntable",
-       24.9
+       33.5
       ]
      ]
     ],
@@ -400,19 +376,9 @@
      -150,
      [
       [
-       "base",
+       "desk",
        "gripper_base",
-       647.6
-      ]
-     ]
-    ],
-    [
-     170,
-     [
-      [
-       "base",
-       "gripper_base",
-       99.4
+       287.0
       ]
      ]
     ]
@@ -453,6 +419,8 @@
     150
    ],
    "collision_free": [
+    -150,
+    -140,
     -130,
     -120,
     -110,
@@ -479,50 +447,11 @@
     100,
     110,
     120,
-    130
+    130,
+    140,
+    150
    ],
-   "first_hits": [
-    [
-     -150,
-     [
-      [
-       "forearm",
-       "servo_grip",
-       73.1
-      ]
-     ]
-    ],
-    [
-     -140,
-     [
-      [
-       "forearm",
-       "servo_grip",
-       9.9
-      ]
-     ]
-    ],
-    [
-     140,
-     [
-      [
-       "forearm",
-       "servo_grip",
-       9.9
-      ]
-     ]
-    ],
-    [
-     150,
-     [
-      [
-       "forearm",
-       "servo_grip",
-       73.1
-      ]
-     ]
-    ]
-   ]
+   "first_hits": []
   },
   "gripper": {
    "tested": [
@@ -566,7 +495,7 @@
       [
        "gripper_base",
        "jaw",
-       1102.8
+       2136.4
       ]
      ]
     ],
@@ -576,7 +505,7 @@
       [
        "gripper_base",
        "jaw",
-       1341.4
+       2280.2
       ]
      ]
     ],
@@ -586,7 +515,7 @@
       [
        "gripper_base",
        "jaw",
-       1167.5
+       1869.7
       ]
      ]
     ],
@@ -596,7 +525,7 @@
       [
        "gripper_base",
        "jaw",
-       592.8
+       949.6
       ]
      ]
     ]
@@ -605,26 +534,26 @@
  },
  "desk_reach": {
   "nearest": {
-   "radius_mm": 91.2,
+   "radius_mm": 74.8,
    "q_deg": [
     0,
-    135,
-    105,
     50,
+    -160,
+    -10,
     0
    ]
   },
   "farthest": {
-   "radius_mm": 271.1,
+   "radius_mm": 236.2,
    "q_deg": [
     0,
-    -5,
-    -5,
-    -40,
+    -15,
+    30,
+    -90,
     0
    ]
   }
  },
- "reach_horizontal_mm": 301.5,
+ "reach_horizontal_mm": 304.5,
  "shoulder_height_above_desk_mm": 100.5
 }

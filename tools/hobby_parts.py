@@ -20,11 +20,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Part, Plane, Polygon, Pos, extrude
+from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Part, Plane, Polygon, Pos, Rot, extrude
+from cadlib import HOLE_COMP_DEFAULT
 
 __all__ = ["ServoSpec", "MG996R", "MG996R_DISC", "SG90", "BoardSpec", "ESP32_DEVKIT_38", "ESP32_DEVKIT_30",
            "servo_mount_cutter", "horn_pocket_cutter", "servo_dummy", "horn_face_z", "link_back_z", "HORN_DEPTH",
-           "rounded_plate", "slot_cutter", "replace"]
+           "rounded_plate", "slot_cutter", "chamfer_plane_edges", "HOLE_COMP_DEFAULT", "replace"]
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class ServoSpec:
     hole_dx: float         # tab hole spacing along x (centre to centre)
     hole_dy: float         # tab hole spacing across y (0 = one hole per tab, on the centreline)
     tab_hole_d: float      # hole diameter in the servo's tab
-    screw_pilot_d: float   # pilot hole for the self-tapping screw into PETG/PLA
+    screw_pilot_d: float   # PRINTED pilot for the self-tapping tab screw (cutters add hole_comp)
     shaft_from_end: float  # shaft axis to the nearest body end
     horn_kind: str         # "disc" or "arm"
     horn_d: float          # disc diameter, or arm hub diameter
@@ -48,6 +49,7 @@ class ServoSpec:
     horn_arm_len: float = 0.0   # arm horns: hub centre to tip centre
     horn_tip_d: float = 0.0     # arm horns: tip width
     horn_arms: int = 1          # arm horns: 1 = single arm along +x, 2 = double arm along ±x
+    horn_screw_clear_d: float = 3.4   # clearance for the horn's centre screw, which clamps the LINK onto the spline
     stall_torque_nmm: float = 0.0  # datasheet stall torque at 6 V, N·mm
     mass_g: float = 0.0
 
@@ -59,7 +61,7 @@ MG996R = ServoSpec(
     name="MG996R", length=40.7, width=19.7, case_top=36.5, total_h=42.9, tab_height=27.0,
     tab_t=2.5, tab_span=54.0, hole_dx=48.5, hole_dy=10.0, tab_hole_d=4.5, screw_pilot_d=2.6,
     shaft_from_end=10.2, horn_kind="arm", horn_d=11.0, horn_t=2.8, horn_arm_len=17.5,
-    horn_tip_d=5.5, horn_arms=2, stall_torque_nmm=1000.0, mass_g=55.0)
+    horn_tip_d=5.5, horn_arms=2, horn_screw_clear_d=3.4, stall_torque_nmm=1000.0, mass_g=55.0)
 
 # Same servo with its round disc horn (Ø25), for parts printed pocket-side up.
 MG996R_DISC = replace(MG996R, horn_kind="disc", horn_d=25.0, horn_arm_len=0.0, horn_tip_d=0.0, horn_arms=1)
@@ -67,9 +69,9 @@ MG996R_DISC = replace(MG996R, horn_kind="disc", horn_d=25.0, horn_arm_len=0.0, h
 # TowerPro SG90 (9 g micro). Nominal: measure yours before printing.
 SG90 = ServoSpec(
     name="SG90", length=22.5, width=12.0, case_top=22.7, total_h=26.7, tab_height=15.9,
-    tab_t=2.5, tab_span=32.2, hole_dx=27.8, hole_dy=0.0, tab_hole_d=2.0, screw_pilot_d=1.8,
+    tab_t=2.5, tab_span=32.2, hole_dx=27.8, hole_dy=0.0, tab_hole_d=2.0, screw_pilot_d=1.5,
     shaft_from_end=5.9, horn_kind="arm", horn_d=7.2, horn_t=1.6, horn_arm_len=14.0, horn_tip_d=4.2,
-    stall_torque_nmm=160.0, mass_g=9.0)
+    horn_screw_clear_d=2.4, stall_torque_nmm=160.0, mass_g=9.0)
 
 
 @dataclass(frozen=True)
@@ -106,16 +108,24 @@ def _body_x0(s: ServoSpec) -> float:
 
 
 def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
-                       roof: str | None = None, through: float = 60.0) -> Part:
+                       roof: str | None = None, through: float = 60.0,
+                       hole_comp: float = HOLE_COMP_DEFAULT, end_clearance: float | None = None,
+                       pilot_teardrop: str | None = None) -> Part:
     """Cutter for a plate the servo hangs through (tabs resting on the plate's z=0 face).
 
-    Cuts the body window (plus clearance) and the screw pilot holes.
-    roof="+x"/"-x"/"+y"/"-y" adds a 45° pointed roof on that side of the window,
-    for windows printed in a vertical wall (the roof side must point up in print).
+    Cuts the body window and the tab-screw pilots. Sizes are PRINTED targets plus
+    `hole_comp` (vertical holes print ~0.2 mm under; fdm-design-rules, HOLE_COMP):
+      window = body + clearance (+ end_clearance along x, default = clearance) + hole_comp
+      pilot  = s.screw_pilot_d + hole_comp
+    roof="+y"/"-y" adds a 45° pointed roof on that long side of the window, for windows
+    printed in a vertical wall (the roof side must point up in print). Roofs on the short
+    sides ("+x"/"-x") are refused when they would cut the tab pilots.
+    pilot_teardrop="+x"/"-x"/"+y"/"-y" gives each pilot a 45° point that way (horizontal pilots).
     """
-    c = clearance
-    x0 = _body_x0(s) - c / 2
-    win_l, win_w = s.length + c, s.width + c
+    c = clearance + hole_comp
+    ce = (clearance if end_clearance is None else end_clearance) + hole_comp
+    x0 = _body_x0(s) - ce / 2
+    win_l, win_w = s.length + ce, s.width + c
     cutter = Pos(x0, -win_w / 2, -plate_t - 1) * Box(win_l, win_w, plate_t + 2, align=(Align.MIN,) * 3)
     if roof:
         bad = _roof_hits_pilots(s, c, roof)
@@ -137,18 +147,18 @@ def servo_mount_cutter(s: ServoSpec, plate_t: float, clearance: float = 0.4,
                 Polygon(*tri, align=None)
             extrude(amount=plate_t + 2)
         cutter = cutter + bp.part
-    xm = _body_x0(s) + s.length / 2
-    ys = [0.0] if s.hole_dy == 0 else [-s.hole_dy / 2, s.hole_dy / 2]
-    for dx in (-s.hole_dx / 2, s.hole_dx / 2):
-        for y in ys:
-            if s.hole_dy == 0:  # micro servos: short slot along x tolerates spacing error
-                slot = Pos(xm + dx, y, -through / 2) * Cylinder(s.screw_pilot_d / 2, through)
-                slot = slot + Pos(xm + dx, y, -through / 2) * Box(0.8, s.screw_pilot_d, through)
-                slot = slot + Pos(xm + dx + (0.4 if dx > 0 else -0.4), y, -through / 2) * Cylinder(
-                    s.screw_pilot_d / 2, through)
-                cutter = cutter + slot
-            else:
-                cutter = cutter + Pos(xm + dx, y, -through / 2) * Cylinder(s.screw_pilot_d / 2, through)
+    d = s.screw_pilot_d + hole_comp
+    for (px, py) in _pilot_xy(s):
+        hole = Pos(px, py, -through / 2) * Cylinder(d / 2, through)
+        if s.hole_dy == 0:  # micro servos: slot elongated OUTWARD along x tolerates spacing error
+            out = 0.4 if px > _body_x0(s) + s.length / 2 else -0.4
+            hole = hole + Pos(px + out / 2, py, -through / 2) * Box(abs(out), d, through)
+            hole = hole + Pos(px + out, py, -through / 2) * Cylinder(d / 2, through)
+        if pilot_teardrop:
+            r = d / 2
+            ux, uy = {"+x": (1, 0), "-x": (-1, 0), "+y": (0, 1), "-y": (0, -1)}[pilot_teardrop]
+            hole = hole + Pos(px + ux * r / 2 ** 0.5, py + uy * r / 2 ** 0.5, -through / 2) * Rot(0, 0, 45) * Box(r, r, through)
+        cutter = cutter + hole
     return cutter
 
 
@@ -180,16 +190,25 @@ def _roof_hits_pilots(s: ServoSpec, c: float, roof: str, wall: float = 1.0) -> l
 
 
 def horn_pocket_cutter(s: ServoSpec, depth: float = 2.0, clearance: float = 0.5,
-                       screw_access_d: float = 6.5, link_t: float = 50.0) -> Part:
+                       screw_access_d: float | None = None, link_t: float = 50.0,
+                       hole_comp: float = HOLE_COMP_DEFAULT) -> Part:
     """Cutter for the horn recess in a link, in LINK frame: origin on the shaft axis at the
     link's BACK face (servo side), +Z pointing away from the servo (into the link).
     Place the link's back face at `link_back_z(s, depth)` in the servo frame, so the horn's
     outer face lands on the pocket floor at z = depth.
 
-    The pocket (z 0..depth) locates the horn; the centre hole lets a screwdriver reach
-    the horn screw. Screw the horn to the link first (its own small screws, pilot-drilled
+    The pocket (z 0..depth) locates the horn and carries torque on its walls. The centre
+    hole (default s.horn_screw_clear_d) takes a LONGER centre screw plus washer, put in from
+    the link's front face, so the screw clamps link + horn onto the spline (the stock short
+    screw would clamp only the horn). Pocket and hole get `hole_comp` added (printed sizes).
+    depth=0 gives just the clamp hole (horn face flat on the link's back face). Screw the horn to the link first (its own small screws, pilot-drilled
     through the horn holes), then push the assembly onto the spline.
     """
+    clearance = clearance + hole_comp
+    access_d = (s.horn_screw_clear_d if screw_access_d is None else screw_access_d) + hole_comp
+    access = Pos(0, 0, -0.5) * Cylinder(access_d / 2, link_t + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if depth <= 0:
+        return access
     if s.horn_kind == "disc":
         pocket = Pos(0, 0, -0.5) * Cylinder((s.horn_d + clearance) / 2, depth + 0.5,
                                             align=(Align.CENTER, Align.CENTER, Align.MIN))
@@ -204,7 +223,6 @@ def horn_pocket_cutter(s: ServoSpec, depth: float = 2.0, clearance: float = 0.5,
                 r = r_hub + (r_tip - r_hub) * t
                 pocket = pocket + Pos(sgn * s.horn_arm_len * t, 0, -0.5) * Cylinder(
                     r, depth + 0.5, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    access = Pos(0, 0, -0.5) * Cylinder(screw_access_d / 2, link_t + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return pocket + access
 
 
@@ -250,3 +268,14 @@ def slot_cutter(x0: float, x1: float, y: float, w: float, t: float, z0: float = 
     for x in (x0 + r, x1 - r):
         c = c + Pos(x, y, z0 - 1) * Cylinder(r, t + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
     return c
+
+
+def chamfer_plane_edges(part: Part, z: float, size: float = 0.4) -> Part:
+    """Chamfer every edge lying in the plane Z = z (use on the blank, before cutting holes,
+    for the face that goes on the bed: elephant's-foot relief)."""
+    from build123d import chamfer
+    edges = [e for e in part.edges()
+             if abs(e.bounding_box().min.Z - z) < 1e-6 and abs(e.bounding_box().max.Z - z) < 1e-6]
+    if not edges:
+        raise ValueError(f"no edges in the plane Z = {z}")
+    return chamfer(edges, length=size)

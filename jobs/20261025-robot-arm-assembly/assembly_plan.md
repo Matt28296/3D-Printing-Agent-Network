@@ -14,7 +14,7 @@ The user left motors, power and material to the designer.
 | Power | 6 V 5 A DC adapter, 5.5 × 2.1 mm plug; panel jack (Ø11 mm hole) in the base; ESP32 fed from 5 V USB or a 5 V buck | Servos stall at up to ~2.5 A each, so they must not run from the ESP32's 5 V pin |
 | Material | PETG (Prusament PETG profile) | Tough, low creep, no enclosure needed |
 | Fasteners | Servo tab screws (supplied with the servos) into printed pilot holes; 3 × M3×8 self-tapping for the ring; 3 × M3×8 for the cradle; 4 × M3 wood screws for the desk (optional) | All screws self-tap into PETG |
-| Horns | MG996R **double-arm** horn and SG90 single-arm horn (both in the servo bags), each seated 2 mm deep in a slot pocket on the link's back face | A slot pocket bridges across its narrow width (longest strand 9.5 mm) and carries torque on its walls; a Ø25 disc pocket would need a 25 mm bridge. Fix each horn with its centre screw (through the Ø6.5 access hole) plus small screws drilled through the arm holes |
+| Horns | MG996R **double-arm** horn and SG90 single-arm horn (both in the servo bags), each seated 2 mm deep in a slot pocket on the link's back face (the turntable has none: the base horn sits flat on its underside) | The slot carries torque on its walls; a Ø25 disc pocket would need a 25 mm bridge. The pocketed links print pocket-up (upper link, forearm) or bridge ≤ 7.9 mm (SG90 parts). **A longer centre screw + washer goes through each link into the spline** (M3×16 + Ø9 washer on MG996R joints, M2×12 + Ø6 on SG90 joints), clamping link and horn together; small screws through the horn arm holes stop rotation (strength round 1: the stock screw clamps only the horn) |
 
 ## Shared frame (every model.py follows it)
 
@@ -24,13 +24,15 @@ Each link's frame has its origin on its joint axis at the link's **back face** (
 
 | Joint | Servo | Servo-frame origin (tab underside, on the axis) | Axis | Horn face | Next link's back face |
 |---|---|---|---|---|---|
-| Base yaw | MG996R | (0, 0, 0) | +Z | Z = 16.5 | turntable underside Z = 14.5 |
+| Base yaw | MG996R | (0, 0, 0) | +Z | Z = 16.5 | turntable underside Z = 16.5 (no pocket) |
 | Shoulder | MG996R | (10.15, −5, 60.5); body **horizontal** along X, centred on the yaw axis | +Y | Y = 11.5 | upper link Y = 9.5 |
-| Elbow | MG996R | upper link (100, 0, 6); body along link +x | link +z | link z = 22.5 | forearm at link z = 20.5 |
-| Wrist | SG90 | forearm (90, 0, 5) | forearm +z | forearm z = 16.4 | gripper base at forearm z = 14.4 |
-| Gripper | SG90 | gripper base (40, 0, 5) | +z | gripper z = 16.4 | jaw at gripper z = 14.4 |
+| Elbow | MG996R | upper link (100, 0, 10); body along link +x | link +z | link z = 26.5 | forearm at link z = 24.5 |
+| Wrist | SG90 | forearm (90, 0, 10) | forearm +z | forearm z = 21.4 | gripper base at forearm z = 19.4 |
+| Gripper | SG90 | gripper base (40, 0, 8) | +z | gripper z = 19.4 | jaw at gripper z = 17.4 |
 
-Link lengths: shoulder→elbow 100 mm, elbow→wrist 90 mm, wrist→fingertip 95 mm. The shoulder axis is 100.5 mm above the desk. Each link mounts on the front of the previous servo, so the arm plane steps out in +Y (fingertip at Y ≈ 61). The yaw target must allow for that offset.
+Plate thicknesses (strength round 1): turntable disk 8, upright 7; upper link 10; forearm 10; gripper base 8; jaw 8.
+
+Link lengths: shoulder→elbow 100 mm, elbow→wrist 90 mm, wrist→fingertip 95 mm. The shoulder axis is 100.5 mm above the desk. Each link mounts on the front of the previous servo, so the arm plane steps out in +Y (fingertip at Y ≈ 75). The yaw target must allow for that offset. Static moments with a 50 g payload, arm straight out: ≈410 N·mm at the shoulder (41 % of MG996R stall), ≈180 at the elbow. **The base must be screwed down**: with the arm out it tips over (358 vs 147 N·mm).
 
 ## Assembly check (`assembly_check.py` → `assembly_check.json`, `assembly_*.png`)
 
@@ -39,11 +41,11 @@ All 8 printed parts, 5 servo dummies, the ESP32 board and the desk, placed per p
 | Joint (0 = straight / horizontal, + = up / open) | Collision-free range found | Use (servo 180°) |
 |---|---|---|
 | Shoulder (elbow 0) | −10° … 180° (desk at −20°) | 0° … 180° |
-| Elbow (shoulder 60) | −140° … +160° | −90° … +90° |
-| Wrist (shoulder 45, elbow −45) | −130° … +130° | −90° … +90° |
+| Elbow (shoulder 60) | −140° … +170° | −90° … +90° |
+| Wrist (shoulder 45, elbow −45) | −150° … +150° | −90° … +90° |
 | Gripper | 0° … 60° (below 0 the jaws overlap: 0 = closed) | 0° … 60° |
 
-Reach: 301 mm from the yaw axis at full horizontal extension; the fingertip can touch the desk from 91 mm to 271 mm out. Every named pose is collision-free except a deliberate 150° fold-down of the elbow, which is outside the servo's range.
+Reach (round 2 geometry): 304 mm from the yaw axis at full horizontal extension; collision-free poses put the fingertip on the desk from 75 mm to 236 mm out. Every named pose is collision-free except a deliberate 150° fold-down of the elbow, which is outside the servo's range.
 
 ## Printed pieces
 
@@ -65,4 +67,4 @@ Reach: 301 mm from the yaw axis at full horizontal extension; the fingertip can 
 
 | # | Piece | Status |
 |---|---|---|
-| 1–8 | all | modelled, built, mesh-checked, assembly-checked; DFM and strength review next |
+| 1–8 | all | round 2: DFM (7 FAIL) and strength (6 FAIL, 2 NEEDS_TEST) round-1 findings applied, rebuilt, mesh-checked, assembly re-checked; round-2 reviews next |

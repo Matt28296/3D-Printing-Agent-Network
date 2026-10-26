@@ -3,12 +3,12 @@
 Job: 20261025-arm-gripper-jaw · Written by: Architect · Date: 2026-10-25 · Assembly: [20261025-robot-arm-assembly](../20261025-robot-arm-assembly/assembly_plan.md)
 
 ## 1. Function
-Lever (hub r8 + 55 mm bar) on the gripper SG90's single-arm horn; closes against the fixed jaw.
+Lever (hub r8 + 55 mm × 14 mm bar, 8 thick) on the gripper SG90's single-arm horn; closes against the fixed jaw.
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 63 × 16 × 5 mm. Interface: SG90 arm-horn pocket at the hub.
-- Fasteners used: Horn centre screw + 1 screw through the horn arm
+- Mating parts and their dimensions: 63 × 16 × 8 mm. Interface: SG90 arm-horn pocket with Ø2.4 clamp hole at the hub.
+- Fasteners used: M2×12 centre screw + Ø6 washer from the front face + 1 screw through the horn arm
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
@@ -18,11 +18,12 @@ Lever (hub r8 + 55 mm bar) on the gripper SG90's single-arm horn; closes against
 Servo dimensions are nominal (tools/hobby_parts.py). Measure your servos and horns first (body length/width, tab-hole spacing, shaft-to-end distance, double-arm horn hub Ø, arm length and tip width) and put any differences into `replace(MG996R, ...)` / `replace(SG90, ...)` in model.py. An optional fit coupon can be printed first.
 
 ## 4. Loads
-Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, SG90 160 N·mm at 6 V), because a stalled servo is the worst case the part sees, plus the arm's own weight with a 50 g payload.
+Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, SG90 160 N·mm at 6 V), because a stalled servo is the worst case the part sees, plus the arm's own weight with a 50 g payload. Round 2 adds the out-of-plane cases found by the strength review: the pitch servos give no resistance sideways, so a **base-yaw stall into a side obstacle** (swept over the joint ranges, up to 12 N at the fingertip) and a **5 N sideways hand push at the fingertip** load the printed plates and horn joints directly.
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
 | Gripper stall | 160 N·mm | pocket bearing; bar bending in-plane | short-term | seconds |
+| Sideways push at the jaw tip | 5 N | out-of-plane bending over the pocket, horn clamp | short-term | seconds |
 
 ## 5. Environment
 - Max temperature the part will see (°C): 40 (indoor desk; servo cases reach ~45 °C under sustained stall, so do not stall the servos for minutes)
@@ -40,7 +41,7 @@ Design loads come from the servos' datasheet stall torques (MG996R 1000 N·mm, S
 
 ## 8. Acceptance criteria (measurable)
 - [ ] Opens 0–60° with no rubbing
-- [ ] **Proof test:** Covered by the gripper-base squeeze test.
+- [ ] **Proof test:** Covered by the gripper-base squeeze test, plus: with the gripper horn held, push 7.5 N sideways at the jaw tip for 1 min each way. Pass: no crack over the pocket, no lift off the horn, no permanent set; the jaw then opens 0–60° without rubbing.
 
 ## 9. Notes and open questions
 None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.
