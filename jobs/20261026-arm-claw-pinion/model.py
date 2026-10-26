@@ -1,11 +1,24 @@
-"""Claw pinion: 18-tooth module-1 spur gear on the claw MG90S. Drives both racks.
+"""Claw pinion: 20-tooth module-1 spur gear on the claw MG90S. Drives both racks.
 Printed back face down (horn pocket on the bed, teeth profile in the bed plane).
 
 Pinion frame: origin on the shaft axis at the pinion's back face, +Z along the shaft (claw +x),
 +X towards claw +z (rack A). Tooth 0 points at rack A when the claw is closed (model pose).
-The servo's double-arm horn, both arms CUT 5.5 mm from the centre, sits 2 mm deep in the
-back-face pocket; an M2 x 10 screw from the counterbored front face clamps pinion + horn onto
-the spline (the stub flats carry the torque; a drop of CA glue in the pocket removes play).
+The servo's double-arm horn, both arms CUT 5.5 mm from the centre with the ends filed round
+(the horn then fits inside a Ø11 circle), sits 2 mm deep in the back-face pocket with a light
+0.1 mm fit, so the pinion is centred on the spline (deep review 03 SYS-08). An M2 x 12 + Ø6
+washer from the counterbored front face clamps pinion + horn onto the spline.
+
+Round 2 (pinion DFM + strength round 1, SYS-01, SYS-08):
+- 20 teeth (was 18), face 10 (was 8), r 0.38 root fillets (tools/gears.py), tips topped 0.15,
+  teeth 0.10 thinner at the pitch line (0.35 backlash per mesh with the racks' 0.25; the pinion
+  keeps the thicker teeth because its radial-flank root is the weaker one): 21.6 N per rack at
+  stall, 0-44 mm in 126° of servo;
+- outside Ø21.7: it passes the cover's Ø22.6 pass-through, so it goes on LAST, axially;
+- Ø6.2 x 1.7 counterbore for the M2 washer (head bearing); clamp floor 6.3 mm, so the M2 x 12
+  reaches 4.6 mm into the spline like every other horn clamp screw on the arm;
+- 0.25 x 45° chamfer on the bed face, tooth outline included (no silent fallback).
+The neck of each jaw sits outside the pinion's tip circle (r 11.25 vs 10.85), so the pinion's
+front face never rubs a neck (DFM fix 2 needs no relief any more).
 """
 import sys
 from pathlib import Path
@@ -14,28 +27,27 @@ from build123d import Align, Cylinder, Pos
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
-from claw_frame import BACKLASH, FACE_W, HORN_TRIM_R, M, PINION_HORN, Z_TEETH  # noqa: E402
+from claw_frame import (FACE_W, HORN_TRIM_R, M, PINION_BACKLASH, PINION_CB_D, PINION_FLOOR, PINION_HORN,  # noqa: E402
+                        PINION_ROOT_FILLET, TIP_RELIEF, Z_TEETH)
 
 from gears import spur_gear  # noqa: E402
-from hobby_parts import chamfer_plane_edges, horn_pocket_cutter  # noqa: E402
+from hobby_parts import HORN_DEPTH, horn_pocket_cutter  # noqa: E402
 
 # --- parameters (mm) -----------------------------------------------------------
 HOLE_COMP = HOLE_COMP_DEFAULT  # +0.2 on hole diameters (default, fdm-design-rules)
-HEAD_D, HEAD_H = 4.2, 1.6      # M2 pan/cheese head counterbore (printed target, + HOLE_COMP)
-POCKET_CLR = 0.3               # horn pocket clearance (tighter than links: gear backlash adds up)
-BED_CHAMFER = 0.25
+POCKET_CLR = 0.1               # horn pocket: light fit that centres the pinion on the horn (SYS-08; was 0.3)
+BED_CHAMFER = 0.25             # 45°, tooth outline included (a true 45° face up to 0.25 m: tools/gears.py)
+CB_D = PINION_CB_D             # 6.2 printed: Ø6 M2 washer under the clamp-screw head (strength fix)
+CB_H = FACE_W - HORN_DEPTH - PINION_FLOOR   # 1.7: leaves a 6.3 mm floor between the washer and the horn face
 
 
 def design():
-    g = spur_gear(M, Z_TEETH, FACE_W, backlash=BACKLASH, phase_deg=0.0)
-    try:
-        g = chamfer_plane_edges(g, 0.0, BED_CHAMFER)      # elephant's foot relief on the bed face
-    except ValueError:
-        pass                                              # kernel refused: rely on the slicer's EFC
+    g = spur_gear(M, Z_TEETH, FACE_W, backlash=PINION_BACKLASH, phase_deg=0.0, root_fillet=PINION_ROOT_FILLET,
+                  tip_relief=TIP_RELIEF, chamfer=(BED_CHAMFER, 0.0))
     g -= horn_pocket_cutter(PINION_HORN, link_t=FACE_W, clearance=POCKET_CLR, hole_comp=HOLE_COMP,
                             trim_r=HORN_TRIM_R)
-    g -= Pos(0, 0, FACE_W - HEAD_H) * Cylinder((HEAD_D + HOLE_COMP) / 2, HEAD_H + 1,
-                                               align=(Align.CENTER, Align.CENTER, Align.MIN))
+    g -= Pos(0, 0, FACE_W - CB_H) * Cylinder((CB_D + HOLE_COMP) / 2, CB_H + 1,
+                                             align=(Align.CENTER, Align.CENTER, Align.MIN))
     return g
 
 

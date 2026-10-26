@@ -1,33 +1,36 @@
 # Part spec: Claw jaw (rack + finger), ×2
 
-Job: 20261026-arm-claw-jaw · Written by: Architect · Date: 2026-10-26 · Assembly: [20261025-robot-arm-assembly](../20261025-robot-arm-assembly/assembly_plan.md)
+Job: 20261026-arm-claw-jaw · Written by: Architect · Date: 2026-10-26 (round 3: 2026-10-26, deep review 03 SYS-01 / SYS-08, jaw DFM and strength round 1) · Assembly: [20261025-robot-arm-assembly](../20261025-robot-arm-assembly/assembly_plan.md)
 
 ## 1. Function
-One-piece rack (module 1, 44 mm, teeth along y), neck (14 × 5 mm, passes through the cover slot) and finger blade (6 mm thick, 45 mm long, 20 mm-tall grip face). The grip face has 0.6 mm cross-grooves and a 1.5 mm V-notch along the centre line for pens, rods and wires. Two identical copies: jaw B is jaw A turned 180° about the pinion axis.
+One piece: a module-1 rack (56.5 mm along y, 10 mm face, 10 mm of solid behind the tooth roots), a 20 × 10 mm neck on that solid back (r 4 root fillets; it passes through the cover's slot), and a finger: 12 mm thick for 20 mm from the neck, tapering to 6 mm over the next 15, 45 mm long, with a full-height 45° gusset from the neck and r 3 fillets at its re-entrant kinks. The 20 mm-tall grip face has 0.6 mm cross-grooves and a 1.5 mm V-notch along the centre line for pens, rods and wires. Two identical copies: jaw B is jaw A turned 180° about the pinion axis. Each rack's back face rides on its guide (rack A under the cover's top wall, rack B on the frame's wrist plate), where the gear's separating force presses it, so both meshes run at the nominal centre distance (deep review 03 SYS-08). The jaws slide in from the open ends of their slots to fully open before the pinion goes in (SYS-01).
 
 ## 2. Envelope and interfaces
 - Max size available (mm): MK3 bed 250 × 210 × 210
-- Mating parts and their dimensions: 57 × 44 × 26 mm (claw x × y × z). Interfaces: rack teeth meshing with the pinion (pitch line 9 from its axis), rack back face against the lip/rail, rack front face against the cover front plate, neck through the cover slot, grip face on y 0 when closed.
+- Mating parts and their dimensions: 60.75 × 56.5 × 31.25 mm (claw x × y × z; print 31.25 × 56.5 × 60.75, standing on the rack's back end). Interfaces (jaw A, closed, claw frame G): rack teeth meshing with the pinion, pitch line on z 37.25 (10 from the axis); rack back face on z 48.5 (the top wall); rack x faces at 22.6 and 32.6 (0.25 to the lip wall and to the front plate); neck z 38.5–48.5, y −20…0, through slot A; grip face on y 0. The rack's back/front edge has a 2 mm 45° chamfer for y ≥ 4.5 (clears the cover's r 2 corner fillet over the whole stroke); the bed face a 0.3 mm chamfer, tooth outline included.
 - Fasteners used: None
 
 ## 3. Critical dimensions and tolerances
 | Feature | Nominal (mm) | Tolerance | Fit type |
 |---|---|---|---|
-| Rack pitch line to back face | 7.25 | ±0.15 | sets the mesh |
-| Rack face width | 8.0 | −0.15/+0 | 0.25 sliding gaps |
-| Neck | 14 × 5 | ±0.15 | 0.25 in the slot |
+| Rack pitch line to back face | 11.25 | ±0.15 | sets the mesh (the back rides on its guide) |
+| Rack face width (x) | 10.0 | −0.15/+0 | 0.25 sliding gaps |
+| Teeth | m 1, 20°, each 0.25 thinner at the pitch line, tips topped 0.15 | in the bed plane | 0.35 backlash per mesh with the pinion's 0.10 |
+| Neck | 20 × 10 | ±0.15 | 0.25 in its slot |
 | Grip face | y 0 closed | ±0.2 | jaws meet |
 
-Servo and camera dimensions are nominal (tools/hobby_parts.py, claw_frame.py). The MG90S is kept at the SG90 body size the arm was reviewed with; makers list 22.5–22.8 × 12–12.2 mm, so measure your MG90S (body length and width, tab-hole spacing, shaft to near end) and the double-arm horn (hub Ø, arm width near the hub), and give Claude any difference over 0.3 mm. Brio 4K: 27 × 102 × 27 mm, 63 g with its clip removed, 1/4"-20 thread centred on the bottom (Logitech quick-start guide); check the thread depth before choosing the screw.
+Servo and camera dimensions are nominal (`tools/hobby_parts.py`, `claw_frame.py`). The MG90S has its own spec since deep review 01 (spline top 14.0 mm above the tab underside), which sets the racks' x position. Measure yours and give Claude any difference over 0.3 mm.
 
 ## 4. Loads
-Design loads come from the MG90S datasheet stall torque (≈216 N·mm at 6 V), the stalled servo being the worst case the claw sees: the pinion (pitch radius 9 mm) then pushes **24 N** into the racks, **12 N per jaw** when both jaws touch the object, or the full **24 N on one jaw** when an off-centre object stops one jaw first. Plus the arm cases kept from the arm's strength review: a **5 N sideways push** and a base-yaw stall of up to **12 N** at the fingertip. The end effector now weighs ≈148 g with the camera (claw ≈53 g printed + 2 × MG90S + Brio 63 g + screws), ×3 for arm accelerations; the Brio's USB cable can tug the camera with ≈10 N.
+Design loads come from the MG90S's 6 V stall torque (≈216 N·mm), the stalled servo being the worst case the claw sees: the 20-tooth pinion (pitch radius 10 mm) then pushes **21.6 N** into the racks, **10.8 N per jaw** when both jaws touch the object, or the full **21.6 N on one jaw** when an off-centre object stops one jaw first. (A real stall grip is 6–8.5 N per finger, because the finger's moment presses the rack onto its guides: deep review 03 SYS-15. The stall figures stay the design loads.) Plus the arm cases: a **5 N sideways push** and the base-yaw stall sweep at the fingertip. The jaw prints standing, finger up (claw x = print Z), so **every bending of the neck and the finger, in either direction, puts its stress across the layers** (DFM round 1, item 4).
 
 | Case | Force (N) | Point and direction | Static / cyclic / sustained | Duration |
 |---|---|---|---|---|
-| Grip at stall, one jaw blocked | 24 N on the grip face, up to 45 mm in front of the rack | neck and blade root bending across layers, rack teeth | short-term | seconds |
-| Grip, both jaws | 12 N each | as above | cyclic | thousands of cycles |
-| Sideways push at the fingertip | 5 N along z | blade bending about y (along the layers) | short-term | seconds |
+| Grip at stall, one jaw blocked | 21.6 N on the grip face, 3 mm from the tip (up to 45 mm in front of the rack) | neck and finger root bending and twist, across the layers; rack teeth | short-term | seconds |
+| Grip, both jaws | 10.8 N each | as above | cyclic | thousands of cycles |
+| Sideways push at the fingertip | 5 N along ±z | neck and finger bending, across the layers | short-term | seconds |
+| Yaw-stall sweep at the fingertip | ≤ 6.6 N along z, ≤ 2.8 N along y, ≤ 13 N along x | as above | short-term | seconds |
+| Rack ends on the guides | ≈28 N (the couple of the one-jaw stall) | lip / rail wall and front plate | short-term | seconds |
 
 ## 5. Environment
 - Max temperature the part will see (°C): 40 (indoor desk; MG90S cases warm under sustained grip)
@@ -41,12 +44,13 @@ Design loads come from the MG90S datasheet stall torque (≈216 N·mm at 6 V), t
 
 ## 7. Quantity and time
 - Quantity: 2
-- Max acceptable print time per batch (h): 4
+- Max acceptable print time per batch (h): 6 (both on one plate; round 3's jaw is 2.3 times the round-1 volume)
 
 ## 8. Acceptance criteria (measurable)
-- [ ] Both jaws slide in from the ends and mesh at the closed position
-- [ ] Grip faces meet flat when closed (feeler 0.2 mm max gap)
-- [ ] **Proof test:** Grip test as for the pinion (centred and 8 mm off-centre, full close 10 s, 5 times each), then grip a 10 mm wooden dowel at the fingertips and hang 200 g from it for 1 min. Pass: no cracks or whitening at the neck, the flares or the blade root; the dowel does not slip; jaws still slide freely.
+- [ ] Without the pinion, both jaws slide in from the open slot ends to fully open with no binding
+- [ ] With the pinion in, the jaws run 0–44 mm with no tight spot; the grip faces meet flat when closed (feeler 0.2 mm max gap)
+- [ ] `claw_sequence_check.py`: 0 mm³ on both slide-in paths and over the stroke
+- [ ] **Proof test:** Grip test as for the pinion (centred and 8 mm off-centre, full close 5 times each, the sketch squeezing for at most 2 s), then grip a 10 mm wooden dowel at the fingertips and hang 200 g from it for 1 min. Pass: no cracks or whitening at the neck, the gusset or the finger root; the dowel does not slip; the jaws still slide freely.
 
 ## 9. Notes and open questions
-None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`.
+None open. Shared frames, joint ranges and clearances: see the assembly plan and `assembly_check.json`; claw assembly order and fit: `claw_sequence_check.json`.

@@ -5,7 +5,8 @@
   "perimeters": 4,
   "top_solid_layers": 5,
   "bottom_solid_layers": 5,
-  "fill_density": 40
+  "fill_density": 40,
+  "brim_width": 5
  },
  "max": {
   "layer_height": 0.2
@@ -21,5 +22,5 @@
   80,
   90
  ],
- "max_print_hours": 3
+ "max_print_hours": 4
 }
