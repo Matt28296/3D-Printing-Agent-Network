@@ -1,14 +1,14 @@
-"""Strength check for jobs/20261025-arm-base: Robot arm base (round 5, independent re-check, 2026-10-26).
+"""Strength check for jobs/20261025-arm-base: Robot arm base (links round 5, independent re-check of the round-5 solids, 2026-10-26).
 
 Run from the project root:  python3 jobs/20261025-arm-base/strength_calc.py
 Plain Python (no build123d). It reads the jobs' model.py, tools/hobby_parts.py, the shared claw_frame.py, each
 geometry.json and the assembly's torque_budget.json, sweeps the arm's poses for the yaw-stall, hand-push and weight
 cases, prints every check as a markdown table and ends with the verdict. strength.md explains every assumption.
 """
-# ===== shared arm model: the same block in the five arm strength_calc.py files (base, turntable, ring, upper link, =====
-# ===== forearm). Plain Python, no build123d: parameters from each job's model.py and the shared claw_frame.py     =====
-# ===== (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py, masses from     =====
-# ===== each job's geometry.json volume. Checked against assembly_check.chain() and torque_budget.json (see below). =====
+# ===== shared arm model (links round 5): the same block in the five arm strength_calc.py files (base, turntable,  =====
+# ===== ring, upper link, forearm). Plain Python, no build123d: parameters from each job's model.py and the shared  =====
+# ===== claw_frame.py (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py,     =====
+# ===== masses from each job's geometry.json volume. Checked against torque_budget.json (see model_check below).    =====
 import ast
 import json
 import math
@@ -134,18 +134,18 @@ CF = eval_constants(os.path.join(ASM, "claw_frame.py"))
 TB = json.load(open(os.path.join(ASM, "torque_budget.json")))
 TRAVEL = TB["travel_deg"]                         # shoulder 0..180, elbow -150..30 (SYS-03 fitting), wrist -90..90
 
-# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, measured
-# 2026-10-26 by this analyst, in each part's design frame). A volume change over 0.5 % prints a warning.
-CAD = {"20261025-arm-turntable": (89196.5, (0.0, -3.799, 33.048)),
-       "20261025-arm-upper-link": (39496.5, (39.615, 0.0, 5.064)),
-       "20261025-arm-forearm": (29235.2, (35.755, 0.0, 5.087)),
+# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, re-measured
+# on the round-5 solids by this review, in each part's design frame). A volume change over 0.5 % prints a warning.
+CAD = {"20261025-arm-turntable": (90736.5, (0.0, -4.089, 33.724)),          # round 5: 90 mm gussets
+       "20261025-arm-upper-link": (44066.2, (44.734, 0.0, 4.234)),          # round 5: 6 mm rail ribs
+       "20261025-arm-forearm": (32833.3, (40.570, 0.0, 4.215)),             # round 5: rail ribs and cross-rib
        "20261026-arm-claw-frame": (34760.0, (10.033, 0.453, 13.988)),
        "20261026-arm-claw-cover": (22526.4, (27.291, -2.495, 32.778)),
        "20261026-arm-claw-pinion": (2773.4, (0.0, 0.0, 5.135)),        # pinion frame: its z = claw +x
        "20261026-arm-claw-jaw": (16126.7, (44.114, -2.705, 37.923)),     # jaw A at gap 0; jaw B is it turned
        "20261026-arm-camera-mount": (10479.9, (-8.231, -3.094, 66.085)),
-       "20261025-arm-base": (89630.6, (0.534, 0.299, -12.615)),
-       "20261025-arm-turntable-ring": (13333.5, (0.0, 0.0, 7.813)),
+       "20261025-arm-base": (94469.6, (-0.731, 0.262, -12.251)),           # round 5: tab pads
+       "20261025-arm-turntable-ring": (13284.1, (0.0, 0.0, 7.806)),         # round 5: washer reliefs (build() volume)
        "20261025-arm-esp32-cradle": (11498.6, (13.187, 26.581, -15.296))}
 STALE = []
 for _job, (_v0, _c) in CAD.items():
@@ -453,6 +453,24 @@ def servo_mount(s, clearance, end_clearance=None, lead="notch", pilot_shift=0.0)
     return m
 
 
+def rect_section(rects):
+    """Composite section from rectangles (b, z0, z1): area, centroid z, I about the centroidal axis, z range."""
+    A = sum(b * (z1 - z0) for b, z0, z1 in rects)
+    zc = sum(b * (z1 - z0) * (z0 + z1) / 2 for b, z0, z1 in rects) / A
+    I = sum(b * (z1 - z0) ** 3 / 12 + b * (z1 - z0) * ((z0 + z1) / 2 - zc) ** 2 for b, z0, z1 in rects)
+    return SimpleNamespace(A=A, zc=zc, I=I, zmin=min(r[1] for r in rects), zmax=max(r[2] for r in rects))
+
+
+def first_moment(rects, zc, za, zb):
+    """First moment about zc of the parts of the rectangles between za and zb (za < zb)."""
+    q = 0.0
+    for b, z0, z1 in rects:
+        lo, hi = max(z0, za), min(z1, zb)
+        if hi > lo:
+            q += b * (hi - lo) * ((lo + hi) / 2 - zc)
+    return q
+
+
 def splitting(S_n, d_thread, d_mean, L, lig):
     """Hoop stress in a thin strip beside a tapped pilot. The thread's radial pressure is p = S tan30 / (pi d_mean L)
     (frictionless 60° thread); the strip is taken as the wall of a thick ring round the thread (Lamé):
@@ -519,42 +537,183 @@ def model_check():
         print(s)
 # ===================================================== end of the shared block =====================================================
 
-# ================================================ 20261025-arm-base (round 5) ================================================
+# --- plate FE cross-check of the top plate (numpy + scipy; a Mindlin plate, written for this review) -------------------------
+def top_plate_fe(P, h=0.5, m_ref=1000.0):
+    """Mindlin Q4 plate (2x2 bending, 1-point shear) of the top plate inside the walls (x +-52, y +-49; walls simply
+    supported, the softer choice), thickness 4 mm with the round-5 pads (7.5 / 5.5), the window, both lead notches and the
+    cable slot as holes. The base servo is a rigid body: its two tension bosses (Ø6.5 at y -+5) are bonded, its two tab
+    pivot bands (2 mm wide inside the tab edge y +-9.85, from the window end to the tab tip) push only (unilateral contact,
+    iterated); a moment m_ref about the servo's long axis (its weak axis) is applied both ways. Returns the peak stresses
+    (MPa) per region, the far tab's share of the moment and the largest plate deflection under the near pad (mm)."""
+    import numpy as np
+    import scipy.sparse as sps
+    import scipy.sparse.linalg as spla
+    X0, X1 = -(P.BX / 2 - P.WALL), P.BX / 2 - P.WALL
+    Y0, Y1 = -(P.BY / 2 - P.WALL), P.BY / 2 - P.WALL
+    nx, ny = int(round((X1 - X0) / h)), int(round((Y1 - Y0) / h))
+    xe = X0 + (np.arange(nx) + 0.5) * h
+    ye = Y0 + (np.arange(ny) + 0.5) * h
+    XE, YE = np.meshgrid(xe, ye, indexing="ij")
+    wx0, wx1, whw = BM.win_x[0], BM.win_x[1], BM.win_hw
+    hole = (XE > wx0) & (XE < wx1) & (np.abs(YE) < whw)
+    for (xa, xb, hw) in BM.notches:
+        hole |= (XE > xa) & (XE < xb) & (np.abs(YE) < hw)
+    cw, ch, cx, cy = P.CABLE_SLOT
+    hole |= (np.abs(XE - cx) < cw / 2) & (np.abs(YE - cy) < ch / 2)
+    T = np.full(XE.shape, P.PLATE_T)
+    for (x0, x1, y0, y1), tp in ((P.PAD_FAR, P.PAD_T_FAR), (P.PAD_NEAR, P.PAD_T_NEAR)):
+        T[(XE > x0) & (XE < x1) & (YE > y0) & (YE < y1)] = tp
+    g = 1 / math.sqrt(3)
+    xin, ein = np.array([-1, 1, 1, -1.0]), np.array([-1, -1, 1, 1.0])
+
+    def dn(xi, eta):
+        return 0.5 * xin * (1 + ein * eta) / h, 0.5 * ein * (1 + xin * xi) / h
+
+    def bmat(xi, eta):
+        dx, dy = dn(xi, eta)
+        B = np.zeros((3, 12))
+        B[0, 1::3], B[1, 2::3], B[2, 1::3], B[2, 2::3] = dx, dy, dy, dx
+        return B
+    Db = np.array([[1, NU, 0], [NU, 1, 0], [0, 0, (1 - NU) / 2]])
+    Kb = sum(bmat(a, b).T @ Db @ bmat(a, b) * (h / 2) ** 2 for a in (-g, g) for b in (-g, g))
+    dx, dy = dn(0, 0)
+    Bs = np.zeros((2, 12))
+    Bs[0, 0::3], Bs[0, 1::3], Bs[1, 0::3], Bs[1, 2::3] = dx, 0.25, dy, 0.25
+    Ks = Bs.T @ Bs * h * h
+    Bc = bmat(0, 0)
+    ie, je = np.nonzero(~hole)
+    te = T[ie, je]
+    Dbe = E_MPA * te ** 3 / (12 * (1 - NU ** 2))
+    nn = (nx + 1) * (ny + 1)
+    nid = lambda i, j: i * (ny + 1) + j
+    conn = np.stack([nid(ie, je), nid(ie + 1, je), nid(ie + 1, je + 1), nid(ie, je + 1)], 1)
+    dofs = (3 * conn[:, :, None] + np.arange(3)).reshape(len(ie), 12)
+    vals = Dbe[:, None, None] * Kb + (5 / 6 * E_MPA / (2 * (1 + NU)) * te)[:, None, None] * Ks
+    K = sps.coo_matrix((vals.ravel(), (np.repeat(dofs, 12, 1).ravel(), np.tile(dofs, (1, 12)).ravel())),
+                       shape=(3 * nn, 3 * nn)).tocsr()
+    XN, YN = [a.ravel() for a in np.meshgrid(X0 + np.arange(nx + 1) * h, Y0 + np.arange(ny + 1) * h, indexing="ij")]
+    used = np.zeros(nn, bool)
+    used[conn.ravel()] = True
+    edge = np.isclose(XN, X0) | np.isclose(XN, X1) | np.isclose(YN, Y0) | np.isclose(YN, Y1)
+    fixed = np.concatenate([3 * np.nonzero(edge)[0]] + [3 * np.nonzero(~used)[0] + k for k in range(3)])
+    free = np.setdiff1d(np.arange(3 * nn), fixed)
+    tabs = [(x, x0, x1) for x, x0, x1 in ((min(p[0] for p in BM.pilots), BM.case_x[0] - (BS.tab_span - BS.length) / 2, wx0),
+                                          (max(p[0] for p in BM.pilots), wx1, BM.case_x[1] + (BS.tab_span - BS.length) / 2))]
+    out = {}
+    for sign in (1, -1):
+        boss = np.zeros(nn, bool)
+        cn = np.zeros(nn, bool)
+        for xt, xp0, xp1 in tabs:
+            boss |= (XN - xt) ** 2 + (YN + sign * BS.hole_dy / 2) ** 2 <= R_BOSS ** 2
+            yb = sign * YN
+            cn |= (yb <= TAB_EDGE + h / 2 + 1e-9) & (yb >= TAB_EDGE - 2.0 - h / 2 - 1e-9) & (XN >= xp0) & (XN <= xp1)
+        cn = (cn | boss) & used
+        for _ in range(30):
+            cdof = 3 * np.nonzero(cn)[0]
+            fr = np.setdiff1d(free, cdof)
+            lu = spla.splu(K[fr][:, fr].tocsc())
+            U, R = [], []
+            for mv in (np.ones(len(cdof)), XN[cn], -sign * YN[cn]):
+                u = np.zeros(3 * nn)
+                u[cdof] = mv
+                u[fr] = lu.solve(-(K[fr][:, cdof] @ mv))
+                r = K[cdof] @ u
+                U.append(u)
+                R.append((r.sum(), (r * YN[cn]).sum(), (r * XN[cn]).sum()))
+            coef = np.linalg.solve(np.array(R).T, np.array([0.0, -sign * m_ref, 0.0]))
+            u = sum(c * uu for c, uu in zip(coef, U))
+            r = K[cdof] @ u
+            idx = np.nonzero(cn)[0]
+            pull = (~boss[idx]) & (r > 1e-9)
+            if not pull.any():
+                break
+            cn[idx[pull]] = False
+        idx = np.nonzero(cn)[0]
+        far = XN[idx] < 0
+        share = abs((r[far] * YN[idx][far]).sum()) / abs((r * YN[idx]).sum())
+        kap = u[dofs] @ Bc.T
+        Mm = -Dbe[:, None] * (kap @ Db.T)
+        avg, rad = (Mm[:, 0] + Mm[:, 1]) / 2, np.hypot((Mm[:, 0] - Mm[:, 1]) / 2, Mm[:, 2])
+        sig = 6 * np.maximum(np.abs(avg + rad), np.abs(avg - rad)) / te ** 2
+        x, y = xe[ie], ye[je]
+        fa, ne = P.PAD_FAR, P.PAD_NEAR
+        in_far = (x > fa[0]) & (x < fa[1]) & (y > fa[2]) & (y < fa[3])
+        in_near = (x > ne[0]) & (x < ne[1]) & (y > ne[2]) & (y < ne[3])
+        near_edge = lambda p, d: ((x > p[0] - d) & (x < p[1] + d) & (y > p[2] - d) & (y < p[3] + d)) & \
+            ~((x > p[0]) & (x < p[1]) & (y > p[2]) & (y < p[3]))
+        regions = {
+            "far_pad": in_far, "near_pad": in_near,
+            "far_corner": in_far & (np.abs(x - wx0) < 1.0) & (np.abs(np.abs(y) - whw) < 1.0),
+            "near_corner": in_near & (np.abs(x - wx1) < 1.0) & (np.abs(np.abs(y) - whw) < 1.0),
+            "far_boss": np.hypot(x - tabs[0][0], y + sign * BS.hole_dy / 2) < R_BOSS + 1.25,
+            "near_boss": np.hypot(x - tabs[1][0], y + sign * BS.hole_dy / 2) < R_BOSS + 1.25,
+            "far_step": (te == P.PLATE_T) & near_edge(fa, 1.0), "near_step": (te == P.PLATE_T) & near_edge(ne, 1.0),
+            "near_step_esp32": (te == P.PLATE_T) & near_edge(ne, 1.0) & (y > ne[3]),
+            "plate_4mm": te == P.PLATE_T,
+            "cable_slot": (te == P.PLATE_T) & (np.abs(x - cx) < cw / 2 + 2) & (np.abs(y - cy) < ch / 2 + 2)}
+        for k, sel in regions.items():
+            out[k] = max(out.get(k, 0.0), float(sig[sel].max()) if sel.any() else 0.0)
+        out["far_share"] = max(out.get("far_share", 0.0), share)
+        out["phi"] = max(out.get("phi", 0.0), abs(coef[2]))         # servo tilt (rad) under m_ref
+        wn = np.abs(u[0::3])[(XN > ne[0]) & (XN < ne[1]) & (YN > ne[2]) & (YN < ne[3])]
+        out["near_pad_w"] = max(out.get("near_pad_w", 0.0), float(wn.max()))
+    out["elements"] = len(ie)
+    return out
+
+# ============================================= 20261025-arm-base (links round 5) =============================================
 JOB = "20261025-arm-base"
 P = job_params(JOB)
 CR = job_params("20261025-arm-esp32-cradle")
 RG = job_params("20261025-arm-turntable-ring")
-BS = MG996R                                 # base-yaw servo, hanging through the 4 mm top plate
+BS = MG996R                                 # base-yaw servo, hanging through the top plate and its pads
 BM = servo_mount(BS, P.SERVO_CLR, lead="notch")
 D_PIL_PRINT = BS.screw_pilot_d
 D_THREAD = 2.9
 D_MEAN = (D_THREAD + D_PIL_PRINT) / 2
-L_ENG = 12.0 - 0.5 - BS.tab_t               # M3 x 12 + Ø7 washer through the 2.5 mm tab: 9 mm in plate + boss
+L_ENG = 12.0 - 0.5 - BS.tab_t               # M3 x 12 + Ø7 washer through the 2.5 mm tab: 9 mm in plate + pad + boss
 L_BEAR = 2 * D_THREAD
-LIG_CAD = min(BM.ligaments)                 # notch -> nearest pilot through the 4 mm plate: 1.84 CAD (2.05 printed)
+LIG_CAD = min(BM.ligaments)                 # notch -> nearest pilot: 1.84 CAD (2.05 printed)
 LIG = LIG_CAD - max(D_THREAD - BM.d_pilot, 0.0) / 2
+T_STRIP = min(P.PAD_T_FAR, P.PAD_T_NEAR)    # round 5: the notches run through plate + pad (5.5 at the near tab)
 TAB_EDGE = BS.width / 2
-TAB_LEVER_W = BS.hole_dy / 2 + TAB_EDGE     # 14.85
-TOR_SHARE = 0.65                            # the far tab sits 15 mm from the -X wall and takes more (assumption)
+TAB_LEVER_W = BS.hole_dy / 2 + TAB_EDGE     # 14.85: the tab pries about its edge, the outer screw in tension
+# moment split between the tabs. Round 4 assumed 65 / 35. The plate FE below (rigid servo, unilateral contact at the tab
+# edges, round-5 pads) gives 74-76 % at the far tab, so the far tab is now checked at 0.75 and the near tab keeps 0.35:
+# each tab at the higher of the two estimates.
+SHARE_FAR, SHARE_NEAR = 0.75, 0.35
 R_FAR = math.hypot(BS.hole_dx / 2 + (BS.length / 2 - BS.shaft_from_end), BS.hole_dy / 2)     # 34.76
 R_NEAR = math.hypot(BS.hole_dx / 2 - (BS.length / 2 - BS.shaft_from_end), BS.hole_dy / 2)    # 14.96
 SUM_R2 = 2 * (R_FAR ** 2 + R_NEAR ** 2)
 R_BOSS = P.SERVO_BOSS_D / 2                 # 3.25: the screw's pull enters the plate round its Ø6.5 boss
-KT_PLATE = 2.0                              # the notch and the window corner sit right at the tab (sharp corners)
+KT_PLATE, KT_SHARP, KT_STEP = 2.0, 2.5, 2.0   # notch / window corner beside the boss (2.5 = fully sharp, sensitivity);
+                                              # the pad's 7.5 -> 4 / 5.5 -> 4 step (sharp in CAD, printed r ~0.2 on 4 mm)
+TABS = (("far", P.TAB_X_FAR, SHARE_FAR, P.PAD_T_FAR, P.PAD_FAR), ("near", P.TAB_X_NEAR, SHARE_NEAR, P.PAD_T_NEAR, P.PAD_NEAR))
 # ring path: the ring takes the whole overturning moment at its mid radius; the top plate under it is a strip from the
-# nearest wall, widened by the ring (the ring spreads its load: b = 2a + 2 x ring height), minus the cable slot
+# nearest wall, widened by the ring (b = 2a + 2 x ring height), minus the cable slot; 4 mm (the far pad under the 180°
+# side is ignored)
 R_RING = (RG.R_IN + RG.R_OUT) / 2
 A_STRIP = 20.6                              # ring at 222° (beside the cable slot) to the -Y wall; 19.0 at 45°
 B_STRIP = 2 * A_STRIP + 2 * RG.H - P.CABLE_SLOT[1]
 MU_WORN = 0.3                               # PETG on PETG once the PTFE tape has worn through
-RING_SCREW_L = 6.0 - RG.TAB_T               # M3 x 6 through the 3 mm ring tab: 3 mm in the 4 mm plate
+WASHER_T = 0.5                              # round 5: Ø7 x 0.5 washer under each ring screw's pan head (ring spec §2)
+RING_SCREW_L = 6.0 - RG.TAB_T - WASHER_T    # M3 x 6 through the 3 mm tab and the washer: 2.5 mm in the 4 mm plate
 
 
-def plate_at_tab(S, t=None):
-    """Bending stress in the top plate round the tension screw's boss: Roark, load S over r0 = boss radius on a plate
-    supported at the opposite tab edge (14.85 away, simply supported form, which is the higher of the two)."""
-    t = P.PLATE_T if t is None else t
-    return KT_PLATE * 3 * S / (2 * math.pi * t ** 2) * ((1 + NU) * math.log(TAB_LEVER_W / R_BOSS) + 1)
+def plate_at_tab(S, t, kt=KT_PLATE):
+    """Bending stress in the plate round the tension screw's boss: Roark, load S over r0 = boss radius on a plate
+    supported at the opposite tab edge (14.85 away, simply supported form, the higher of the two)."""
+    return kt * 3 * S / (2 * math.pi * t ** 2) * ((1 + NU) * math.log(TAB_LEVER_W / R_BOSS) + 1)
+
+
+def pad_cover(x_tab, pad):
+    """Smallest distance from the tab's two bosses (y +-5) to the edge of its pad, and the edge it is to."""
+    x0, x1, y0, y1 = pad
+    best = (1e9, "")
+    for yb in (-BS.hole_dy / 2, BS.hole_dy / 2):
+        for d, e in ((x_tab - x0, f"x {x0:g}"), (x1 - x_tab, f"x {x1:g}"), (yb - y0, f"y {y0:g}"), (y1 - yb, f"y {y1:g}")):
+            if d < best[0]:
+                best = (d, e)
+    return best
 
 
 TT_items = [i for i in ITEMS if i[2] == "TT"]
@@ -569,7 +728,12 @@ probes = {
 }
 model_check()
 print(f"base: MG996R window x {BM.win_x[0]:.2f}..{BM.win_x[1]:.2f}, y +-{BM.win_hw:.2f}; pilots "
-      f"{[(round(x, 2), y) for x, y in BM.pilots]}; notch -> pilot strip {LIG_CAD:.2f} CAD ({LIG:.2f} behind the thread)")
+      f"{[(round(x, 2), y) for x, y in BM.pilots]}; notch -> pilot strip {LIG_CAD:.2f} CAD ({LIG:.2f} behind the thread), "
+      f"{T_STRIP:g} deep (plate + pad)")
+for nm, xt, sh, tp, pad in TABS:
+    d, e = pad_cover(xt, pad)
+    print(f"  {nm} tab x {xt:.2f}: pad {tp:g} mm, x {pad[0]:g}..{pad[1]:g}, y {pad[2]:g}..{pad[3]:g}; boss -> pad edge "
+          f"{d:.1f} ({e}), against the 14.85 lever of the Roark plate; moment share {sh:.2f}")
 n = sweep(list(probes.values()))
 print(f"{n} poses swept (shoulder {TRAVEL['shoulder']}, elbow {TRAVEL['elbow']}, wrist {TRAVEL['wrist']}, {STEP_DEG} deg)")
 for k, pr in probes.items():
@@ -577,28 +741,54 @@ for k, pr in probes.items():
                                      for m in ("weight", "yaw", "hand")))
 
 # other moments on the base servo (spec §4): the shoulder pushing the fingertips into the desk, the 20 N rim knock
-W_TT_N = sum(i[1] for i in ITEMS) * GN + PAYLOAD_G * GN
 D_DESK = 60.0                                # nearest fingertip-on-desk reach from the shoulder axis (conservative)
 M_SH_DESK = STALL_MG996R_NMM * (D_DESK + XS) / D_DESK + probes["tabs"].get("weight", "Mh")[0] / DYN
 M_RIM = 20.0 * TT.DISK_R + probes["tabs"].get("weight", "Mh")[0] / DYN
 EXTRA = {"shoulder stall on the desk": M_SH_DESK, "20 N on the turntable rim (spec)": M_RIM}
 
+# --- plate FE (cross-check, and the verdict rows for the window corners and the pad edges) ---------------------------------
+M_FE = 1000.0
+try:
+    FE = top_plate_fe(P, m_ref=M_FE)
+    FE_SRC = f"computed now, {FE['elements']} elements of 0.5 mm"
+except ImportError:                          # numpy / scipy missing: the values this review computed (2026-10-26)
+    FE = {"far_pad": 2.634, "near_pad": 2.207, "far_corner": 2.634, "near_corner": 2.207, "far_boss": 2.259,
+          "near_boss": 1.676, "far_step": 1.409, "near_step": 0.9049, "near_step_esp32": 0.9049, "plate_4mm": 1.488,
+          "cable_slot": 1.488, "far_share": 0.7456, "phi": 0.002897, "near_pad_w": 0.05073, "elements": 36930}
+    FE_SRC = "recorded values (numpy / scipy not installed)"
+print("FE raw: " + ", ".join(f"{k} {v:.4g}" for k, v in FE.items()))
+print(f"plate FE ({FE_SRC}), per 1000 N.mm on the servo's weak axis: window corner beside the far / near tab's pivot "
+      f"{FE['far_corner']:.2f} / {FE['near_corner']:.2f} MPa; round the far / near tension boss {FE['far_boss']:.2f} / "
+      f"{FE['near_boss']:.2f} (Roark here, Kt 1: {plate_at_tab(0.75 * M_FE / TAB_LEVER_W, P.PAD_T_FAR, 1.0):.2f} / "
+      f"{plate_at_tab(0.35 * M_FE / TAB_LEVER_W, P.PAD_T_NEAR, 1.0):.2f}); 4 mm plate at the pad edges far / near "
+      f"{FE['far_step']:.2f} / {FE['near_step']:.2f} (ESP32 side {FE['near_step_esp32']:.2f}); 4 mm plate anywhere "
+      f"{FE['plate_4mm']:.2f}, at the cable slot {FE['cable_slot']:.2f}; far tab's share {FE['far_share']:.2f}; "
+      f"near pad deflection {FE['near_pad_w'] * 1000:.0f} um")
+
 # --- base servo: stall, tab pilots and notch strips ------------------------------------------------------------------------
 F_stall = STALL_MG996R_NMM * R_FAR / SUM_R2
 row("base stall 1079 N.mm", f"far tab pilot bearing, F {F_stall:.1f} N", "bearing", F_stall / (D_PIL_PRINT * L_BEAR),
     BEARING_MPA, SF_STATIC)
-row("base stall 1079 N.mm", f"notch -> pilot strip {LIG:.2f} in the 4 mm plate: tear-out, F {F_stall:.1f} N", "XY shear",
-    F_stall / (2 * LIG * P.PLATE_T), allow(False, True), SF_STATIC)
+row("base stall 1079 N.mm", f"notch -> pilot strip {LIG:.2f}, {T_STRIP:g} deep (plate + pad): tear-out, F {F_stall:.1f} N",
+    "XY shear", F_stall / (2 * LIG * T_STRIP), allow(False, True), SF_STATIC)
 
 # --- servo path: the whole overturning moment through the base servo's tabs (ring ignored) -----------------------------------
 cases = [(lbl, req, probes["tabs"].get(mode, "Mh")[0], where(probes["tabs"], mode, "Mh")) for mode, (lbl, req) in MODES.items()]
 cases += [(k, SF_STATIC, v, "") for k, v in EXTRA.items()]
 for lbl, req, Mh, w in cases:
-    S = TOR_SHARE * Mh / TAB_LEVER_W
-    row(lbl, f"servo path: tab screw pull-out, M {Mh:.0f} N.mm on the weak axis, S {S:.0f} N (L {L_ENG:g}){'; ' + w if w else ''}",
+    S = SHARE_FAR * Mh / TAB_LEVER_W
+    row(lbl, f"servo path: far tab screw pull-out, M {Mh:.0f} N.mm on the weak axis, S {S:.0f} N (L {L_ENG:g}){'; ' + w if w else ''}",
         "Z shear", S / (math.pi * D_PIL_PRINT * L_ENG), allow(True, True), req)
-    row(lbl, f"servo path: top plate {P.PLATE_T:g} mm round the tension screw's boss (Kt {KT_PLATE}: notch and window corner)",
-        "XY", plate_at_tab(S), ALLOW_XY_MPA, req)
+    for nm, xt, sh, tp, pad in TABS:
+        row(lbl, f"servo path: {nm} pad {tp:g} mm round the tension screw's boss ({sh:.2f} of M; Kt {KT_PLATE})", "XY",
+            plate_at_tab(sh * Mh / TAB_LEVER_W, tp), ALLOW_XY_MPA, req)
+    k = Mh / M_FE
+    row(lbl, "plate FE: window corner beside a tab's pivot (peak element, sharp corner, no extra Kt)", "XY",
+        k * max(FE["far_corner"], FE["near_corner"]), ALLOW_XY_MPA, req)
+    row(lbl, f"plate FE: 4 mm plate at the pad-edge steps (Kt {KT_STEP} for the step)", "XY",
+        k * KT_STEP * max(FE["far_step"], FE["near_step"]), ALLOW_XY_MPA, req)
+    row(lbl, "plate FE: 4 mm plate elsewhere, cable-slot corners included (peak element, no extra Kt)", "XY",
+        k * FE["plate_4mm"], ALLOW_XY_MPA, req)
     row(lbl, f"notch strip {LIG:.2f}: splitting, snug preload {PRELOAD_SNUG_N:.0f} N + {S:.0f} N", "XY",
         splitting(PRELOAD_SNUG_N + S, D_THREAD, D_MEAN, L_ENG, LIG), ALLOW_XY_MPA, req)
 row("spec §8: tab screws driven snug", f"notch strip {LIG:.2f}: splitting at {PRELOAD_SNUG_N:.0f} N", "XY",
@@ -609,68 +799,50 @@ cases = [(lbl, req, probes["ring"].get(mode, "Mh")[0]) for mode, (lbl, req) in M
 cases += [("20 N on the turntable rim (spec)", SF_STATIC, None)]
 for lbl, req, Mh in cases:
     R = Mh / R_RING if Mh is not None else 20.0 * TT.DISK_R / R_RING
-    row(lbl, f"ring path, R {R:.1f} N: top plate strip a {A_STRIP:g}, b {B_STRIP:.0f}", "XY",
+    row(lbl, f"ring path, R {R:.1f} N: top plate strip a {A_STRIP:g}, b {B_STRIP:.0f}, {P.PLATE_T:g} thick", "XY",
         6 * R * A_STRIP / (B_STRIP * P.PLATE_T ** 2), ALLOW_XY_MPA, req)
     F_scr = MU_WORN * R * RG.R_OUT / RG.TAB_R
-    row(lbl, f"ring path: friction {MU_WORN} x R on one ring screw, bearing in the plate pilot (L {RING_SCREW_L:g})", "bearing",
-        F_scr / (D_PIL_PRINT * RING_SCREW_L), BEARING_MPA, req)
+    row(lbl, f"ring path: friction {MU_WORN} x R on one ring screw, bearing in the plate pilot (L {RING_SCREW_L:g}: "
+        f"M3 x 6 under a Ø7 x {WASHER_T:g} washer)", "bearing", F_scr / (D_PIL_PRINT * RING_SCREW_L), BEARING_MPA, req)
 
-# --- cradle bosses (unchanged since round 3) -------------------------------------------------------------------------------
+# --- cradle bosses (unchanged since round 3; pilots 7 deep since round 5) --------------------------------------------------------
 F_USB = 20.0
 I_boss = math.pi * (P.CRADLE_BOSS_D ** 4 - (P.PILOT + HOLE_COMP) ** 4) / 64
 row(f"USB insertion {F_USB:g} N / 3 bosses", "cradle-boss root bending (Kt 2.5)", "Z",
     2.5 * F_USB / 3 * P.CRADLE_BOSS_L * (P.CRADLE_BOSS_D / 2) / I_boss, allow(True), SF_STATIC)
 CR_CLAMP = (CR.TOP - CR.BOT) - CR.CBORE_DEPTH
-eng = min(P.CRADLE_BOSS_L, 10.0 - CR_CLAMP)
+eng = min(P.CRADLE_BOSS_L, 10.0 - CR_CLAMP, P.CRADLE_PILOT_DEPTH - 1.0)
 row("10 N jumper pull / 2 screws", f"cradle screw pull-out, {eng:g} mm engaged", "Z shear",
     5.0 / (math.pi * P.PILOT * eng), allow(True, True), SF_STATIC)
 
-# --- advisory: the ring sharing the moment once the 0.3-0.4 mm gap closes ----------------------------------------------------
-D_PL = E_MPA * P.PLATE_T ** 3 / (12 * (1 - NU ** 2))
-k_s = 18.43 * D_PL                          # rigid boss b 9.85 in a clamped plate a 49 (derived for this review), N.mm/rad
-I_strip = B_STRIP * P.PLATE_T ** 3 / 12
-k_r = RG.R_OUT ** 2 * 3 * E_MPA * I_strip / A_STRIP ** 3     # ring force at r 44 on the plate strip
-for gap in (0.4, 0.3):
-    phi = gap / RG.R_OUT
-    for mode in ("weight", "yaw"):
-        lbl, req = MODES[mode]
-        M = probes["tabs"].get(mode, "Mh")[0]
-        Ms = M if M <= k_s * phi else k_s * phi + (M - k_s * phi) * k_s / (k_s + k_r)
-        S = TOR_SHARE * Ms / TAB_LEVER_W
-        row(lbl, f"servo path with the ring sharing past a {gap:g} mm gap (play-free servo): M_servo {Ms:.0f} of {M:.0f}",
-            "XY", plate_at_tab(S), ALLOW_XY_MPA, req, info=True)
-for mode in ("weight", "yaw"):
-    lbl, req = MODES[mode]
-    M = probes["tabs"].get(mode, "Mh")[0]
-    Ms = M * k_s / (k_s + k_r)
-    row(lbl, f"FIX: ring at zero gap (disk resting on the taped ring): servo path takes {k_s / (k_s + k_r):.2f}, "
-        f"M_servo {Ms:.0f}", "XY", plate_at_tab(TOR_SHARE * Ms / TAB_LEVER_W), ALLOW_XY_MPA, req, info=True)
+# --- advisory --------------------------------------------------------------------------------------------------------------------
 M_yaw = probes["tabs"].get("yaw", "Mh")[0]
-for t in (6.0, 6.5, 7.0):
-    row(MODES["yaw"][0], f"FIX: top plate {t:g} mm round the servo (servo path, ring ignored)", "XY",
-        plate_at_tab(TOR_SHARE * M_yaw / TAB_LEVER_W, t), ALLOW_XY_MPA, SF_STATIC, info=True)
-for t in (7.0, 7.5):
-    row(MODES["yaw"][0], f"top plate {t:g} mm, corners left fully sharp (Kt 2.5 instead of {KT_PLATE})", "XY",
-        plate_at_tab(TOR_SHARE * M_yaw / TAB_LEVER_W, t) * 2.5 / KT_PLATE, ALLOW_XY_MPA, SF_STATIC, info=True)
-row(MODES["weight"][0], "FIX: top plate 7 mm round the servo (servo path, ring ignored)", "XY",
-    plate_at_tab(TOR_SHARE * probes["tabs"].get("weight", "Mh")[0] / TAB_LEVER_W, 7.0), ALLOW_XY_MPA, SF_SUSTAINED, info=True)
-row(MODES["weight"][0], "top plate 7.5 mm round the far tab, Kt 2.5", "XY",
-    plate_at_tab(TOR_SHARE * probes["tabs"].get("weight", "Mh")[0] / TAB_LEVER_W, 7.5) * 2.5 / KT_PLATE, ALLOW_XY_MPA,
-    SF_SUSTAINED, info=True)
-for mode in ("yaw", "weight"):                # the near tab takes the other 35 %; the ESP32 cradle limits a pad there
-    lbl, req = MODES[mode]
-    row(lbl, f"top plate 5.5 mm round the near tab ({1 - TOR_SHARE:.2f} of M), Kt 2.5", "XY",
-        plate_at_tab((1 - TOR_SHARE) * probes["tabs"].get(mode, "Mh")[0] / TAB_LEVER_W, 5.5) * 2.5 / KT_PLATE, ALLOW_XY_MPA,
-        req, info=True)
+for nm, xt, sh, tp, pad in TABS:
+    row(MODES["yaw"][0], f"{nm} pad {tp:g} mm round the boss, corners fully sharp (Kt {KT_SHARP} instead of {KT_PLATE})", "XY",
+        plate_at_tab(sh * M_yaw / TAB_LEVER_W, tp, KT_SHARP), ALLOW_XY_MPA, SF_STATIC, info=True)
+row(MODES["yaw"][0], "far pad at round 4's 0.65 share (Kt 2.0)", "XY", plate_at_tab(0.65 * M_yaw / TAB_LEVER_W, P.PAD_T_FAR),
+    ALLOW_XY_MPA, SF_STATIC, info=True)
+row(MODES["yaw"][0], "plate FE: far / near tension boss (FE peak, compare the Roark rows)", "XY",
+    M_yaw / M_FE * max(FE["far_boss"], FE["near_boss"]), ALLOW_XY_MPA, SF_STATIC, info=True)
+row(MODES["yaw"][0], "plate FE: 4 mm plate at the near pad's ESP32-side edge (y 18; Kt 2.0)", "XY",
+    M_yaw / M_FE * KT_STEP * FE["near_step_esp32"], ALLOW_XY_MPA, SF_STATIC, info=True)
+row(f"yaw-stall sweep with a {CLONE_FACTOR * 11:.0f} kgf.cm clone MG996R", "plate FE: window corner beside a tab's pivot", "XY",
+    M_yaw / M_FE * max(FE["far_corner"], FE["near_corner"]) * CLONE_FACTOR, ALLOW_XY_MPA, SF_STATIC, info=True)
 row(f"yaw-stall sweep, tab screws over-tightened to {PRELOAD_TIGHT_N:.0f} N", f"notch strip {LIG:.2f}: splitting", "XY",
-    splitting(PRELOAD_TIGHT_N + TOR_SHARE * M_yaw / TAB_LEVER_W, D_THREAD, D_MEAN, L_ENG, LIG), ALLOW_XY_MPA, SF_STATIC,
+    splitting(PRELOAD_TIGHT_N + SHARE_FAR * M_yaw / TAB_LEVER_W, D_THREAD, D_MEAN, L_ENG, LIG), ALLOW_XY_MPA, SF_STATIC,
     info=True)
+for lbl_w, L_w in (("no washer (round 4)", 6.0 - RG.TAB_T), (f"Ø7 x {WASHER_T:g} washer (round 5)", RING_SCREW_L)):
+    row(f"assembly: ring M3 x 6 driven snug, {lbl_w}", f"thread in the 4 mm plate, {L_w:g} mm engaged, at "
+        f"{PRELOAD_SNUG_N:.0f} N", "Z shear", PRELOAD_SNUG_N / (math.pi * D_PIL_PRINT * L_w), allow(True, True), 1.0, info=True)
 
 worst, fails = report(JOB)
 
-# --- stability (spec §4, SYS-12) ------------------------------------------------------------------------------------------
+# --- clearance and stability ----------------------------------------------------------------------------------------------------
+w_yaw = FE["near_pad_w"] * M_yaw / M_FE
+print(f"\nCLEARANCE (round 5): the near pad's underside (Z -{P.PAD_T_NEAR:g}) stands 0.5 mm above the ESP32's 4 mm parts "
+      f"envelope; the plate FE moves it at most {w_yaw * 1000:.0f} um under the yaw stall ({0.5 / w_yaw:.0f} x margin)")
 st = TB["stability_arm_straight_out"]
-print("\nSTABILITY (torque_budget.json, sliced masses): free-standing SF " +
+print("STABILITY (torque_budget.json, sliced masses): free-standing SF " +
       ", ".join(f"{k} {v['sf_free_standing']}" for k, v in st.items() if k.startswith("camera")) +
       " -> the desk screws (or the 200 x 200 board / ballast) stay required")
 W_robot = (sum(i[1] for i in ITEMS) + mass_g(JOB) + mass_g("20261025-arm-turntable-ring") + mass_g("20261025-arm-esp32-cradle")
@@ -682,27 +854,37 @@ for mode in ("yaw", "hand"):
     print(f"  {MODES[mode][0]}: {Md:.0f} N.mm about the desk against {W_robot * edge:.0f} restoring -> uplift {up:.1f} N per desk "
           f"screw (2 screws, {edge:g} mm lever)")
 
-# --- proof tests (spec §8 as this review would write it) --------------------------------------------------------------------
-print("\nPROOF TEST (spec §8 as this review would write it). Ratio = test value / yaw-stall service value.")
-
-
-def servo_share(M, gap=0.4):
-    """Moment through the servo path when the ring shares past a running gap (play-free servo)."""
-    phi = gap / RG.R_OUT
-    return M if M <= k_s * phi else k_s * phi + (M - k_s * phi) * k_s / (k_s + k_r)
-
-
+# --- proof tests (spec §8 as written in round 5) --------------------------------------------------------------------------------
+print("\nPROOF TEST (spec §8 as written). Ratio = test value / yaw-stall service value; the lowest service SF over the ratio "
+      f"must stay >= {SF_PROOF:g}.")
 Mt_yaw, Mr_yaw = probes["tabs"].get("yaw", "Mh")[0], probes["ring"].get("yaw", "Mh")[0]
+lowest_servo = min(r[4] for r in ROWS if "servo path" in r[0] or "plate FE" in r[0])
+lowest_ring = min(r[4] for r in ROWS if "ring path" in r[0])
+# ring sharing (servo bearing play not credited): the servo path alone until the disk has tilted 0.4 / 44 rad, then the
+# two paths share by stiffness: servo path from the plate FE's tilt, ring path the ring force on the 4 mm plate strip
+k_s = M_FE / FE["phi"]
+k_r = RG.R_OUT ** 2 * 3 * E_MPA * (B_STRIP * P.PLATE_T ** 3 / 12) / A_STRIP ** 3
+
+
+def servo_share(M, gap=RG.RUN_GAP):
+    m0 = k_s * gap / RG.R_OUT
+    return M if M <= m0 else m0 + (M - m0) * k_s / (k_s + k_r)
+
+
+print(f"  servo path stiffness {k_s:.3g} N.mm/rad (plate FE, pads), ring path {k_r:.3g}: the servo path alone carries up to "
+      f"{k_s * RG.RUN_GAP / RG.R_OUT:.0f} N.mm before the 0.4 mm gap closes, then {k_s / (k_s + k_r):.2f} of the rest")
 for name, (pose, F_N) in ARM_TESTS.items():
-    Mt = probes["tabs"].checks["Mh"](*test_loads(probes["tabs"], pose, F_N))
-    Mr = probes["ring"].checks["Mh"](*test_loads(probes["ring"], pose, F_N))
-    F15 = force_for(lambda F: probes["tabs"].checks["Mh"](*test_loads(probes["tabs"], pose, F)) / Mt_yaw, PROOF_RATIO)
-    print(f"  {name}, {F_N:g} N, base screwed down: servo path (ring ignored) {Mt:.0f} N.mm = {Mt / Mt_yaw:.2f} x; with the "
-          f"ring sharing past 0.4 mm {servo_share(Mt):.0f} = {servo_share(Mt) / servo_share(Mt_yaw):.2f} x; ring path "
-          f"{Mr / Mr_yaw:.2f} x; {PROOF_RATIO:g} x on the servo path at {F15:.1f} N")
+    for F_ in (F_N, 11.0):
+        Mt = probes["tabs"].checks["Mh"](*test_loads(probes["tabs"], pose, F_))
+        Mr = probes["ring"].checks["Mh"](*test_loads(probes["ring"], pose, F_))
+        print(f"  (1) {name}, {F_:g} N, base screwed down: servo path (ring ignored) {Mt:.0f} N.mm = {Mt / Mt_yaw:.2f} x the "
+              f"yaw stall; the lowest servo-path / plate row then SF {lowest_servo / (Mt / Mt_yaw):.2f}; with the ring sharing "
+              f"{servo_share(Mt):.0f} N.mm; ring path {Mr / Mr_yaw:.2f} x, lowest ring row SF {lowest_ring / (Mr / Mr_yaw):.2f}")
 F_rim = PROOF_RATIO * Mr_yaw / TT.DISK_R
-M_rim = F_rim * TT.DISK_R + probes["tabs"].get("weight", "Mh")[0] / DYN
-print(f"  rim test: {PROOF_RATIO:g} x the yaw-stall ring load = {F_rim:.0f} N straight down on the turntable rim (r {TT.DISK_R:g}); "
-      f"the servo path then takes at most {servo_share(M_rim):.0f} N.mm ({servo_share(M_rim) / servo_share(Mt_yaw):.2f} x its "
-      f"yaw-stall share), because the ring sits right under the load")
-print(f"  spec §8 rim test as written: 50 N = {50.0 * TT.DISK_R / R_RING / (Mr_yaw / R_RING):.2f} x the yaw-stall ring load")
+M_rim77 = 77.0 * TT.DISK_R + probes["tabs"].get("weight", "Mh")[0] / DYN
+print(f"  (2) rim test: {PROOF_RATIO:g} x the yaw-stall ring load = {F_rim:.1f} N straight down at the rim (r {TT.DISK_R:g}); "
+      f"spec §8 says 77 N = {77.0 * TT.DISK_R / Mr_yaw:.2f} x; the ring rows then SF >= "
+      f"{lowest_ring / (77.0 * TT.DISK_R / Mr_yaw):.2f}; the servo path takes {servo_share(M_rim77):.0f} N.mm "
+      f"({servo_share(M_rim77) / Mt_yaw:.2f} x its yaw-stall moment, lowest servo row SF "
+      f"{lowest_servo / (servo_share(M_rim77) / Mt_yaw):.2f}; {M_rim77:.0f} N.mm, {M_rim77 / Mt_yaw:.2f} x, if the ring took none)")
+print(f"  (3) USB plug 5 x: the cradle-boss row (20 N) covers it")

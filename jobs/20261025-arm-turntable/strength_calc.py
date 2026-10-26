@@ -1,14 +1,14 @@
-"""Strength check for jobs/20261025-arm-turntable: Turntable with shoulder upright (round 5, independent re-check, 2026-10-26).
+"""Strength check for jobs/20261025-arm-turntable: Turntable with shoulder upright (links round 5, independent re-check of the round-5 solids, 2026-10-26).
 
 Run from the project root:  python3 jobs/20261025-arm-turntable/strength_calc.py
 Plain Python (no build123d). It reads the jobs' model.py, tools/hobby_parts.py, the shared claw_frame.py, each
 geometry.json and the assembly's torque_budget.json, sweeps the arm's poses for the yaw-stall, hand-push and weight
 cases, prints every check as a markdown table and ends with the verdict. strength.md explains every assumption.
 """
-# ===== shared arm model: the same block in the five arm strength_calc.py files (base, turntable, ring, upper link, =====
-# ===== forearm). Plain Python, no build123d: parameters from each job's model.py and the shared claw_frame.py     =====
-# ===== (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py, masses from     =====
-# ===== each job's geometry.json volume. Checked against assembly_check.chain() and torque_budget.json (see below). =====
+# ===== shared arm model (links round 5): the same block in the five arm strength_calc.py files (base, turntable,  =====
+# ===== ring, upper link, forearm). Plain Python, no build123d: parameters from each job's model.py and the shared  =====
+# ===== claw_frame.py (top-level constants evaluated with ast), servo and camera data from tools/hobby_parts.py,     =====
+# ===== masses from each job's geometry.json volume. Checked against torque_budget.json (see model_check below).    =====
 import ast
 import json
 import math
@@ -134,18 +134,18 @@ CF = eval_constants(os.path.join(ASM, "claw_frame.py"))
 TB = json.load(open(os.path.join(ASM, "torque_budget.json")))
 TRAVEL = TB["travel_deg"]                         # shoulder 0..180, elbow -150..30 (SYS-03 fitting), wrist -90..90
 
-# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, measured
-# 2026-10-26 by this analyst, in each part's design frame). A volume change over 0.5 % prints a warning.
-CAD = {"20261025-arm-turntable": (89196.5, (0.0, -3.799, 33.048)),
-       "20261025-arm-upper-link": (39496.5, (39.615, 0.0, 5.064)),
-       "20261025-arm-forearm": (29235.2, (35.755, 0.0, 5.087)),
+# --- masses: geometry.json volume x 1.27 g/cm^3; centres of mass from build123d (design() of each job, re-measured
+# on the round-5 solids by this review, in each part's design frame). A volume change over 0.5 % prints a warning.
+CAD = {"20261025-arm-turntable": (90736.5, (0.0, -4.089, 33.724)),          # round 5: 90 mm gussets
+       "20261025-arm-upper-link": (44066.2, (44.734, 0.0, 4.234)),          # round 5: 6 mm rail ribs
+       "20261025-arm-forearm": (32833.3, (40.570, 0.0, 4.215)),             # round 5: rail ribs and cross-rib
        "20261026-arm-claw-frame": (34760.0, (10.033, 0.453, 13.988)),
        "20261026-arm-claw-cover": (22526.4, (27.291, -2.495, 32.778)),
        "20261026-arm-claw-pinion": (2773.4, (0.0, 0.0, 5.135)),        # pinion frame: its z = claw +x
        "20261026-arm-claw-jaw": (16126.7, (44.114, -2.705, 37.923)),     # jaw A at gap 0; jaw B is it turned
        "20261026-arm-camera-mount": (10479.9, (-8.231, -3.094, 66.085)),
-       "20261025-arm-base": (89630.6, (0.534, 0.299, -12.615)),
-       "20261025-arm-turntable-ring": (13333.5, (0.0, 0.0, 7.813)),
+       "20261025-arm-base": (94469.6, (-0.731, 0.262, -12.251)),           # round 5: tab pads
+       "20261025-arm-turntable-ring": (13284.1, (0.0, 0.0, 7.806)),         # round 5: washer reliefs (build() volume)
        "20261025-arm-esp32-cradle": (11498.6, (13.187, 26.581, -15.296))}
 STALE = []
 for _job, (_v0, _c) in CAD.items():
@@ -453,6 +453,24 @@ def servo_mount(s, clearance, end_clearance=None, lead="notch", pilot_shift=0.0)
     return m
 
 
+def rect_section(rects):
+    """Composite section from rectangles (b, z0, z1): area, centroid z, I about the centroidal axis, z range."""
+    A = sum(b * (z1 - z0) for b, z0, z1 in rects)
+    zc = sum(b * (z1 - z0) * (z0 + z1) / 2 for b, z0, z1 in rects) / A
+    I = sum(b * (z1 - z0) ** 3 / 12 + b * (z1 - z0) * ((z0 + z1) / 2 - zc) ** 2 for b, z0, z1 in rects)
+    return SimpleNamespace(A=A, zc=zc, I=I, zmin=min(r[1] for r in rects), zmax=max(r[2] for r in rects))
+
+
+def first_moment(rects, zc, za, zb):
+    """First moment about zc of the parts of the rectangles between za and zb (za < zb)."""
+    q = 0.0
+    for b, z0, z1 in rects:
+        lo, hi = max(z0, za), min(z1, zb)
+        if hi > lo:
+            q += b * (hi - lo) * ((lo + hi) / 2 - zc)
+    return q
+
+
 def splitting(S_n, d_thread, d_mean, L, lig):
     """Hoop stress in a thin strip beside a tapped pilot. The thread's radial pressure is p = S tan30 / (pi d_mean L)
     (frictionless 60° thread); the strip is taken as the wall of a thick ring round the thread (Lamé):
@@ -519,7 +537,8 @@ def model_check():
         print(s)
 # ===================================================== end of the shared block =====================================================
 
-# ============================================= 20261025-arm-turntable (round 5) =============================================
+
+# ========================================== 20261025-arm-turntable (links round 5) ==========================================
 JOB = "20261025-arm-turntable"
 P = TT
 SS = MG996R                                 # shoulder servo (and the base servo under the disk)
@@ -548,9 +567,13 @@ SUM_R2 = 2 * (R_FAR ** 2 + R_NEAR ** 2)
 # base disc horn -> disk: the disk's underside is flat on the Ø25 disc; anti-rotation screws through the disc's holes
 DISC_R = 25.0 / 2
 HORN_T = SS.horn_t                          # 2.8 (hobby_parts; the disc horn is not measured)
-R_HOLES = 9.0                               # ASSUMED hole circle of the stock Ø25 disc horn's outer holes: unverified
-N_ANTI, L_ANTI = 2, 6.0 - HORN_T            # 2 x M2 x 6 through the 2.8 mm horn: 3.2 mm in the disk
-D_ANTI_PILOT = 1.5                          # BUILD_GUIDE §4 step 3: 1.5 mm pilot drilled through the horn into the disk
+R_HOLES = 9.0                               # ASSUMED hole circle of the stock Ø25 disc horn (the design value): unverified
+R_HOLES_MIN = P.DISC_HOLE_R_MIN             # 7: BUILD_GUIDE §2 / §4 step 3 rule, 4 holes in opposite pairs at r >= 7
+N_ANTI, L_ANTI = P.ANTI_ROT_N, P.ANTI_ROT_L - HORN_T   # round 5: 4 x M2 x 8 through the 2.8 mm horn: 5.2 mm in the disk
+D_ANTI_PILOT = P.ANTI_ROT_PILOT_D           # 1.5 mm pilot drilled through the horn's holes, 6 mm into the disk
+SOLID_BOTTOM = 6.0                          # print_requirements.json: bottom_solid_layers 30, bottom_solid_min_thickness 6.0
+FALLBACKS = ((4, 5.0, "4 in opposite pairs at r 5 (BUILD_GUIDE fallback for r 5-7)"),
+             (3, R_HOLES_MIN, "3 on one circle at r 7 (BUILD_GUIDE fallback)"))
 FLOOR = P.DISK_T                            # the clamp washer bears on the 8 mm disk
 D_WASHER = 9.0
 KT_WEDGE, KT_CORNER, KT_HOLE = 2.0, 2.5, 2.0
@@ -631,23 +654,12 @@ def upright_stress(s, z, kt_f, kt_t, Mx, My, Mz):
 # corner there (Kt 2.5, governs; Kt 2.0 under the wedge); the gusset toe meets the disk in a sharp corner.
 SECTIONS = {"root": (TOP + P.ROOT_FILLET + 0.5, KT_CORNER, KT_CORNER), "wb": (WIN_Z[0] + 0.25, KT_CORNER, 1.0),
             "pr": (P.ZS - SS.hole_dy / 2, KT_HOLE, 1.0), "notch": (P.ZS, KT_CORNER, 1.0)}
-CAD_SEC = {"root": (35227.5, 7.46, 21.39), "wb": (10642.6, 7.79, 13.63), "pr": (7638.8, 7.80, 12.01),
-           "notch": (6121.6, 6.93, 11.24)}                      # build123d sections at Z 28, 50.6, 55.5, 60.5
+CAD_SEC = {"root": (36172.9, 7.528, 21.578), "wb": (13734.8, 8.520, 14.811), "pr": (10558.4, 8.736, 13.343),
+           "notch": (9185.1, 7.951, 12.850)}             # build123d sections of the round-5 solid at Z 28, 50.6, 55.5, 60.5
 SEC = {k: upright_section(z) for k, (z, _, _) in SECTIONS.items()}
-# what-if geometries for the window region (evaluated pose by pose like the drawn one). The gusset toe must stay on the
-# disk (r <= 48, DFM round 1), so a thicker upright or gusset comes with a shorter or inboard gusset.
-WHATIF = (("as drawn", {}),
-          ("UP_T 7 -> 8, GUSSET_LEN 23 -> 22", {"up_t": 8.0, "g_len": 22.0}),
-          ("GUSSET_T 4 -> 6, GUSSET_X 30.5 -> 29.5", {"g_t": 6.0, "g_x": 29.5}),
-          ("GUSSET_H 70 -> 90", {"g_h": 90.0}),
-          ("GUSSET_H 70 -> 100", {"g_h": 100.0}),
-          ("GUSSET_H 90, UP_T 8, GUSSET_LEN 22", {"g_h": 90.0, "up_t": 8.0, "g_len": 22.0}))
-
-
-def toe_r(kw):
-    """Radius of the gusset toe's outer corner (it must stay inside the disk, r 48)."""
-    return math.hypot(kw.get("g_x", P.GUSSET_X) + kw.get("g_t", P.GUSSET_T) / 2,
-                      P.UP_Y - kw.get("up_t", P.UP_T) - kw.get("g_len", P.GUSSET_LEN))
+TOE_R = math.hypot(P.GUSSET_X + P.GUSSET_T / 2, Y_BACK - P.GUSSET_LEN)    # 47.76: the toe stays on the disk (r 48)
+G_TOP = min(TOP + P.GUSSET_H, P.UP_TOP)                                     # round 5: cut off at the upright's top
+G_DEPTH_TOP = P.GUSSET_LEN * (1 - (G_TOP - TOP) / P.GUSSET_H)               # 4.4 deep there
 TT_items = [i for i in ITEMS if i[2] == "TT"]
 sh_servo = [i for i in TT_items if i[0] == "shoulder MG996R"]
 UP_ABOVE_ROOT = ("upright above the root", 36.8, "TT", (0.0, -9.5, 62.0))   # ≈28 980 mm3 of the upright and gussets
@@ -668,15 +680,14 @@ probes = {
 for k, (z, kt_f, kt_t) in SECTIONS.items():
     checks = {"Mx": absM(0), "My": absM(1), "Mz": absM(2), "front": front_check(SEC[k], z, kt_f, kt_t),
               "toe": front_check(SEC[k], z, kt_f, kt_t, 1)}
-    if k != "root":
-        for i, (_, kw) in enumerate(WHATIF):
-            checks[f"wi{i}"] = front_check(upright_section(z, **kw), z, kt_f, kt_t)
     probes[k] = Probe(f"upright Z {z:.1f}", "TT", (0.0, SEC[k].yc, z),
                       own_items=sh_servo + [UP_ABOVE_ROOT if k == "root" else UP_ABOVE_WIN], checks=checks)
 probes["tabs"] = Probe("shoulder tab plane", "TT", (0.0, P.UP_Y, P.ZS), own_items=sh_servo,
                        checks={"S": lambda F, M: TOR_SHARE * abs(M[0]) / TAB_LEVER_W + abs(M[2]) / (2 * TAB_LEVER_L)
                                + abs(F[1]) / 4})
 model_check()
+print(f"turntable: gussets {P.GUSSET_H:g} tall, cut off at Z {G_TOP:.1f} ({G_DEPTH_TOP:.1f} deep there), toe at r {TOE_R:.2f}; "
+      f"anti-rotation {N_ANTI} x M2 x {P.ANTI_ROT_L:g}, {L_ANTI:.1f} mm in the disk's {SOLID_BOTTOM:g} mm solid bottom")
 print(f"turntable: shoulder window X +-{WIN_HL:.2f}, Z {WIN_Z[0]:.2f}-{WIN_Z[1]:.2f}; notches to |X| {NOTCH_X1:.2f}; pilots "
       f"X +-{PIL_X:.2f}, Z {P.ZS - 5:.1f} / {P.ZS + 5:.1f}; notch -> pilot strip {LIG_CAD:.2f} CAD ({LIG:.2f} behind the thread)")
 for k, (z, _, _) in SECTIONS.items():
@@ -691,9 +702,17 @@ for k, pr in probes.items():
                                      for m in ("weight", "yaw", "hand")))
 
 # --- base-horn joint: torque and overturning ------------------------------------------------------------------------------
-F_anti = STALL_MG996R_NMM / (N_ANTI * R_HOLES)
-row("base stall 1079 N.mm (yaw stall)", f"disc-horn anti-rotation screws {N_ANTI} x M2 x 6 at r {R_HOLES:g} (assumed), "
-    f"bearing in the disk, L {L_ANTI:.1f}, friction ignored", "bearing", F_anti / (D_ANTI_PILOT * L_ANTI), BEARING_MPA, SF_STATIC)
+def anti_bearing(n_, r_, T_=STALL_MG996R_NMM):
+    return T_ / (n_ * r_) / (D_ANTI_PILOT * L_ANTI)
+
+
+row("base stall 1079 N.mm (yaw stall)", f"disc-horn anti-rotation {N_ANTI} x M2 x {P.ANTI_ROT_L:g} at r {R_HOLES_MIN:g} (the "
+    f"BUILD_GUIDE minimum; r {R_HOLES:g} assumed), bearing in the disk's solid bottom, L {L_ANTI:.1f}, friction ignored",
+    "bearing", anti_bearing(N_ANTI, R_HOLES_MIN), BEARING_MPA, SF_STATIC)
+for n_, r_, lbl_ in FALLBACKS:
+    row("base stall 1079 N.mm (yaw stall)", f"disc-horn anti-rotation, {lbl_}: bearing, L {L_ANTI:.1f}", "bearing",
+        anti_bearing(n_, r_), BEARING_MPA, SF_STATIC)
+# the screw's force is tangential: no free edge lies that way (the clamp hole is radial, inboard), so no tear-out row
 for mode, (lbl, req) in MODES.items():
     pr = probes["horn"]
     S = pr.get(mode, "Mh")[0] / DISC_R
@@ -729,6 +748,16 @@ for mode, (lbl, req) in MODES.items():
     row(lbl, f"upright torsion at the root, open section (T {Mz:.0f})", "Z shear", Mz * P.UP_T / SEC["root"].J,
         allow(True, True), req)
 
+# round 5: the 90 mm gussets. Their sloping free edge is in compression when the upright leans towards them: plate
+# buckling with one free edge, sigma_cr = 0.425 pi^2 E / (12 (1 - nu^2)) (t / b)^2, b = the gusset's depth at the root (23,
+# the deepest point: conservative), against the toe's stress without Kt.
+SIG_CR = 0.425 * math.pi ** 2 * E_MPA / (12 * (1 - NU ** 2)) * (P.GUSSET_T / P.GUSSET_LEN) ** 2
+for mode, (lbl, req) in MODES.items():
+    pr = probes["root"]
+    s_toe = pr.get(mode, "toe")[0] / KT_CORNER
+    row(lbl, f"gusset's free edge in compression: buckling, t {P.GUSSET_T:g} / depth {P.GUSSET_LEN:g} (sigma_cr {SIG_CR:.1f} "
+        f"MPa taken as the allowable)", "Z", s_toe, SIG_CR, req)
+
 # --- shoulder servo tabs, pilots and notch strips ---------------------------------------------------------------------------
 F_stall = STALL_MG996R_NMM * R_FAR / SUM_R2
 row("shoulder stall 1079 N.mm", f"far tab pilot bearing, F {F_stall:.1f} N", "bearing", F_stall / (D_PIL_PRINT * L_BEAR),
@@ -747,18 +776,12 @@ row("spec §8: tab screws driven snug", f"notch strip {LIG:.2f}: splitting at {P
     splitting(PRELOAD_SNUG_N, D_THREAD, D_MEAN, L_ENG, LIG), allow(True), SF_SUSTAINED)
 
 # --- advisory ------------------------------------------------------------------------------------------------------------------
-for r in (7.0, 10.5):
-    row("base stall 1079 N.mm", f"anti-rotation screws {N_ANTI} x M2 x 6 at r {r:g} (hole-circle sensitivity)", "bearing",
-        STALL_MG996R_NMM / (N_ANTI * r) / (D_ANTI_PILOT * L_ANTI), BEARING_MPA, SF_STATIC, info=True)
-for n_, L_ in ((2, 8.0 - HORN_T), (4, 8.0 - HORN_T)):
-    for r in (7.0, R_HOLES):
-        row("base stall 1079 N.mm", f"FIX: {n_} x M2 x 8 at r {r:g}, L {L_:.1f}", "bearing",
-            STALL_MG996R_NMM / (n_ * r) / (D_ANTI_PILOT * L_), BEARING_MPA, SF_STATIC, info=True)
-mu, P_res = 0.2, 150.0
-T_fric = mu * P_res * (2 / 3 * DISC_R + D_WASHER / 3)
-row("base stall 1079 N.mm", f"2 x M2 x 6 at r 9 with clamp friction credited (μ {mu}, {P_res:.0f} N left of the preload: "
-    f"{T_fric:.0f} N.mm)", "bearing", (STALL_MG996R_NMM - T_fric) / (N_ANTI * R_HOLES) / (D_ANTI_PILOT * L_ANTI), BEARING_MPA,
-    SF_STATIC, info=True)
+row("base stall 1079 N.mm", f"anti-rotation {N_ANTI} x M2 x {P.ANTI_ROT_L:g} at the assumed r {R_HOLES:g}", "bearing",
+    anti_bearing(N_ANTI, R_HOLES), BEARING_MPA, SF_STATIC, info=True)
+row("base stall 1079 N.mm", f"if the slice kept round 4's 5 bottom layers: {N_ANTI} x M2 x {P.ANTI_ROT_L:g} at r "
+    f"{R_HOLES_MIN:g}, 1 mm of skin + 40 % gyroid (x 0.4) over the rest", "bearing",
+    STALL_MG996R_NMM / (N_ANTI * R_HOLES_MIN) / (D_ANTI_PILOT * (1.0 + 0.4 * (L_ANTI - 1.0))), BEARING_MPA, SF_STATIC,
+    info=True)
 row(f"yaw-stall sweep with a {CLONE_FACTOR * 11:.0f} kgf.cm clone MG996R", "upright window bottom, front", "Z",
     WB_YAW * CLONE_FACTOR, allow(True), SF_STATIC, info=True)
 row(f"yaw-stall sweep, tab screws over-tightened to {PRELOAD_TIGHT_N:.0f} N", f"notch strip {LIG:.2f}: splitting", "Z",
@@ -766,44 +789,28 @@ row(f"yaw-stall sweep, tab screws over-tightened to {PRELOAD_TIGHT_N:.0f} N", f"
     info=True)
 
 worst, fails = report(JOB)
-print("\nWHAT-IF: upright window region, front face, pose by pose (yaw-stall sweep / hand push; SF 3 required):")
-for i, (lbl_, kw) in enumerate(WHATIF):
-    sfs = [f"{allow(True) / probes[k].get('yaw', f'wi{i}')[0]:.2f} / {allow(True) / probes[k].get('hand', f'wi{i}')[0]:.2f}"
-           for k in ("wb", "pr", "notch")]
-    print(f"  {lbl_:36s}: window bottom {sfs[0]}, pilot row {sfs[1]}, notch level {sfs[2]}; gusset toe at r "
-          f"{toe_r(kw):.1f}" + (f", gussets cut off at the upright's top (Z {P.UP_TOP:.1f}), "
-                                f"{kw.get('g_len', P.GUSSET_LEN) * (1 - (P.UP_TOP - TOP) / kw['g_h']):.1f} deep there"
-                                if "g_h" in kw else ""))
-print("\nWHAT-IF: anti-rotation screws (base stall, friction ignored):")
-for n_ in (2, 4):
-    for L_name, L_ in (("M2 x 6", 6.0 - HORN_T), ("M2 x 8", 8.0 - HORN_T)):
-        print(f"  {n_} x {L_name} at r {R_HOLES:g}: SF {BEARING_MPA / (STALL_MG996R_NMM / (n_ * R_HOLES) / (D_ANTI_PILOT * L_)):.2f}"
-              f"; at r 7: SF {BEARING_MPA / (STALL_MG996R_NMM / (n_ * 7.0) / (D_ANTI_PILOT * L_)):.2f}")
+print(f"\nNOTE: the solid bottom is a slicer setting. print_requirements.json asks for bottom_solid_layers >= 30 and "
+      f"bottom_solid_min_thickness >= {SOLID_BOTTOM:g}; this job's slice files are still round 4's (bottom_solid_layers 5), "
+      f"so it must be re-sliced, and the gcode-auditor checks the new slice against the requirements.")
 
 # --- proof tests (spec §8 as this review would write it) --------------------------------------------------------------------
-print("\nPROOF TEST (spec §8 as this review would write it). Ratio = test value / yaw-stall service value at the same check;")
-print("the test should reach 1.5 at the critical checks and stay under 2 elsewhere.")
+print("\nPROOF TEST (spec §8 as written in round 5). Ratio = test value / yaw-stall service value at the same check;")
+print(f"the test should reach 1.5 at the critical checks, and every row's SF over its ratio must stay >= {SF_PROOF:g}.")
 PT = [("wb", "front", "window bottom, front"), ("pr", "front", "lower pilot row, front"), ("notch", "front", "notch level"),
       ("root", "front", "root front"), ("root", "toe", "gusset toe"), ("root", "Mz", "upright torsion"),
       ("horn", "Mh", "base-horn joint and disk"), ("horn", "Mx", "disk strip"), ("tabs", "S", "shoulder tab screw")]
 for name, (pose, F_N) in ARM_TESTS.items():
-    print(f"  {name}, {F_N:g} N (s{pose[0]} e{pose[1]} w{pose[2]}): "
-          + ", ".join(f"{lbl} {test_ratio(probes[k], c, pose, F_N):.2f}" for k, c, lbl in PT))
+    for F_ in (F_N, 11.0):
+        print(f"  {name}, {F_:g} N (s{pose[0]} e{pose[1]} w{pose[2]}): "
+              + ", ".join(f"{lbl} {test_ratio(probes[k], c, pose, F_):.2f}" for k, c, lbl in PT))
     for k, c, lbl in PT[:2]:
         F15 = force_for(lambda F: test_ratio(probes[k], c, pose, F), PROOF_RATIO)
         print(f"    target {lbl}: {PROOF_RATIO:g} x the yaw-stall service value at {F15:.1f} N")
-fr90 = frames(90, -90, 0)
-P90 = to_world(fr90["G"], TIP_G)
-print(f"  spec §8 (2), elbow at 90: the fingertips are {math.hypot(P90[0], P90[1]):.0f} mm from the yaw axis, so the base servo "
-      f"slips at {STALL_MG996R_NMM / abs(P90[0]):.1f} N of +-Y push; the upright torsion it was meant to test has SF "
-      f"{allow(True, True) * SEC['root'].J / (probes['root'].get('yaw', 'Mz')[0] * P.UP_T):.1f} under the yaw stall")
-fr0 = frames(0, 0, 0)
-arm = [i for i in ITEMS if i[2] in ("U", "F", "G")]
-for lbl_, pose in (("forearm straight out", (0, 0, 0)), ("forearm and claw hanging down", (0, -90, 0))):
-    fr = frames(*pose)
-    m_sh = sum(i[1] * GN * (to_world(fr[i[2]], i[3])[0] - fr["U"][0][0]) for i in arm) + 9.81 * L1
-    print(f"  spec §8 (1) as written ({lbl_}): 1 kg at the elbow axis + the arm's own weight = {m_sh:.0f} N.mm about the "
-          f"shoulder, against the shoulder servo's {STALL_MG996R_NMM:.0f} N.mm stall")
-F_slip = PROOF_RATIO * STALL_MG996R_NMM / P.DISK_R
-print(f"  disc-horn test: {PROOF_RATIO:g} x the base stall = {F_slip:.0f} N tangential at the disk rim (r {P.DISK_R:g}); the "
-      f"anti-rotation screws then carry {PROOF_RATIO:g} x their service load (friction ignored)")
+F_slip = 34.0
+T_slip = F_slip * P.DISK_R
+print(f"  spec §8 (2) disc-horn test: {F_slip:g} N tangential at the disk rim (r {P.DISK_R:g}) = {T_slip:.0f} N.mm = "
+      f"{T_slip / STALL_MG996R_NMM:.2f} x the base stall (friction ignored): anti-rotation bearing SF "
+      f"{BEARING_MPA / anti_bearing(N_ANTI, R_HOLES_MIN, T_slip):.2f} (4 at r {R_HOLES_MIN:g}), "
+      f"{BEARING_MPA / anti_bearing(4, 5.0, T_slip):.2f} (4 at r 5), {BEARING_MPA / anti_bearing(3, 7.0, T_slip):.2f} (3 at r 7), "
+      f"required {SF_PROOF:g} at a proof load. The datasheet servo gives way at {STALL_MG996R_NMM / P.DISK_R:.1f} N, a "
+      f"15 kgf.cm clone at {STALL_MG996R_NMM * CLONE_FACTOR / P.DISK_R:.1f} N")
