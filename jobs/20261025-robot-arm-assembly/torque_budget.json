@@ -21,41 +21,12 @@
  },
  "configs": {
   "camera, solid": {
-   "end_effector_g": 224.1,
+   "end_effector_g": 253.9,
    "worst_static_torque_nmm": {
     "payload 0 g": {
      "shoulder": {
-      "nmm": 621.0,
-      "pct_stall": 58.0,
-      "pose": [
-       0,
-       0,
-       -5
-      ]
-     },
-     "elbow": {
-      "nmm": 258.0,
-      "pct_stall": 24.0,
-      "pose": [
-       40,
-       -40,
-       -5
-      ]
-     },
-     "wrist": {
-      "nmm": 30.0,
-      "pct_stall": 14.0,
-      "pose": [
-       35,
-       -95,
-       55
-      ]
-     }
-    },
-    "payload 20 g": {
-     "shoulder": {
-      "nmm": 672.0,
-      "pct_stall": 62.0,
+      "nmm": 682.0,
+      "pct_stall": 63.0,
       "pose": [
        0,
        0,
@@ -66,25 +37,25 @@
       "nmm": 290.0,
       "pct_stall": 27.0,
       "pose": [
-       40,
-       -40,
+       0,
+       0,
        0
       ]
      },
      "wrist": {
-      "nmm": 44.0,
-      "pct_stall": 20.0,
+      "nmm": 35.0,
+      "pct_stall": 16.0,
       "pose": [
        10,
-       -90,
-       80
+       -60,
+       50
       ]
      }
     },
-    "payload 50 g": {
+    "payload 20 g": {
      "shoulder": {
-      "nmm": 750.0,
-      "pct_stall": 69.0,
+      "nmm": 733.0,
+      "pct_stall": 68.0,
       "pose": [
        0,
        0,
@@ -92,17 +63,340 @@
       ]
      },
      "elbow": {
-      "nmm": 338.0,
-      "pct_stall": 31.0,
+      "nmm": 322.0,
+      "pct_stall": 30.0,
       "pose": [
-       40,
-       -40,
+       0,
+       0,
        0
       ]
      },
      "wrist": {
-      "nmm": 66.0,
-      "pct_stall": 30.0,
+      "nmm": 50.0,
+      "pct_stall": 23.0,
+      "pose": [
+       10,
+       -60,
+       50
+      ]
+     }
+    },
+    "payload 50 g": {
+     "shoulder": {
+      "nmm": 811.0,
+      "pct_stall": 75.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 370.0,
+      "pct_stall": 34.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 71.0,
+      "pct_stall": 33.0,
+      "pose": [
+       5,
+       -110,
+       -75
+      ]
+     }
+    }
+   },
+   "payload_arm_straight_out_g": {
+    "<=50% stall static": 0.0,
+    "<=50% stall x1.3 moving": 0.0,
+    "<=1/3 stall continuous": 0.0
+   },
+   "payload_top_down_carry_g": {
+    "x 60-80": {
+     "<=50% stall static": 810.0,
+     "<=50% stall x1.3 moving": 563.0,
+     "<=1/3 stall continuous": 453.0,
+     "poses": 54
+    },
+    "x 80-100": {
+     "<=50% stall static": 517.0,
+     "<=50% stall x1.3 moving": 336.0,
+     "<=1/3 stall continuous": 256.0,
+     "poses": 47
+    },
+    "x 100-120": {
+     "<=50% stall static": 306.0,
+     "<=50% stall x1.3 moving": 165.0,
+     "<=1/3 stall continuous": 103.0,
+     "poses": 40
+    },
+    "x 120-140": {
+     "<=50% stall static": 192.0,
+     "<=50% stall x1.3 moving": 76.0,
+     "<=1/3 stall continuous": 25.0,
+     "poses": 35
+    },
+    "x 140-160": {
+     "<=50% stall static": 103.0,
+     "<=50% stall x1.3 moving": 5.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 36
+    },
+    "x 160-180": {
+     "<=50% stall static": 36.0,
+     "<=50% stall x1.3 moving": 0.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 36
+    },
+    "x 180-200": {
+     "<=50% stall static": 0.0,
+     "<=50% stall x1.3 moving": 0.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 51
+    },
+    "x 200-220": {
+     "<=50% stall static": 0.0,
+     "<=50% stall x1.3 moving": 0.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 17
+    }
+   }
+  },
+  "no camera, solid": {
+   "end_effector_g": 169.6,
+   "worst_static_torque_nmm": {
+    "payload 0 g": {
+     "shoulder": {
+      "nmm": 519.0,
+      "pct_stall": 48.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 216.0,
+      "pct_stall": 20.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 38.0,
+      "pct_stall": 17.0,
+      "pose": [
+       10,
+       -60,
+       50
+      ]
+     }
+    },
+    "payload 20 g": {
+     "shoulder": {
+      "nmm": 571.0,
+      "pct_stall": 53.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 248.0,
+      "pct_stall": 23.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 52.0,
+      "pct_stall": 24.0,
+      "pose": [
+       10,
+       -60,
+       50
+      ]
+     }
+    },
+    "payload 50 g": {
+     "shoulder": {
+      "nmm": 648.0,
+      "pct_stall": 60.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 296.0,
+      "pct_stall": 27.0,
+      "pose": [
+       20,
+       -20,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 73.0,
+      "pct_stall": 34.0,
+      "pose": [
+       40,
+       -130,
+       90
+      ]
+     }
+    }
+   },
+   "payload_arm_straight_out_g": {
+    "<=50% stall static": 8.0,
+    "<=50% stall x1.3 moving": 0.0,
+    "<=1/3 stall continuous": 0.0
+   },
+   "payload_top_down_carry_g": {
+    "x 60-80": {
+     "<=50% stall static": 886.0,
+     "<=50% stall x1.3 moving": 639.0,
+     "<=1/3 stall continuous": 529.0,
+     "poses": 54
+    },
+    "x 80-100": {
+     "<=50% stall static": 596.0,
+     "<=50% stall x1.3 moving": 415.0,
+     "<=1/3 stall continuous": 334.0,
+     "poses": 47
+    },
+    "x 100-120": {
+     "<=50% stall static": 388.0,
+     "<=50% stall x1.3 moving": 247.0,
+     "<=1/3 stall continuous": 184.0,
+     "poses": 40
+    },
+    "x 120-140": {
+     "<=50% stall static": 275.0,
+     "<=50% stall x1.3 moving": 159.0,
+     "<=1/3 stall continuous": 108.0,
+     "poses": 35
+    },
+    "x 140-160": {
+     "<=50% stall static": 187.0,
+     "<=50% stall x1.3 moving": 89.0,
+     "<=1/3 stall continuous": 46.0,
+     "poses": 36
+    },
+    "x 160-180": {
+     "<=50% stall static": 120.0,
+     "<=50% stall x1.3 moving": 37.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 36
+    },
+    "x 180-200": {
+     "<=50% stall static": 76.0,
+     "<=50% stall x1.3 moving": 1.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 51
+    },
+    "x 200-220": {
+     "<=50% stall static": 39.0,
+     "<=50% stall x1.3 moving": 0.0,
+     "<=1/3 stall continuous": 0.0,
+     "poses": 17
+    }
+   }
+  },
+  "camera, sliced est.": {
+   "end_effector_g": 233.6,
+   "worst_static_torque_nmm": {
+    "payload 0 g": {
+     "shoulder": {
+      "nmm": 615.0,
+      "pct_stall": 57.0,
+      "pose": [
+       180,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 264.0,
+      "pct_stall": 24.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 32.0,
+      "pct_stall": 15.0,
+      "pose": [
+       10,
+       -60,
+       50
+      ]
+     }
+    },
+    "payload 20 g": {
+     "shoulder": {
+      "nmm": 666.0,
+      "pct_stall": 62.0,
+      "pose": [
+       180,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 296.0,
+      "pct_stall": 27.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 46.0,
+      "pct_stall": 21.0,
+      "pose": [
+       10,
+       -60,
+       50
+      ]
+     }
+    },
+    "payload 50 g": {
+     "shoulder": {
+      "nmm": 744.0,
+      "pct_stall": 69.0,
+      "pose": [
+       180,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 344.0,
+      "pct_stall": 32.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 68.0,
+      "pct_stall": 31.0,
       "pose": [
        5,
        -20,
@@ -118,43 +412,43 @@
    },
    "payload_top_down_carry_g": {
     "x 60-80": {
-     "<=50% stall static": 835.0,
-     "<=50% stall x1.3 moving": 588.0,
-     "<=1/3 stall continuous": 478.0,
+     "<=50% stall static": 833.0,
+     "<=50% stall x1.3 moving": 586.0,
+     "<=1/3 stall continuous": 477.0,
      "poses": 54
     },
     "x 80-100": {
-     "<=50% stall static": 544.0,
-     "<=50% stall x1.3 moving": 363.0,
-     "<=1/3 stall continuous": 282.0,
+     "<=50% stall static": 542.0,
+     "<=50% stall x1.3 moving": 360.0,
+     "<=1/3 stall continuous": 280.0,
      "poses": 47
     },
     "x 100-120": {
-     "<=50% stall static": 333.0,
-     "<=50% stall x1.3 moving": 192.0,
-     "<=1/3 stall continuous": 130.0,
+     "<=50% stall static": 335.0,
+     "<=50% stall x1.3 moving": 194.0,
+     "<=1/3 stall continuous": 132.0,
      "poses": 40
     },
     "x 120-140": {
-     "<=50% stall static": 220.0,
-     "<=50% stall x1.3 moving": 104.0,
-     "<=1/3 stall continuous": 52.0,
+     "<=50% stall static": 222.0,
+     "<=50% stall x1.3 moving": 106.0,
+     "<=1/3 stall continuous": 54.0,
      "poses": 35
     },
     "x 140-160": {
-     "<=50% stall static": 131.0,
-     "<=50% stall x1.3 moving": 33.0,
+     "<=50% stall static": 134.0,
+     "<=50% stall x1.3 moving": 36.0,
      "<=1/3 stall continuous": 0.0,
      "poses": 36
     },
     "x 160-180": {
-     "<=50% stall static": 64.0,
+     "<=50% stall static": 67.0,
      "<=50% stall x1.3 moving": 0.0,
      "<=1/3 stall continuous": 0.0,
      "poses": 36
     },
     "x 180-200": {
-     "<=50% stall static": 19.0,
+     "<=50% stall static": 23.0,
      "<=50% stall x1.3 moving": 0.0,
      "<=1/3 stall continuous": 0.0,
      "poses": 51
@@ -167,333 +461,10 @@
     }
    }
   },
-  "no camera, solid": {
-   "end_effector_g": 139.8,
-   "worst_static_torque_nmm": {
-    "payload 0 g": {
-     "shoulder": {
-      "nmm": 458.0,
-      "pct_stall": 42.0,
-      "pose": [
-       0,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 184.0,
-      "pct_stall": 17.0,
-      "pose": [
-       40,
-       -40,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 32.0,
-      "pct_stall": 15.0,
-      "pose": [
-       75,
-       -60,
-       -15
-      ]
-     }
-    },
-    "payload 20 g": {
-     "shoulder": {
-      "nmm": 510.0,
-      "pct_stall": 47.0,
-      "pose": [
-       0,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 216.0,
-      "pct_stall": 20.0,
-      "pose": [
-       40,
-       -40,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 46.0,
-      "pct_stall": 21.0,
-      "pose": [
-       75,
-       -60,
-       -15
-      ]
-     }
-    },
-    "payload 50 g": {
-     "shoulder": {
-      "nmm": 587.0,
-      "pct_stall": 54.0,
-      "pose": [
-       0,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 264.0,
-      "pct_stall": 25.0,
-      "pose": [
-       20,
-       -20,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 68.0,
-      "pct_stall": 31.0,
-      "pose": [
-       70,
-       15,
-       -85
-      ]
-     }
-    }
-   },
-   "payload_arm_straight_out_g": {
-    "<=50% stall static": 31.0,
-    "<=50% stall x1.3 moving": 0.0,
-    "<=1/3 stall continuous": 0.0
-   },
-   "payload_top_down_carry_g": {
-    "x 60-80": {
-     "<=50% stall static": 911.0,
-     "<=50% stall x1.3 moving": 664.0,
-     "<=1/3 stall continuous": 554.0,
-     "poses": 54
-    },
-    "x 80-100": {
-     "<=50% stall static": 623.0,
-     "<=50% stall x1.3 moving": 441.0,
-     "<=1/3 stall continuous": 361.0,
-     "poses": 47
-    },
-    "x 100-120": {
-     "<=50% stall static": 415.0,
-     "<=50% stall x1.3 moving": 274.0,
-     "<=1/3 stall continuous": 211.0,
-     "poses": 40
-    },
-    "x 120-140": {
-     "<=50% stall static": 302.0,
-     "<=50% stall x1.3 moving": 187.0,
-     "<=1/3 stall continuous": 135.0,
-     "poses": 35
-    },
-    "x 140-160": {
-     "<=50% stall static": 214.0,
-     "<=50% stall x1.3 moving": 117.0,
-     "<=1/3 stall continuous": 74.0,
-     "poses": 36
-    },
-    "x 160-180": {
-     "<=50% stall static": 148.0,
-     "<=50% stall x1.3 moving": 65.0,
-     "<=1/3 stall continuous": 28.0,
-     "poses": 36
-    },
-    "x 180-200": {
-     "<=50% stall static": 104.0,
-     "<=50% stall x1.3 moving": 29.0,
-     "<=1/3 stall continuous": 0.0,
-     "poses": 51
-    },
-    "x 200-220": {
-     "<=50% stall static": 68.0,
-     "<=50% stall x1.3 moving": 1.0,
-     "<=1/3 stall continuous": 0.0,
-     "poses": 17
-    }
-   }
-  },
-  "camera, sliced est.": {
-   "end_effector_g": 208.6,
-   "worst_static_torque_nmm": {
-    "payload 0 g": {
-     "shoulder": {
-      "nmm": 563.0,
-      "pct_stall": 52.0,
-      "pose": [
-       0,
-       0,
-       -5
-      ]
-     },
-     "elbow": {
-      "nmm": 237.0,
-      "pct_stall": 22.0,
-      "pose": [
-       115,
-       -115,
-       -5
-      ]
-     },
-     "wrist": {
-      "nmm": 27.0,
-      "pct_stall": 13.0,
-      "pose": [
-       35,
-       -95,
-       55
-      ]
-     }
-    },
-    "payload 20 g": {
-     "shoulder": {
-      "nmm": 615.0,
-      "pct_stall": 57.0,
-      "pose": [
-       0,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 269.0,
-      "pct_stall": 25.0,
-      "pose": [
-       40,
-       -40,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 41.0,
-      "pct_stall": 19.0,
-      "pose": [
-       5,
-       -95,
-       90
-      ]
-     }
-    },
-    "payload 50 g": {
-     "shoulder": {
-      "nmm": 692.0,
-      "pct_stall": 64.0,
-      "pose": [
-       0,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 317.0,
-      "pct_stall": 29.0,
-      "pose": [
-       40,
-       -40,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 63.0,
-      "pct_stall": 29.0,
-      "pose": [
-       5,
-       -95,
-       90
-      ]
-     }
-    }
-   },
-   "payload_arm_straight_out_g": {
-    "<=50% stall static": 0.0,
-    "<=50% stall x1.3 moving": 0.0,
-    "<=1/3 stall continuous": 0.0
-   },
-   "payload_top_down_carry_g": {
-    "x 60-80": {
-     "<=50% stall static": 854.0,
-     "<=50% stall x1.3 moving": 607.0,
-     "<=1/3 stall continuous": 497.0,
-     "poses": 54
-    },
-    "x 80-100": {
-     "<=50% stall static": 564.0,
-     "<=50% stall x1.3 moving": 382.0,
-     "<=1/3 stall continuous": 302.0,
-     "poses": 47
-    },
-    "x 100-120": {
-     "<=50% stall static": 358.0,
-     "<=50% stall x1.3 moving": 217.0,
-     "<=1/3 stall continuous": 154.0,
-     "poses": 40
-    },
-    "x 120-140": {
-     "<=50% stall static": 245.0,
-     "<=50% stall x1.3 moving": 129.0,
-     "<=1/3 stall continuous": 78.0,
-     "poses": 35
-    },
-    "x 140-160": {
-     "<=50% stall static": 157.0,
-     "<=50% stall x1.3 moving": 59.0,
-     "<=1/3 stall continuous": 16.0,
-     "poses": 36
-    },
-    "x 160-180": {
-     "<=50% stall static": 91.0,
-     "<=50% stall x1.3 moving": 7.0,
-     "<=1/3 stall continuous": 0.0,
-     "poses": 36
-    },
-    "x 180-200": {
-     "<=50% stall static": 47.0,
-     "<=50% stall x1.3 moving": 0.0,
-     "<=1/3 stall continuous": 0.0,
-     "poses": 51
-    },
-    "x 200-220": {
-     "<=50% stall static": 11.0,
-     "<=50% stall x1.3 moving": 0.0,
-     "<=1/3 stall continuous": 0.0,
-     "poses": 17
-    }
-   }
-  },
   "no camera, sliced est.": {
-   "end_effector_g": 124.3,
+   "end_effector_g": 149.3,
    "worst_static_torque_nmm": {
     "payload 0 g": {
-     "shoulder": {
-      "nmm": 401.0,
-      "pct_stall": 37.0,
-      "pose": [
-       180,
-       0,
-       0
-      ]
-     },
-     "elbow": {
-      "nmm": 163.0,
-      "pct_stall": 15.0,
-      "pose": [
-       40,
-       -40,
-       0
-      ]
-     },
-     "wrist": {
-      "nmm": 29.0,
-      "pct_stall": 14.0,
-      "pose": [
-       5,
-       -95,
-       90
-      ]
-     }
-    },
-    "payload 20 g": {
      "shoulder": {
       "nmm": 452.0,
       "pct_stall": 42.0,
@@ -504,105 +475,134 @@
       ]
      },
      "elbow": {
-      "nmm": 195.0,
+      "nmm": 190.0,
       "pct_stall": 18.0,
       "pose": [
-       40,
-       -40,
+       0,
+       0,
        0
       ]
      },
      "wrist": {
-      "nmm": 44.0,
-      "pct_stall": 20.0,
+      "nmm": 34.0,
+      "pct_stall": 16.0,
       "pose": [
-       5,
+       10,
        -95,
-       90
+       85
       ]
      }
     },
-    "payload 50 g": {
+    "payload 20 g": {
      "shoulder": {
-      "nmm": 530.0,
-      "pct_stall": 49.0,
+      "nmm": 504.0,
+      "pct_stall": 47.0,
       "pose": [
-       0,
+       180,
        0,
        0
       ]
      },
      "elbow": {
-      "nmm": 243.0,
-      "pct_stall": 23.0,
+      "nmm": 222.0,
+      "pct_stall": 21.0,
       "pose": [
-       40,
-       -40,
+       20,
+       -20,
        0
       ]
      },
      "wrist": {
-      "nmm": 65.0,
-      "pct_stall": 30.0,
+      "nmm": 49.0,
+      "pct_stall": 23.0,
       "pose": [
-       70,
-       15,
-       -85
+       5,
+       -20,
+       15
+      ]
+     }
+    },
+    "payload 50 g": {
+     "shoulder": {
+      "nmm": 581.0,
+      "pct_stall": 54.0,
+      "pose": [
+       180,
+       0,
+       0
+      ]
+     },
+     "elbow": {
+      "nmm": 270.0,
+      "pct_stall": 25.0,
+      "pose": [
+       0,
+       0,
+       0
+      ]
+     },
+     "wrist": {
+      "nmm": 70.0,
+      "pct_stall": 33.0,
+      "pose": [
+       5,
+       -110,
+       -75
       ]
      }
     }
    },
    "payload_arm_straight_out_g": {
-    "<=50% stall static": 54.0,
-    "<=50% stall x1.3 moving": 6.0,
+    "<=50% stall static": 34.0,
+    "<=50% stall x1.3 moving": 0.0,
     "<=1/3 stall continuous": 0.0
    },
    "payload_top_down_carry_g": {
     "x 60-80": {
-     "<=50% stall static": 930.0,
-     "<=50% stall x1.3 moving": 683.0,
-     "<=1/3 stall continuous": 573.0,
+     "<=50% stall static": 909.0,
+     "<=50% stall x1.3 moving": 662.0,
+     "<=1/3 stall continuous": 553.0,
      "poses": 54
     },
     "x 80-100": {
-     "<=50% stall static": 642.0,
-     "<=50% stall x1.3 moving": 461.0,
-     "<=1/3 stall continuous": 381.0,
+     "<=50% stall static": 620.0,
+     "<=50% stall x1.3 moving": 439.0,
+     "<=1/3 stall continuous": 359.0,
      "poses": 47
     },
     "x 100-120": {
-     "<=50% stall static": 439.0,
-     "<=50% stall x1.3 moving": 298.0,
-     "<=1/3 stall continuous": 236.0,
+     "<=50% stall static": 417.0,
+     "<=50% stall x1.3 moving": 276.0,
+     "<=1/3 stall continuous": 213.0,
      "poses": 40
     },
     "x 120-140": {
-     "<=50% stall static": 328.0,
-     "<=50% stall x1.3 moving": 212.0,
-     "<=1/3 stall continuous": 160.0,
+     "<=50% stall static": 305.0,
+     "<=50% stall x1.3 moving": 189.0,
+     "<=1/3 stall continuous": 137.0,
      "poses": 35
     },
     "x 140-160": {
-     "<=50% stall static": 241.0,
-     "<=50% stall x1.3 moving": 143.0,
-     "<=1/3 stall continuous": 100.0,
+     "<=50% stall static": 217.0,
+     "<=50% stall x1.3 moving": 120.0,
+     "<=1/3 stall continuous": 77.0,
      "poses": 36
     },
     "x 160-180": {
-     "<=50% stall static": 175.0,
-     "<=50% stall x1.3 moving": 92.0,
-     "<=1/3 stall continuous": 55.0,
+     "<=50% stall static": 152.0,
+     "<=50% stall x1.3 moving": 68.0,
+     "<=1/3 stall continuous": 31.0,
      "poses": 36
     },
     "x 180-200": {
-     "<=50% stall static": 132.0,
-     "<=50% stall x1.3 moving": 57.0,
-     "<=1/3 stall continuous": 24.0,
+     "<=50% stall static": 108.0,
+     "<=50% stall x1.3 moving": 33.0,
+     "<=1/3 stall continuous": 0.0,
      "poses": 51
     },
     "x 200-220": {
-     "<=50% stall static": 96.0,
-     "<=50% stall x1.3 moving": 29.0,
+     "<=50% stall static": 72.0,
+     "<=50% stall x1.3 moving": 5.0,
      "<=1/3 stall continuous": 0.0,
      "poses": 17
     }
@@ -611,28 +611,28 @@
  },
  "overhung_moment_nmm": {
   "camera, payload 0 g": {
-   "shoulder": 240.0,
-   "elbow": 161.0,
-   "wrist": 108.0,
-   "turntable upright mid-plane": 293.0
+   "shoulder": 263.0,
+   "elbow": 176.0,
+   "wrist": 116.0,
+   "turntable upright mid-plane": 319.0
   },
   "camera, payload 50 g": {
-   "shoulder": 279.0,
-   "elbow": 188.0,
-   "wrist": 124.0,
-   "turntable upright mid-plane": 338.0
+   "shoulder": 302.0,
+   "elbow": 203.0,
+   "wrist": 133.0,
+   "turntable upright mid-plane": 364.0
   },
   "no camera, payload 0 g": {
-   "shoulder": 134.0,
-   "elbow": 76.0,
-   "wrist": 41.0,
-   "turntable upright mid-plane": 174.0
+   "shoulder": 156.0,
+   "elbow": 91.0,
+   "wrist": 50.0,
+   "turntable upright mid-plane": 200.0
   },
   "no camera, payload 50 g": {
-   "shoulder": 173.0,
-   "elbow": 103.0,
-   "wrist": 57.0,
-   "turntable upright mid-plane": 220.0
+   "shoulder": 195.0,
+   "elbow": 118.0,
+   "wrist": 66.0,
+   "turntable upright mid-plane": 246.0
   }
  },
  "case_top_plane_y_mm": {
@@ -642,127 +642,127 @@
  },
  "yaw_output_moment_nmm": {
   "camera, arm straight out, payload 0 g": {
-   "total_nmm": 706.0,
-   "about_x_nmm": 247.0,
-   "about_y_nmm": 662.0,
-   "axial_n": 5.7
+   "total_nmm": 774.0,
+   "about_x_nmm": 270.0,
+   "about_y_nmm": 726.0,
+   "axial_n": 5.99
   },
   "camera, arm straight out, payload 50 g": {
-   "total_nmm": 846.0,
-   "about_x_nmm": 288.0,
-   "about_y_nmm": 796.0,
-   "axial_n": 6.19
+   "total_nmm": 914.0,
+   "about_x_nmm": 311.0,
+   "about_y_nmm": 860.0,
+   "axial_n": 6.48
   },
   "camera, arm upright, payload 0 g": {
-   "total_nmm": 250.0,
-   "about_x_nmm": 247.0,
-   "about_y_nmm": 39.0,
-   "axial_n": 5.7
+   "total_nmm": 274.0,
+   "about_x_nmm": 270.0,
+   "about_y_nmm": 43.0,
+   "axial_n": 5.99
   },
   "camera, arm upright, payload 50 g": {
-   "total_nmm": 291.0,
-   "about_x_nmm": 288.0,
-   "about_y_nmm": 44.0,
-   "axial_n": 6.19
+   "total_nmm": 315.0,
+   "about_x_nmm": 311.0,
+   "about_y_nmm": 48.0,
+   "axial_n": 6.48
   },
   "no camera, arm straight out, payload 0 g": {
-   "total_nmm": 508.0,
-   "about_x_nmm": 136.0,
-   "about_y_nmm": 490.0,
-   "axial_n": 4.79
+   "total_nmm": 576.0,
+   "about_x_nmm": 159.0,
+   "about_y_nmm": 554.0,
+   "axial_n": 5.08
   },
   "no camera, arm straight out, payload 50 g": {
-   "total_nmm": 649.0,
-   "about_x_nmm": 177.0,
-   "about_y_nmm": 624.0,
-   "axial_n": 5.28
+   "total_nmm": 717.0,
+   "about_x_nmm": 201.0,
+   "about_y_nmm": 688.0,
+   "axial_n": 5.57
   },
   "no camera, arm upright, payload 0 g": {
-   "total_nmm": 139.0,
-   "about_x_nmm": 136.0,
-   "about_y_nmm": 30.0,
-   "axial_n": 4.79
+   "total_nmm": 163.0,
+   "about_x_nmm": 159.0,
+   "about_y_nmm": 34.0,
+   "axial_n": 5.08
   },
   "no camera, arm upright, payload 50 g": {
-   "total_nmm": 180.0,
-   "about_x_nmm": 177.0,
-   "about_y_nmm": 35.0,
-   "axial_n": 5.28
+   "total_nmm": 204.0,
+   "about_x_nmm": 201.0,
+   "about_y_nmm": 39.0,
+   "axial_n": 5.57
   }
  },
  "yaw_output_note": "moments of everything on the turntable about the base horn face (Z 16.5), solid masses; about_x comes from the arm's sideways offset and is there in every pose",
  "stability_arm_straight_out": {
   "camera, yaw 0, payload 0 g": {
-   "robot_g": 716.0,
-   "com_out_mm": 84.7,
+   "robot_g": 741.0,
+   "com_out_mm": 89.3,
    "base_edge_mm": 55.0,
-   "past_edge_mm": 29.7,
-   "sf_free_standing": 0.48,
-   "ballast_for_sf_1_5_g": 760.0,
-   "board_200_04kg_sf": 2.9
+   "past_edge_mm": 34.3,
+   "sf_free_standing": 0.44,
+   "ballast_for_sf_1_5_g": 873.0,
+   "board_200_04kg_sf": 2.61
   },
   "camera, yaw 0, payload 50 g": {
-   "robot_g": 766.0,
-   "com_out_mm": 97.0,
+   "robot_g": 791.0,
+   "com_out_mm": 100.9,
    "base_edge_mm": 55.0,
-   "past_edge_mm": 42.0,
-   "sf_free_standing": 0.38,
-   "ballast_for_sf_1_5_g": 1058.0,
-   "board_200_04kg_sf": 2.19
+   "past_edge_mm": 45.9,
+   "sf_free_standing": 0.35,
+   "ballast_for_sf_1_5_g": 1170.0,
+   "board_200_04kg_sf": 2.02
   },
   "camera, yaw 90, payload 0 g": {
-   "robot_g": 716.0,
-   "com_out_mm": 85.8,
+   "robot_g": 741.0,
+   "com_out_mm": 90.3,
    "base_edge_mm": 52.0,
-   "past_edge_mm": 33.8,
-   "sf_free_standing": 0.43,
-   "ballast_for_sf_1_5_g": 871.0,
-   "board_200_04kg_sf": 2.87
+   "past_edge_mm": 38.3,
+   "sf_free_standing": 0.39,
+   "ballast_for_sf_1_5_g": 992.0,
+   "board_200_04kg_sf": 2.58
   },
   "camera, yaw 90, payload 50 g": {
-   "robot_g": 766.0,
-   "com_out_mm": 98.1,
+   "robot_g": 791.0,
+   "com_out_mm": 101.9,
    "base_edge_mm": 52.0,
-   "past_edge_mm": 46.1,
-   "sf_free_standing": 0.34,
-   "ballast_for_sf_1_5_g": 1190.0,
-   "board_200_04kg_sf": 2.17
+   "past_edge_mm": 49.9,
+   "sf_free_standing": 0.31,
+   "ballast_for_sf_1_5_g": 1312.0,
+   "board_200_04kg_sf": 2.0
   },
   "no camera, yaw 0, payload 0 g": {
-   "robot_g": 624.0,
-   "com_out_mm": 69.1,
+   "robot_g": 649.0,
+   "com_out_mm": 75.0,
    "base_edge_mm": 55.0,
-   "past_edge_mm": 14.1,
-   "sf_free_standing": 0.69,
-   "ballast_for_sf_1_5_g": 421.0,
-   "board_200_04kg_sf": 4.23
+   "past_edge_mm": 20.0,
+   "sf_free_standing": 0.61,
+   "ballast_for_sf_1_5_g": 534.0,
+   "board_200_04kg_sf": 3.63
   },
   "no camera, yaw 0, payload 50 g": {
-   "robot_g": 674.0,
-   "com_out_mm": 84.3,
+   "robot_g": 699.0,
+   "com_out_mm": 89.2,
    "base_edge_mm": 55.0,
-   "past_edge_mm": 29.3,
-   "sf_free_standing": 0.5,
-   "ballast_for_sf_1_5_g": 719.0,
-   "board_200_04kg_sf": 2.87
+   "past_edge_mm": 34.2,
+   "sf_free_standing": 0.45,
+   "ballast_for_sf_1_5_g": 832.0,
+   "board_200_04kg_sf": 2.58
   },
   "no camera, yaw 90, payload 0 g": {
-   "robot_g": 624.0,
-   "com_out_mm": 70.4,
+   "robot_g": 649.0,
+   "com_out_mm": 76.2,
    "base_edge_mm": 52.0,
-   "past_edge_mm": 18.4,
-   "sf_free_standing": 0.61,
-   "ballast_for_sf_1_5_g": 505.0,
-   "board_200_04kg_sf": 4.18
+   "past_edge_mm": 24.2,
+   "sf_free_standing": 0.53,
+   "ballast_for_sf_1_5_g": 626.0,
+   "board_200_04kg_sf": 3.59
   },
   "no camera, yaw 90, payload 50 g": {
-   "robot_g": 674.0,
-   "com_out_mm": 85.5,
+   "robot_g": 699.0,
+   "com_out_mm": 90.3,
    "base_edge_mm": 52.0,
-   "past_edge_mm": 33.5,
-   "sf_free_standing": 0.44,
-   "ballast_for_sf_1_5_g": 824.0,
-   "board_200_04kg_sf": 2.84
+   "past_edge_mm": 38.3,
+   "sf_free_standing": 0.4,
+   "ballast_for_sf_1_5_g": 945.0,
+   "board_200_04kg_sf": 2.56
   }
  },
  "stability_note": "whole robot incl. base, ring, cradle, ESP32 + wiring allowance 35 g; centre of mass along the arm vs the base edge (55 mm at yaw 0, 52 at yaw 90), positive = tips over; SF = restoring / overturning moment about the edge; ballast at the base centre; the board is 200 x 200 mm, 0.4 kg, centred under the base"

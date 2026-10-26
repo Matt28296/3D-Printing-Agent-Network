@@ -27,7 +27,7 @@ resets the ESP32. The sketch then restarts where the arm stopped, but each reset
 
 The camera sits on the claw's side, turned 90° to the arm: with the claw level, world "up"
 appears at the right edge of the raw image. --rotate (default ccw) turns the preview upright.
-The claw's own cover fills the bottom 40 % of the raw image: crop_claw() cuts it off for vision code.
+The claw's own cover fills the bottom 44-46 % of the raw image: crop_claw() cuts it off for vision code.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ import time
 
 READY = "arm_test ready"
 
-# ---- Geometry (mm), as assembly_check.py places the CAD parts (arm round 3: 20-tooth claw, 2026-10-26) ---------
+# ---- Geometry (mm), as assembly_check.py places the CAD parts (claw round 3: 12 mm racks, 2026-10-26) ----------
 SHOULDER_X, SHOULDER_Z = 10.15, 60.5    # shoulder axis: along the arm from the yaw axis; above the base top plate
 UPPER_L, FORE_L = 100.0, 90.0           # shoulder -> elbow, elbow -> wrist
 TIP_L = 80.35                           # wrist axis -> the point between the fingertips (claw_frame.X_TIP - 3)
@@ -46,8 +46,9 @@ TIP_Y = 83.85                           # the fingertips sit this far to the sid
 DESK_Z = -40.0                          # desk top, relative to the base top plate
 LIMITS = ((-90.0, 90.0), (0.0, 180.0), (-150.0, 30.0), (-90.0, 90.0), (0.0, 44.0))   # as arm_test.ino
 CAMERA_ABOVE_MM = 10.0                  # approach moves keep the Brio's lowest corner this far above the fingertips
-CLAW_ROWS = 0.40                        # crop this share off the raw image's bottom: the claw's cover fills 38 % at
-                                        # the 65° view (43 % at 90°: set 0.43 there)
+CLAW_ROWS = 0.46                        # crop this share off the raw image's bottom: the claw's cover fills 44 % at
+                                        # the 65° view (46 % at 90°: set 0.48 there); claw round 3's 12 mm racks
+                                        # moved the cover's front edge 2 mm towards the fingers (was 38 / 43 %)
 
 # The sketch's guard, line for line (arm_test.ino, "Guard"): every moving part as a box in its link's frame,
 # (link, x0, x1, y0, y1, Y0, Y1, kind). It plans moves the sketch will accept; the sketch still checks them.
@@ -57,13 +58,13 @@ PARTS = (
     (1, -25.0, 121.0, -17.0, 17.0, -7.5, 35.4, 0),      # upper link and the elbow MG996R
     (2, -25.0, 104.0, -13.0, 13.0, 34.0, 44.0, 0),      # forearm
     (2, 68.4, 100.6, -6.1, 6.1, 25.5, 58.0, 0),         # wrist MG90S
-    (3, -8.5, 37.85, -32.0, 32.0, 52.6, 108.1, 0),      # claw frame, cover, pinion and claw MG90S
+    (3, -8.5, 39.85, -32.0, 32.0, 50.6, 108.1, 0),      # claw frame, cover, pinion and claw MG90S
     (3, -26.32, 14.0, -28.0, 22.0, 108.1, 140.49, 0),   # camera mount
     (3, -24.33, 17.79, -51.0, 51.0, 113.07, 154.93, 1),  # Brio 4K with its right-angle plug and thumb screw
-    (3, 22.6, 32.6, 0.0, 0.0, 62.6, 105.1, 2),          # racks
-    (3, 32.6, 49.35, 0.0, 0.0, 62.6, 105.1, 3),         # necks, down to the finger roots
-    (3, 49.35, 76.35, 0.0, 0.0, 62.6, 105.1, 4),        # finger roots and their tapers
-    (3, 76.35, 83.35, 0.0, 0.0, 62.6, 105.1, 5),        # fingertips
+    (3, 22.6, 34.6, 0.0, 0.0, 62.6, 105.1, 2),          # racks
+    (3, 34.6, 51.35, 0.0, 0.0, 62.6, 105.1, 3),         # necks, down to the finger roots
+    (3, 51.35, 78.35, 0.0, 0.0, 62.6, 105.1, 4),        # finger roots and their tapers
+    (3, 78.35, 83.35, 0.0, 0.0, 62.6, 105.1, 5),        # fingertips
 )
 CAMERA_BOX = PARTS[5][1:5]              # Brio's box in the claw's frame (x0, x1, y0, y1)
 FINGER_BOXES = (PARTS[8], PARTS[9])     # finger roots and fingertips

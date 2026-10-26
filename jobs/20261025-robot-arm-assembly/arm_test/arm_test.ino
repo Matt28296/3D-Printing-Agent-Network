@@ -124,13 +124,13 @@ const Part PARTS[] = {
   {1, -25.0,  121.0,  -17.0, 17.0,   -7.5,   35.4,  0},   // upper link and the elbow MG996R
   {2, -25.0,  104.0,  -13.0, 13.0,   34.0,   44.0,  0},   // forearm
   {2,  68.4,  100.6,   -6.1,  6.1,   25.5,   58.0,  0},   // wrist MG90S
-  {3,  -8.5,   37.85, -32.0, 32.0,   52.6,  108.1,  0},   // claw frame, cover, pinion and claw MG90S
+  {3,  -8.5,   39.85, -32.0, 32.0,   50.6,  108.1,  0},   // claw frame, cover, pinion and claw MG90S
   {3, -26.32,  14.0,  -28.0, 22.0,  108.1,  140.49, 0},   // camera mount
   {3, -24.33,  17.79, -51.0, 51.0,  113.07, 154.93, 1},   // Brio 4K with its right-angle plug and thumb screw
-  {3,  22.6,   32.6,    0.0,  0.0,   62.6,  105.1,  2},   // racks
-  {3,  32.6,   49.35,   0.0,  0.0,   62.6,  105.1,  3},   // necks, down to the finger roots
-  {3,  49.35,  76.35,   0.0,  0.0,   62.6,  105.1,  4},   // finger roots and their tapers
-  {3,  76.35,  83.35,   0.0,  0.0,   62.6,  105.1,  5},   // fingertips
+  {3,  22.6,   34.6,    0.0,  0.0,   62.6,  105.1,  2},   // racks
+  {3,  34.6,   51.35,   0.0,  0.0,   62.6,  105.1,  3},   // necks, down to the finger roots
+  {3,  51.35,  78.35,   0.0,  0.0,   62.6,  105.1,  4},   // finger roots and their tapers
+  {3,  78.35,  83.35,   0.0,  0.0,   62.6,  105.1,  5},   // fingertips
 };
 const int NPARTS = sizeof(PARTS) / sizeof(PARTS[0]);
 const float RAD = 0.017453293f;

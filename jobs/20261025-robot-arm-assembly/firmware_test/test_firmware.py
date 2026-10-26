@@ -182,7 +182,7 @@ def test_pc_tool_against_the_sketch(pc_on_bridge):
         arm.claw(30)                                                          # the jaws widen towards the desk
     # the base keep-out: elbow folded, shoulder lowered
     assert arm.park() is True
-    assert arm.move(0, 60, -150, -30, 0) is True
+    assert arm.move(0, 64, -150, -30, 0) is True          # the cover's foot (claw round 3) stops it at s 61.5
     with pytest.raises(RuntimeError, match="arm: blocked: base"):
         arm.move(0, 15, -150, -30, 0)
     assert arm.park() is True

@@ -100,10 +100,14 @@ def test_end_chamfers_are_45_degree_faces_on_filleted_outlines():
     assert max(math.hypot(v.X, v.Y) for v in bottom) == pytest.approx(11.0 - 0.25, abs=0.02)
     inner = [v for v in g.vertices() if abs(v.Z - 0.25) < 1e-6]
     assert max(math.hypot(v.X, v.Y) for v in inner) == pytest.approx(11.0, abs=0.02)
-    r = rack_bar(1.0, -10.0, 20.0, 10.0, 5.0, root_fillet=0.3, tip_relief=0.15, chamfer=(0.0, 0.3))
+    # the claw's rack (claw_frame.py): ends in tooth gaps, 0.5 backlash, 0.25 chamfer, whose inset keeps every edge
+    # (a clipped tooth tip or a short end land that collapses in the inset makes the loft refuse: see
+    # test_chamfer_loft_refuses_an_inset_that_lost_edges_and_falls_back_to_steps)
+    r = rack_bar(1.0, -8 * math.pi, 10 * math.pi, 10.0, 10.0, backlash=0.5, phase=math.pi / 2, root_fillet=0.3,
+                 tip_relief=0.15, chamfer=(0.0, 0.25))
     assert r.is_valid and len(r.solids()) == 1
     top = [v for v in r.vertices() if abs(v.Z - 10.0) < 1e-6]
-    assert max(v.Y for v in top) == pytest.approx(0.85 - 0.3, abs=0.02)   # tooth tips 0.85
+    assert max(v.Y for v in top) == pytest.approx(0.85 - 0.25, abs=0.02)   # tooth tips 0.85
     with pytest.raises(ValueError):
         spur_gear(1.0, 20, 1.0, chamfer=(0.6, 0.6))
 
@@ -117,6 +121,27 @@ def test_stepped_chamfer_fallback_stays_within_half_a_step():
         inset = 1.0 - t
         assert abs(inset - 0.3 * (1 - (k + 0.5) / len(slices))) < 0.01
         assert abs(inset - (0.3 - (k + 0.5) * CHAMFER_STEP)) <= CHAMFER_STEP / 2 + 1e-6
+
+
+def test_chamfer_loft_refuses_an_inset_that_lost_edges_and_falls_back_to_steps():
+    """Module-1 rack, 0.5 backlash, 0.3 chamfer: two tooth tips collapse in the 0.3 inset (256 -> 254 edges), and a
+    ruled loft between them twists (the claw jaw's DFM round 2). The loft must be refused and the bar built with the
+    stepped band, whose volume is the true 45° band's within half a step."""
+    pts = rack_outline(1.0, -8 * math.pi, 10 * math.pi, 10.0, 20.0, 0.5, math.pi / 2, root_fillet=0.3, tip_relief=0.15)
+    with pytest.raises(ValueError, match="edges"):
+        _chamfer_band(pts, 0.0, 0.3, +1, method="loft")
+    steps = sum(s.volume for s in _chamfer_band(pts, 0.0, 0.3, +1, method="steps"))
+    plain = rack_bar(1.0, -8 * math.pi, 10 * math.pi, 12.0, 10.0, backlash=0.5, phase=math.pi / 2, root_fillet=0.3,
+                     tip_relief=0.15)
+    bar = rack_bar(1.0, -8 * math.pi, 10 * math.pi, 12.0, 10.0, backlash=0.5, phase=math.pi / 2, root_fillet=0.3,
+                   tip_relief=0.15, chamfer=(0.3, 0.0))
+    assert bar.is_valid and len(bar.solids()) == 1
+    band = plain.volume - bar.volume                       # what the chamfer took off the bar's first 0.3 mm
+    slab = plain.volume * 0.3 / 12.0                       # the plain bar's first 0.3 mm
+    assert band == pytest.approx(slab - steps, rel=0.01)   # the stepped band, not the 1.6 % lighter twisted loft
+    # and at 0.25 (the jaw's value) the inset keeps every edge, so the true loft is used
+    band25 = _chamfer_band(pts, 0.0, 0.25, +1, method="loft")[0]
+    assert band25.is_valid
 
 
 def _claw_pair(m=1.0, z=20, w=4.0, pinion_backlash=0.2, rack_backlash=0.5):

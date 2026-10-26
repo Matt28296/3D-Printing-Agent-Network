@@ -9,6 +9,16 @@ between the frame's lower rail and this front plate. Each jaw's neck passes thro
 the front plate: slot A (upper) is open at the -y end, slot B (lower) at the +y end, so the jaws
 slide in from the ends after the cover is screwed on.
 
+Round 3 (claw DFM + strength round 2):
+- lip 4 -> 8 thick (GUIDE_T 8, x 14.35..22.35), and the first tie's post with it;
+- a second tie (post + web) at y 24..32 joins the upper piece to the lip (strength change 2); it is at the top of the
+  print, so its undersides are 45° slopes from the lip and the front plate (second_tie());
+- front plate down to z -6 (strength change 3: the strip under slot B 11.75 deep);
+- the front plate cut by slot A, the pass-through and slot B leaves two pieces of the upper half that start in mid-air
+  in print (DFM fix 1): build() adds a breakaway support pillar under each (supports()); design() is the cover as
+  fitted, without them;
+- FACE_W 12: the front plate is at x 34.85..39.85.
+
 Round 2 (deep review 03 SYS-01 fix A, claw DFM + strength round 1):
 - a Ø22.6 (printed) pass-through on the pinion axis: the pinion goes in LAST, axially, with both
   jaws parked fully open, and comes out first for service. The plate slivers it would leave
@@ -26,13 +36,13 @@ import math
 import sys
 from pathlib import Path
 
-from build123d import Align, Box, BuildPart, BuildSketch, Circle, Locations, Plane, Polygon, Pos, Rot, extrude
+from build123d import Align, Box, BuildPart, BuildSketch, Circle, Keep, Locations, Plane, Polygon, Pos, Rot, extrude, split
 from cadlib import HOLE_COMP_DEFAULT, to_bed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "20261025-robot-arm-assembly"))
-from claw_frame import (ACCESS_D, CORNER_FILLET, CORNER_FILLET_Y0, CRESCENT_Y, FRONT_SCREWS, FRONT_Z0, HALF_Y, M3_CLEAR,  # noqa: E402
-                        M25_CLEAR, NECK_Z, RAIL_IN, RAIL_X0, RAIL_X1, SLOT_A_END, SLOT_B_END, SLOT_CLR, SLOT_FILLET,
-                        TIE_X0, TIE_Y, TIE_Z, TOP_CHAMFER, TOP_SCREWS, TOP_X0, X_F0, X_F1, Z_TOP0, Z_TOP1, ZS)
+from claw_frame import (ACCESS_D, CORNER_FILLET, CORNER_FILLET_Y0, CRESCENT_Y, FRONT_SCREWS, FRONT_Z0, HALF_Y, LIP_X0,  # noqa: E402
+                        M3_CLEAR, M25_CLEAR, NECK_Z, RAIL_IN, RAIL_X1, SLOT_A_END, SLOT_B_END, SLOT_CLR, SLOT_FILLET,
+                        TIE2_Y, TIE_X0, TIE_Y, TIE_Z, TOP_CHAMFER, TOP_SCREWS, TOP_X0, X_F0, X_F1, Z_TOP0, Z_TOP1, ZS)
 
 from hobby_parts import _teardrop_z, chamfer_plane_edges  # noqa: E402
 
@@ -47,6 +57,15 @@ ZA1 = Z_TOP0                                 # 48.5: slot A's outer edge is the 
 ZB0 = ZS - NECK_Z[1] - SLOT_CLR              # 5.75: slot B over the strip
 ZB1 = ZS - NECK_Z[0] + SLOT_CLR              # 16.25
 Z_CRES = math.sqrt(R_PASS ** 2 - CRESCENT_Y ** 2)   # 9.0: where the pass-through meets |y| = CRESCENT_Y
+# Breakaway support pillars (DFM fix 1). The pass-through (r 11.4 CAD for the pinion's r 10.85 tips) is wider than the
+# necks' inner faces (r 11.25), so it must break into both slots, and slot A opens at the bed (-y) and slot B at the top
+# (+y): the plate between the pass-through and each slot, above those breaks in print, can only start on support.
+# Each pillar stands on the lower half below its piece and stops SUP_GAP short of it; snap both off before assembly.
+SUP_X = (X_F0 + 0.5, X_F1 - 0.5)             # 4 mm along x, 0.5 in from both plate faces
+SUP_A = (-8.0, SLOT_A_END, ZA0 - 1.45, ZA0 - 0.15)      # y from, piece starts at y, z 36.8..38.1: under the piece
+SUP_B = (-6.0, CRESCENT_Y, ZB1 + 0.1, ZB1 + 1.1)        # beside slot A's end / beside slot B (z 16.35..17.35)
+SUP_GAP = 0.25                               # one layer (0.2) and a bit, under each piece
+TIE2_POST_T = 4.0              # second tie's post, x 18.35..22.35 (the first tie's 4 x 8 post gave SF >= 4.4 in round 2)
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -106,13 +125,47 @@ def front_openings():
     return slot_a, slot_b, tear, cres_a, cres_b
 
 
+def _halfspace(part, origin, normal):
+    """The part's portion on the side of the plane (origin, normal) that the normal points into."""
+    return split(part, bisect_by=Plane(origin=origin, z_dir=normal), keep=Keep.TOP)
+
+
+def second_tie():
+    """Post + web at y TIE2_Y joining the upper piece to the lip, between the racks (|z - ZS| <= TIE_Z) and outside
+    the pinion. Printed at the top of the part (G +y up), so each underside is a 45° slope: the post grows from the lip
+    (full depth at y >= TIE2_Y[0]); the web grows from the post (its back) and from the front plate (its front), whose
+    material starts just above the pass-through's 45° teardrop flanks (apex y 2k = 16.12)."""
+    z0, z1, zp = ZS - TIE_Z, ZS + TIE_Z, ZS + RAIL_IN           # 19.25, 35.25, 36.75 (the post meets the lip)
+    yp = TIE2_Y[0] - (zp - z0)                                  # 6.5: the post's underside meets the lip here
+    post = _yz_prism([(yp - 0.01, zp + 0.01), (HALF_Y, zp + 0.01), (HALF_Y, z0), (TIE2_Y[0], z0)], RAIL_X1 - TIE2_POST_T,
+                     RAIL_X1 + 0.01)
+    web = _box(RAIL_X1, X_F0 + 0.01, yp, HALF_Y, z0, z1)
+    s2 = math.sqrt(0.5)
+    k2 = 2 * R_PASS / math.sqrt(2)                              # 16.12: teardrop apex
+    # from the post: y >= yp + (zp - z) + (x - RAIL_X1)
+    from_post = _halfspace(web, (RAIL_X1, yp, zp), (-1, 1, 1))
+    # from the front plate: y >= k2 - |z - ZS| + (X_F0 - x), one half-space per flank
+    from_plate = (_halfspace(web, (X_F0, k2, ZS), (1, 1, 1)) + _halfspace(web, (X_F0, k2, ZS), (1, 1, -1)))
+    return post + from_post + from_plate
+
+
+def supports():
+    """Breakaway pillars under the two pieces that would start in mid-air (see SUP_A / SUP_B)."""
+    out = None
+    for y0, y_piece, z0, z1 in (SUP_A, SUP_B):
+        pil = _box(SUP_X[0], SUP_X[1], y0, y_piece - SUP_GAP, z0, z1)
+        out = pil if out is None else out + pil
+    return out
+
+
 def design():
     c = _box(TOP_X0, X_F1, -HALF_Y, HALF_Y, Z_TOP0, Z_TOP1)                     # top wall
     c += _box(X_F0, X_F1, -HALF_Y, HALF_Y, FRONT_Z0, Z_TOP0 + 0.01)              # front plate (down to z -4)
-    c += _box(RAIL_X0, RAIL_X1, -HALF_Y, HALF_Y, ZS + RAIL_IN, Z_TOP0 + 0.01)    # upper lip: 4 mm wall behind rack A
+    c += _box(LIP_X0, RAIL_X1, -HALF_Y, HALF_Y, ZS + RAIL_IN, Z_TOP0 + 0.01)     # upper lip: 8 mm wall behind rack A
     # tie between the two halves of the front plate (see claw_frame.py): post behind the racks + web between them
     c += _box(TIE_X0, RAIL_X1 + 0.01, TIE_Y[0], TIE_Y[1], ZS - TIE_Z, ZS + RAIL_IN + 0.01)
     c += _box(RAIL_X1, X_F0 + 0.01, TIE_Y[0], TIE_Y[1], ZS - TIE_Z, ZS + TIE_Z)
+    c += second_tie()
     # r 2 fillet in the inner corner front plate / top wall, beyond slot A's roof
     r = CORNER_FILLET
     arc = [(X_F0 - r + r * math.cos(t), Z_TOP0 - r + r * math.sin(t))
@@ -148,4 +201,5 @@ def design():
 
 
 def build():
-    return to_bed(TO_PRINT * design())
+    """As printed: the cover plus its two breakaway support pillars."""
+    return to_bed(TO_PRINT * (design() + supports()))
