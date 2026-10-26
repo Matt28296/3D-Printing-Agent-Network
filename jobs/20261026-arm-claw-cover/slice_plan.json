@@ -2,7 +2,6 @@
  "printer_profile": "profiles/printer/Original_Prusa_i3_MK3S_MK3S+.ini",
  "print_profile": "profiles/print/0.20mm_QUALITY_@MK3.ini",
  "filament_profile": "profiles/filament/Prusament_PETG.ini",
- "model": "part.stl",
  "overrides": {
   "perimeters": 4,
   "top_solid_layers": 5,
@@ -11,9 +10,13 @@
   "fill_pattern": "gyroid",
   "layer_height": 0.2,
   "elefant_foot_compensation": 0.2,
+  "support_material": 0,
   "brim_type": "outer_only",
-  "brim_width": 5
+  "brim_width": 5,
+  "seam_position": "rear"
  },
+ "model": "part.stl",
  "copies": 1,
- "rationale": "Stock QUALITY + Prusament PETG; 4 perimeters (the 3 mm walls print solid), 40 % gyroid; standing 64 mm tall on a 203 mm\u00b2 end face, so a 5 mm outer brim; EFC 0.2 with the 0.3 mm bed chamfer so the rack channels' entry stays clean."
+ "plates": 1,
+ "rationale": "SLICE for the round-7 cover. It replaces the stale earlier slice. Profiles from config/printer.json: stock MK3S printer, 0.20mm QUALITY @MK3, Prusament PETG (spec §6 PETG = filament_type in print_requirements). Its 240 then 250 °C, bed 85 then 90 °C and 30-50 % part fan sit inside the requirements' 230-250 / 80-90 °C and the skill's PETG guidance, so they are not overridden. library/materials.csv and lessons.md are empty: no flow, temperature or xy_size_compensation overrides. Overrides meet print_requirements.json exactly: 4 perimeters (the 3 mm walls print solid), 5 top / 5 bottom layers, 40 % gyroid, 0.2 mm layers, support_material 0 (equals; the model carries its own breakaway pillars A and B), brim 5 mm outer only (min brim_width 5: 64 mm tall on a 704 mm² end face). Elephant-foot compensation 0.2 pairs with the 0.3 mm bed chamfer, so the rack channels' entry stays clean. Orientation is in the STL (brief): standing on its -y end (print Z = claw y + 32), so every rack bearing face is a vertical wall. Seam: rear, chosen by slicing all four placements and counting external-loop starts on the governing sections (strength rows 30/31/87/88). Those are the top wall behind the lip, at the lip's back face x 14.35, and the plate strips at the two ties' webs. Aligned: 50 starts in the lip/top-wall root and 21 + 1 in the web/plate-strip roots, because it hides seams in exactly those concave corners. Nearest: 22, 23 and 41. Random: 20, 3 and 0. Rear: 0 on the top wall, 0 at tie 1, and none at either web root; the 41 starts in tie 2's strip box are at the strip's free edge on slot B (z_G 16.47, the cantilever tip, 2.8 mm from the web root at 19.25). Rear's outline seam is at the plate's bottom end (z_G -5.8). Sliced 3.57 h against the 4 h limit; 1 copy on 1 plate = spec §7 quantity 1."
 }
