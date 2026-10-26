@@ -14,3 +14,4 @@
 - 2026-10-26T15:16Z · design-lead + cad-engineer (claw round 3) · model.py, design_brief.md, cad_checks.py · ok; architect merged it with links round 5 · ok
 - 2026-10-26T15:16Z · architect · spec §1: round 3 values recorded · ok
 - 2026-10-26T15:43Z · dfm-reviewer (claw round 3, independent) · design_review.md · FAIL
+- 2026-10-26T15:44Z · architect · user approved a fourth attempt: support pillar B thicker (SUP_B) · ok

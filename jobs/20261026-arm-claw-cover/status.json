@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 3 DFM: support pillar B (1.0 mm) leaves 4.24 mm\u00b2 of a piece's first layer in mid-air; third failure, escalated to the user: SUP_B \u2192 (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8)",
+    "DESIGN": "round 4 in progress (user-approved fourth round): support pillar B thicker (SUP_B)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Cover failed a third time (pillar B too thin). Fix: SUP_B (-8.0, CRESCENT_Y, ZB1 + 0.2, ZB1 + 1.8). Fourth round? (asked of the user)"
-  ],
-  "updated": "2026-10-26T15:43:26+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T15:44:29+00:00"
 }
