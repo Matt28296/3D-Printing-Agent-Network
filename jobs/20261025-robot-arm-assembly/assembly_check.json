@@ -786,8 +786,8 @@
      "claw_cover",
      "claw_frame"
     ],
-    "plane": "z = 48.5",
-    "what": "top wall on the bulkhead top"
+    "plane": "z = 48.45",
+    "what": "top wall over the bulkhead top (claw round 6: 0.05 clear in CAD, the cover rests on its ridge)"
    },
    {
     "pair": [
@@ -811,7 +811,7 @@
      "front_screws"
     ],
     "plane": "x = 39.85",
-    "what": "screw heads on the front plate"
+    "what": "screw washers on the front plate (round 7: \u00d86 x 0.5 under each M2.5 head)"
    },
    {
     "pair": [
@@ -998,6 +998,6 @@
    }
   },
   "ok": true,
-  "run_s": 953.5
+  "run_s": 828.1
  }
 }

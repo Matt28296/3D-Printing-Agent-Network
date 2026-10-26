@@ -36,7 +36,8 @@ Five independent reviewers each took one slice of all three robot test builds: t
 | 26 Oct, ~16:00 | Arm fourth attempts: upper-link rib taper 12, forearm round tab pilots, claw-cover support pillar B. Upper link and forearm passed and are sliced |
 | 26 Oct, ~16:45 | Claw cover: anchor its second post onto the frame with an M3 × 45. Its recheck failed: the post was held only by friction |
 | 26 Oct, ~20:30 | Claw cover and frame: a fifth design round with a V-groove lock (a 90° groove in the frame's rail block, a matching ridge under the cover's post, an Ø7 washer under the M3 × 45). Failed its review: printed ridge play about 0.08 mm |
-| 26 Oct, ~22:00 | Claw cover and frame: a sixth design round, ridge-first seat (the cover's post lifted so only the ridge carries it; the frame's bulkhead top moved off a print-layer boundary to 48.45) |
+| 26 Oct, ~22:00 | Claw cover and frame: a sixth design round, ridge-first seat (the cover's post lifted so only the ridge carries it; the frame's bulkhead top moved off a print-layer boundary to 48.45). Seat passed; the cover's screws failed at snug preload |
+| 26 Oct, ~23:00 | Claw cover and frame: a seventh round, washers and longer screws (M3 × 14 + Ø7 on top, M2.5 × 16 + Ø6 in front, Ø7 under the camera build's M3 × 18). Passed; all 11 arm parts await approval |
 
 ## How the fixes flow
 
