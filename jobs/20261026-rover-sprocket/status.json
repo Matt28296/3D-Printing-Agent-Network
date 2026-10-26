@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-sprocket",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -8,7 +8,7 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "re-check: the chassis round 4 moved the motor shaft end 1 mm inward (1.5 mm into the centre hole with a 9 mm shaft); strength rows H4/H5 re-run with the round 4 reviews",
+    "DESIGN": "pass (round 3 DFM PASS; strength NEEDS_TEST, round 4 re-check: H4/H5 need a 10 mm motor shaft, at least 9.6 mm; spec \u00a71\u2013\u00a74 and \u00a78 updated)",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:18:14+00:00"
+  "updated": "2026-10-26T12:16:47+00:00"
 }

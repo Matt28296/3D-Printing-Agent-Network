@@ -62,6 +62,6 @@ Do these after every part's §8 proof tests have passed (deep review 04 S-11):
 - [ ] **8. Drops.** The 5 cm drops in the chassis spec §8 (test 3): flat and on each corner. Afterwards, tests 1 and 2 still pass.
 
 ## 9. Notes and open questions
-- **Motor class.** N20 (GA12) 6 V, 100 rpm (≈150:1), LP or MP winding (stall ≤ 0.7 A at 6 V), 9 mm gearbox, 3 mm D-shaft 9–10 mm long. An 11 mm gearbox also fits.
+- **Motor class.** N20 (GA12) 6 V, 100 rpm (≈150:1), LP or MP winding (stall ≤ 0.7 A at 6 V), 9 mm gearbox, 3 mm D-shaft 10 mm long from the flat gearbox face (at least 9.6 mm; a 9 mm shaft is too short for the sprocket, strength round 4). An 11 mm gearbox also fits.
 - **Reverse steps.** They are limited to about 8.7 mm, because the chassis's rear-bottom corner meets a step before the track does (deep review 04 S-18). Forward steps are limited by grip: expect 12–15 mm.
 - **Status file.** `status.json` still says `"kind": "part"`. It is the head-orchestrator's file, so it is not changed here.

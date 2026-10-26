@@ -15,3 +15,5 @@
 - 2026-10-26T11:18Z · architect (as head-orchestrator) · merged round 4 into robot-arm-test-build (7281cb6); cad_checks 14/14 re-run; status.json: round 4 in review, fresh DFM and strength reviews next · ok
 - 2026-10-26T12:09Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (no overhangs; deck ≥ 6.0 mm round the moved tie slots; clears the toggle, cable slots and screws; ESP32 tie loop now ≈ 98 mm: ties ≥ 150 mm)
 - 2026-10-26T12:09Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T12:16Z · strength-analyst (round 4, independent) · strength.md, strength_calc.py · NEEDS_TEST (26 rows pass; lowest SF 3.15, ESP32 tie on its slot's inner wall; rail press 3.20)
+- 2026-10-26T12:16Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; spec §8: strap test 6 and tie slots in the pass list; BUILD_GUIDE: ESP32 ties ≥ 150 mm, snug by hand; status.json: DESIGN pass, stage SLICE · ok

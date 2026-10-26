@@ -17,3 +17,4 @@
 - 2026-10-26T11:18Z · architect (as head-orchestrator) · merged round 4 into robot-arm-test-build (7281cb6); cad_checks 47/47 re-run; status.json: round 4 in review, fresh DFM and strength reviews next · ok
 - 2026-10-26T12:09Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (largest bridge 8.0 mm; 2.0 mm skin; plates fit real 14-ga stock; slots cover the bolt's full travel; build-guide notes A1–A4 for the snug, the nyloc, the pen mark and the slots)
 - 2026-10-26T12:09Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T12:16Z · architect · spec.md motor note: 10 mm shaft from the gearbox face (at least 9.6 mm), per the sprocket's round 4 re-check · ok

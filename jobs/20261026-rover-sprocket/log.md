@@ -13,3 +13,5 @@
 - 2026-10-26T10:25Z · strength-analyst (round 3, independent) · strength.md, strength_calc.py · NEEDS_TEST
 - 2026-10-26T10:25Z · architect · spec §8 proof test updated to the round-3 strength review · ok
 - 2026-10-26T11:18Z · architect (as head-orchestrator) · status.json: strength rows H4/H5 reopened for a re-check, because chassis round 4 (2 mm skin) moved the motor shaft end 1 mm inward; no geometry change to the sprocket · ok
+- 2026-10-26T12:16Z · strength-analyst (round 4 re-check, independent) · strength.md, strength_calc.py · NEEDS_TEST (9 mm shaft: H5 2.24 fails; at the 9.6 mm minimum H4 4.95, H5 3.13; lowest SF 3.11, tooth root)
+- 2026-10-26T12:16Z · architect (as head-orchestrator) · decision: 10 mm shaft only (at least 9.6 mm from the gearbox face); spec §1, §2, §3, §4 and a §8 depth check updated; BUILD_GUIDE §1 row 2, 'Before you start' and §3 step 6 updated; status.json: DESIGN pass, stage SLICE · ok

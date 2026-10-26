@@ -85,8 +85,9 @@ Design loads, as re-derived by strength round 2 (see strength.md):
   3. **USB.** Plug and unplug the USB cable 10 times.
   4. **Toggle.** Flick the toggle 20 times.
   5. **Lid refit.** Take the lid off and refit it 5 times: the 4 screws into the inserts.
+  6. **Strap** (strength round 4). Before fitting the jumpers, tie the bare ESP32 into its seat, the ties pulled snug by hand only. Holding the lid, push the board up out of its seat from below, through the window between the pin rows, next to one tie, with **3 kg (≈ 30 N, 1.5 × service)** for 10 s. Repeat next to the other tie.
   - Pass:
-    - no crack or whitening at the window corners, rails, ledges, screw holes, toggle hole or tie bar;
+    - no crack or whitening at the window corners, rails, ledges, tie slots, screw holes, toggle hole or tie bar;
     - no permanent set over 0.2 mm (straight-edge along each rail and across the deck);
     - the board stays on both ledges;
     - no insert turns or pulls up.

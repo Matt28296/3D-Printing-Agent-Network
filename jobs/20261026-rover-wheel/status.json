@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-wheel",
-  "stage": "DESIGN",
+  "stage": "SLICE",
   "kind": "part",
   "iterations": {
     "DESIGN": 2,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T10:25:32+00:00"
+  "updated": "2026-10-26T12:16:47+00:00"
 }

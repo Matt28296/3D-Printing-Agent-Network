@@ -19,7 +19,7 @@ Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 ### Bought
 | Qty | Item | Notes |
 |---|---|---|
-| 2 | N20 (GA12) gear motor: 6 V, 100 rpm (≈150:1), **LP or MP winding** (stall ≤ 0.7 A at 6 V), 9 mm metal gearbox, 3 mm D-shaft 9–10 mm long. For example, Pololu 150:1 Micro Metal Gearmotor LP or MP 6 V | An 11 mm gearbox also fits. Don't use an HP winding: it overloads the driver and the printed parts. Measure each motor's stall torque before the proof tests (chassis `spec.md` §8) |
+| 2 | N20 (GA12) gear motor: 6 V, 100 rpm (≈150:1), **LP or MP winding** (stall ≤ 0.7 A at 6 V), 9 mm metal gearbox, 3 mm D-shaft **10 mm long, measured from the flat gearbox face (at least 9.6 mm)**. For example, Pololu 150:1 Micro Metal Gearmotor LP or MP 6 V: its output shaft adds 10 mm to the body length | An 11 mm gearbox also fits. **Don't use a 9 mm shaft**: its end reaches only 1.5 mm into the sprocket's centre hole, and a 5 cm drop can then shear the ring between that hole and a screw slot. Measure from the flat metal face of the gearbox, not from the round bushing. Don't use an HP winding: it overloads the driver and the printed parts. Measure each motor's stall torque before the proof tests (chassis `spec.md` §8) |
 | 1 | Pololu #1996 universal aluminium mounting hub for a 3 mm shaft, M3 holes (2-pack, with set screws) | One hub per sprocket. Its M3 set screw goes on the shaft's flat |
 | 8 | M3 × 12 socket or button head screws | Sprocket disc to hub, 4 per side |
 | 4 | M3 × 50 socket head cap screws, class 12.9, **fully threaded** | Road-wheel axles, head inside the tub. An ordinary ISO 4762 screw this long has only 18 mm of thread and never reaches the wall nut, so buy ones sold as fully threaded |
@@ -43,7 +43,7 @@ Print times and filament: in each job's `slice_stats.json`, once it is sliced.
 | 1 | MTS-102 mini toggle switch (M6 × 0.75 bushing, at least 6 mm of thread) | Main power, on the lid, lever up |
 | 1 | HC-SR04 ultrasonic sensor | 1 kΩ + 2 kΩ resistors for its ECHO line (5 V → 3.3 V) |
 | 1 | 100 µF electrolytic capacitor, 16 V or more | Across the TB6612's VM and GND |
-| — | Zip ties: 2 at most 3.6 mm wide (motors), 2 at most 2.5 mm wide (ESP32), 1 for the lid's tie bar. 1 velcro strap (20 mm), jumper wires, 22 AWG wire, heat-shrink, double-sided foam tape, hot glue, medium threadlocker | |
+| — | Zip ties: 2 at most 3.6 mm wide (motors), 2 at most 2.5 mm wide and at least 150 mm long (ESP32: each loop is about 98 mm), 1 for the lid's tie bar. 1 velcro strap (20 mm), jumper wires, 22 AWG wire, heat-shrink, double-sided foam tape, hot glue, medium threadlocker | |
 
 ### Making the idler plates
 1. **Mark out** two head plates, 20.6 × 10 mm, and two nut plates, 14 × 8 mm, on the 2 mm (or 14-gauge) steel. On 10 mm wide bar the head plates are just cut to length; trim the nut plates to 8 mm wide.
@@ -100,7 +100,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
 **Before you start**
 - **Check the bought parts against section 1:**
   - the axle bolts are threaded right up to the head;
-  - each motor's gearbox is 9 or 11 mm long and its shaft 9–10 mm;
+  - each motor's gearbox is 9 or 11 mm long and its shaft 10 mm (at least 9.6 mm) from the flat gearbox face;
   - the hub's four holes sit 5.5–6.85 mm from its centre, which is the range the sprocket's slots cover.
 - **Test-fit a motor in the chassis pocket.** The gearbox should slide in with light friction. If it binds, scrape the pocket's 45° faces lightly.
 - **Test a short chain first.** Make a 5-link test chain from the first plate of links and do the track-link proof tests (its `spec.md` §8) before printing the second plate.
@@ -130,6 +130,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
    - On each shaft: an M3 washer (the thrust washer), then the aluminium hub.
    - Push the motor outward, so the gearbox face is against the skin, and slide the hub in until it just touches the washer. The washer must still turn.
    - Turn the shaft so its flat faces the hub's set screw. Put a drop of medium threadlocker on the set screw and tighten it on the flat (1.5 mm key).
+   - Check that the shaft end stands at least 2.1 mm proud of the hub's outer face (calipers' depth rod). If it is shorter, the motor's shaft is too short (§1).
    - **Measure the motor's stall torque now, with the hub on and the disc off** (chassis `spec.md` §8, test 2): screw the 50 mm arm to the hub and connect the motor's leads straight to the freshly charged pack for 1 s (that is 100 % PWM), with the arm pressing down on the kitchen scale. It must read ≤ 371 g. If it reads more, the motor isn't the specified type: don't fit the sprocket disc to it.
    - Bolt the sprocket disc to the hub through the slots: 4 × M3 × 12, each with a washer. The shaft end centres the disc in its middle hole.
    - Tighten the screws evenly (2.5 mm key) and spin the sprocket: it should run true.
@@ -148,7 +149,7 @@ N20 motors: a 100 nF ceramic capacitor soldered across each motor's terminals
 11. **Lid.**
     - Stick the mini breadboard on the front of the lid and push the TB6612 into it. Stick the buck under the lid, beneath the breadboard, on foam tape.
     - Fit the toggle through its hole, lever up, with a nut each side of the deck. If the bushing is too short for both nuts, leave the inner nut off.
-    - Push the jumpers onto the ESP32's pins. Then seat it pins-down on its ledges and fix it with two small zip ties through the slots at its ends: across the pin-free ends of the board, never across the pin rows.
+    - Push the jumpers onto the ESP32's pins. Then seat it pins-down on its ledges and fix it with two small zip ties through the slots at its ends: across the pin-free ends of the board, never across the pin rows. Pull them snug by hand only: a tie pulled tight with pliers can split the slot's inner wall (lid strength round 4).
     - Fold the ESP32's wires flat towards the cable slots, one layer deep. There are 5 mm between the jumper housings and the battery holder, and 3.5 mm over the strap.
     - Bring the motor, battery and sensor leads up through the two cable slots and zip-tie the bundle to the bar between them. Leave at least 150 mm of slack below, so the lid can lie beside the rover.
     - Wire per section 2, then screw the lid on: 4 × M3 × 8 into the inserts.
