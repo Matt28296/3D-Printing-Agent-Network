@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4: DFM PASS; strength review running",
+    "DESIGN": "FAIL round 4 strength (lowest SF 2.00: disc-horn anti-rotation screws 2 \u00d7 M2 \u00d7 6; upright window bottom 2.80, pilot row 2.83; DFM PASS); links round 5 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:38:01+00:00"
+  "updated": "2026-10-26T13:06:30+00:00"
 }

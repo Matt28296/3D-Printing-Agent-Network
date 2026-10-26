@@ -3,12 +3,12 @@
   "stage": "DESIGN",
   "kind": "part",
   "iterations": {
-    "DESIGN": 1,
+    "DESIGN": 2,
     "SLICE": 0
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "round 4: DFM PASS; strength review running",
+    "DESIGN": "FAIL round 4 strength (lowest SF 1.21: 4 mm top plate round the MG996R tension-side tab boss in the yaw-stall sweep; DFM PASS); links round 5 next",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
@@ -16,5 +16,5 @@
     "RECORD": null
   },
   "open_questions": [],
-  "updated": "2026-10-26T11:38:01+00:00"
+  "updated": "2026-10-26T13:06:30+00:00"
 }

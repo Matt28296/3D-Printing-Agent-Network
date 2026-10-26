@@ -20,3 +20,4 @@
 - 2026-10-26T12:16Z · architect · spec.md motor note: 10 mm shaft from the gearbox face (at least 9.6 mm), per the sprocket's round 4 re-check · ok
 - 2026-10-26T12:54Z · strength-analyst (round 4, independent) · strength.md, strength_calc.py · FAIL (10 of 58 rows; lowest SF 0.61, B15: web top strip root across the layers, 5 cm front-corner drop; round 3's five failures fixed; N20 shaft 3.06 stall / 1.91 drop against 1.5 for steel)
 - 2026-10-26T12:54Z · architect (as head-orchestrator) · merged the review (b51930e); strength_calc re-run; status.json: DESIGN iterations 4, escalated to the user with the reviewer's fix · ok
+- 2026-10-26T13:06Z · architect · user approved a fifth DESIGN round with the strength reviewer's fix (nut plate on the wall's outer face, nut slot deleted, Ø9 washer under the nut, idler hub 5.2 mm shorter); round 5 started · ok

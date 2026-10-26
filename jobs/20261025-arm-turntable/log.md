@@ -19,3 +19,5 @@
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 4 in review; arm round merged (28d9365), fresh DFM and strength reviews next · ok
 - 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (true 45° notch tops; 3D minimum wall 1.775 mm CAD)
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 2.00; fix: 4 × M2 × 8 anti-rotation screws, GUSSET_H 70 → 90)
+- 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok

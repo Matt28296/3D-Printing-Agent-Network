@@ -16,3 +16,5 @@
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, reopened 2026-10-26 (deep review 03 SYS-05); arm round merged (28d9365), fresh DFM and strength reviews next · ok
 - 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · FAIL (brief's dimension table and Risks line give the old 15.0 mm ring and 1.5 mm gap)
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 2.26 against 4 sustained; fix: a Ø7 washer, 4.72)
+- 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok

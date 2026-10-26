@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "FAIL round 4 strength (lowest SF 0.61: web between the head-plate recess and the nut slot; reverse stall 1.20); DFM round 4 PASS; fourth failure, escalated to the user",
+    "DESIGN": "round 5 in progress (approved by the user after the fourth failure): nut plate out of the wall onto its outer face (20.6 \u00d7 10 \u00d7 2 on a printed lip), nut slot deleted, \u00d89 washer under the nut; idler hub 5.2 mm shorter",
     "SLICE": null,
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "Chassis round 4 failed strength (fourth DESIGN failure): the 3.4 mm web between the head-plate recess and the nut slot, SF 0.61 in the 5 cm drop. Fix offered: nut plate out of the wall onto its outer face (20.6 \u00d7 10 \u00d7 2, a twin of the head plate, on a printed lip), nut slot deleted, \u00d89 washer under the nut, idler hub 5.2 mm shorter; lowest SF then 3.02. Round 5? (asked of the user)"
-  ],
-  "updated": "2026-10-26T12:54:11+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T13:06:30+00:00"
 }

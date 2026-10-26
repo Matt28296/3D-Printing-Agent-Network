@@ -1,6 +1,6 @@
 {
   "job_id": "20261026-rover-idler",
-  "stage": "AWAITING_APPROVAL",
+  "stage": "DESIGN",
   "kind": "part",
   "iterations": {
     "DESIGN": 1,
@@ -8,15 +8,13 @@
   },
   "gates": {
     "SPEC": "pass",
-    "DESIGN": "pass (DFM PASS round 3; strength NEEDS_TEST, proof test in spec \u00a78, after the chassis clamp change)",
-    "SLICE": "pass (2 per plate \u00d7 1, 1.16 h, 10.5 g, 50 % gyroid; validator 0 errors, 0 warnings; audit PASS; preflight written)",
+    "DESIGN": "reopened for chassis round 5 (user-approved): hub 5.2 mm shorter (starts at |y| 43.7) to make room for the nut plate on the chassis wall's outer face",
+    "SLICE": "stale: the round 4 slice (2 per plate, 1.16 h) predates the hub change",
     "APPROVAL": null,
     "PRINT": null,
     "INSPECT": null,
     "RECORD": null
   },
-  "open_questions": [
-    "If the user approves chassis round 5, the idler's hub gets 5.2 mm shorter (starts at |y| 43.7) and the idler returns to DESIGN; its round 4 slice would then be stale"
-  ],
-  "updated": "2026-10-26T12:54:11+00:00"
+  "open_questions": [],
+  "updated": "2026-10-26T13:06:30+00:00"
 }

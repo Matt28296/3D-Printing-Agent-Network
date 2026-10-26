@@ -20,3 +20,5 @@
 - 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · FAIL (MG90S tab-pilot walls 1.34 / 1.45 mm CAD < 1.8; fix: pilots out 1.6 / ≥ 0.2 mm, or a user-accepted deviation)
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
 - 2026-10-26T11:51Z · architect · user decision: keep the MG90S tab-pilot strips (1.34 / 1.45 mm CAD) and check them on the first print; spec §8 and BUILD_GUIDE §4 step 6 carry the check (459ee45); open question closed · ok
+- 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 1.71 at the window rails; fix: a 6 mm back-face rib on each rail and a boss under the far pilot with an M2 × 16; the MG90S strips pass, 4.75 and 5.19)
+- 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok

@@ -19,3 +19,5 @@
 - 2026-10-26T10:56Z · architect (as head-orchestrator) · status.json: DESIGN, round 4 in review; arm round merged (28d9365), fresh DFM and strength reviews next · ok
 - 2026-10-26T11:38Z · dfm-reviewer (round 4, independent) · design_review.md · PASS (notch-to-pilot walls 1.84 mm CAD)
 - 2026-10-26T11:38Z · architect (as head-orchestrator) · merged the round 4 DFM review; status.json updated · ok
+- 2026-10-26T13:06Z · strength-analyst (links round 4, independent) · strength.md, strength_calc.py · FAIL (lowest SF 1.21; fix: a pad under the plate, 7.5 mm at the far tab and 5.5 mm at the near tab)
+- 2026-10-26T13:06Z · architect (as head-orchestrator) · merged the round 4 strength review; strength_calc re-run; status.json updated · ok
